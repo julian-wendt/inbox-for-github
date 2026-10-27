@@ -7,8 +7,8 @@
  * The tag is built in a temporary git worktree, so the current checkout, branch and uncommitted
  * work stay untouched. Cargo reuses this checkout's `src-tauri/target`, so the build is not cold.
  *
- * Refuses unless this is an Apple Silicon Mac (the build is arm64 only), the newest release has
- * no download yet, and `package.json` at its tag carries the tag's version.
+ * Refuses unless this is an Apple Silicon Mac (the build is arm64 only), `cargo` is on the path,
+ * the newest release has no download yet, and `package.json` at its tag carries the tag's version.
  *
  * Needs `gh` (logged in), Node, and Rust, as for any build (see docs/releasing.md).
  *
@@ -32,6 +32,11 @@ const fail = (message) => {
 };
 
 if (process.platform !== "darwin" || process.arch !== "arm64") fail("needs an Apple Silicon Mac.");
+try {
+  run("cargo", ["--version"]);
+} catch {
+  fail("cargo is not on the path. With Homebrew's rustup: export PATH=/opt/homebrew/opt/rustup/bin:$PATH");
+}
 
 const releases = JSON.parse(run("gh", ["release", "list", "--limit", "10", "--json", "tagName,createdAt"]));
 releases.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

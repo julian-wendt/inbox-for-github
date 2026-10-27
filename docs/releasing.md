@@ -26,7 +26,8 @@ macOS runner in CI would use up the monthly Actions quota fast
 
    The script takes the newest release, refuses if it has a download already or if `package.json`
    at its tag has another version, and builds the tag in a temporary worktree (`npm ci`, then the
-   build below), so your checkout stays as it is. It needs Rust as described below.
+   build below), so your checkout stays as it is. It needs Rust as described below and says so
+   before it installs anything when `cargo` is not on the path.
 4. **Publish the draft** in GitHub, or let `release:publish` do it right after the upload. A draft
    without a download is a release you have not finished.
 
