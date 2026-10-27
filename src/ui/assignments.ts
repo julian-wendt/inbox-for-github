@@ -3,14 +3,15 @@ import type { Item, Status } from "../model";
 import { isBot, latest, posts, sameLogin } from "../timeline";
 import { workStatus, type StatusMap } from "../workStatus";
 import type { AuthoredGroup } from "./authored";
+import type { Planned } from "./plan";
 
 /**
  * A bar in the "Assigned to me" table: "focus" for the items marked today, then the work
- * statuses, "later" for snoozed or blocked ones, and "finished" for what is done but still open
+ * statuses, "planned" for items planned for a later day, "later" for snoozed or blocked ones, and "finished" for what is done but still open
  * on GitHub: done on its board, or the viewer's part done. Assignments not opened yet sit in
  * their work status bar, marked as new in their row.
  */
-export type PlateGroup = "focus" | "review" | "progress" | "todo" | "later" | "finished";
+export type PlateGroup = "focus" | "review" | "progress" | "todo" | "planned" | "later" | "finished";
 
 /** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`) or a bar of Created by me. */
 export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup;
@@ -62,7 +63,7 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
 }
 
 /** The bars in display order. */
-export const PLATE_GROUPS: PlateGroup[] = ["focus", "review", "progress", "todo", "later", "finished"];
+export const PLATE_GROUPS: PlateGroup[] = ["focus", "review", "progress", "todo", "planned", "later", "finished"];
 
 /** At most this many items can be marked "today". */
 export const FOCUS_MAX = 3;
@@ -113,22 +114,37 @@ export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MO
  * @param statusMap  The viewer's board status mapping.
  * @param order      The viewer's bar order (see `orderBars`).
  * @param me         The viewer's login.
+ * @param planned    Items planned for a later day; their bar is sorted by that day, soonest first.
  * @returns The non-empty bars in that order.
  *
  * @example
  *   groupPlate(classified, ["I_1"], settings.statusMap); // [{ group: "focus", entries }, { group: "review", entries }, …]
  */
-export function groupPlate(entries: Classified[], focus: string[] = [], statusMap: StatusMap = {}, order: PlateGroup[] = [], me = ""): { group: PlateGroup; entries: Classified[] }[] {
+export function groupPlate(entries: Classified[], focus: string[] = [], statusMap: StatusMap = {}, order: PlateGroup[] = [], me = "", planned: Planned[] = []): { group: PlateGroup; entries: Classified[] }[] {
   const groups = new Map<PlateGroup, Classified[]>(PLATE_GROUPS.map((g) => [g, []]));
-  for (const entry of entries.filter((e) => onPlate(e, me))) groups.get(plateGroup(entry, focus, statusMap))!.push(entry);
+  const days = new Map(planned.map((p) => [p.id, p.day]));
+  for (const entry of entries.filter((e) => onPlate(e, me))) groups.get(plateGroup(entry, focus, statusMap, days))!.push(entry);
   const newest = (a: Classified, b: Classified) => assignedAt(b.item, me).at.localeCompare(assignedAt(a.item, me).at);
-  return orderBars(order).map((group) => ({ group, entries: groups.get(group)!.sort(newest) })).filter((g) => g.entries.length > 0);
+  const soonest = (a: Classified, b: Classified) => days.get(a.item.id)!.localeCompare(days.get(b.item.id)!) || newest(a, b);
+  return orderBars(order)
+    .map((group) => ({ group, entries: groups.get(group)!.sort(group === "planned" ? soonest : newest) }))
+    .filter((g) => g.entries.length > 0);
 }
 
-/** The viewer's bar order, completed with any bars it leaves out, in their default order. */
+/**
+ * The viewer's bar order, completed with any bars it leaves out: each goes before the first bar
+ * that follows it by default, so a bar added later lands where it belongs in a saved order.
+ *
+ * @example
+ *   orderBars(["review", "focus", "progress", "todo", "later", "finished"]); // "planned" before "later"
+ */
 export function orderBars(order: PlateGroup[]): PlateGroup[] {
-  const known = order.filter((g) => PLATE_GROUPS.includes(g));
-  return [...known, ...PLATE_GROUPS.filter((g) => !known.includes(g))];
+  const bars = order.filter((g) => PLATE_GROUPS.includes(g));
+  for (const group of PLATE_GROUPS.filter((g) => !bars.includes(g))) {
+    const next = PLATE_GROUPS.slice(PLATE_GROUPS.indexOf(group) + 1).find((g) => bars.includes(g));
+    bars.splice(next ? bars.indexOf(next) : bars.length, 0, group);
+  }
+  return bars;
 }
 
 /** Moves `bar` to just before `target`, for drag and drop. */
@@ -149,10 +165,11 @@ export function shownStatus(entry: Pick<Classified, "item" | "status">, statusMa
   return entry.status === "open" && workStatus(entry.item, statusMap) === "done" ? "done" : entry.status;
 }
 
-function plateGroup(entry: Classified, focus: string[], statusMap: StatusMap): PlateGroup {
+function plateGroup(entry: Classified, focus: string[], statusMap: StatusMap, planned: Map<string, string>): PlateGroup {
   if (entry.updates) return "finished";
   if (entry.status === "snoozed") return "later";
   if (focus.includes(entry.item.id)) return "focus";
+  if (planned.has(entry.item.id)) return "planned";
   const work = workStatus(entry.item, statusMap);
   return work === "snoozed" ? "later" : work === "done" ? "finished" : work;
 }
@@ -228,9 +245,14 @@ export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, see
   return !!last && !!since && last > since;
 }
 
-/** The number for the sidebar: everything on the plate except the blocked and the finished bar. */
+/** The bars that ask for work now; planned, blocked and finished items are parked. */
+export function isActiveBar(group: PlateGroup): boolean {
+  return group !== "planned" && group !== "later" && group !== "finished";
+}
+
+/** The number for the sidebar: everything on the plate except the planned, blocked and finished bars. */
 export function plateCount(groups: { group: PlateGroup; entries: Classified[] }[]): number {
-  return groups.filter((g) => g.group !== "later" && g.group !== "finished").reduce((n, g) => n + g.entries.length, 0);
+  return groups.filter((g) => isActiveBar(g.group)).reduce((n, g) => n + g.entries.length, 0);
 }
 
 /** The local calendar date, e.g. "2026-10-23", which decides when "today" starts over. */

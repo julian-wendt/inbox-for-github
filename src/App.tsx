@@ -22,7 +22,7 @@ import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { followUpOf } from "./ui/followUp";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
-import { Bell, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, Star, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
+import { Bell, CalendarClock, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, Star, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
 import { Detail } from "./ui/parts/Detail";
 import { Help } from "./ui/parts/Help";
@@ -41,7 +41,8 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { openInOrca } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { choiceKey, choiceText, planChoices, rollOver, setPlan } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -102,8 +103,8 @@ export default function App() {
     [askBase, inbox.me],
   );
   const plateAll = useMemo(
-    () => groupPlate(scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me ?? ""),
-    [scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me],
+    () => groupPlate(scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me ?? "", inbox.settings.planned),
+    [scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me, inbox.settings.planned],
   );
   const setBucket = (view: View) => {
     setChosen(view);
@@ -128,7 +129,7 @@ export default function App() {
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["later", "finished"]);
+  const bars = useCollapsed("assigned-collapsed", ["planned", "later", "finished"]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
@@ -140,9 +141,9 @@ export default function App() {
     // Today stays on top and what is finished but open at the bottom, in every grouping.
     const today = byStatus.filter((g) => g.group === "focus");
     const finished = byStatus.filter((g) => g.group === "finished");
-    const later = byStatus.filter((g) => g.group === "later");
-    const working = plateNewest.filter((g) => g.group !== "focus" && g.group !== "later" && g.group !== "finished").flatMap((g) => g.entries);
-    return [...today, ...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? ""), ...later, ...finished];
+    const parked = byStatus.filter((g) => g.group === "planned" || g.group === "later");
+    const working = plateNewest.filter((g) => g.group !== "focus" && isActiveBar(g.group)).flatMap((g) => g.entries);
+    return [...today, ...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? ""), ...parked, ...finished];
   }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.me]);
   const [popup, setPopup] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -176,19 +177,19 @@ export default function App() {
       () => cs.forEach((c) => void (read ? inbox.markSeen(c.item.id) : inbox.markUnread(c.item.id))),
     );
   };
-  /** The unread assignments that still ask for work: the bars Later and Done are parked. */
+  /** The unread assignments that still ask for work: the bars Planned, Later and Done are parked. */
   const unreadPlateIds = useMemo(
     () =>
       new Set(
-        groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me)
-          .filter((g) => g.group !== "later" && g.group !== "finished")
+        groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned)
+          .filter((g) => isActiveBar(g.group))
           .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me)).map((c) => c.item.id)),
       ),
-    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.focus, inbox.settings.statusMap, me],
+    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.planned, me],
   );
   /** The items a view's count stands for, whatever filters narrow its list. */
   const itemsOfView = (view: View): Classified[] => {
-    if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me).filter((g) => g.group !== "later" && g.group !== "finished").flatMap((g) => g.entries);
+    if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
     if (view === "authored") return groupAuthored(inbox.classified, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
     return inbox.classified.filter((c) => c.bucket === view);
   };
@@ -305,10 +306,10 @@ export default function App() {
     return {
       ...countBy(all, (c) => c.bucket),
       inbox: all.filter((c) => c.bucket === "inbox").length,
-      assigned: plateCount(groupPlate(all, inbox.settings.focus, inbox.settings.statusMap, [], me)),
+      assigned: plateCount(groupPlate(all, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned)),
       authored: authoredCount(groupAuthored(all, me)),
     } as Record<View, number>;
-  }, [inRepos, inbox.settings.focus, inbox.settings.statusMap, me]);
+  }, [inRepos, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.planned, me]);
   const findable = useMemo(() => inbox.classified.filter((c) => viewOf(c, me) !== null), [inbox.classified, me]);
   // The badge says there is something to do again, or still: unread inbox items and unread assignments, marks by hand included.
   const badgeIds = useMemo(() => new Set([...unreadInboxIds, ...unreadPlateIds]), [unreadInboxIds, unreadPlateIds]);
@@ -376,8 +377,8 @@ export default function App() {
     const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
     const on = focus.includes(c.item.id);
     if (!on && focus.length >= FOCUS_MAX) return actions.notify(t("focus.full"));
-    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay };
-    const next = { focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id], focusDay: localDay() };
+    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned };
+    const next = { focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id], focusDay: localDay(), planned: setPlan(inbox.settings.planned, c.item.id, null) };
     void inbox.saveSettings({ ...inbox.settings, ...next });
     actions.announce(
       t(on ? "focus.removed" : "focus.added", { number: c.item.number }),
@@ -385,6 +386,29 @@ export default function App() {
       () => void inbox.updateSettings((s) => ({ ...s, ...next })),
     );
   };
+
+  /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today. */
+  const planFor = (c: Classified, day: string | null, text: string) => {
+    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned };
+    const next = { focus: inbox.settings.focus.filter((id) => id !== c.item.id), focusDay: inbox.settings.focusDay, planned: setPlan(inbox.settings.planned, c.item.id, day) };
+    void inbox.saveSettings({ ...inbox.settings, ...next });
+    actions.announce(
+      day ? t("plan.added", { number: c.item.number, day: text }) : t("plan.removed", { number: c.item.number }),
+      () => void inbox.updateSettings((s) => ({ ...s, ...previous })),
+      () => void inbox.updateSettings((s) => ({ ...s, ...next })),
+    );
+  };
+  /** The plan choices; the menu P opens leads with Today (T), the right-click submenu has it beside. */
+  const planEntries = (c: Classified, withToday = false): MenuEntry[] => {
+    const day = inbox.settings.planned.find((p) => p.id === c.item.id)?.day;
+    return [
+      ...(withToday ? [{ label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), onSelect: () => toggleFocus(c) }] : []),
+      ...planChoices().map((choice, i) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === day, divided: withToday && i === 0, onSelect: () => planFor(c, choice.day, choiceText(choice)) })),
+      ...(day ? [{ label: t("plan.remove"), keys: "X", divided: true, onSelect: () => planFor(c, null, "") }] : []),
+    ];
+  };
+  /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones. */
+  const plan = (c: Classified) => (pinnable(c) ? setMenu({ entries: planEntries(c, true), ...paneCenter(), centered: true }) : actions.notify(t("noop.notPlannable", { number: c.item.number })));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -724,7 +748,8 @@ export default function App() {
       ...(leavable(c) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => leave(c) }] : []),
       ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
-      ...(pinnable(c) ? [{ label: t("menu.today"), keys: "P", icon: <Star size={14} />, checked: inbox.settings.focus.includes(item.id), onSelect: () => toggleFocus(c) }] : []),
+      ...(pinnable(c) ? [{ label: t("menu.today"), keys: "T", icon: <Star size={14} />, checked: inbox.settings.focus.includes(item.id), onSelect: () => toggleFocus(c) }] : []),
+      ...(pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarClock size={14} />, items: planEntries(c) }] : []),
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
       ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <SquareTerminal size={14} />, onSelect: () => openOrca(c, orcaId) }] : []),
@@ -737,17 +762,19 @@ export default function App() {
     ];
   };
 
-  // "Today" starts over each morning: checked on start and every few minutes while the app stays open.
-  const { settings, saveSettings, ready } = inbox;
+  // "Today" starts over each morning with what was planned for it: checked on start and every few minutes while the app stays open.
+  const { settings, saveSettings, ready, classified } = inbox;
   useEffect(() => {
     if (!ready) return;
     const check = () => {
-      if (settings.focus.length > 0 && settings.focusDay !== localDay()) void saveSettings({ ...settings, focus: [], focusDay: null });
+      const pinnable = (id: string) => classified.some((c) => c.item.id === id && c.status === "open" && onPlate(c, me));
+      const next = rollOver(settings, localDay(), pinnable, (id) => classified.some((c) => c.item.id === id));
+      if (next) void saveSettings({ ...settings, ...next });
     };
     check();
     const timer = window.setInterval(check, 5 * 60_000);
     return () => window.clearInterval(timer);
-  }, [ready, settings, saveSettings]);
+  }, [ready, settings, saveSettings, classified, me]);
 
   const showPopup = popup && table && current !== null;
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
@@ -777,7 +804,8 @@ export default function App() {
       f: marked.length > 0 ? openBulkTimes : withCurrent(snooze),
       o: marked.length > 0 ? () => bulkStatus("open") : withCurrent((c) => applyStatus(c, "open")),
       x: marked.length > 0 ? removeMarkedFollowUps : withCurrent((c) => (hasFollowUp(c) ? removeFollowUp(c) : actions.notify(t("noop.noFollowUp", { number: c.item.number })))),
-      p: withCurrent((c) => (pinnable(c) ? toggleFocus(c) : actions.notify(t("noop.notPinnable", { number: c.item.number })))),
+      t: withCurrent((c) => (pinnable(c) ? toggleFocus(c) : actions.notify(t("noop.notPinnable", { number: c.item.number })))),
+      p: withCurrent(plan),
       u: marked.length > 0 ? () => toggleRead(marked) : withCurrent((c) => toggleRead([c])),
       r: marked.length > 0 ? () => toggleRead(marked) : withCurrent((c) => toggleRead([c])),
       "mod+z": actions.undo,
@@ -797,8 +825,9 @@ export default function App() {
       " ": () => (selectedBar ? toggleBar(selectedBar) : table && current && setPopup(!popup)),
       ArrowRight: () => selectedBar && setBar(selectedBar, true),
       ArrowLeft: () => (selectedBar ? setBar(selectedBar, false) : !showPopup && foldCurrent()),
-      t: () => (asking && !table ? setAsk((f) => nextOf(ASK_FILTERS, f)) : setKind((k) => nextOf(KINDS.map((o) => o.id), k))),
-      g: toggleGrouping,
+      // Switches of the app, not of an item, so they go with ⌘.
+      "mod+t": () => (asking && !table ? setAsk((f) => nextOf(ASK_FILTERS, f)) : setKind((k) => nextOf(KINDS.map((o) => o.id), k))),
+      "mod+g": toggleGrouping,
       // The selected item alone, as #17 decided; with nothing selected, everything, as before.
       "ctrl+r": withCurrent(reloadCurrent),
       "mod+r": () => void inbox.refresh(),
@@ -910,6 +939,7 @@ export default function App() {
           onColumn={setColumn}
           showOpened={showOpened}
           focus={inbox.settings.focus}
+          planned={inbox.settings.planned}
           onFocus={toggleFocus}
           onMove={(bar, target) => void inbox.saveSettings({ ...inbox.settings, plateOrder: moveBar(inbox.settings.plateOrder, bar as PlateGroup, target as PlateGroup) })}
           seen={inbox.seen}
@@ -1077,6 +1107,7 @@ export default function App() {
             unread={!!current && isUnread(current)}
             onToggleRead={() => current && toggleRead([current])}
             onToday={current && pinnable(current) ? () => toggleFocus(current) : undefined}
+            onPlan={current && pinnable(current) ? () => plan(current) : undefined}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
             onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}

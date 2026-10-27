@@ -615,7 +615,8 @@
 }
 
 /* Quiet and absolute, so it does not read like the relative time at the end of the row. */
-.table-opened {
+.table-opened,
+.table-planned {
   flex: none;
   color: var(--text-faint);
   font-size: 11.5px;

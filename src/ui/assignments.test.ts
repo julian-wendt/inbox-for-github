@@ -102,12 +102,16 @@ describe("assignedAt", () => {
 });
 
 describe("bar order", () => {
-  it("completes a partial order with the remaining bars in their default order", () => {
-    expect(orderBars(["todo", "review"])).toEqual(["todo", "review", "focus", "progress", "later", "finished"]);
+  it("completes a partial order with each remaining bar before the one it precedes by default", () => {
+    expect(orderBars(["todo", "review"])).toEqual(["progress", "todo", "focus", "review", "planned", "later", "finished"]);
+  });
+
+  it("puts a bar missing from a saved order where it belongs by default", () => {
+    expect(orderBars(["review", "focus", "progress", "todo", "later", "finished"])).toEqual(["review", "focus", "progress", "todo", "planned", "later", "finished"]);
   });
 
   it("moves a bar to just before the one it was dropped on", () => {
-    expect(moveBar([], "later", "review")).toEqual(["focus", "later", "review", "progress", "todo", "finished"]);
+    expect(moveBar([], "later", "review")).toEqual(["focus", "later", "review", "progress", "todo", "planned", "finished"]);
   });
 });
 
@@ -199,5 +203,16 @@ describe("lastOthersActivity", () => {
 
   it("keeps reviews when events are switched off", () => {
     expect(lastOthersActivity(item, "me", { ...MOVES_UP_DEFAULT, events: false })).toBe("2026-10-11T00:00:00Z");
+  });
+});
+
+describe("groupPlate with planned items", () => {
+  it("files planned items in their bar, soonest day first, and keeps Today above it", () => {
+    const groups = groupPlate([entry("a"), entry("b"), entry("c")], ["c"], {}, [], "", [{ id: "a", day: "2026-10-29" }, { id: "b", day: "2026-10-28" }, { id: "c", day: "2026-10-28" }]);
+    expect(groups.map((g) => [g.group, g.entries.map((e) => e.item.id)])).toEqual([["focus", ["c"]], ["planned", ["b", "a"]]]);
+  });
+
+  it("leaves planned items out of the sidebar count", () => {
+    expect(plateCount(groupPlate([entry("a"), entry("b")], [], {}, [], "", [{ id: "a", day: "2026-10-28" }]))).toBe(1);
   });
 });

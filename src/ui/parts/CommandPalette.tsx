@@ -33,8 +33,10 @@ interface Props {
   /** The current item counts as unread; the entry then marks it read. */
   unread: boolean;
   onToggleRead: () => void;
-  /** Pins the current item for today or takes it off (P); offered while it can be pinned. */
+  /** Pins the current item for today or takes it off (T); offered while it can be pinned. */
   onToday?: () => void;
+  /** Opens the plan choices for the current item (P); offered while it can be pinned. */
+  onPlan?: () => void;
   onCopy: (format: LinkFormat) => void;
   onReload: () => void;
   onAssignMe: () => void;
@@ -109,8 +111,13 @@ export function CommandPalette(props: Props) {
                   </Item>
                 )}
                 {props.onToday && (
-                  <Item onSelect={run(props.onToday)} keys="P">
+                  <Item onSelect={run(props.onToday)} keys="T">
                     {t("menu.today")}
+                  </Item>
+                )}
+                {props.onPlan && (
+                  <Item onSelect={run(props.onPlan)} keys="P">
+                    {t("menu.plan")}
                   </Item>
                 )}
                 <Item onSelect={run(props.onToggleRead)} keys="R">

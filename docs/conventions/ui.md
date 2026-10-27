@@ -65,7 +65,7 @@ Shortcuts are registered in `App.tsx` with `useHotkeys` (`src/ui/useHotkeys.ts`)
 lowercased; `mod+` is ⌘, `shift+` is added with ⌘ and for letters. Single-key shortcuts do not
 fire while typing in a field.
 
-Taken today: ↑/↓ (with ⇧ to mark; J/K are deliberately unused), ←/→, 1–5, T, G, D, O, F, X, U, R, P, W, ⌃A, ⌃U, ⌃O, ⌃R, C, Space, Enter, Escape, ⌘Z, ⌘Y, ⌘R,
+Taken today: ↑/↓ (with ⇧ to mark; J/K are deliberately unused), ←/→, 1–5, T, D, O, F, X, U, R, P, W, ⌃A, ⌃U, ⌃O, ⌃R, C, Space, Enter, Escape, ⌘Z, ⌘Y, ⌘R, ⌘T, ⌘G,
 ⌘K, ⌘F, ⌘,, ?. A new shortcut MUST also appear in the help (`Help.tsx`, "Shortcuts") and, where it
 acts on an item, in the right-click menu and the palette.
 

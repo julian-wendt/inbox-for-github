@@ -19,6 +19,7 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
+import { dayLong, dayShort, type Planned } from "../plan";
 import { numberSpans, titleSpans } from "../textFilter";
 import { KindIcon, FollowUpBell } from "./ItemMarks";
 
@@ -27,6 +28,7 @@ const HINTS: Partial<Record<TableGroup, MessageKey>> = {
   review: "table.reviewHint",
   progress: "table.progressHint",
   todo: "table.todoHint",
+  planned: "table.plannedHint",
   later: "table.laterHint",
   finished: "table.finishedHint",
   pr: "table.prHint",
@@ -72,6 +74,8 @@ interface Props {
   onSelectBar: (group: TableGroup) => void;
   /** Item ids pinned for today. */
   focus: string[];
+  /** Items planned for a later day; their rows show that day after the title. */
+  planned: Planned[];
   /** Pins an item for today or removes it. */
   onFocus: (entry: Classified) => void;
   /** A bar dragged onto another: move it there. */
@@ -115,6 +119,7 @@ export function AssignedTable(props: Props) {
   const today = groups.find((g) => g.group === "focus")?.entries ?? [];
   const bars = groups.filter((g) => g.group !== "focus");
   const anyOpen = bars.some((g) => !collapsed.has(g.group));
+  const plannedDays = new Map(props.planned.map((p) => [p.id, p.day]));
   const row = (entry: Classified) => (
     <Row
       query={props.search ?? ""}
@@ -130,6 +135,7 @@ export function AssignedTable(props: Props) {
       onMark={(range) => props.onMark(entry.item.id, range)}
       showOpened={props.showOpened}
       pinned={focus.includes(entry.item.id)}
+      plannedDay={assigned ? plannedDays.get(entry.item.id) : undefined}
       onFocus={assigned ? () => onFocus(entry) : undefined}
       onMenu={(e) => props.onMenu(entry, e)}
       onOpen={() => {
@@ -290,13 +296,15 @@ interface RowProps {
   showOpened: boolean;
   /** Pinned for today: the star stays visible and filled. */
   pinned: boolean;
+  /** The day it is planned for, shown after the title. */
+  plannedDay?: string;
   /** Pins or unpins it for today and makes it a row of Assigned to me, timed by the assignment; without it the row is timed by the opening. */
   onFocus?: () => void;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, pinned, onFocus, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, pinned, plannedDay, onFocus, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
@@ -340,6 +348,11 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       )}
       <span className="table-title">
         <span className="table-title-text"><Highlight spans={titleSpans(item.title, query)} /></span>
+        {plannedDay && (
+          <span className="table-planned" title={t("plan.on", { date: dayLong(plannedDay) })}>
+            {dayShort(plannedDay)}
+          </span>
+        )}
         {showOpened && (
           <span className="table-opened" title={opened}>
             {openedText(item.createdAt)}

@@ -32,10 +32,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       beim zuletzt gewählten Item weiter.
 - [ ] Die Zahlen an den Ansichten folgen dem Repo-Filter und passen dann zur Liste; Issues/Pull Requests,
       Sonstige/Reviews und Sprint ändern sie nicht. Der Kopf der Liste zeigt keine Zahl neben dem Titel.
-- [ ] T schaltet den Filter im Kopf weiter: in Inbox, Wiedervorlage und Erledigt Alle → Sonstige → Reviews, sonst
-      Alle → Issues → Pull Requests, danach wieder Alle. G wechselt in „Mir zugewiesen“ zwischen
+- [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox, Wiedervorlage und Erledigt Alle → Sonstige → Reviews, sonst
+      Alle → Issues → Pull Requests, danach wieder Alle. ⌘G wechselt in „Mir zugewiesen“ zwischen
       Typ und Status, in den Listen die Zeitgruppen an und aus (auch in den Einstellungen sichtbar);
-      in „Von mir erstellt“ tut G nichts. `/` öffnet die Palette nicht mehr, ⌘K schon.
+      in „Von mir erstellt“ tut ⌘G nichts. T und G allein schalten nichts mehr um. `/` öffnet die Palette nicht mehr, ⌘K schon.
 - [ ] Fragezeichen öffnet die Hilfe.
 - [ ] ⌘R: Icon dreht sich mit kleinem Quadrat. Klick darauf stoppt, die Liste bleibt, unten
       steht wieder „Zuletzt aktualisiert …“.
@@ -234,6 +234,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       zugewiesen“; hinter dem Titel leise das Eröffnungsdatum („12. Sept.“, früher „Sept. 2025“).
       Kein Avatar.
 - [ ] Eigene PRs fehlen hier (sie stehen in „Von mir erstellt“), fremde zugewiesene PRs stehen oben.
+- [ ] T heftet ein Item für heute an oder nimmt es heraus. P öffnet mittig das Planmenü: T Heute,
+      M Morgen, 1–5 die übrigen Wochentage dieser Woche, W Nächsten Montag, X Plan entfernen (nur
+      wenn geplant). Geplante Items stehen in „Geplant“ (über „Später“), der nächste Tag zuerst,
+      mit dem Tag leise hinter dem Titel („Morgen“, „Do“); die Seitenleiste zählt sie nicht mit.
+- [ ] Am geplanten Tag stehen sie morgens in Heute (höchstens drei, ältester Plan zuerst); ein
+      Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
 - [ ] „Neu“ steht an Zuweisungen, die du seit der Zuweisung nicht geöffnet hast; nach dem Öffnen
       verschwindet es. Selbst zugewiesene sind nie neu.
 - [ ] Der erste Start nach dem Update lädt einmal vollständig (Issue-Typen), danach wieder Deltas.

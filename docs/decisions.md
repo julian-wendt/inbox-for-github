@@ -141,8 +141,10 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   marks already show it. Exceptions per reason or repo, an organization filter, bundling
   and sound are left for later.
 - **Assigned to me is a status table** grouped by the board status, normalized per board, with
-  linked pull requests as the fallback. Today (P) holds up to three items and empties each
-  morning.
+  linked pull requests as the fallback. Today (T) holds up to three items and starts over each
+  morning with what was planned for that day (P, #55). Planning is not snoozing: a planned item
+  stays on the plate, in its own bar, instead of leaving it. T and G became ⌘T and ⌘G, since
+  they switch the app, not an item, which freed T for Today and P for the plan menu.
 - **Untracking is local and deliberate.** It hides an item everywhere, also from new activity; it
   sits in the right-click menu under "More" and in the palette, not on a key, and can be undone.
 - **Keyboard focus without rings.** A fill that meets 3:1, only after keyboard use. Whether to
