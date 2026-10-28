@@ -2,7 +2,7 @@ import type { MouseEvent } from "react";
 import type { Budget, Scope } from "../../github/client";
 import { CalendarDays, CircleCheck, CircleHelp, Eraser, Inbox, RefreshCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
 import { lang, t } from "../i18n";
-import { ago, VIEW_SECTIONS, type VIEWS, type View } from "../labels";
+import { ago, type VIEWS, type View } from "../labels";
 import { Avatar } from "./Avatar";
 import { ScopeNotice } from "./ScopeNotice";
 import { UsageRing } from "./UsageMeter";
@@ -81,26 +81,22 @@ export function Sidebar(props: Props) {
         <Search size={14} /> <span>{t("sidebar.search")}</span> <kbd>⌘K</kbd>
       </button>
 
-      {VIEW_SECTIONS.map((section, i) => (
-        <ul key={i} className="nav views">
-          {props.views
-            .filter((b) => section.includes(b.id))
-            .map((b) => {
-              const Icon = ICONS[b.id];
-              const key = props.views.indexOf(b) + 1;
-              const hasUnread = (props.unread[b.id] ?? 0) > 0;
-              return (
-                <li key={b.id}>
-                  <button className={`nav-item${bucket === b.id ? " on" : ""}${hasUnread ? " unread" : ""}`} onClick={() => props.onBucket(b.id)} onContextMenu={(e) => props.onViewMenu(b.id, e)} title={`${b.title} (${key})`}>
-                    <Icon size={15} strokeWidth={1.8} />
-                    <span>{b.title}</span>
-                    {viewCounts && counts[b.id] > 0 && <span className="nav-count">{counts[b.id]}</span>}
-                  </button>
-                </li>
-              );
-            })}
-        </ul>
-      ))}
+      <ul className="nav views">
+        {props.views.map((b) => {
+          const Icon = ICONS[b.id];
+          const key = props.views.indexOf(b) + 1;
+          const hasUnread = (props.unread[b.id] ?? 0) > 0;
+          return (
+            <li key={b.id}>
+              <button className={`nav-item${bucket === b.id ? " on" : ""}${hasUnread ? " unread" : ""}`} onClick={() => props.onBucket(b.id)} onContextMenu={(e) => props.onViewMenu(b.id, e)} title={`${b.title} (${key})`}>
+                <Icon size={15} strokeWidth={1.8} />
+                <span>{b.title}</span>
+                {viewCounts && counts[b.id] > 0 && <span className="nav-count">{counts[b.id]}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       {repos.length > 0 && (
         <>

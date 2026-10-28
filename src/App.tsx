@@ -11,6 +11,7 @@ import { setLang, t, type MessageKey } from "./ui/i18n";
 import { itemLink, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
 import { covers, setCovered } from "./rules/directOnly";
 import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
+import { OrcaMark } from "./ui/parts/OrcaMark";
 import { repoList } from "./ui/repoList";
 import { paneCenter } from "./ui/paneCenter";
 import { useOrbLogins } from "./ui/avatarKinds";
@@ -22,7 +23,7 @@ import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { followUpOf } from "./ui/followUp";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
-import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
+import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
 import { Detail } from "./ui/parts/Detail";
 import { Help } from "./ui/parts/Help";
@@ -819,7 +820,7 @@ export default function App() {
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
-      ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <SquareTerminal size={14} />, onSelect: () => openOrca(c, orcaId) }] : []),
+      ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => openOrca(c, orcaId) }] : []),
       { label: t("menu.copyLink"), keys: "C", icon: <Link size={14} />, onSelect: () => void copy(itemLink(item, "url")) },
       { label: t("menu.copyRef"), icon: <Hash size={14} />, onSelect: () => void copy(itemLink(item, "ref")) },
       { label: t("menu.copyMarkdown"), icon: <Code size={14} />, onSelect: () => void copy(itemLink(item, "markdown")) },

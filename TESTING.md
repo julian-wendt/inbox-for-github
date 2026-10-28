@@ -19,8 +19,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Sidebar
 
-- [ ] Zwei Gruppen ohne Überschrift, durch eine kurze Linie getrennt: Inbox, Geplant, Erledigt
-      (Tasten 1–3) und Mir zugewiesen, Von mir erstellt (4–5); der Tooltip nennt die Taste.
+- [ ] Eine Liste ohne Überschrift und ohne Trennlinie: Inbox, Geplant, Mir zugewiesen,
+      Von mir erstellt, Erledigt (Tasten 1–5); der Tooltip nennt die Taste.
       „Beobachtet“ und „Alle“ gibt es nicht mehr.
 - [ ] ⌘K findet nur Items, die in einer Ansicht stehen; ein Sprung landet in deren Ansicht, ein
       eigener zugewiesener PR in „Von mir erstellt“.
@@ -414,7 +414,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## In Orca öffnen
 
 - [ ] Mit Orca installiert und dem Repo in Orca registriert: Kontextmenü, ⌘K und ein Button im
-      Detail-Kopf bieten „In Orca öffnen“ (W) an; bei Items aus anderen Repos, ohne Orca und im
+      Detail-Kopf bieten „In Orca öffnen“ (W) an, mit Orcas Logo (dem Wal) in Textfarbe; bei Items aus anderen Repos, ohne Orca und im
       Demo-Modus fehlen sie, W meldet dann „Orca kennt <Repo> nicht“. Die Hilfe listet W.
 - [ ] Erstes Öffnen eines Issues: Hinweis „wird in Orca geöffnet…“, dann „neuer Worktree in Orca“;
       Orca kommt nach vorn und zeigt den Worktree unter dem Titel des Issues (Ordner und Branch

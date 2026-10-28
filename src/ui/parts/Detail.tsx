@@ -1,5 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, SquareTerminal, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
 import type { Reopen, Status, StatusChange, WriteFailure } from "../../model";
@@ -16,6 +16,7 @@ import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } f
 import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
+import { OrcaMark } from "./OrcaMark";
 import { KindIcon, FollowUpChip } from "./ItemMarks";
 import type { StatusMap } from "../../workStatus";
 import { AttributeChips } from "./AttributeChips";
@@ -122,8 +123,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
     .filter((s) => !since || s.activity.at >= since);
   const timeline = [
     ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} /> })),
-    ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} avatars={item.avatars} itemUrl={item.url} /> })),
-    ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} avatars={item.avatars} /> })),
+    ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} itemUrl={item.url} /> })),
+    ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} /> })),
     ...shownHistory(history, item).filter((c) => !since || c.at >= since).map((change, i) => ({ at: change.at, node: <StatusChangeRow key={`s-${change.at}-${i}`} change={change} /> })),
     ...failures.filter((f) => !since || f.at >= since).map((failure, i) => ({ at: failure.at, node: <WriteFailureRow key={`f-${failure.at}-${i}`} failure={failure} /> })),
   ].sort((a, b) => a.at.localeCompare(b.at));
@@ -195,7 +196,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
           </button>
           {onOrca && (
             <button className="chip-btn" title={`${t("orca.open")} (W)`} aria-label={t("orca.open")} onClick={onOrca}>
-              <SquareTerminal size={15} />
+              <OrcaMark size={18} />
             </button>
           )}
           <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>

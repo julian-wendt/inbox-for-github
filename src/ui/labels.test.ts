@@ -143,7 +143,7 @@ describe("views", () => {
     ({ bucket, status: "open", item: { kind: "issue", author: "alice", closed: null, reasons: ["assigned"], ...item } }) as Classified;
 
   it("offers five views, without Watching and All", () => {
-    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "done", "assigned", "authored"]);
+    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "assigned", "authored", "done"]);
   });
 
   it("finds an item's view, none for what the viewer merely takes part in", () => {

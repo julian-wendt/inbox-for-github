@@ -4,7 +4,7 @@ import type { Status } from "../../model";
 const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: Clock, done: CircleCheck };
 
 /**
- * A status as an icon in its color: a gray ring for open, a yellow clock for a follow-up, a green
+ * A status as an icon in its color: a gray ring for open, a purple clock for a follow-up, a green
  * check for done. Shape and color both tell the states apart, so neither alone carries it.
  *
  * @example

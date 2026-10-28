@@ -47,7 +47,7 @@
   --purple: #7445c9;
   /* Status roles name a hue, so every state of one color is the same color. */
   --st-open: var(--text-faint);
-  --st-snoozed: var(--yellow);
+  --st-snoozed: var(--purple);
   --st-done: var(--green);
   --st-accepted: var(--blue);
   --st-planned: var(--blue);

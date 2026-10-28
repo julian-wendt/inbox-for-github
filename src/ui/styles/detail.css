@@ -541,11 +541,6 @@
   color: var(--new);
 }
 
-.activity .avatar {
-  display: block;
-  margin-right: -4px;
-}
-
 .activity-text strong {
   color: var(--text);
   font-weight: 600;

@@ -376,11 +376,12 @@
   color: var(--text-muted);
 }
 
+/* Above the overlays (30), so it stays sharp over the pop-up detail and dialogs; under menus (40). */
 .toast {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  z-index: 20;
+  z-index: 35;
   display: flex;
   gap: 14px;
   align-items: center;
@@ -745,7 +746,7 @@
 }
 
 .option-yellow {
-  --option: var(--st-snoozed);
+  --option: var(--yellow);
 }
 
 .option-orange {
@@ -814,7 +815,7 @@
   flex: none;
   padding: 1px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--st-snoozed) 18%, transparent);
+  background: color-mix(in srgb, var(--yellow) 18%, transparent);
   color: var(--text);
   font-size: 11px;
   font-weight: 600;

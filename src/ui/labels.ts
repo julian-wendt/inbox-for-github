@@ -14,17 +14,10 @@ import { lang, t, type Lang } from "./i18n";
 export type View = Exclude<Bucket, "involved" | "snoozed">;
 
 /**
- * The sidebar's two groups, set apart by a line, without headings: what comes in, is dated and
- * is finished (the inbox, everything with a date, and done ones), and the viewer's own work
- * (assigned to them, opened by them).
+ * The sidebar views on keys 1–5, in the order of a day's work: what asks for the viewer, what
+ * they planned, their assignments, what they opened, and last what is finished.
  */
-export const VIEW_SECTIONS: View[][] = [
-  ["inbox", "planned", "done"],
-  ["assigned", "authored"],
-];
-
-/** The sidebar views on keys 1–5, in the sections' order. */
-export const VIEWS: { id: View; readonly title: string }[] = VIEW_SECTIONS.flat().map((id) => ({
+export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "assigned", "authored", "done"] as const).map((id) => ({
   id,
   get title() {
     return t(`bucket.${id}`);

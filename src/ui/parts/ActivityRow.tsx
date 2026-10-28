@@ -7,7 +7,6 @@ import type { Item, StateChange, StatusChange, WriteFailure } from "../../model"
 import { historyText, type ShownActivity } from "../activities";
 import { t, tRich, type MessageKey } from "../i18n";
 import { ago } from "../labels";
-import { Avatar } from "./Avatar";
 import { KindIcon } from "./ItemMarks";
 import { StatusIcon } from "./StatusIcon";
 
@@ -35,17 +34,17 @@ const CLOSED_AS: Record<string, [LucideIcon, MessageKey, MessageKey]> = {
 };
 
 /**
- * One slim timeline line between the posts, GitHub style: an icon in a small circle, the actor's
- * avatar, a short sentence naming who did what, and when. A click opens GitHub at the event, or
+ * One slim timeline line between the posts, GitHub style: an icon in a small circle and a short
+ * sentence naming who did what, and when; no avatar, the sentence names the actor. A click opens GitHub at the event, or
  * at the item when GitHub gives the event no link (commits open the pull request's commits).
  *
  * @param itemUrl  The item's GitHub URL, the fallback link.
  *
  * @example
- *   <ActivityRow shown={{ activity: { kind: "commit", at: "…" }, count: 3 }} me="octocat" avatars={item.avatars} itemUrl={item.url} />
+ *   <ActivityRow shown={{ activity: { kind: "commit", at: "…" }, count: 3 }} me="octocat" itemUrl={item.url} />
  *   // ⊙ 3 new commits by alice · 2 hours ago (without known authors: 3 new commits)
  */
-export function ActivityRow({ shown, me, avatars, itemUrl }: { shown: ShownActivity; me: string; avatars: Record<string, string>; itemUrl: string }) {
+export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: string; itemUrl: string }) {
   const { activity, count, authors = [] } = shown;
   const mine = activity.kind !== "commit" && sameLogin(activity.actor, me);
   const name = activity.kind !== "commit" && <strong>{activity.actor}</strong>;
@@ -116,14 +115,12 @@ export function ActivityRow({ shown, me, avatars, itemUrl }: { shown: ShownActiv
       break;
   }
   const Icon = icon;
-  const actor = activity.kind === "commit" ? (authors.length === 1 ? authors[0] : null) : activity.actor;
   const url = ("url" in activity && activity.url) || (activity.kind === "commit" ? `${itemUrl}/commits` : itemUrl);
   return (
     <li className="activity">
       <span className={`activity-icon ${tone}`}>
         <Icon size={13} />
       </span>
-      {actor && <Avatar login={actor} src={avatars[actor]} size={16} />}
       <GitHubLink url={url}>
         {text} <span className="activity-time">· {ago(activity.at)}</span>
       </GitHubLink>
@@ -156,9 +153,9 @@ function GitHubLink({ url, children }: { url: string | null; children: ReactNode
  * opens GitHub at the review. Done reviews (see `ReviewDone`) get a double check instead.
  *
  * @example
- *   <ReviewRow line={reviewLines(item)[0]} me="octocat" avatars={item.avatars} />
+ *   <ReviewRow line={reviewLines(item)[0]} me="octocat" />
  */
-export function ReviewRow({ line, me, avatars }: { line: ReviewLine; me: string; avatars: Record<string, string> }) {
+export function ReviewRow({ line, me }: { line: ReviewLine; me: string }) {
   const mine = sameLogin(line.actor, me);
   const name = <strong>{line.actor}</strong>;
   let icon: LucideIcon;
@@ -182,7 +179,6 @@ export function ReviewRow({ line, me, avatars }: { line: ReviewLine; me: string;
       <span className={`activity-icon ${tone}`}>
         <Icon size={13} />
       </span>
-      <Avatar login={line.actor} src={avatars[line.actor]} size={16} />
       <GitHubLink url={line.url}>
         {text}
         {note && ` · ${note}`} <span className="activity-time">· {ago(line.at)}</span>
@@ -245,7 +241,6 @@ export function OpenedRow({ item, me }: { item: Item; me: string }) {
       <span className="activity-icon">
         <KindIcon item={item} size={13} />
       </span>
-      <Avatar login={item.author} src={item.avatars[item.author]} size={16} />
       <span className="activity-text">
         {sameLogin(item.author, me) ? t("activity.openedSelf") : tRich("activity.opened", { name: <strong>{item.author}</strong> })}{" "}
         <span className="activity-time">· {ago(item.createdAt)}</span>

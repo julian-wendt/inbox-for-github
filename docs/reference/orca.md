@@ -35,6 +35,8 @@ lookup in `src/ui/useOrca.ts`.
 - `orca terminal list --worktree id:<worktree-id>` lists only that worktree's terminals;
   `orca terminal switch --terminal <handle>` shows one, `orca terminal create --worktree … --focus`
   opens one.
+- The mark the app shows for Orca (`OrcaMark`) is the path of the bundle's
+  `Contents/Resources/app.asar.unpacked/resources/logo.svg`.
 - `orca agent-context --json` prints the schema of all 288 commands, useful when Orca changes.
 
 ## Not verified
