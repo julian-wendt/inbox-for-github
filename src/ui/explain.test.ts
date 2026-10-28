@@ -116,6 +116,26 @@ describe("explain, where the inbox and a stored status meet", () => {
   });
 });
 
+describe("explain, for planned items", () => {
+  const planned = (i: Item, plannedAt: string, dated: Parameters<typeof explain>[3]) =>
+    explain(classify(i, ME, undefined, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt), "mention", ME, dated);
+  const mentioned = item({ comments: [comment("bob", "@me look", 2)] });
+
+  it("says a planned item left the inbox, with its day, and what brings it back", () => {
+    const result = planned(mentioned, at(3), { kind: "planned", day: "2026-10-29" });
+    expect(result.tone).toBe("planned");
+    expect(result.title).toMatch(/^Geplant für Donnerstag/);
+    expect(result.lines[0]).toMatch(/^Geplant \(P\), darum nicht in der Inbox/);
+    expect(planned(mentioned, at(3), { kind: "today", day: "2026-10-28" })).toMatchObject({ tone: "planned", title: "Heute", lines: [expect.stringMatching(/^Für heute angeheftet/), expect.any(String)] });
+  });
+
+  it("adds the plan to an item a newer mention put back into the inbox", () => {
+    const result = planned(mentioned, at(1), { kind: "planned", day: "2026-10-29" });
+    expect(result.tone).toBe("inbox");
+    expect(result.lines).toEqual([expect.stringMatching(/^@bob/), "Es bleibt für Donnerstag, 29. Oktober 2026 geplant."]);
+  });
+});
+
 describe("bucketHelp", () => {
   it("describes every view and follows the reopen setting", () => {
     for (const view of ["inbox", "planned", "done", "assigned", "authored"] as const) {

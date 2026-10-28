@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, planChoices, rollOver, setPlan } from "./plan";
+import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, planChoices, rollOver, setPlan, unplan } from "./plan";
 
 const days = (now: Date) => planChoices(now).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -36,7 +36,7 @@ describe("setPlan", () => {
   });
 });
 
-const state = (focus: string[], focusDay: string | null, planned: { id: string; day: string }[], pinnedOn: Record<string, string> = {}) => ({ focus, focusDay, planned, pinnedOn });
+const state = (focus: string[], focusDay: string | null, planned: { id: string; day: string }[], pinnedOn: Record<string, string> = {}, plannedAt: Record<string, string> = {}) => ({ focus, focusDay, planned, pinnedOn, plannedAt });
 
 describe("rollOver", () => {
   it("does nothing within the day Today was set on", () => {
@@ -49,15 +49,15 @@ describe("rollOver", () => {
 
   it("carries the unfinished pins over and moves in what is planned for today behind them", () => {
     const before = state(["a"], "2026-10-26", [{ id: "b", day: "2026-10-27" }, { id: "c", day: "2026-10-29" }], { a: "2026-10-26" });
-    expect(rollOver(before, "2026-10-27", always)).toEqual({ focus: ["a", "b"], focusDay: "2026-10-27", planned: [{ id: "c", day: "2026-10-29" }], pinnedOn: { a: "2026-10-26", b: "2026-10-27" } });
+    expect(rollOver(before, "2026-10-27", always)).toEqual({ focus: ["a", "b"], focusDay: "2026-10-27", planned: [{ id: "c", day: "2026-10-29" }], pinnedOn: { a: "2026-10-26", b: "2026-10-27" }, plannedAt: {} });
   });
 
   it("dates a pin from before the days were recorded to the day Today was set", () => {
-    expect(rollOver(state(["a"], "2026-10-26", []), "2026-10-27", always)).toEqual({ focus: ["a"], focusDay: "2026-10-27", planned: [], pinnedOn: { a: "2026-10-26" } });
+    expect(rollOver(state(["a"], "2026-10-26", []), "2026-10-27", always)).toEqual({ focus: ["a"], focusDay: "2026-10-27", planned: [], pinnedOn: { a: "2026-10-26" }, plannedAt: {} });
   });
 
   it("drops pins of loaded items that cannot be pinned any more and clears the day when Today empties", () => {
-    expect(rollOver(state(["closed"], "2026-10-26", [], { closed: "2026-10-26" }), "2026-10-27", () => false, always)).toEqual({ focus: [], focusDay: null, planned: [], pinnedOn: {} });
+    expect(rollOver(state(["closed"], "2026-10-26", [], { closed: "2026-10-26" }), "2026-10-27", () => false, always)).toEqual({ focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {} });
   });
 
   it("takes the oldest plans first and leaves what does not fit planned", () => {
@@ -83,6 +83,14 @@ describe("rollOver", () => {
     const next = rollOver(state([], null, [{ id: "b", day: "2026-10-27" }, { id: "x", day: "2026-10-27" }]), "2026-10-27", (id) => id === "b")!;
     expect(next.focus).toEqual(["b"]);
     expect(next.planned).toEqual([{ id: "x", day: "2026-10-27" }]);
+  });
+
+  it("keeps the time an item was planned when it moves into Today, and drops it with a dropped pin or plan", () => {
+    const at = { a: "2026-10-26T08:00:00Z", b: "2026-10-26T09:00:00Z", closed: "2026-10-25T09:00:00Z" };
+    const before = state(["a", "closed"], "2026-10-26", [{ id: "b", day: "2026-10-27" }], { a: "2026-10-26", closed: "2026-10-26" }, at);
+    const next = rollOver(before, "2026-10-27", (id) => id !== "closed", always)!;
+    expect(next.focus).toEqual(["a", "b"]);
+    expect(next.plannedAt).toEqual({ a: at.a, b: at.b });
   });
 });
 
@@ -113,6 +121,18 @@ describe("datedOf", () => {
     expect(datedOf(open("a", "open", true), ["a"], planned, "2026-10-28")).toBeNull();
     expect(datedOf(open("b", "done"), ["a"], planned, "2026-10-28")).toBeNull();
     expect(isPinnable(open("a", "open", true))).toBe(false);
+  });
+
+  it("lets T and P take a follow-up, which they end", () => {
+    expect(isPinnable(open("a", "snoozed"))).toBe(true);
+    expect(isPinnable(open("a", "done"))).toBe(false);
+  });
+});
+
+describe("unplan", () => {
+  it("takes the pins, plans and times of the items, and leaves the rest and the day", () => {
+    const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-28", b: "2026-10-27" }, { a: "t1", b: "t2", c: "t3" });
+    expect(unplan(before, ["a", "c"])).toEqual({ focus: ["b"], focusDay: "2026-10-28", planned: [], pinnedOn: { b: "2026-10-27" }, plannedAt: { b: "t2" } });
   });
 });
 

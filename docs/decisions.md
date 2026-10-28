@@ -2,6 +2,21 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-10-28
+
+- **Plan is the calendar, follow-up is waiting.** P and T say "I do this on that day"; F says
+  "leave me alone, I am waiting for others". Both take an item out of the inbox, since each is a
+  decision and the inbox lists what is undecided; the "someone still waits" of #61 was as true of
+  a follow-up, which did leave. They differ in where the item comes back: a plan lands in Today
+  on its day (or stays planned when Today is full), a follow-up is simply back in the inbox at
+  its date or on new activity, and a new ask brings a planned item back as well. One "when" per
+  item: P and T remove a follow-up, F removes a plan. Planned shows Today and plans only;
+  follow-ups that left the inbox wait in a collapsed bar at its bottom, those on assignments in
+  their table's Later as before. The "due" state of #24 and its notification go: coming back is
+  enough, nothing needs to stick or ring. The Today and planned bars leave Assigned to me, since
+  Planned holds them (#63, #64, #65). Supersedes the inbox rule of #61 and the due
+  notification of #24.
+
 ## 2026-10-27
 
 - **Releases are prepared in CI and built on the Mac.** A merge to `main` only updates a release

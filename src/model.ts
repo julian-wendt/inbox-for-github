@@ -1,7 +1,7 @@
 /** Why GitHub search returned an item for the viewer. */
 export type Reason = "assigned" | "mentioned" | "review" | "involved";
 
-export type Bucket = "inbox" | "assigned" | "involved" | "authored" | "snoozed" | "done";
+export type Bucket = "inbox" | "planned" | "assigned" | "involved" | "authored" | "snoozed" | "done";
 
 /** Manual status. "open" is the default; it is stored only after an explicit reopen. */
 export type Status = "open" | "snoozed" | "done";

@@ -7,11 +7,11 @@ import { lang, t, type Lang } from "./i18n";
 
 /** Titles are getters, so they follow the language set at render time. */
 /**
- * A sidebar view: a bucket, except "involved" and "snoozed", plus "planned". What the viewer merely
- * takes part in (commented, edited, or answered long ago) shows nowhere until a mention, review
- * request or assignment; follow-ups show in Planned with everything else that has a date.
+ * A sidebar view: a bucket, except "involved" and "snoozed". What the viewer merely takes part in
+ * (commented, edited, or answered long ago) shows nowhere until a mention, review request or
+ * assignment; follow-ups show in Planned with everything else that has a date.
  */
-export type View = Exclude<Bucket, "involved" | "snoozed"> | "planned";
+export type View = Exclude<Bucket, "involved" | "snoozed">;
 
 /**
  * The sidebar's two groups, set apart by a line, without headings: what comes in, is dated and

@@ -58,6 +58,10 @@ export interface Classified {
  *    (an explicit reopen) counts as a fresh request. With `reviewOnCommits`, a push by someone
  *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
  *    is no such ask.
+ * 2b. A plan (`plannedAt`: the item is pinned for today or planned for a day) answers the asks
+ *    the viewer saw when they made it: only an ask that came later shows the item in the inbox.
+ *    With none, the item stays in its table ("assigned", "authored") or goes to "planned", which
+ *    only the Planned view shows.
  * 3. An item assigned to the viewer with nothing pending goes to "assigned".
  * 4. Once the viewer has answered every review request and mention, the item counts as "done"
  *    without a stored status, and `answered` says why.
@@ -70,6 +74,8 @@ export interface Classified {
  * @param switches  Rule id → enabled, as returned by `ruleSwitches`.
  * @param reopenOn  What brings a snoozed or done item back to "Offen" (the "reopenOn" setting).
  * @param reviewOnCommits  Pushes by others bring a reviewed pull request back (the "reviewOnCommits" setting).
+ * @param plannedAt  When the viewer pinned the item for today or planned it for a day (ISO 8601), if they did
+ *                   (the "plannedAt" setting); asks from before then do not put it into the inbox.
  *
  * @example
  *   classify(item, "octocat", { status: "done", changedAt: "2026-10-01T12:00:00Z" }, ruleSwitches());
@@ -82,6 +88,7 @@ export function classify(
   reopenOn: Reopen = REOPEN_DEFAULT,
   now = Date.now(),
   reviewOnCommits = true,
+  plannedAt?: string,
 ): Classified {
   const rules = RULES.filter((r) => switches[r.id]);
   const assigned = item.reasons.includes("assigned");
@@ -127,8 +134,16 @@ export function classify(
   if (mention) asks.push("mention");
   else if (mentionOpen && !asks.includes("reopened")) asks.push("reopened");
 
-  if (asks.length > 0) return { ...result, bucket: "inbox", status: "open", answered: null, asks, ...(asks.includes("commits") && { pushedBy: pushed!.by }) };
-  if (item.reasons.includes("assigned")) return { ...result, bucket: "assigned", status: "open", answered: null, asks };
+  // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
+  const askedAt = (ask: Ask): string | undefined =>
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : effective?.until;
+  const fresh = plannedAt ? asks.filter((ask) => (askedAt(ask) ?? "") > plannedAt) : asks;
+  const parked = fresh.length < asks.length;
+  const shown = parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result;
+
+  if (fresh.length > 0) return { ...shown, bucket: "inbox", status: "open", answered: null, asks: fresh, ...(fresh.includes("commits") && { pushedBy: pushed!.by }) };
+  if (assigned) return { ...shown, bucket: "assigned", status: "open", answered: null, asks: fresh };
+  if (parked) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
   if (reviewed || mentioned) {
     return { ...result, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks };
   }
@@ -153,10 +168,14 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   return { item, bucket, status: "done", mention, answered: null, asks, statusAt: since, statusReset: false, updates };
 }
 
+/** The last time the viewer, or one of their teams, was asked for a review, as the activities record it. */
+function lastRequest(item: Item, me: string): { at: string; actor: string } | undefined {
+  const last = item.activities.filter((a) => a.kind === "review-requested" && (sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:"))).at(-1);
+  return last?.kind === "review-requested" ? last : undefined;
+}
+
 function requesterOf(item: Item, me: string): string | null {
-  const requests = item.activities.filter((a) => a.kind === "review-requested" && (sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:")));
-  const last = requests.at(-1);
-  return last && last.kind === "review-requested" ? last.actor : null;
+  return lastRequest(item, me)?.actor ?? null;
 }
 
 function assignerOf(item: Item, me: string): string | null {

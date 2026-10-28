@@ -42,7 +42,7 @@ import { useOrca } from "./ui/useOrca";
 import { openInOrca } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, datedAt, datedOf, isPinnable, planChoices, rollOver, setPlan, without } from "./ui/plan";
+import { choiceKey, choiceText, datedAt, datedOf, isPinnable, planChoices, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -390,30 +390,43 @@ export default function App() {
     const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
     const on = focus.includes(c.item.id);
     if (!on && focus.length >= FOCUS_MAX) return actions.notify(t("focus.full"));
-    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned, pinnedOn: inbox.settings.pinnedOn };
-    const next = {
+    const previous = todayOf(inbox.settings);
+    const next: Today = {
       focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id],
       focusDay: localDay(),
       planned: setPlan(inbox.settings.planned, c.item.id, null),
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
+      plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() },
     };
-    void inbox.saveSettings({ ...inbox.settings, ...next });
+    const steps = [todayStep(previous, next), ...(on ? [] : followUpEnds(c))];
+    for (const s of steps) s.run();
     actions.announce(
       t(on ? "focus.removed" : "focus.added", { number: c.item.number }),
-      () => void inbox.updateSettings((s) => ({ ...s, ...previous })),
-      () => void inbox.updateSettings((s) => ({ ...s, ...next })),
+      () => steps.forEach((s) => s.undo()),
+      () => steps.forEach((s) => s.run()),
     );
   };
+  /** A change of Today as a step: the settings go from `previous` to `next` and back. */
+  const todayStep = (previous: Today, next: Today) => ({ run: () => void inbox.updateSettings((s) => ({ ...s, ...next })), undo: () => void inbox.updateSettings((s) => ({ ...s, ...previous })) });
+  /** An item has one "when": a plan or Today pin on a follow-up ends it, as a step; none when there is no follow-up. */
+  const followUpEnds = (c: Classified) => (c.status === "snoozed" ? [followUpStep(c)] : []);
 
-  /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today. */
+  /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today and ends its follow-up. */
   const planFor = (c: Classified, day: string | null, text: string) => {
-    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned, pinnedOn: inbox.settings.pinnedOn };
-    const next = { focus: inbox.settings.focus.filter((id) => id !== c.item.id), focusDay: inbox.settings.focusDay, planned: setPlan(inbox.settings.planned, c.item.id, day), pinnedOn: without(inbox.settings.pinnedOn, c.item.id) };
-    void inbox.saveSettings({ ...inbox.settings, ...next });
+    const previous = todayOf(inbox.settings);
+    const next: Today = {
+      focus: inbox.settings.focus.filter((id) => id !== c.item.id),
+      focusDay: inbox.settings.focusDay,
+      planned: setPlan(inbox.settings.planned, c.item.id, day),
+      pinnedOn: without(inbox.settings.pinnedOn, c.item.id),
+      plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
+    };
+    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : [])];
+    for (const s of steps) s.run();
     actions.announce(
       day ? t("plan.added", { number: c.item.number, day: text }) : t("plan.removed", { number: c.item.number }),
-      () => void inbox.updateSettings((s) => ({ ...s, ...previous })),
-      () => void inbox.updateSettings((s) => ({ ...s, ...next })),
+      () => steps.forEach((s) => s.undo()),
+      () => steps.forEach((s) => s.run()),
     );
   };
   /** The plan choices; the menu P opens leads with Today (T), the right-click submenu has it beside. */
@@ -505,10 +518,16 @@ export default function App() {
     const waiting = marked.filter(hasFollowUp);
     bulk(plural("marks.reminderRemovedOne", "marks.reminderRemoved", waiting.length), waiting.map(followUpStep));
   };
+  /** Takes the plan or Today pin off the items that have one, as one step for all of them; none when none has. */
+  const unplanStep = (cs: Classified[]) => {
+    const { focus, planned } = inbox.settings;
+    const ids = cs.map((c) => c.item.id).filter((id) => focus.includes(id) || planned.some((p) => p.id === id));
+    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids))] : [];
+  };
   /** A time for the marked items: they wait until then. */
-  const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), open.map((c) => statusStep(c, "snoozed", until)));
+  const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), [...open.map((c) => statusStep(c, "snoozed", until)), ...unplanStep(open)]);
   const bulkTimes = (): MenuEntry[] => [
-    { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), open.map((c) => statusStep(c, "snoozed"))) },
+    { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
     { label: t("snooze.later"), keys: "H", onSelect: () => bulkLater(snoozeUntil("later")) },
     { label: t("snooze.tomorrow"), keys: "M", onSelect: () => bulkLater(snoozeUntil("tomorrow")) },
     { label: t("snooze.nextWeek"), keys: "W", onSelect: () => bulkLater(snoozeUntil("nextWeek")) },
@@ -594,13 +613,26 @@ export default function App() {
         return;
     }
   };
+  /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
+  const followUp = (c: Classified, until: string) => {
+    const steps = unplanStep([c]);
+    if (steps.length === 0) return actions.apply(c, "snoozed", until);
+    if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
+    steps.push(statusStep(c, "snoozed", until));
+    for (const s of steps) s.run();
+    actions.announce(
+      until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : `#${c.item.number} → ${t("status.snoozed")}`,
+      () => steps.forEach((s) => s.undo()),
+      () => steps.forEach((s) => s.run()),
+    );
+  };
   /** The snooze choices for one item, as menu entries; "Pick a date…" opens the date dialog. */
   const snoozeEntries = (c: Classified): MenuEntry[] => [
-    { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => actions.apply(c, "snoozed", "") },
-    { label: t("snooze.later"), keys: "H", onSelect: () => actions.apply(c, "snoozed", snoozeUntil("later")) },
-    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => actions.apply(c, "snoozed", snoozeUntil("tomorrow")) },
-    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => actions.apply(c, "snoozed", snoozeUntil("nextWeek")) },
-    { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => actions.apply(c, "snoozed", until) }) },
+    { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
+    { label: t("snooze.later"), keys: "H", onSelect: () => followUp(c, snoozeUntil("later")) },
+    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => followUp(c, snoozeUntil("tomorrow")) },
+    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => followUp(c, snoozeUntil("nextWeek")) },
+    { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
   ];
   /** S on an item: the follow-up choices open in the middle of the detail, also to move the date. */
   const snooze = (c: Classified) => {
@@ -1047,6 +1079,7 @@ export default function App() {
             entry={current}
             me={inbox.me ?? ""}
             reopenOn={inbox.settings.reopenOn}
+            datedOf={dated}
             hiddenBoards={inbox.settings.hiddenBoards}
             history={(current && inbox.statusLog.get(current.item.id)) ?? NO_HISTORY}
             failures={(current && inbox.writeFailures.get(current.item.id)) ?? NO_FAILURES}
@@ -1079,6 +1112,7 @@ export default function App() {
                 entry={current}
                 me={inbox.me ?? ""}
                 reopenOn={inbox.settings.reopenOn}
+                datedOf={dated}
                 hiddenBoards={inbox.settings.hiddenBoards}
                 history={(current && inbox.statusLog.get(current.item.id)) ?? NO_HISTORY}
                 failures={(current && inbox.writeFailures.get(current.item.id)) ?? NO_FAILURES}

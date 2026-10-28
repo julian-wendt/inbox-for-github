@@ -434,3 +434,40 @@ describe("my part done", () => {
     expect(run(item({ comments: [comment("bob", "@me ping", 5)] }), done).bucket).toBe("inbox");
   });
 });
+
+describe("planned items", () => {
+  const at = (day: number, hour = 0) => `2026-10-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00:00Z`;
+  const planned = (i: Item, plannedAt: string, stored?: StoredStatus) => classify(i, ME, stored, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt);
+  const requested = (day: number, reviewer = ME) => ({ kind: "review-requested" as const, at: at(day), actor: "alice", reviewer });
+
+  it("leave the inbox for Planned once planned, and come back on a mention since", () => {
+    const mentioned = item({ comments: [comment("alice", "@me what do you think?", 2)] });
+    expect(planned(mentioned, at(3))).toMatchObject({ bucket: "planned", status: "open", asks: [], mention: null });
+    expect(planned(mentioned, at(1))).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+    expect(planned(item({ comments: [comment("alice", "@me again", 2), comment("alice", "@me and now?", 5)] }), at(3))).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+  });
+
+  it("stay in their table when assigned to or opened by the viewer", () => {
+    const assigned = item({ reasons: ["assigned", "involved"], assignees: [ME], comments: [comment("alice", "@me look", 2)] });
+    expect(planned(assigned, at(3))).toMatchObject({ bucket: "assigned", asks: [] });
+    const own = item({ author: ME, reasons: ["involved"], comments: [comment("alice", "@me look", 2)] });
+    expect(planned(own, at(3))).toMatchObject({ bucket: "authored", asks: [] });
+  });
+
+  it("come back on a review request, a push or a reopen after the plan, not before", () => {
+    const pr = item({ kind: "pr", reasons: ["review", "involved"], reviewRequests: [{ reviewer: ME, at: at(2) }] });
+    expect(planned(pr, at(3)).bucket).toBe("planned");
+    expect(planned(item({ ...pr, activities: [requested(2), requested(5, "team:core")] }), at(3))).toMatchObject({ bucket: "inbox", asks: ["review"] });
+    const reviewed = item({ kind: "pr", reasons: ["involved"], reviews: [{ author: ME, at: at(3) }], activities: [{ kind: "commit", at: at(4), author: "alice" }] });
+    expect(planned(reviewed, at(5)).bucket).toBe("planned");
+    expect(planned(reviewed, at(3, 12))).toMatchObject({ bucket: "inbox", asks: ["commits"], pushedBy: ["alice"] });
+    const answered = item({ comments: [comment("alice", "@me?", 2), comment(ME, "done", 3)] });
+    expect(planned(answered, at(4), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(planned(answered, at(6), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "planned", asks: [] });
+  });
+
+  it("leave an item without any ask as it was", () => {
+    expect(planned(item({ reasons: ["involved"] }), at(3)).bucket).toBe("involved");
+    expect(planned(item({ comments: [comment("alice", "@me?", 2), comment(ME, "done", 3)] }), at(4))).toMatchObject({ bucket: "done", answered: "mention" });
+  });
+});

@@ -10,6 +10,7 @@ import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
+import type { Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
@@ -34,6 +35,8 @@ interface Props {
   entry: Classified | null;
   me: string;
   reopenOn: Reopen;
+  /** Whether an item is pinned for today or planned for a day (see `datedOf`), for the explanation of where it sits. */
+  datedOf: (entry: Classified) => Dated | null;
   hiddenBoards: string[];
   /** The item's status changes made in this app, oldest first. */
   history: StatusChange[];
@@ -90,7 +93,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, onAssignMe, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, onAssignMe, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -183,7 +186,7 @@ function DetailBody({ entry, me, reopenOn, hiddenBoards, history, failures, seen
           <button className="chip-btn" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
             <Link size={15} />
           </button>
-          <WhyHint why={explain(entry, reopenOn, me)} />
+          <WhyHint why={explain(entry, reopenOn, me, datedOf(entry))} />
           {onClose && (
             <button className="chip-btn" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
               <X size={15} />

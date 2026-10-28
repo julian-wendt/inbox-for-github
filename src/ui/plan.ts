@@ -46,31 +46,39 @@ export function setPlan(planned: Planned[], id: string, day: string | null): Pla
   return day ? [...rest, { id, day }] : rest;
 }
 
-/** The settings that make up "Today": the pins, the day they stand for, the plans and when each pin was made. */
+/** The settings that make up "Today": the pins, the day they stand for, the plans, when each pin came in and when each item was pinned or planned. */
 export interface Today {
   focus: string[];
   focusDay: string | null;
   planned: Planned[];
   pinnedOn: Record<string, string>;
+  plannedAt: Record<string, string>;
+}
+
+/** The "Today" part of the settings, to snapshot it for undo. */
+export function todayOf(settings: Today): Today {
+  const { focus, focusDay, planned, pinnedOn, plannedAt } = settings;
+  return { focus, focusDay, planned, pinnedOn, plannedAt };
 }
 
 /**
  * The state of "Today" once a new day has begun: what was pinned and is still open stays, carried
  * over, and the items planned for today or earlier move in behind it, oldest plan first, as far
  * as `FOCUS_MAX` allows. Those that do not fit stay planned. Pins and plans of items that are
- * loaded but cannot be pinned any more (closed, unassigned, snoozed) are dropped. `pinnedOn`
+ * loaded but cannot be pinned any more (closed, done) are dropped. `pinnedOn`
  * keeps the day each pin came into Today; a pin recorded before that existed counts from the day
- * Today was last set. Returns null while nothing is to be done: Today is from this day, or it is
- * empty, no plan is due and none is dropped.
+ * Today was last set. `plannedAt` keeps only the items still pinned or planned; a plan that moves
+ * into Today keeps its time. Returns null while nothing is to be done: Today is from this day, or
+ * it is empty, no plan is due and none is dropped.
  *
- * @param state      The settings `focus`, `focusDay`, `planned` and `pinnedOn`.
+ * @param state      The settings `focus`, `focusDay`, `planned`, `pinnedOn` and `plannedAt`.
  * @param today      The local date of today (see `localDay`).
  * @param pinnable   Whether an item can be pinned now.
  * @param loaded     Whether an item is loaded at all; pins and plans of items not loaded yet are kept.
  *
  * @example
- *   rollOver({ focus: ["I_1"], focusDay: "2026-10-26", planned: [{ id: "I_2", day: "2026-10-27" }], pinnedOn: { I_1: "2026-10-26" } }, "2026-10-27", () => true);
- *   // { focus: ["I_1", "I_2"], focusDay: "2026-10-27", planned: [], pinnedOn: { I_1: "2026-10-26", I_2: "2026-10-27" } }
+ *   rollOver({ focus: ["I_1"], focusDay: "2026-10-26", planned: [{ id: "I_2", day: "2026-10-27" }], pinnedOn: { I_1: "2026-10-26" }, plannedAt: {} }, "2026-10-27", () => true);
+ *   // { focus: ["I_1", "I_2"], focusDay: "2026-10-27", planned: [], pinnedOn: { I_1: "2026-10-26", I_2: "2026-10-27" }, plannedAt: {} }
  */
 export function rollOver(state: Today, today: string, pinnable: (id: string) => boolean, loaded: (id: string) => boolean = () => false): Today | null {
   if (state.focusDay === today) return null;
@@ -85,7 +93,9 @@ export function rollOver(state: Today, today: string, pinnable: (id: string) => 
   if (focus.length === 0 && state.focus.length === 0 && kept.length === state.planned.length) return null;
   const moved = new Set(due.map((p) => p.id));
   const pinnedOn = Object.fromEntries(focus.map((id) => [id, moved.has(id) ? today : (state.pinnedOn[id] ?? state.focusDay ?? today)]));
-  return { focus, focusDay: focus.length > 0 ? today : null, planned: kept.filter((p) => !moved.has(p.id)), pinnedOn };
+  const dated = new Set([...focus, ...kept.map((p) => p.id)]);
+  const plannedAt = Object.fromEntries(Object.entries(state.plannedAt).filter(([id]) => dated.has(id)));
+  return { focus, focusDay: focus.length > 0 ? today : null, planned: kept.filter((p) => !moved.has(p.id)), pinnedOn, plannedAt };
 }
 
 /** The record without `id`, for taking an item out of `pinnedOn`. */
@@ -157,9 +167,23 @@ export function dayLong(day: string): string {
   return dateOf(day).toLocaleDateString(lang(), { dateStyle: "full" });
 }
 
-/** Whether T and P take the item: open here and on GitHub. */
+/** Whether T and P take the item: open on GitHub and not done here; a follow-up ends when they do. */
 export function isPinnable(entry: Pick<Classified, "status" | "item">): boolean {
-  return entry.status === "open" && !entry.item.closed;
+  return entry.status !== "done" && !entry.item.closed;
+}
+
+/**
+ * Today without the items: their pins, plans and times go, as when a follow-up takes an item's
+ * "when". The day Today stands for stays.
+ *
+ * @example
+ *   unplan({ focus: ["I_1"], focusDay: "2026-10-28", planned: [{ id: "I_2", day: "2026-10-29" }], pinnedOn: { I_1: "2026-10-28" }, plannedAt: { I_1: "…", I_2: "…" } }, ["I_1", "I_2"]);
+ *   // { focus: [], focusDay: "2026-10-28", planned: [], pinnedOn: {}, plannedAt: {} }
+ */
+export function unplan(state: Today, ids: readonly string[]): Today {
+  const gone = (id: string) => ids.includes(id);
+  const keep = (record: Record<string, string>) => Object.fromEntries(Object.entries(record).filter(([id]) => !gone(id)));
+  return { focus: state.focus.filter((id) => !gone(id)), focusDay: state.focusDay, planned: state.planned.filter((p) => !gone(p.id)), pinnedOn: keep(state.pinnedOn), plannedAt: keep(state.plannedAt) };
 }
 
 /** Why an item is in Planned: pinned for today, planned for a day, or a follow-up, with its date when it has one. */

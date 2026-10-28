@@ -451,13 +451,15 @@ export function useInbox(): Inbox {
     if (!me) return [];
     const switches = ruleSwitches(settings.rules);
     const untracked = new Set(settings.untracked.map((u) => u.id));
+    // A plan counts while the item is pinned or planned; a time left behind by a dropped pin does not.
+    const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
     // The cache may hold more than the settings ask for (see `Coverage`); show only that.
     return withinClosedWindow(items, settings.closedDays)
       .filter((item) => repoVisible(item.repo, settings.repoFilters) && !untracked.has(item.id))
       .map((item) => directOnly(item, me, settings.directOnly))
       .map((item) => (settings.loadBoards ? item : { ...item, boards: [] }))
-      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits));
-  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, now]);
+      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits, dated.has(item.id) ? settings.plannedAt[item.id] : undefined));
+  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, settings.plannedAt, now]);
 
   const writeStatus = useCallback(
     async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource()) => {

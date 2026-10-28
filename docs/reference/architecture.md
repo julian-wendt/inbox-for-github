@@ -34,8 +34,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Statuses** (`Status` in `src/model.ts`) are the viewer's own: `open`, `snoozed`, `done`.
   They live in `item_status` with a log in `status_log`; nothing is sent to GitHub.
 - **Buckets** (`Bucket`) say where an item belongs: `inbox` (someone waits for an answer: a
-  pending mention, an unanswered review request, a passed follow-up date), `assigned`, `authored`,
-  `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no view shows.
+  pending mention, an unanswered review request, a passed follow-up date), `planned` (pinned for
+  today or planned for a day, with no ask since; only the Planned view shows it), `assigned`,
+  `authored`, `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no
+  view shows.
 - **Views** overlap where it helps: Assigned to me shows every current assignment except the
   viewer's own pull requests, also one in the inbox for a mention; Created by me shows every open
   item the viewer opened, whatever its bucket, unless marked done by hand.
@@ -56,6 +58,12 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   item in the inbox (ask `due`) until the viewer files it; the log says "follow-up came due"
   (source `auto:snooze-ended`), and the list shows no mark of it. `followUpOf` gives the date
   that the bell and chip show, and only while the item waits.
+- **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
+  `pinnedOn`), and `plannedAt` records when each item last got one. `classify` drops the asks
+  from before that time: with none left, the item leaves the inbox for `planned`, or stays in its
+  table marked with its day; a mention, review request, push or reopen since brings it back. Each
+  morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
+  follow-up, F ends a plan or pin (`unplan`).
 - Unassigned, the handoff no longer counts: the item sorts as if no status were stored.
 - A closed or merged item is in Done when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
