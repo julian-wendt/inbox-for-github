@@ -21,9 +21,9 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 - **Releases are prepared in CI and built on the Mac.** A merge to `main` only updates a release
   PR (release-please); merging that PR tags and drafts the release, and `npm run release:upload`
   attaches the app. No self-hosted runner (it would run repository code unattended with the rights
-  of the Mac it runs on), no macOS runner (macOS minutes count ten times against the Actions quota),
-  no local agent that polls for releases (same risk as the runner). A build the user starts
-  is what `tauri dev` already is. See [`releasing.md`](releasing.md).
+  of the Mac it runs on), no local agent that polls for releases (same risk as the runner). A build the user starts
+  is what `tauri dev` already is. A macOS runner costs nothing on a public repository and is
+  planned (#12). See [`releasing.md`](releasing.md).
 - **New commits by others bring a reviewed pull request back, as their own ask.** A push after
   the viewer's review is a real "please look again", unlike a commit in general, so it has its
   own setting (`reviewOnCommits`, on) instead of following `reopenOn`, and its own row label

@@ -4,6 +4,12 @@ A small macOS app that collects everything you are asked for on GitHub, so no re
 issues assigned to you, mentions you have not answered yet, and pull requests waiting for your
 review. An item stays in the inbox until you act on it.
 
+![The inbox in dark mode with an issue open in the detail, on the demo mode's made-up data](docs/images/inbox-dark.png)
+
+This is a personal project: I build it for my own work and publish it so others can use it too.
+Issues with bugs or ideas are welcome. Pull requests are not expected, and updates come when
+there is something to ship, not on a schedule.
+
 ## What it does
 
 - **Five views:** *Inbox* (someone waits for you: a mention or a review request; your
@@ -48,7 +54,9 @@ stored in the app's local database under
 `~/Library/Application Support/inbox-for-github/`, never in this
 repository. The token is read from `gh` on every refresh and never stored.
 
-The app is unsigned; open it the first time via right-click → Open.
+A build of your own opens directly. A downloaded build is unsigned, so macOS blocks its first
+start: open System Settings › Privacy & Security and choose "Open Anyway". Releases carry no
+download yet; building them in CI is planned (#12).
 
 ## Layout
 
@@ -58,6 +66,6 @@ The app is unsigned; open it the first time via right-click → Open.
 - `src/ui/` — React UI; texts in `src/ui/locales/` (English is the source, German mirrors it)
 - `src-tauri/` — the Tauri shell; `icons/icon.svg` is the source of the app icon
 
-## Contributing
+## Working on it
 
 Start with [`AGENTS.md`](AGENTS.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md); topic docs are in [`docs/`](docs/).
