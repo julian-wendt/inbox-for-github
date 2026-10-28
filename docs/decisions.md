@@ -6,25 +6,24 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 - **Plan is the calendar, follow-up is waiting.** P and T say "I do this on that day"; F says
   "leave me alone, I am waiting for others". Both take an item out of the inbox, since each is a
-  decision and the inbox lists what is undecided; the "someone still waits" of #61 was as true of
+  decision and the inbox lists what is undecided; the earlier rule "someone still waits" was as true of
   a follow-up, which did leave. They differ in where the item comes back: a plan lands in Today
   on its day (or stays planned when Today is full), a follow-up is simply back in the inbox at
   its date or on new activity, and a new ask brings a planned item back as well. One "when" per
   item: P and T remove a follow-up, F removes a plan. Planned shows Today and plans only;
   follow-ups that left the inbox wait in a collapsed bar at its bottom, those on assignments in
-  their table's Later as before. The "due" state of #24 and its notification go: coming back is
+  their table's Later as before. The "due" state and its notification go: coming back is
   enough, nothing needs to stick or ring. The Today and planned bars leave Assigned to me, since
-  Planned holds them (#63, #64, #65). Supersedes the inbox rule of #61 and the due
-  notification of #24.
+  Planned holds them. Supersedes the earlier inbox rule and the due notification.
 
 ## 2026-10-27
 
 - **Releases are prepared in CI and built on the Mac.** A merge to `main` only updates a release
   PR (release-please); merging that PR tags and drafts the release, and `npm run release:upload`
   attaches the app. No self-hosted runner (it would run repository code unattended with the rights
-  of the Mac it runs on), no macOS runner (macOS minutes count ten times against the Actions quota),
-  no local agent that polls for releases (same risk as the runner). A build the user starts
-  is what `tauri dev` already is. See [`releasing.md`](releasing.md).
+  of the Mac it runs on), no local agent that polls for releases (same risk as the runner). A build the user starts
+  is what `tauri dev` already is. A macOS runner costs nothing on a public repository and is
+  planned (#12). See [`releasing.md`](releasing.md).
 - **New commits by others bring a reviewed pull request back, as their own ask.** A push after
   the viewer's review is a real "please look again", unlike a commit in general, so it has its
   own setting (`reviewOnCommits`, on) instead of following `reopenOn`, and its own row label
@@ -133,7 +132,7 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 - **Read-mostly toward GitHub.** The app writes only plain comments and close/reopen. Review
   actions (approve, request changes, inline reviews) stay in GitHub's UI; deleting reminder
-  comments or editing descriptions was declined (#11, #12).
+  comments or editing descriptions was declined.
 - **Statuses are local.** Open, snoozed and done exist only in the app and never reach
   GitHub; closed or merged items follow GitHub and offer no status.
 - **Frugal with the API.** Every feature is built to spend as few GraphQL points as possible:
@@ -157,7 +156,7 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   and sound are left for later.
 - **Assigned to me is a status table** grouped by the board status, normalized per board, with
   linked pull requests as the fallback. Today (T) holds up to three items; each morning what
-  was planned for that day moves in (P, #55). What was not finished stays, marked since when, and
+  was planned for that day moves in (P). What was not finished stays, marked since when, and
   counts against the three, so leftovers are dealt with first (D, P or T) instead of vanishing
   quietly. Planning is not snoozing: a planned item stays on the plate, in its own bar, instead
   of leaving it. T and G became ⌘T and ⌘G, since they switch the app, not an item, which freed

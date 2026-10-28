@@ -36,7 +36,7 @@ PRs are squash-merged, so the PR title becomes the commit title on `main`.
     without closing. GitHub honors the keywords only in a PR against `main`
     ([docs](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue),
     read 2026-10-27). `gh stack merge --squash` closes them for every layer, although an upper
-    PR still shows the branch below as its base (seen with #40, 2026-10-27).
+    PR still shows the branch below as its base (seen 2026-10-27).
   - `## Changes`: one bullet per commit, `**hash** (read closely | mechanical | docs): …` in
     one sentence
   - `## Impact`: what changes for users and existing data, and whether anything is breaking

@@ -1,9 +1,10 @@
 # Building and releasing
 
 A release is a decision, not a side effect of a merge: a workflow prepares it, you approve it by
-merging a PR, and the app is built on the Mac and attached by hand. No runner builds the app: a
-macOS runner in CI would use up the monthly Actions quota fast
-(macOS minutes count ten times against that quota).
+merging a PR, and the app is built on the Mac and attached by hand. Building it on a macOS runner
+instead, with the tag created only after a successful build, is planned (#12); until then
+releases carry no download, because a local build embeds the builder's home directory in the
+binary through the paths of the Cargo registry.
 
 ## Releasing
 
@@ -31,7 +32,8 @@ macOS runner in CI would use up the monthly Actions quota fast
 4. **Publish the draft** in GitHub, or let `release:publish` do it right after the upload. A draft
    without a download is a release you have not finished.
 
-Apple Silicon only, unsigned (first start via right-click → Open). Release PRs may change the version
+Apple Silicon only, unsigned (first start of a download: System Settings › Privacy & Security ›
+"Open Anyway"). Release PRs may change the version
 fields in the two lockfiles; other lockfile changes still need approval.
 
 `release-please-config.json` has the settings; `.release-please-manifest.json` holds the last released
@@ -39,7 +41,7 @@ version. The `Checks` workflow runs typecheck, lint and tests on every PR.
 
 **`Cargo.lock` needs `.value` in its filter** (verified 2026-10-27, release-please 17.6.0): the `toml`
 updater parses with a tagging parser that wraps every string in an object with its position, so
-`@.name=='…'` never matches and the lockfile stays behind (the first release PR, #53, left it at
+`@.name=='…'` never matches and the lockfile stays behind (the first release PR left it at
 0.1.0, and `cargo build --locked` then fails). The filter in `release-please-config.json` is
 `@.name.value=='inbox-for-github'`. `Cargo.toml` (`$.package.version`) works as is. Check on each
 release PR that `src-tauri/Cargo.lock` is among the changed files.
@@ -53,7 +55,7 @@ npm run tauri build -- --bundles app -- --locked # --locked: Cargo fails instead
 ```
 
 The result is `src-tauri/target/release/bundle/macos/Inbox for GitHub.app`. It is unsigned:
-open it the first time via right-click → Open. Copy it to `/Applications` to install.
+a build of your own opens directly. Copy it to `/Applications` to install.
 
 Before a build, go through [`TESTING.md`](../TESTING.md) for what the change touched.
 
