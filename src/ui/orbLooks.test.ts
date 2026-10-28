@@ -40,10 +40,6 @@ describe("assignLooks", () => {
     expect(assignLooks(["sara"], {}).sara).toBe(preferredLook("sara"));
   });
 
-  it("carries over an earlier shuffle by its seed", () => {
-    expect(assignLooks(["sara"], {}, { sara: 2 }).sara).toBe(preferredLook("sara", 2));
-  });
-
   it("moves a login off a look somebody holds", () => {
     const held = preferredLook("sara");
     const looks = assignLooks(["sara"], { anna: held });

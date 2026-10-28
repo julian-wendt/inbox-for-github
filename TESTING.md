@@ -10,6 +10,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Alte App ersetzen: neue `.app` nach `/Programme` ziehen. Icon in Dock und ⌘⇥ ist das
       violette mit Haken (sonst ab- und wieder anmelden, dann aktualisiert macOS den Icon-Cache).
 - [ ] App startet, Liste und Avatar sind sofort da (aus dem Cache).
+- [ ] Erster Start nach dem Wechsel der Bundle-ID: Status, Notizen, Einstellungen und
+      Fensterposition sind wie vorher, kein Willkommensdialog. In
+      `~/Library/Application Support/inbox-for-github/` liegt `tracker.db`, der alte Ordner
+      `io.github.julian-wendt.github-task-tracker` ist unverändert. „Logdatei zeigen“ öffnet
+      `~/Library/Logs/inbox-for-github/` mit den alten Einträgen. macOS fragt einmal neu nach
+      Mitteilungen; eingeklappte Leisten und Sortierungen stehen wieder auf Standard.
 
 ## Sidebar
 
@@ -127,6 +133,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       geöffnet, Force-Push (mehrere hintereinander als eine Zeile), Auto-Merge, verworfenes Review,
       zurückgenommene Review-Anfrage; bei Issues verknüpfter PR und Duplikat. Jede Zeile öffnet per
       Klick GitHub am Ereignis oder, ohne eigenen Link, am Item. Labels und Projekte erscheinen nicht.
+- [ ] Einen fremden PR reviewen, dann committet oder force-pusht der Autor: der PR steht wieder in
+      der Inbox mit „Neue Commits von …“, auch unter dem Filter Reviews, und geht nach einem neuen Review
+      oder Kommentar wieder raus. Eigene Commits holen ihn nicht zurück; mit Einstellungen › Regeln ›
+      „Neue Commits holen Reviews zurück“ aus bleibt er unter Erledigt.
 
 ## Protokoll
 
@@ -200,6 +210,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst
       eine Erwähnung darin holt sie zusätzlich in die Inbox, bis du antwortest.
 - [ ] Kontextmenü, ⌘K und Hilfe bieten „Annehmen“ nicht mehr an.
+- [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
+      erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
+      Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.
 
 ## Von mir erstellt
 

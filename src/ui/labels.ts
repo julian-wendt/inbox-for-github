@@ -2,7 +2,7 @@ import type { Classified } from "../classify";
 import type { Update } from "../handoff";
 import type { Bucket, Item, Status } from "../model";
 import { lastReplyAt, sameLogin } from "../timeline";
-import { onPlate } from "./assignments";
+import { lastOthersActivity, MOVES_UP_DEFAULT, onPlate, type MovesUp } from "./assignments";
 import { lang, t, type Lang, type MessageKey } from "./i18n";
 
 /** Titles are getters, so they follow the language set at render time. */
@@ -181,18 +181,20 @@ export function updateSummary(updates: Update[]): string {
 
 /**
  * One short line saying why an item concerns the viewer: who mentioned them, a note to self, an
- * answered or open review request, an assignment, or otherwise who posted last.
+ * answered or open review request and who asked, new commits since the viewer's review, an
+ * assignment and who made it, or otherwise who posted last.
  *
  * @example
  *   rowContext(classified); // "@alice mentioned you"
  */
-export function rowContext({ item, mention, answered, asks, updates }: Pick<Classified, "item" | "mention" | "answered"> & Partial<Pick<Classified, "asks" | "updates">>): string {
+export function rowContext({ item, mention, answered, asks, updates, pushedBy, requestedBy, assignedBy }: Pick<Classified, "item" | "mention" | "answered"> & Partial<Pick<Classified, "asks" | "updates" | "pushedBy" | "requestedBy" | "assignedBy">>): string {
   if (asks?.includes("update") && updates) return t("row.update", { what: updateSummary(updates) });
   if (item.closed) return t(item.closed.state === "merged" ? "row.merged" : "row.closed");
   if (mention) return mention.self ? t("row.reminder") : t("row.mentioned", { name: mention.by });
+  if (asks?.includes("commits") && pushedBy) return t(pushedBy.length > 1 ? "row.commitsMany" : "row.commits", { name: pushedBy.at(-1)! });
   if (answered) return answered === "review" ? t("row.reviewAnswered") : t("row.answered");
-  if (item.reasons.includes("review")) return t("row.reviewRequested");
-  if (item.reasons.includes("assigned")) return t("row.assigned");
+  if (item.reasons.includes("review")) return requestedBy ? t("row.reviewRequestedBy", { name: requestedBy }) : t("row.reviewRequested");
+  if (item.reasons.includes("assigned")) return assignedBy ? t("row.assignedBy", { name: assignedBy }) : t("row.assigned");
   const last = item.comments.at(-1);
   return last ? t("row.commented", { name: last.author }) : t("row.openedBy", { name: item.author });
 }
@@ -243,16 +245,21 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * - Snoozed: when it comes back, else when you snoozed it.
  * - Done: when it was closed or merged on GitHub; else when you answered (your last reply, or
  *   your last review for a review request); else when you marked it done.
- * - Inbox, Watching and the rest: the pending mention, else the item's last update.
+ * - Inbox, Watching and the rest: the pending mention, else the last activity by someone else.
  *
- * @param me  The viewer's login, to find their answer.
+ * Wherever a view's own moment is missing, the last activity by someone else stands in, and
+ * `createdAt` when there is none: `updatedAt` also moves on commits and the viewer's own posts.
+ *
+ * @param me       The viewer's login, to find their answer and leave out their own activity.
+ * @param movesUp  Which activity counts besides posts and reviews by others (the "movesUp" setting).
  *
  * @example
- *   sortTime(snoozedEntry, "octocat"); // its statusAt
+ *   sortTime(snoozedEntry, "octocat", settings.movesUp); // its statusAt
  */
-export function sortTime(c: Classified, me: string): string {
+export function sortTime(c: Classified, me: string, movesUp: MovesUp = MOVES_UP_DEFAULT): string {
   const { item } = c;
-  if (c.bucket === "snoozed") return c.until ?? c.statusAt ?? item.updatedAt;
+  const activity = () => lastOthersActivity(item, me, movesUp) ?? item.createdAt;
+  if (c.bucket === "snoozed") return c.until ?? c.statusAt ?? activity();
   if (c.bucket === "done") {
     if (item.closed) return item.closed.at;
     if (c.answered === "review") {
@@ -263,7 +270,7 @@ export function sortTime(c: Classified, me: string): string {
       const reply = lastReplyAt(item, me);
       if (reply) return reply;
     }
-    return c.statusAt ?? item.updatedAt;
+    return c.statusAt ?? activity();
   }
-  return c.mention?.at ?? item.updatedAt;
+  return c.mention?.at ?? activity();
 }

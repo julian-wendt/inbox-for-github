@@ -22,23 +22,21 @@ export function freeLook(start: number, taken: ReadonlySet<number>): number {
 /**
  * Gives every login without a look one that no other login has. A login's own preferred look is
  * kept whenever it is free, so orbs stay as they were; the rest step to the next free look.
- * Logins that were shuffled before looks were stored carry their old seed over.
  *
  * @param logins   Everyone whose avatar shows an orb.
  * @param current  Login → look, as stored.
- * @param seeds    Login → how often it was shuffled before looks were stored (`Settings.orbSeeds`).
  * @returns        `current` itself when nobody is missing, so callers can tell nothing changed.
  *
  * @example
  *   assignLooks(["anna", "ben"], { anna: 12 }); // { anna: 12, ben: <a look other than 12> }
  */
-export function assignLooks(logins: readonly string[], current: Record<string, number>, seeds: Record<string, number> = {}): Record<string, number> {
+export function assignLooks(logins: readonly string[], current: Record<string, number>): Record<string, number> {
   const missing = logins.filter((login) => current[login] === undefined);
   if (missing.length === 0) return current;
   const next = { ...current };
   const taken = new Set(Object.values(next));
   for (const login of [...missing].sort()) {
-    const look = freeLook(preferredLook(login, seeds[login] ?? 0), taken);
+    const look = freeLook(preferredLook(login), taken);
     next[login] = look;
     taken.add(look);
   }

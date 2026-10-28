@@ -1,4 +1,4 @@
-import type { Reminder, Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
+import type { Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 /** What a `MemoryStore` starts with; everything is optional and starts empty. */
@@ -82,15 +82,6 @@ export class MemoryStore implements Persistence {
     for (const id of cleared.keys()) this.logChange(id, change);
     this.statusMap.clear();
     return Promise.resolve(cleared);
-  }
-
-  /** Nothing writes reminders any more, so a fresh store has none to convert. */
-  reminders(): Promise<Map<string, Reminder>> {
-    return Promise.resolve(new Map<string, Reminder>());
-  }
-
-  clearReminder(): Promise<void> {
-    return Promise.resolve();
   }
 
   notes(): Promise<Map<string, string>> {

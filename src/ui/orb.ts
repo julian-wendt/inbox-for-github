@@ -143,15 +143,13 @@ export function lookParts(look: number): { palette: number; accent: number | nul
 
 /**
  * The look a login gets from its name alone, before anyone else's orbs are considered. About half
- * of the logins get an accent. Seed 0 is the first draw; each further seed is another one, which
- * carries over the orbs viewers shuffled before looks were stored.
+ * of the logins get an accent.
  *
  * @example
  *   preferredLook("sara"); // a number below LOOKS
  */
-export function preferredLook(login: string, seed = 0): number {
-  const base = loginHash(login);
-  const hash = seed === 0 ? base : mix(base ^ Math.imul(seed, 0x9e3779b1));
+export function preferredLook(login: string): number {
+  const hash = loginHash(login);
   const drawn = mix(hash);
   const accent = drawn % (ACCENTS.length * 2);
   const angle = Math.round(((drawn >>> 8) % 360) / (360 / ACCENT_ANGLES)) % ACCENT_ANGLES;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, groupByType, groupPlate, isNewAssignment, withAssignees, withSelfAssigned, localDay, moveBar, onPlate, orderBars, plateCount, shownStatus } from "./assignments";
+import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, onPlate, orderBars, plateCount, shownStatus } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -170,5 +170,34 @@ describe("shownStatus", () => {
   it("keeps the viewer's own status otherwise", () => {
     expect(shownStatus(entry("x", {}, board("In Progress")), {})).toBe("open");
     expect(shownStatus(entry("x", { status: "snoozed" }, board("Done")), {})).toBe("snoozed");
+  });
+});
+
+describe("lastOthersActivity", () => {
+  const item = entry("x", {}, {
+    comments: [
+      { author: "bob", body: "looks good", createdAt: "2026-10-10T00:00:00Z" },
+      { author: "me", body: "thanks", createdAt: "2026-10-15T00:00:00Z" },
+      { author: "ci[bot]", body: "green", createdAt: "2026-10-14T00:00:00Z" },
+    ],
+    activities: [
+      { kind: "reviewed", at: "2026-10-11T00:00:00Z", actor: "carol", state: "APPROVED" },
+      { kind: "assigned", at: "2026-10-12T00:00:00Z", actor: "dave", assignee: "me" },
+      { kind: "commit", at: "2026-10-13T00:00:00Z" },
+      { kind: "state", at: "2026-10-16T00:00:00Z", actor: "me", change: "closed" },
+    ],
+  }).item;
+
+  it("counts others' events by default, and never the viewer's own activity", () => {
+    expect(lastOthersActivity(item, "me")).toBe("2026-10-12T00:00:00Z");
+  });
+
+  it("counts commits and bots only when switched on", () => {
+    expect(lastOthersActivity(item, "me", { ...MOVES_UP_DEFAULT, commits: true })).toBe("2026-10-13T00:00:00Z");
+    expect(lastOthersActivity(item, "me", { ...MOVES_UP_DEFAULT, bots: true })).toBe("2026-10-14T00:00:00Z");
+  });
+
+  it("keeps reviews when events are switched off", () => {
+    expect(lastOthersActivity(item, "me", { ...MOVES_UP_DEFAULT, events: false })).toBe("2026-10-11T00:00:00Z");
   });
 });

@@ -67,8 +67,12 @@ fn orca_activate() -> Result<(), String> {
     Command::new("open").args(["-b", ORCA_BUNDLE_ID]).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+fn log_name(index: u32) -> String {
+    if index == 0 { "inbox.log".to_string() } else { format!("inbox.{index}.log") }
+}
+
 fn rotated(dir: &Path, index: u32) -> std::path::PathBuf {
-    dir.join(if index == 0 { "inbox.log".to_string() } else { format!("inbox.{index}.log") })
+    dir.join(log_name(index))
 }
 
 /// Appends one line to `~/Library/Logs/<bundle id>/inbox.log` and rotates it by size.
@@ -96,6 +100,70 @@ fn log_reveal(app: tauri::AppHandle) -> Result<(), String> {
     Command::new("open").arg(&dir).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
+/// The bundle identifier of earlier builds, whose folders are copied over on the first start.
+const OLD_IDENTIFIER: &str = "io.github.julian-wendt.github-task-tracker";
+/// What the old config folder holds; `tracker.db` comes last, as its presence marks a finished copy.
+const MIGRATED_DATA: [&str; 4] = [".window-state.json", "tracker.db-wal", "tracker.db-shm", "tracker.db"];
+
+/// Copies the data and logs of builds under the old bundle identifier into the app's folders.
+///
+/// Covers the config folder (`~/Library/Application Support/<bundle id>/`: the database, its WAL
+/// files and `.window-state.json`) and the log folder (`~/Library/Logs/<bundle id>/`:
+/// `inbox.log` and its rotations), each with `copy_from_old_folder`, so it does nothing after
+/// the first start and on a fresh install. The old folders stay untouched, so an older build
+/// still finds its data. The web view's localStorage (collapsed bars, sort orders) is not
+/// carried over.
+///
+/// It must run before the window-state plugin's setup, which reads `.window-state.json`, and
+/// before the SQL plugin opens the database; see `docs/reference/architecture.md#local-data`.
+///
+/// Returns an error when a data file cannot be copied; the app then refuses to start rather than
+/// open an empty database in place of the user's data. A failed copy of the logs is ignored.
+///
+/// # Example
+///
+/// ```ignore
+/// tauri::Builder::default()
+///     .plugin(tauri::plugin::Builder::<tauri::Wry>::new("data-migration").setup(|app, _| migrate_data_dir(app)).build())
+/// ```
+fn migrate_data_dir(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    copy_from_old_folder(&app.path().app_config_dir()?, &MIGRATED_DATA.map(String::from))?;
+    let logs: Vec<String> = (0..LOG_FILES).rev().map(log_name).collect();
+    let _ = copy_from_old_folder(&app.path().app_log_dir()?, &logs);
+    Ok(())
+}
+
+/// Copies the files `names` from the old identifier's folder next to `dir` into `dir`.
+///
+/// The last name is the marker: nothing happens when `dir` already has it or the old folder
+/// lacks it. Each file is copied to `<name>.migrating` and then renamed, and the marker comes
+/// last, so an interrupted copy never leaves the marker behind and the next start tries again.
+/// Names the old folder lacks are skipped.
+///
+/// # Example
+///
+/// ```ignore
+/// copy_from_old_folder(Path::new("/Users/me/Library/Logs/inbox-for-github"), &["inbox.1.log".into(), "inbox.log".into()])?;
+/// ```
+fn copy_from_old_folder(dir: &Path, names: &[String]) -> std::io::Result<()> {
+    let (Some(old_dir), Some(marker)) = (dir.parent().map(|parent| parent.join(OLD_IDENTIFIER)), names.last()) else {
+        return Ok(());
+    };
+    if dir.join(marker).exists() || !old_dir.join(marker).exists() {
+        return Ok(());
+    }
+    fs::create_dir_all(dir)?;
+    for name in names {
+        let from = old_dir.join(name);
+        if from.exists() {
+            let staged = dir.join(format!("{name}.migrating"));
+            fs::copy(&from, &staged)?;
+            fs::rename(&staged, dir.join(name))?;
+        }
+    }
+    Ok(())
+}
+
 /// Brings the hidden main window back, for a click on the Dock icon or on a notification.
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -107,6 +175,8 @@ fn show_main_window(app: &tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Plugins set up in registration order, so the data is in place before the others read it.
+        .plugin(tauri::plugin::Builder::<tauri::Wry>::new("data-migration").setup(|app, _| migrate_data_dir(app)).build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())

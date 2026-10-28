@@ -44,7 +44,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 ```sh
 npm run tauri dev                    # dev window (restart it after new settings keys, hooks or store changes)
 VITE_DEMO=1 npm run tauri dev        # the same on a simulated GitHub with made-up data, for screenshots
-npm run tauri build -- --bundles app # src-tauri/target/release/bundle/macos/Inbox for GitHub.app
+npm run tauri build -- --bundles app -- --locked # src-tauri/target/release/bundle/macos/Inbox for GitHub.app
 npm run typecheck                    # tsc --noEmit
 npm run lint                         # ESLint
 npm test                             # Vitest
@@ -53,6 +53,12 @@ npm test                             # Vitest
 ## Checks before every commit
 
 `npm run typecheck`, `npm run lint` and `npm test` all pass. Fix the findings you caused; do not just note them.
+For changes in `.github/`, `zizmor --pedantic .github/` and `actionlint` pass too.
+
+## After finishing a change
+
+Restart the dev window from the change's worktree (the `restart-dev` skill) and say in the
+handover what to look at there: the user checks every change in the running app.
 
 ## Where things are documented
 

@@ -26,17 +26,17 @@ Vite hot reload keeps component state, which breaks in these cases; stop and sta
 Stopping all dev processes:
 
 ```sh
-pkill -f "target/debug/github-task-tracker"; pkill -f "tauri dev"; pkill -f vite
+pkill -f "target/debug/inbox-for-github"; pkill -f "tauri dev"; pkill -f vite
 ```
 
 ## The local database
 
-`~/Library/Application Support/io.github.julian-wendt.github-task-tracker/tracker.db`
+`~/Library/Application Support/inbox-for-github/tracker.db`
 (tables in [`architecture.md`](architecture.md#local-data)). Read it only, while the app may be
 running:
 
 ```sh
-sqlite3 -readonly "$HOME/Library/Application Support/io.github.julian-wendt.github-task-tracker/tracker.db" \
+sqlite3 -readonly "$HOME/Library/Application Support/inbox-for-github/tracker.db" \
   "select node_id, status, changed_at, until from item_status limit 5"
 ```
 
@@ -51,14 +51,14 @@ in the settings. `automatic` is also 1 for an item the viewer
 takes back into the work, so `source` is the one to trust. The last changes, in local time:
 
 ```sh
-sqlite3 -readonly "$HOME/Library/Application Support/io.github.julian-wendt.github-task-tracker/tracker.db" \
+sqlite3 -readonly "$HOME/Library/Application Support/inbox-for-github/tracker.db" \
   "select datetime(changed_at, 'localtime'), node_id, status, automatic, source from status_log order by id desc limit 10"
 ```
 
 ## The log
 
 Settings › General › Logging (off by default) writes `inbox.log` to
-`~/Library/Logs/io.github.julian-wendt.github-task-tracker/`, rotated at 2 MB into `inbox.1.log`
+`~/Library/Logs/inbox-for-github/`, rotated at 2 MB into `inbox.1.log`
 … `inbox.4.log`; "Show log file" opens the folder. Lines are `time level message key=value …` in
 UTC (`log.ts`, written by the Rust commands `log_write` and `log_reveal`).
 

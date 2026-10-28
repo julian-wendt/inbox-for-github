@@ -10,12 +10,12 @@ When it is needed: see `docs/reference/local-development.md` ("When the dev wind
 Restart (run the second command in the background):
 
 ```sh
-pkill -f "target/debug/github-task-tracker"; pkill -f "tauri dev"; pkill -f vite
+pkill -f "target/debug/inbox-for-github"; pkill -f "tauri dev"; pkill -f vite
 export PATH=/opt/homebrew/opt/rustup/bin:$PATH && npm run tauri dev > /tmp/claude-inbox/tauri-dev.log 2>&1
 ```
 
-Then wait until the log shows `target/debug/github-task-tracker` and check it for
+Then wait until the log shows `target/debug/inbox-for-github` and check it for
 `order of Hooks`, `TypeError`, `Unhandled error` or `no such column`. An "exit code 144" from the
 previous dev process is its kill, not an error.
 
-Build the app (only when asked): `npm run tauri build -- --bundles app`, see `docs/releasing.md`.
+Build the app (only when asked): `npm ci`, then `npm run tauri build -- --bundles app -- --locked`, see `docs/releasing.md`.

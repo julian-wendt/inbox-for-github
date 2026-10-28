@@ -24,6 +24,7 @@ export interface SessionSettings {
   loadBoards?: boolean;
   maxItems?: number;
   reopenOn?: Reopen;
+  reviewOnCommits?: boolean;
   rules?: Record<string, boolean>;
   directOnly?: Record<string, string[]>;
 }
@@ -59,7 +60,7 @@ export class InboxSession {
     settings: SessionSettings = {},
   ) {
     this.me = world.viewer;
-    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: 200, reopenOn: REOPEN_DEFAULT, rules: {}, directOnly: {}, ...settings };
+    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: 200, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, rules: {}, directOnly: {}, ...settings };
   }
 
   private get nowMs(): number {
@@ -215,7 +216,7 @@ export class InboxSession {
     const list = () =>
       withinClosedWindow(this.items, this.settings.closedDays, this.nowMs).map((raw) => {
         const item = directOnly(raw, this.me, this.settings.directOnly);
-        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs);
+        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits);
       });
     for (let pass = 0; pass < 3; pass++) {
       let changed = false;

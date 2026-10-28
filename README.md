@@ -38,14 +38,14 @@ review. An item stays in the inbox until you act on it.
 ```sh
 npm install
 npm run tauri dev                    # development window
-npm run tauri build -- --bundles app # src-tauri/target/release/bundle/macos/Inbox for GitHub.app
+npm run tauri build -- --bundles app -- --locked # src-tauri/target/release/bundle/macos/Inbox for GitHub.app
 npm test                             # unit tests (vitest)
 npm run lint                         # ESLint
 ```
 
 On first start, pick the organizations to watch. Settings, statuses and the cached fetch are
 stored in the app's local database under
-`~/Library/Application Support/io.github.julian-wendt.github-task-tracker/`, never in this
+`~/Library/Application Support/inbox-for-github/`, never in this
 repository. The token is read from `gh` on every refresh and never stored.
 
 The app is unsigned; open it the first time via right-click → Open.

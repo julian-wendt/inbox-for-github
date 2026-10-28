@@ -218,6 +218,13 @@ describe("review requests", () => {
     expect(run(pr())).toMatchObject({ bucket: "inbox", status: "open", answered: null });
   });
 
+  it("names who last asked me or my team for the review", () => {
+    const requested = (actor: string, reviewer: string, day: number) => ({ kind: "review-requested" as const, at: `2026-10-0${day}T00:00:00Z`, actor, reviewer });
+    expect(run(pr({ activities: [requested("alice", ME, 2), requested("bob", "carol", 3)] })).requestedBy).toBe("alice");
+    expect(run(pr({ activities: [requested("alice", ME, 2), requested("dave", "team:core", 3)] })).requestedBy).toBe("dave");
+    expect(run(pr()).requestedBy).toBeUndefined();
+  });
+
   it("counts a comment or a review without text after the request as done", () => {
     expect(run(pr({ comments: [comment(ME, "Looks odd, see above", 3)] }))).toMatchObject({
       bucket: "done",
@@ -255,6 +262,49 @@ describe("review requests", () => {
   });
 });
 
+describe("pushes after my review", () => {
+  const at = (day: number) => `2026-10-${String(day).padStart(2, "0")}T00:00:00Z`;
+  const reviewed = (overrides: Partial<Item> = {}) =>
+    item({ kind: "pr", reasons: ["involved"], reviews: [{ author: ME, at: at(3) }], ...overrides });
+  const commit = (day: number, author?: string) => ({ kind: "commit" as const, at: at(day), ...(author && { author }) });
+
+  it("brings the pull request back on a commit or force push by someone else", () => {
+    expect(run(reviewed({ activities: [commit(4, "alice")] }))).toMatchObject({ bucket: "inbox", asks: ["commits"] });
+    expect(run(reviewed({ activities: [{ kind: "force-pushed", at: at(4), actor: "alice" }] })).asks).toEqual(["commits"]);
+  });
+
+  it("names who pushed, last pusher last", () => {
+    const pushed = reviewed({ activities: [commit(4, "bob"), { kind: "force-pushed", at: at(5), actor: "alice" }, commit(6, "bob")] });
+    expect(run(pushed).pushedBy).toEqual(["alice", "bob"]);
+  });
+
+  it("ignores my own commits, bots, unknown authors and pushes before my review", () => {
+    for (const activity of [commit(4, ME), commit(4, "renovate[bot]"), commit(4), commit(2, "alice")]) {
+      expect(run(reviewed({ activities: [activity] })).asks).toEqual([]);
+    }
+  });
+
+  it("leaves once I review or comment again", () => {
+    expect(run(reviewed({ activities: [commit(4, "alice")], comments: [comment(ME, "Checked", 5)] })).asks).toEqual([]);
+  });
+
+  it("needs a review of mine", () => {
+    expect(run(item({ kind: "pr", reasons: ["involved"], activities: [commit(4, "alice")] })).asks).toEqual([]);
+  });
+
+  it("reopens a done or snoozed item only for pushes after the status change", () => {
+    const pushed = reviewed({ activities: [commit(5, "alice")] });
+    expect(run(pushed, done(4))).toMatchObject({ bucket: "inbox", statusReset: true, asks: ["commits"] });
+    expect(run(pushed, done(6))).toMatchObject({ bucket: "done", statusReset: false });
+  });
+
+  it("does nothing with the setting off", () => {
+    const pushed = reviewed({ activities: [commit(5, "alice")] });
+    expect(classify(pushed, ME, undefined, ruleSwitches(), "mention", Date.now(), false).asks).toEqual([]);
+    expect(classify(pushed, ME, done(4), ruleSwitches(), "mention", Date.now(), false).statusReset).toBe(false);
+  });
+});
+
 describe("closed items", () => {
   it("are done when they were for the viewer, whatever the stored status, and never reopen", () => {
     const closed = item({ reasons: ["review"], closed: { state: "merged", at: "2026-10-05T00:00:00Z" } });
@@ -272,6 +322,12 @@ describe("closed items", () => {
 
 describe("assignments", () => {
   const assigned = (overrides: Partial<Item> = {}) => item({ reasons: ["assigned", "involved"], assignees: ["me"], ...overrides });
+
+  it("name who last assigned me, but not when I assigned myself", () => {
+    const assignedAt = (actor: string, assignee: string, day: number) => ({ kind: "assigned" as const, at: `2026-10-0${day}T00:00:00Z`, actor, assignee });
+    expect(run(assigned({ activities: [assignedAt("alice", ME, 2), assignedAt("bob", "carol", 3)] })).assignedBy).toBe("alice");
+    expect(run(assigned({ activities: [assignedAt("alice", ME, 2), assignedAt(ME, ME, 3)] })).assignedBy).toBeUndefined();
+  });
 
   it("go straight to Assigned to me, without passing through the inbox", () => {
     expect(run(assigned())).toMatchObject({ bucket: "assigned", status: "open", asks: [] });

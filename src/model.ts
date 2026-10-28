@@ -105,7 +105,8 @@ export type Activity =
   | { kind: "assigned" | "unassigned"; at: string; actor: string; assignee: string }
   | { kind: "review-requested" | "review-request-removed"; at: string; actor: string; reviewer: string }
   | { kind: "reviewed"; at: string; actor: string; state: ReviewState }
-  | { kind: "commit"; at: string }
+  /** `author`: the commit author's login; absent without a linked GitHub user and in older caches. */
+  | { kind: "commit"; at: string; author?: string }
   /** `reason` for closed issues: GitHub's state reason, e.g. "NOT_PLANNED" or "DUPLICATE". */
   | { kind: "state"; at: string; actor: string; change: StateChange; reason?: string; url?: string }
   | { kind: "force-pushed" | "auto-merge"; at: string; actor: string }
@@ -205,16 +206,6 @@ export interface StoredStatus {
 export interface Handoff {
   boards: Record<string, string | null>;
   prs: number[];
-}
-
-/**
- * A reminder from before follow-ups, read once at start and turned into one (see
- * `followUpsFrom`). Nothing sets reminders any more.
- */
-export interface Reminder {
-  at: string;
-  /** When the app notified about it; unset until it was due. */
-  firedAt?: string;
 }
 
 /** What a status change may carry besides the status: see `StoredStatus`. */

@@ -197,6 +197,23 @@ describe("Events in the timeline", () => {
     expect(app.entry(pr).item.activities.map((a) => a.kind)).toEqual(["commit", "commit"]);
   });
 
+  it("brings a reviewed pull request back when someone else pushes, not when the viewer does", async () => {
+    const { world, app } = sim;
+    const pr = world.pullRequest({ author: "alice" });
+    world.requestReview(pr, "alice", "octocat");
+    world.advance(HOUR);
+    world.review(pr, "octocat", "APPROVED");
+    world.advance(HOUR);
+    world.commit(pr, "octocat");
+    await app.refresh();
+    expect(app.entry(pr).asks).toEqual([]);
+
+    world.advance(HOUR);
+    world.commit(pr, "alice");
+    await app.refresh();
+    expect(app.entry(pr)).toMatchObject({ bucket: "inbox", asks: ["commits"] });
+  });
+
   it("reads bot comments as bots, with their avatar", async () => {
     const { world, app } = sim;
     const pr = followedPr();

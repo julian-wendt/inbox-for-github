@@ -67,12 +67,37 @@ export const PLATE_GROUPS: PlateGroup[] = ["focus", "review", "progress", "todo"
 /** At most this many items can be marked "today". */
 export const FOCUS_MAX = 3;
 
-/** The latest post or activity by someone other than the viewer (bots excluded), or null. */
-export function lastOthersActivity(item: Item, me: string): string | null {
-  const times = [
-    ...posts(item).filter((p) => !sameLogin(p.author, me) && !isBot(p.author)).map((p) => p.at),
-    ...item.activities.flatMap((a) => (a.kind !== "commit" && !sameLogin(a.actor, me) && !isBot(a.actor) ? [a.at] : [])),
-  ];
+/**
+ * What counts as activity besides posts and reviews by others (the "movesUp" setting). The
+ * viewer's own activity never counts.
+ */
+export interface MovesUp {
+  /** Pushed commits; GitHub names no pusher, so the viewer's own count too. */
+  commits: boolean;
+  /** Timeline events: assignments, review requests, state changes, links, force pushes. */
+  events: boolean;
+  /** Posts and events by bots. */
+  bots: boolean;
+}
+
+export const MOVES_UP_DEFAULT: MovesUp = { commits: false, events: true, bots: false };
+
+/**
+ * The latest post or activity by someone other than the viewer, or null.
+ *
+ * @param counted  Which activity counts besides posts and reviews by people; the default leaves
+ *                 out commits and bots.
+ *
+ * @example
+ *   lastOthersActivity(item, "octocat", { ...MOVES_UP_DEFAULT, commits: true }); // "2026-10-21T09:12:00Z"
+ */
+export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MOVES_UP_DEFAULT): string | null {
+  const byOther = (login: string) => !sameLogin(login, me) && (counted.bots || !isBot(login));
+  const counts = (a: Item["activities"][number]) => {
+    if (a.kind === "commit") return counted.commits;
+    return byOther(a.actor) && (a.kind === "reviewed" || counted.events);
+  };
+  const times = [...posts(item).filter((p) => byOther(p.author)).map((p) => p.at), ...item.activities.filter(counts).map((a) => a.at)];
   return times.sort().at(-1) ?? null;
 }
 

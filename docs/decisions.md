@@ -2,6 +2,33 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-10-27
+
+- **Releases are prepared in CI and built on the Mac.** A merge to `main` only updates a release
+  PR (release-please); merging that PR tags and drafts the release, and `npm run release:upload`
+  attaches the app. No self-hosted runner (it would run repository code unattended with the rights
+  of the Mac it runs on), no macOS runner (macOS minutes count ten times against the Actions quota),
+  no local agent that polls for releases (same risk as the runner). A build the user starts
+  is what `tauri dev` already is. See [`releasing.md`](releasing.md).
+- **New commits by others bring a reviewed pull request back, as their own ask.** A push after
+  the viewer's review is a real "please look again", unlike a commit in general, so it has its
+  own setting (`reviewOnCommits`, on) instead of following `reopenOn`, and its own row label
+  ("New commits") under the Reviews filter. Only the commit author is known, not the pusher, so
+  commits without a linked GitHub user count as nobody's; a force push by someone else counts the
+  same, since after a rebase the commits keep their old dates.
+- **The bundle identifier is `inbox-for-github`, not a reverse-DNS name.** It names the data
+  folder, and the old one carried a personal name and the project's former name. Reverse-DNS is
+  Apple's and Tauri's convention, not a rule; without a domain of our own, a made-up one like
+  `app.inbox-for-github` would only look unique. The app is not in the App Store, so no
+  registered ID is needed.
+- **The schema is cleaned up while the app is at 0.1.0.** The reminders table, the column
+  `keep_open`, the setting `snoozeAuthored` and the one-time conversions of older data
+  (`accepted`, `in_progress`/`waiting`, reminders into follow-ups, the first log entries) are
+  gone, and the added columns are part of `CREATE TABLE`. Likewise `orbSeeds` and the cache's
+  stale flags and filled-in fields (`boardsStale`, `typesStale`, `linkedPrs`, `threads`,
+  `issueType`, board `fields`), with `CACHE_VERSION` kept, since every cache already has them. This replaces "the unused column
+  `keep_open` stays" (2026-10-26): databases older than the last 0.1.0 builds are not supported.
+
 ## 2026-10-26
 
 - **No two people share an orb.** An orb is a look: palette, accent and accent angle, one number

@@ -31,9 +31,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 ## Buckets and statuses
 
 - **Statuses** (`Status` in `src/model.ts`) are the viewer's own: `open`, `snoozed`, `done`.
-  They live in `item_status` with a log in `status_log`; nothing is sent to GitHub. `Store.open`
-  removes the `accepted` rows of older versions from both, keeping their time as `item_seen`;
-  the column `keep_open` is no longer read or set.
+  They live in `item_status` with a log in `status_log`; nothing is sent to GitHub.
 - **Buckets** (`Bucket`) say where an item belongs: `inbox` (someone waits for an answer: a
   pending mention, an unanswered review request, a passed follow-up date), `assigned`, `authored`,
   `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no view shows.
@@ -56,9 +54,6 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   item in the inbox (ask `due`) until the viewer files it; the log says "follow-up came due"
   (source `auto:snooze-ended`), and the list shows no mark of it. `followUpOf` gives the date
   that the bell and chip show, and only while the item waits.
-- **Reminders no longer exist.** `item_reminder` rows of earlier versions are turned into
-  follow-ups once at start (`followUpsFrom`: only for items without a status or with a plain
-  "open") and deleted; the table stays for old databases. The "snoozeAuthored" setting is not read.
 - Unassigned, the handoff no longer counts: the item sorts as if no status were stored.
 - A closed or merged item is in Done when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
@@ -70,7 +65,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 ## Refreshes
 
 - **Full fetch** at start, when the organizations change, at least every `FULL_EVERY_MS`
-  (1 hour), and once when the cache predates issue types (`typesStale`).
+  (1 hour).
 - **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
@@ -82,17 +77,28 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 ## Local data
 
 The database is `tracker.db` in
-`~/Library/Application Support/io.github.julian-wendt.github-task-tracker/`.
+`~/Library/Application Support/inbox-for-github/`, the folder named after the bundle identifier.
+Builds up to 2026-10-27 used `io.github.julian-wendt.github-task-tracker`; on the first start
+`migrate_data_dir` (`src-tauri/src/lib.rs`) copies `tracker.db`, its WAL files and
+`.window-state.json` from that folder, and the logs from `~/Library/Logs/` under that name, and
+leaves both in place. It runs as the first plugin, because
+Tauri sets plugins up in registration order (`PluginStore::initialize_all` in tauri 2.12.5) and
+the window-state plugin reads its file in its own setup (`tauri-plugin-window-state` 2.5.0),
+before `Builder::setup` runs. The web view's localStorage (collapsed bars, sort orders) and the
+notification permission are not carried over.
+
+`SCHEMA` in `src/store.ts` creates every table in its current shape; `dropLeftovers` removes
+what databases of 0.1.0 builds still hold (`item_reminder`, `item_status.keep_open`, the
+settings `snoozeAuthored` and `orbSeeds`). A new column is added in `Store.open` next to it, as `CONTRIBUTING.md` says.
 
 | Table | Holds |
 |---|---|
 | `settings` | one row per settings key, JSON values (`Settings` in `src/store.ts`) |
-| `item_status` | the current status per item, `keep_open`, `until`, `due` |
+| `item_status` | the current status per item, `until`, `due`, `handoff` |
 | `status_log` | every status change, with `automatic` for changes by the app and `source` for what caused it (see [`local-development.md`](local-development.md#the-local-database)) |
 | `item_seen` | when the viewer last looked at an item, for "since you were last here" |
 | `item_unread` | items the viewer marked unread by hand (U), with `marked_at`; opening the item removes the row |
 | `item_note` | private notes per item |
-| `item_reminder` | reminders of earlier versions, converted to follow-ups at start and emptied; nothing writes it any more |
 | `item_write_failure` | writes to GitHub that failed (assign, unassign), with the error, for the item's timeline |
 | `item_cache` | the last fetch: viewer, items (JSON), `fetched_at`, `full_at`, `scope` |
 

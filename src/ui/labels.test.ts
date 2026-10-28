@@ -16,6 +16,11 @@ describe("rowContext", () => {
     expect(rowContext({ item, answered: null, mention: { by: "me", at, excerpt: "", self: true } })).toBe("Deine Selbst-Erwähnung");
   });
 
+  it("names who pushed since the viewer's review", () => {
+    expect(rowContext({ item, answered: null, mention: null, asks: ["commits"], pushedBy: ["alice"] })).toBe("Neue Commits von alice");
+    expect(rowContext({ item, answered: null, mention: null, asks: ["commits"], pushedBy: ["bob", "alice"] })).toBe("Neue Commits von alice und anderen");
+  });
+
   it("falls back to the search reason, then to the last poster", () => {
     const base: Pick<Classified, "item" | "mention" | "answered"> = {
       item: { ...item, reasons: ["review", "assigned"] },
@@ -23,9 +28,11 @@ describe("rowContext", () => {
       answered: null,
     };
     expect(rowContext(base)).toBe("Review angefragt");
+    expect(rowContext({ ...base, requestedBy: "alice" })).toBe("Review angefragt von alice");
     expect(rowContext({ ...base, answered: "review" })).toBe("Review beantwortet");
     expect(rowContext({ ...base, answered: "mention" })).toBe("Beantwortet");
     expect(rowContext({ ...base, item: { ...item, reasons: ["assigned"] } })).toBe("Dir zugewiesen");
+    expect(rowContext({ ...base, item: { ...item, reasons: ["assigned"] }, assignedBy: "bob" })).toBe("Dir zugewiesen von bob");
     expect(rowContext({ ...base, item })).toBe("eröffnet von alice");
     const commented = { ...item, comments: [{ author: "carol", body: "", createdAt: at }] };
     expect(rowContext({ ...base, item: commented })).toBe("carol hat kommentiert");
@@ -101,12 +108,17 @@ describe("statusesFor", () => {
 
 describe("sortTime", () => {
   const item = {
-    updatedAt: "2026-10-20T00:00:00Z",
+    createdAt: "2026-10-10T00:00:00Z",
+    updatedAt: "2026-10-22T00:00:00Z",
     closed: null,
     author: "alice",
     body: "",
-    comments: [{ author: "me", body: "done", createdAt: "2026-10-18T00:00:00Z" }],
+    comments: [
+      { author: "bob", body: "any news?", createdAt: "2026-10-20T00:00:00Z" },
+      { author: "me", body: "done", createdAt: "2026-10-18T00:00:00Z" },
+    ],
     reviews: [{ author: "me", at: "2026-10-17T00:00:00Z" }],
+    activities: [{ kind: "commit", at: "2026-10-21T00:00:00Z" }],
   } as unknown as Classified["item"];
   const entry = (over: Partial<Classified>) => ({ item, mention: null, statusAt: null, answered: null, ...over }) as Classified;
 
@@ -117,6 +129,12 @@ describe("sortTime", () => {
     expect(sortTime(entry({ bucket: "done", answered: "mention" }), "me")).toBe("2026-10-18T00:00:00Z");
     expect(sortTime(entry({ bucket: "done", statusAt: "2026-10-16T00:00:00Z" }), "me")).toBe("2026-10-16T00:00:00Z");
     expect(sortTime(entry({ bucket: "inbox" }), "me")).toBe("2026-10-20T00:00:00Z");
+  });
+
+  it("leaves out commits and the viewer's own posts, and falls back to the creation", () => {
+    const pushed = { ...item, comments: [{ author: "me", body: "pushed a fix", createdAt: "2026-10-21T12:00:00Z" }] };
+    expect(sortTime(entry({ bucket: "authored", item: pushed }), "me")).toBe("2026-10-10T00:00:00Z");
+    expect(sortTime(entry({ bucket: "authored", item: { ...pushed, author: "me" } }), "me")).toBe("2026-10-10T00:00:00Z");
   });
 });
 

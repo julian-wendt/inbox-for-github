@@ -68,6 +68,19 @@ describe("historyText", () => {
   });
 });
 
+describe("commit authors", () => {
+  it("keeps the distinct authors of a run, last author last, and none for unknown ones", () => {
+    const activities: Activity[] = [
+      { kind: "commit", at: at(1), author: "alice" },
+      { kind: "commit", at: at(2), author: "bob" },
+      { kind: "commit", at: at(3), author: "Alice" },
+      { kind: "commit", at: at(4) },
+    ];
+    expect(shownActivities({ activities }, "me", [])).toEqual([{ activity: activities[3], count: 4, authors: ["bob", "Alice"] }]);
+    expect(shownActivities({ activities: [{ kind: "commit", at: at(1) }] }, "me", [])[0].authors).toEqual([]);
+  });
+});
+
 describe("shownHistory", () => {
   const item = { comments: [{ author: "bob", body: "hm", createdAt: "2026-10-22T12:00:00Z" }], body: "", author: "alice", createdAt: "2026-10-01T00:00:00Z", activities: [], reviews: [] } as unknown as Item;
   const change = (status: "done" | "snoozed", at: string) => ({ status, at, automatic: false });

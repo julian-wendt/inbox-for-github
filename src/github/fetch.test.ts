@@ -233,6 +233,7 @@ describe("toItem", () => {
         timelineItems: {
           nodes: [
             { __typename: "PullRequestCommit", commit: { committedDate: "2026-10-01T10:00:00Z" } },
+            { __typename: "PullRequestCommit", commit: { committedDate: "2026-10-01T10:30:00Z", author: { user: { login: "alice" } } } },
             { __typename: "ReviewRequestedEvent", createdAt: "2026-10-01T11:00:00Z", actor: { login: "alice" }, requestedReviewer: { login: "me" } },
             { __typename: "AssignedEvent", createdAt: "2026-10-01T12:00:00Z", actor: { login: "alice" }, assignee: { login: "me" } },
             { __typename: "UnassignedEvent", createdAt: "2026-10-01T13:00:00Z", actor: { login: "me" }, assignee: { login: "me" } },
@@ -249,6 +250,7 @@ describe("toItem", () => {
 
     expect(item.activities).toEqual([
       { kind: "commit", at: "2026-10-01T10:00:00Z" },
+      { kind: "commit", at: "2026-10-01T10:30:00Z", author: "alice" },
       { kind: "review-requested", at: "2026-10-01T11:00:00Z", actor: "alice", reviewer: "me" },
       { kind: "assigned", at: "2026-10-01T12:00:00Z", actor: "alice", assignee: "me" },
       { kind: "unassigned", at: "2026-10-01T13:00:00Z", actor: "me", assignee: "me" },

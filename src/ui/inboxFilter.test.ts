@@ -28,6 +28,11 @@ describe("matchesAsk", () => {
     expect(matchesAsk(entry(["involved"], ["due"]), "mention", "me")).toBe(true);
   });
 
+  it("files new commits after a review under reviews, without a pending request", () => {
+    const pushed = entry(["involved"], ["commits"]);
+    expect([matchesAsk(pushed, "review", "me"), matchesAsk(pushed, "mention", "me")]).toEqual([true, false]);
+  });
+
   it("outside the inbox, follows the review request or a mention of the viewer", () => {
     const answered = entry(["review"], [], false, "done");
     const mentioned = entry(["mentioned"], [], true, "snoozed");

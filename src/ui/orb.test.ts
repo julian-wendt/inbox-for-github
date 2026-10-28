@@ -49,10 +49,9 @@ describe("looks", () => {
     expect(lookParts(33 + 1 + 4)).toEqual({ palette: 1, accent: 0, degrees: 45 });
   });
 
-  it("are preferred deterministically, below LOOKS, and differ by seed", () => {
+  it("are preferred deterministically and below LOOKS", () => {
     expect(preferredLook("sara")).toBe(preferredLook("sara"));
     for (const login of ["anna", "ben", "sara"]) expect(preferredLook(login)).toBeLessThan(LOOKS);
-    expect(new Set([0, 1, 2, 3, 4, 5].map((seed) => preferredLook("sara", seed))).size).toBeGreaterThan(4);
   });
 });
 

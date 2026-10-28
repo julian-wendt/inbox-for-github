@@ -6,7 +6,6 @@ import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, mergeDelt
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
-import { followUpsFrom } from "./followUp";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
 import { sameLogin } from "../timeline";
@@ -141,23 +140,6 @@ function legacyDone(c: Classified, viewer: string): boolean {
   return c.status === "done" && c.answered === null && !c.updates && !c.item.closed && !ownPr && c.item.reasons.includes("assigned");
 }
 
-/**
- * Turns the reminders of earlier versions into follow-ups once, then clears them, so an item
- * carries a single date (see `followUpsFrom`).
- *
- * @returns The stored statuses after the conversion.
- */
-async function withFollowUpsFromReminders(store: Persistence): Promise<Map<string, StoredStatus>> {
-  let statuses = await store.statuses();
-  const reminders = await store.reminders();
-  for (const { id, until } of followUpsFrom(reminders, statuses)) {
-    const { stored } = await store.setStatus(id, "snoozed", true, undefined, { until }, "auto:reminder-to-follow-up");
-    statuses = new Map(statuses).set(id, stored);
-  }
-  for (const id of reminders.keys()) await store.clearReminder(id);
-  return statuses;
-}
-
 export function useInbox(): Inbox {
   const [store, setStore] = useState<Persistence | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -231,7 +213,7 @@ export function useInbox(): Inbox {
       log.debug("app started", { build: __APP_COMMIT__ });
       log.debug("store opened");
       setSettings(stored);
-      setStatuses(await withFollowUpsFromReminders(opened));
+      setStatuses(await opened.statuses());
       setWriteFailures(await opened.writeFailures());
       setStatusLog(await opened.statusLog());
       setSeen(await opened.seen());
@@ -269,7 +251,7 @@ export function useInbox(): Inbox {
       const key = JSON.stringify([settings.orgs, viewer.login]);
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
-      const delta = !!last && !last.typesStale && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const delta = !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
       const coverage: Coverage = delta ? { ...had.coverage, boards: want.boards } : want;
       const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards, signal };
@@ -281,7 +263,7 @@ export function useInbox(): Inbox {
       // Onto the items as they are now, so a change made while the refresh ran (e.g. assigning) stays.
       let items = delta ? mergeDelta((lastFetch.current ?? last).items, fetched, coverage.closedDays) : fetched;
       if (delta) logMerge((lastFetch.current ?? last).items, fetched, items);
-      if (delta && want.boards && (!had.coverage.boards || last?.boardsStale)) items = await withBoards(token, items, signal);
+      if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
       const fetchedAt = new Date();
       const result: CachedFetch = {
         viewer: { ...viewer, avatar },
@@ -474,8 +456,8 @@ export function useInbox(): Inbox {
       .filter((item) => repoVisible(item.repo, settings.repoFilters) && !untracked.has(item.id))
       .map((item) => directOnly(item, me, settings.directOnly))
       .map((item) => (settings.loadBoards ? item : { ...item, boards: [] }))
-      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now));
-  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, now]);
+      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits));
+  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, now]);
 
   const writeStatus = useCallback(
     async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource()) => {

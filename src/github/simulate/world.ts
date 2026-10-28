@@ -269,9 +269,10 @@ export class GitHubSimulator {
     this.touch(raw);
   }
 
-  commit(ref: Ref): void {
+  commit(ref: Ref, author?: string): void {
     const raw = this.raw(ref);
-    (raw.commitItems ??= { nodes: [] }).nodes.push({ __typename: "PullRequestCommit", commit: { committedDate: this.stamp() } });
+    const user = author ? { user: { login: author } } : null;
+    (raw.commitItems ??= { nodes: [] }).nodes.push({ __typename: "PullRequestCommit", commit: { committedDate: this.stamp(), author: user } });
     this.touch(raw);
   }
 

@@ -42,6 +42,8 @@ export function explain(entry: Classified, reopenOn: Reopen, me = ""): Explanati
           return t("explain.update", { what: updateSummary(entry.updates ?? []) });
         case "review":
           return t("explain.review");
+        case "commits":
+          return t("explain.commits");
         case "reopened":
           return t("explain.reopened", { ago: statusAt ? agoInSentence(statusAt) : "" });
         case "mention":
@@ -121,7 +123,7 @@ export function bucketHelp(bucket: Bucket, reopenOn: Reopen): { lead: string; po
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
-        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.due"), t("help.inbox.update"), t("help.inbox.reopened")],
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.due"), t("help.inbox.update"), t("help.inbox.reopened")],
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back")] };

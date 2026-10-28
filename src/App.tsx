@@ -193,7 +193,8 @@ export default function App() {
     return inbox.classified.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
-  const rowTime = useCallback((c: Classified) => sortTime(c, me), [me]);
+  const movesUp = inbox.settings.movesUp;
+  const rowTime = useCallback((c: Classified) => sortTime(c, me, movesUp), [me, movesUp]);
   // Snoozed lists by when items come back, soonest first; the sort button turns the dated ones around.
   const snoozeGroups = useMemo(
     () =>
@@ -840,13 +841,13 @@ export default function App() {
   useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending);
 
   const orbLogins = useOrbLogins();
-  const { orbLooks, orbSeeds } = inbox.settings;
+  const { orbLooks } = inbox.settings;
   useLayoutEffect(() => setOrbLooks(orbLooks), [orbLooks]);
   const { ready: inboxReady, updateSettings } = inbox;
   useEffect(() => {
-    if (!inboxReady || assignLooks(orbLogins, orbLooks, orbSeeds) === orbLooks) return;
-    void updateSettings((current) => ({ ...current, orbLooks: assignLooks(orbLogins, current.orbLooks, current.orbSeeds) }));
-  }, [inboxReady, updateSettings, orbLogins, orbLooks, orbSeeds]);
+    if (!inboxReady || assignLooks(orbLogins, orbLooks) === orbLooks) return;
+    void updateSettings((current) => ({ ...current, orbLooks: assignLooks(orbLogins, current.orbLooks) }));
+  }, [inboxReady, updateSettings, orbLogins, orbLooks]);
 
   if (!inbox.ready) return <div className="boot" data-tauri-drag-region />;
 

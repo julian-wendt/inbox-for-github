@@ -53,7 +53,7 @@ const PR_FIELDS = `
     }
   }
   # Own window, so a long run of commits cannot push review requests and other events out.
-  commitItems: timelineItems(itemTypes: [PULL_REQUEST_COMMIT], last: 20) { nodes { ... on PullRequestCommit { commit { committedDate } } } }
+  commitItems: timelineItems(itemTypes: [PULL_REQUEST_COMMIT], last: 20) { nodes { ... on PullRequestCommit { commit { committedDate author { user { login } } } } } }
   reviews(last: 30) { nodes { id url author { login __typename avatarUrl } body state submittedAt } }
   reviewThreads(last: 30) {
     nodes {
@@ -158,7 +158,7 @@ export interface RawEvent {
   actor?: RawAuthor | null;
   requestedReviewer?: RawReviewer | null;
   assignee?: { login?: string } | null;
-  commit?: { committedDate: string };
+  commit?: { committedDate: string; author?: { user: { login: string } | null } | null };
   url?: string;
   stateReason?: string | null;
   review?: { author: { login: string } | null } | null;
@@ -548,7 +548,10 @@ function activitiesOf(raw: RawItem): Activity[] {
   const mergedAt = events.flatMap((e) => (e.__typename === "MergedEvent" && e.createdAt ? [Date.parse(e.createdAt)] : []));
   const fromEvents = events.flatMap((e): Activity[] => {
     const actor = toLogin(e.actor ?? null);
-    if (e.commit) return [{ kind: "commit", at: e.commit.committedDate }];
+    if (e.commit) {
+      const author = e.commit.author?.user?.login;
+      return [{ kind: "commit", at: e.commit.committedDate, ...(author && { author }) }];
+    }
     const at = e.createdAt;
     if (!at) return [];
     const url = e.url ? { url: e.url } : {};

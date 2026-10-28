@@ -6,6 +6,8 @@ import { isBot, posts, sameLogin } from "../timeline";
 export interface ShownActivity {
   activity: Activity;
   count: number;
+  /** Commits only: the run's distinct known authors, last author last. */
+  authors?: string[];
 }
 
 /**
@@ -14,7 +16,7 @@ export interface ShownActivity {
  * Kept: assignments and review requests (made or withdrawn) that concern the viewer (a team
  * request counts), reviews without text by people (not bots), state changes, links, dismissals and
  * commits. A run of commits, or of force pushes by one person, with no other event or post in
- * between becomes one entry dated at its last.
+ * between becomes one entry dated at its last; a run of commits keeps its authors.
  *
  * @param item   The item whose `activities` to sift.
  * @param me     The viewer's login.
@@ -36,10 +38,12 @@ export function shownActivities(item: Pick<Item, "activities">, me: string, post
   for (const activity of relevant) {
     const last = shown.at(-1);
     const postBetween = last && posts.some((at) => at > last.activity.at && at < activity.at);
+    const author = activity.kind === "commit" && activity.author ? [activity.author] : [];
     if (last && !postBetween && sameRun(last.activity, activity)) {
-      shown[shown.length - 1] = { activity, count: last.count + 1 };
+      const authors = activity.kind === "commit" ? [...(last.authors ?? []).filter((a) => !author.some((b) => sameLogin(a, b))), ...author] : undefined;
+      shown[shown.length - 1] = { activity, count: last.count + 1, ...(authors && { authors }) };
     } else {
-      shown.push({ activity, count: 1 });
+      shown.push({ activity, count: 1, ...(activity.kind === "commit" && { authors: author }) });
     }
   }
   return shown;

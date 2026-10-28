@@ -43,10 +43,10 @@ const CLOSED_AS: Record<string, [LucideIcon, MessageKey, MessageKey]> = {
  *
  * @example
  *   <ActivityRow shown={{ activity: { kind: "commit", at: "…" }, count: 3 }} me="octocat" avatars={item.avatars} itemUrl={item.url} />
- *   // ⊙ 3 new commits · 2 hours ago
+ *   // ⊙ 3 new commits by alice · 2 hours ago (without known authors: 3 new commits)
  */
 export function ActivityRow({ shown, me, avatars, itemUrl }: { shown: ShownActivity; me: string; avatars: Record<string, string>; itemUrl: string }) {
-  const { activity, count } = shown;
+  const { activity, count, authors = [] } = shown;
   const mine = activity.kind !== "commit" && sameLogin(activity.actor, me);
   const name = activity.kind !== "commit" && <strong>{activity.actor}</strong>;
   const say = (key: MessageKey, selfKey: MessageKey, params: Record<string, string | number> = {}) => (mine ? t(selfKey, params) : tRich(key, { name, ...params }));
@@ -112,11 +112,11 @@ export function ActivityRow({ shown, me, avatars, itemUrl }: { shown: ShownActiv
     }
     case "commit":
       icon = GitCommitHorizontal;
-      text = count === 1 ? t("activity.commit") : t("activity.commits", { count });
+      text = commitText(count, authors, me);
       break;
   }
   const Icon = icon;
-  const actor = activity.kind === "commit" ? null : activity.actor;
+  const actor = activity.kind === "commit" ? (authors.length === 1 ? authors[0] : null) : activity.actor;
   const url = ("url" in activity && activity.url) || (activity.kind === "commit" ? `${itemUrl}/commits` : itemUrl);
   return (
     <li className="activity">
@@ -129,6 +129,15 @@ export function ActivityRow({ shown, me, avatars, itemUrl }: { shown: ShownActiv
       </GitHubLink>
     </li>
   );
+}
+
+function commitText(count: number, authors: string[], me: string): ReactNode {
+  const author = authors.at(-1);
+  if (!author) return count === 1 ? t("activity.commit") : t("activity.commits", { count });
+  const name = <strong>{author}</strong>;
+  if (authors.length > 1) return tRich("activity.commitsByMany", { name, count });
+  if (sameLogin(author, me)) return count === 1 ? t("activity.commitSelf") : t("activity.commitsSelf", { count });
+  return count === 1 ? tRich("activity.commitBy", { name }) : tRich("activity.commitsBy", { name, count });
 }
 
 /** Opens a GitHub link from a timeline line; plain text when there is none. */

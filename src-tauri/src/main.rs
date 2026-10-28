@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    github_task_tracker_lib::run()
+    inbox_for_github_lib::run()
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Budget } from "../../github/client";
 import { revealLog, type LogLevel } from "../../log";
 import type { Org, Reopen } from "../../model";
+import type { MovesUp } from "../assignments";
 import type { RepoFilter } from "../../repoFilter";
 import { RULES, ruleSwitches } from "../../rules";
 import type { BotComments, Settings } from "../../store";
@@ -60,6 +61,7 @@ const LOG_LEVELS: LogLevel[] = ["off", "debug", "verbose"];
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
+const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
 
 /** The dictionary key of a rule's title or description; every rule id must have both. */
 const ruleText = (id: string, part: "title" | "description") => t(`rule.${id}.${part}` as MessageKey);
@@ -458,6 +460,19 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                   ))}
                 </div>
                 <small>{t(`settings.reopen.${reopenShown}Hint`)}</small>
+                <div className="toggle-card">
+                  <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
+                </div>
+              </div>
+
+              <div className="field">
+                <span>{t("settings.movesUp")}</span>
+                <small>{t("settings.movesUpHint")}</small>
+                <div className="toggle-card">
+                  {MOVES_UP.map((id) => (
+                    <Toggle key={id} title={t(`settings.movesUp.${id}`)} hint={t(`settings.movesUp.${id}Hint`)} checked={draft.movesUp[id]} onChange={(on) => change({ movesUp: { ...draft.movesUp, [id]: on } })} />
+                  ))}
+                </div>
               </div>
 
               <div className="field">

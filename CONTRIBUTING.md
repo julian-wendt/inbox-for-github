@@ -18,6 +18,36 @@ query, read [`docs/reference/github-api.md`](docs/reference/github-api.md).
   count). If it grows past that, stop and propose a cut.
 - Before every commit, `npm run typecheck`, `npm run lint` and `npm test` MUST pass. Lint
   findings you caused MUST be fixed, not noted.
+- A commit that touches `.github/` MUST also pass `zizmor --pedantic .github/` and `actionlint`
+  locally (`brew install zizmor actionlint`); the zizmor workflow repeats the check on every PR.
+
+## Pull requests
+
+PRs are squash-merged, so the PR title becomes the commit title on `main`.
+
+- The title MUST be a conventional message of at most 72 characters **including** the ` (#nn)`
+  the squash merge appends, i.e. at most 66 for a two-digit PR number; GitHub cuts longer
+  commit titles with "…" and moves the rest into the description. It SHOULD NOT name the issue.
+- The description MUST follow this layout:
+  - an opening paragraph without a heading: what the PR does and why
+  - `## Related Issues`: one line per issue, or N/A. An issue the PR finishes gets any of
+    GitHub's closing keywords (`close`, `fix`, `resolve` and their `-s` and `-d` forms):
+    `Closes #n`, `Fixes owner/repo#n`. An issue it only touches gets `Refs #n`, which links
+    without closing. GitHub honors the keywords only in a PR against `main`
+    ([docs](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue),
+    read 2026-10-27). `gh stack merge --squash` closes them for every layer, although an upper
+    PR still shows the branch below as its base (seen with #40, 2026-10-27).
+  - `## Changes`: one bullet per commit, `**hash** (read closely | mechanical | docs): …` in
+    one sentence
+  - `## Impact`: what changes for users and existing data, and whether anything is breaking
+  - `## Testing`: what was actually checked, as a short list, not a checklist
+- A PR holds one change with as many commits as it has logical steps.
+- Branches that build on each other SHOULD go in as a stack of PRs
+  ([stacked pull requests](https://docs.github.com/en/pull-requests/reference/stacked-prs-cli-commands),
+  `gh extension install github/gh-stack`): when a change needs another that is not on `main` yet,
+  its branch is based on that one's, and each PR follows the rules above. Merge with
+  `gh stack merge --squash`; after a lower layer changes, `gh stack rebase` and `gh stack push`
+  carry it upward.
 
 ## Breaking changes
 
@@ -38,6 +68,17 @@ update does not cost a full refetch.
 You MUST ask before adding or upgrading a dependency, changing `package-lock.json` or
 `Cargo.lock`, or touching `.github/`, release scripts, `tauri.conf.json` or the Tauri
 capabilities.
+
+Every third-party dependency MUST be pinned to an exact version, so an install or build never
+picks up a release nobody reviewed:
+
+- npm: the exact version without `^` or `~` (`"react": "19.1.0"`; `npm install --save-exact`).
+- Cargo: an exact requirement (`tauri = { version = "=2.12.5" }`).
+- GitHub Actions: the full commit SHA, with the version as a comment
+  (`uses: actions/checkout@<40-char sha> # v4.2.2`); tags and branches can move.
+- Transitive dependencies are pinned by `package-lock.json` and `Cargo.lock`. Installs and
+  builds MUST honor them: `npm ci`, and `--locked` for Cargo (see `docs/releasing.md`).
+- Dependabot proposes updates as PRs; they are reviewed like any other change.
 
 ## Product rules
 

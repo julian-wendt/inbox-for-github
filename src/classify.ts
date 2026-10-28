@@ -1,6 +1,6 @@
 import type { Bucket, Item, Reopen, Status, StoredStatus } from "./model";
 import { REOPEN_DEFAULT, reopens, snoozeEnded } from "./reopen";
-import { reviewAnswered } from "./review";
+import { pushedSinceReview, reviewAnswered } from "./review";
 import { RULES, type Rule } from "./rules";
 import { lastReplyAt, mentionsOf, sameLogin, type Mention } from "./timeline";
 import { updatesSince, type Update } from "./handoff";
@@ -8,9 +8,10 @@ import { updatesSince, type Update } from "./handoff";
 /**
  * Why an item sits in the inbox; "reopened" is an explicit "Offen" that revived an answered
  * request, "due" a follow-up date that has passed and holds until the viewer files it, "update"
- * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off.
+ * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off,
+ * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`).
  */
-export type Ask = "due" | "update" | "review" | "mention" | "reopened";
+export type Ask = "due" | "update" | "review" | "commits" | "mention" | "reopened";
 
 export interface Classified {
   item: Item;
@@ -28,6 +29,12 @@ export interface Classified {
   until?: string;
   /** Set once the viewer finished their part of it ("Mein Teil erledigt"): what happened since, maybe nothing. */
   updates?: Update[];
+  /** Who last asked the viewer (or one of their teams) for a review, when the activities say. */
+  requestedBy?: string;
+  /** Who last assigned the viewer, unless they did it themselves; unknown when the activities do not say. */
+  assignedBy?: string;
+  /** With the "commits" ask: who pushed since the viewer's review, last pusher last. */
+  pushedBy?: string[];
   /** The stored status fell back to "Offen" (see `reopens`); the caller should delete it. */
   statusReset: boolean;
 }
@@ -41,13 +48,16 @@ export interface Classified {
  * 0b. An item closed or merged on GitHub is "done" when it was for the viewer (a review request
  *    or a mention), whatever the stored status says; other closed items show nowhere.
  * 1. A stored "Zurückgestellt" or "Erledigt" wins, unless `reopens` says the item needs the
- *    viewer again; then it is discarded and `statusReset` is set. An item of the tables
+ *    viewer again, or with `reviewOnCommits` someone else pushed to a pull request the viewer
+ *    reviewed since; then it is discarded and `statusReset` is set. An item of the tables
  *    snoozes in place instead: it stays in its table until its date, and a mention since adds it
  *    to the inbox without ending the snooze.
  * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
  *    not answered yet (see `reviewAnswered`), a mention is pending, or a snooze date has passed
  *    (`due`, also on the stored "Offen" written for it). A stored "Offen"
- *    (an explicit reopen) counts as a fresh request. An assignment alone is no such ask.
+ *    (an explicit reopen) counts as a fresh request. With `reviewOnCommits`, a push by someone
+ *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
+ *    is no such ask.
  * 3. An item assigned to the viewer with nothing pending goes to "assigned".
  * 4. Once the viewer has answered every review request and mention, the item counts as "done"
  *    without a stored status, and `answered` says why.
@@ -59,6 +69,7 @@ export interface Classified {
  * @param stored    The viewer's manual status for this item, if any.
  * @param switches  Rule id → enabled, as returned by `ruleSwitches`.
  * @param reopenOn  What brings a snoozed or done item back to "Offen" (the "reopenOn" setting).
+ * @param reviewOnCommits  Pushes by others bring a reviewed pull request back (the "reviewOnCommits" setting).
  *
  * @example
  *   classify(item, "octocat", { status: "done", changedAt: "2026-10-01T12:00:00Z" }, ruleSwitches());
@@ -70,6 +81,7 @@ export function classify(
   switches: Record<string, boolean>,
   reopenOn: Reopen = REOPEN_DEFAULT,
   now = Date.now(),
+  reviewOnCommits = true,
 ): Classified {
   const rules = RULES.filter((r) => switches[r.id]);
   const assigned = item.reasons.includes("assigned");
@@ -85,10 +97,14 @@ export function classify(
     return { item, mention: null, statusReset: false, statusAt: stored?.changedAt ?? null, bucket: forMe ? "done" : "involved", status: "done", answered: null, asks: [] };
   }
   const tableSnooze = inTable && stored?.status === "snoozed";
-  const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now);
+  const pushed = reviewOnCommits ? pushedSinceReview(item, me) : null;
+  const pushedSinceStatus = !!pushed && !!stored && stored.status !== "open" && pushed.at > stored.changedAt;
+  const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now) || pushedSinceStatus;
   const effective = statusReset ? undefined : stored;
   const mention = pendingMention(item, rules, { me });
-  const result = { item, mention, statusReset, statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }) };
+  const requestedBy = requesterOf(item, me);
+  const assignedBy = assignerOf(item, me);
+  const result = { item, mention, statusReset, statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   if (effective && tableSnooze) {
     const asks: Ask[] = mention && mention.at > effective.changedAt ? ["mention"] : [];
@@ -107,10 +123,11 @@ export function classify(
   const asks: Ask[] = [];
   if (statusReset ? snoozeEnded(stored, now) : effective?.due) asks.push("due");
   if (reviewOpen) asks.push(reopenedAt && reviewAnswered(item, me) ? "reopened" : "review");
+  else if (pushed) asks.push("commits");
   if (mention) asks.push("mention");
   else if (mentionOpen && !asks.includes("reopened")) asks.push("reopened");
 
-  if (asks.length > 0) return { ...result, bucket: "inbox", status: "open", answered: null, asks };
+  if (asks.length > 0) return { ...result, bucket: "inbox", status: "open", answered: null, asks, ...(asks.includes("commits") && { pushedBy: pushed!.by }) };
   if (item.reasons.includes("assigned")) return { ...result, bucket: "assigned", status: "open", answered: null, asks };
   if (reviewed || mentioned) {
     return { ...result, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks };
@@ -134,6 +151,17 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   if (mention) asks.push("mention");
   const bucket: Bucket = asks.length > 0 ? "inbox" : !item.closed && item.reasons.includes("assigned") ? "assigned" : "involved";
   return { item, bucket, status: "done", mention, answered: null, asks, statusAt: since, statusReset: false, updates };
+}
+
+function requesterOf(item: Item, me: string): string | null {
+  const requests = item.activities.filter((a) => a.kind === "review-requested" && (sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:")));
+  const last = requests.at(-1);
+  return last && last.kind === "review-requested" ? last.actor : null;
+}
+
+function assignerOf(item: Item, me: string): string | null {
+  const last = item.activities.flatMap((a) => (a.kind === "assigned" && sameLogin(a.assignee, me) ? [a.actor] : [])).at(-1);
+  return last && !sameLogin(last, me) ? last : null;
 }
 
 function pendingMention(item: Item, rules: Rule[], ctx: { me: string }): Mention | null {

@@ -1,0 +1,49 @@
+# Updates for the exact pins in package.json, src-tauri/Cargo.toml and the workflows (see CONTRIBUTING.md).
+# Cooldown: a release is proposed only once it is days old, so a compromised one has time to be
+# found and yanked. Security updates ignore the cooldown.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Tauri's npm and Cargo packages share minor versions: merge both ecosystems' PRs together.
+      tauri:
+        patterns: ["@tauri-apps/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      lint:
+        patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint"]
+
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      tauri:
+        patterns: ["tauri", "tauri-*"]
+      serde:
+        patterns: ["serde", "serde_json"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+      include: scope
