@@ -1,0 +1,90 @@
+import type { Item } from "../model";
+
+/** A full fetch at least this often; deltas miss changes that do not touch `updatedAt`, such as board status. */
+export const FULL_EVERY_MS = 60 * 60_000;
+
+/** Deltas start this much before the last fetch, so items GitHub's search indexes late are not missed. */
+export const DELTA_OVERLAP_MS = 5 * 60_000;
+
+/**
+ * Merges a delta fetch into the items shown so far: every item in `changed` replaces its old
+ * version (with the reasons the delta found), new ones are added, and the rest stays as it was.
+ * Closed items drop out once they are older than `closedDays`, as a full fetch would leave them out.
+ *
+ * Items that stopped matching every search without changing (rare, e.g. a review request
+ * withdrawn) stay until the next full fetch; see `FULL_EVERY_MS`.
+ *
+ * @param previous    The items shown before the delta.
+ * @param changed     Items updated since the last fetch.
+ * @param closedDays  The "closedDays" setting; 0 drops every closed item.
+ * @param now         The current time, for the closed window.
+ * @returns The merged items.
+ *
+ * @example
+ *   mergeDelta(items, fresh, 7); // items with the fresh versions swapped in
+ */
+export function mergeDelta(previous: Item[], changed: Item[], closedDays: number, now = Date.now()): Item[] {
+  const byId = new Map(previous.map((item) => [item.id, item]));
+  for (const item of changed) byId.set(item.id, item);
+  return withinClosedWindow([...byId.values()], closedDays, now);
+}
+
+/**
+ * Leaves out closed items older than `closedDays`; 0 leaves out every closed item. Open items stay.
+ *
+ * @example
+ *   withinClosedWindow(items, 7); // open items and those closed in the last 7 days
+ */
+export function withinClosedWindow(items: Item[], closedDays: number, now = Date.now()): Item[] {
+  const cutoff = now - closedDays * 86_400_000;
+  return items.filter((item) => !item.closed || (closedDays > 0 && Date.parse(item.closed.at) >= cutoff));
+}
+
+/** What a cached fetch holds: closed items this many days back, board data, and the item limit used. */
+export interface Coverage {
+  closedDays: number;
+  boards: boolean;
+  maxItems: number;
+}
+
+/**
+ * The cache's `scope`: who and which organizations it is for (`key`), and what it covers. Kept
+ * apart so narrowing a setting filters the cache instead of making it look like another scope.
+ *
+ * @example
+ *   encodeScope('[["octo-org"],"octocat"]', { closedDays: 7, boards: true, maxItems: 200 });
+ */
+export function encodeScope(key: string, coverage: Coverage): string {
+  return JSON.stringify({ key, coverage });
+}
+
+/** Reads `encodeScope`'s value; null for anything else, such as a cache from before coverage was kept. */
+export function decodeScope(scope: string | undefined): { key: string; coverage: Coverage } | null {
+  try {
+    const parsed = JSON.parse(scope ?? "") as { key?: unknown; coverage?: Partial<Coverage> };
+    const c = parsed.coverage;
+    if (typeof parsed.key !== "string" || typeof c?.closedDays !== "number" || typeof c.boards !== "boolean" || typeof c.maxItems !== "number") return null;
+    return { key: parsed.key, coverage: { closedDays: c.closedDays, boards: c.boards, maxItems: c.maxItems } };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether the cache holds enough for these settings: as many closed days and items or more.
+ * Boards are not part of it; switching them on loads only the boards (see `withBoards`).
+ */
+export function covers(have: Coverage, want: Coverage): boolean {
+  return have.closedDays >= want.closedDays && have.maxItems >= want.maxItems;
+}
+
+/**
+ * Whether the next refresh may be a delta: there is an earlier fetch for the same settings
+ * (`scope`), and its last full fetch is recent enough.
+ *
+ * @example
+ *   canDelta({ scope: "a", fullAt: new Date() }, "a"); // true
+ */
+export function canDelta(last: { scope?: string; fullAt?: Date } | null, scope: string, now = Date.now()): boolean {
+  return !!last?.fullAt && last.scope === scope && now - last.fullAt.getTime() < FULL_EVERY_MS;
+}

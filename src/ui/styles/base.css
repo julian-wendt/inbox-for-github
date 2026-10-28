@@ -1,0 +1,255 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Transparent so the window's vibrancy shows through the sidebar; panels paint their own background. */
+body {
+  background: transparent;
+  color: var(--text);
+  font: 450 13.5px/1.5 var(--font);
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: default;
+}
+
+/* Keyboard focus as a fill; everything inside takes the full text color, muted would fall below 3:1.
+   Rows and bars show the keyboard position by their selection instead. */
+:focus-visible {
+  outline: none;
+}
+
+html:not([data-input="pointer"]) :focus-visible:not(input:not([type="checkbox"], [type="radio"]), select, textarea, .btn.success, .table-row, .bar) {
+  box-shadow: inset 0 0 0 100vmax var(--focus-fill);
+}
+
+html:not([data-input="pointer"]) :focus-visible:not(input:not([type="checkbox"], [type="radio"]), select, textarea, .btn.success, .table-row, .bar),
+html:not([data-input="pointer"]) :focus-visible:not(input:not([type="checkbox"], [type="radio"]), select, textarea, .btn.success, .table-row, .bar) * {
+  color: var(--text);
+}
+
+/* A filled button keeps its white text; a fill over it would hide its color, so it darkens. */
+html:not([data-input="pointer"]) .btn.success:focus-visible {
+  filter: brightness(0.78);
+}
+
+/* Text fields show focus by their border; a tint behind the text would read as a fill.
+   :where keeps it weaker than a field's own focus style (comment box, private note). */
+:where(input:not([type="checkbox"], [type="radio"]), select, textarea):focus-visible {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* The thumb shows only while its area scrolls (data-scrolling, set in main.tsx) and fades out after;
+   the track keeps its width, so nothing shifts. A registered property, as WebKit cannot transition the thumb. */
+@property --thumb-alpha {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--border-strong) calc(var(--thumb-alpha) * 100%), transparent) padding-box;
+}
+
+.inbox-list,
+.inbox-empty,
+.assigned-scroll,
+.detail-scroll,
+.settings-body,
+.help-body,
+.palette [cmdk-list],
+.nav.repos,
+.repo-list,
+.org-select-menu,
+.reply-preview {
+  transition: --thumb-alpha 400ms var(--ease);
+}
+
+[data-scrolling] {
+  --thumb-alpha: 1;
+  transition-duration: 0s;
+}
+
+kbd {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--panel);
+  color: var(--text-muted);
+  font: 500 11px/1 var(--font);
+}
+
+.btn {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+  font-weight: 500;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+}
+
+.btn:hover {
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.btn.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn.primary:hover {
+  filter: brightness(1.06);
+}
+
+.icon-btn {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--text-muted);
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn:disabled {
+  color: var(--text-faint);
+}
+
+.avatar {
+  flex: none;
+  border-radius: 50%;
+  background: var(--border);
+  object-fit: cover;
+}
+
+/* Stands in for GitHub's identicons: a soft orb of color clouds, a light from the top left and the initial. */
+.avatar-placeholder {
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+  background:
+    radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.2), transparent 45%),
+    radial-gradient(
+      circle at var(--xa) var(--ya),
+      color-mix(in srgb, var(--ca) 70%, transparent),
+      color-mix(in srgb, var(--ca) 28%, transparent) calc(var(--sa) / 2),
+      transparent var(--sa)
+    ),
+    radial-gradient(circle at var(--x1) var(--y1), var(--c1), transparent 62%),
+    radial-gradient(circle at var(--x2) var(--y2), var(--c2), transparent 68%),
+    var(--c3);
+}
+
+/* While an image is being checked, it loads invisibly on top of the placeholder. */
+.avatar-pending {
+  position: relative;
+  display: inline-block;
+  background: none;
+}
+
+.avatar-pending > img {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+/* The body is transparent for the window's vibrancy; the crash page paints its own ground. */
+.crash {
+  display: grid;
+  gap: 12px;
+  align-content: center;
+  min-height: 100vh;
+  padding: 32px max(32px, calc((100% - 560px) / 2));
+  background: var(--bg);
+  color: var(--text);
+}
+
+.crash h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.crash p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.crash-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.crash pre {
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  font: 11.5px/1.5 var(--font-mono);
+  white-space: pre-wrap;
+}
+
+.crash summary {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+/* Long reading surfaces use the slightly dimmer text; the sidebar keeps full --text. */
+.inbox,
+.assigned,
+.detail {
+  --text: var(--text-content);
+}

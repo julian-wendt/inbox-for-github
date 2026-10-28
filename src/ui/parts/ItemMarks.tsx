@@ -1,0 +1,70 @@
+import { Bell, CircleDot, GitPullRequest, X } from "lucide-react";
+import type { Classified } from "../../classify";
+import type { Item, Status } from "../../model";
+import { t } from "../i18n";
+import { STATUSES } from "../labels";
+import { followUpOf } from "../followUp";
+import { reminderText, untilText } from "../snooze";
+
+/**
+ * Glyph telling issues and pull requests apart, with the kind as its tooltip. Given a status, it
+ * takes that status's color, a heavier stroke so the color reads, and names it in the tooltip, so a
+ * list row needs no separate marker.
+ *
+ * @example
+ *   <KindIcon item={item} size={14} /> // pull request glyph for a PR, issue glyph otherwise
+ *   <KindIcon item={item} status="snoozed" /> // tooltip "Issue · Snoozed"
+ */
+export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">; size?: number; status?: Status }) {
+  const [Icon, kind] = item.kind === "pr" ? [GitPullRequest, "Pull Request"] : [CircleDot, "Issue"];
+  const label = status ? `${kind} · ${STATUSES.find((s) => s.id === status)!.title}` : kind;
+  return (
+    <span className={`kind-icon${status ? ` st-${status}` : ""}`} title={label}>
+      <Icon size={size} strokeWidth={status ? 2.6 : 2} aria-label={label} />
+    </span>
+  );
+}
+
+/**
+ * A bell on items that wait for a follow-up date, with the time as its tooltip. Nothing for other
+ * items, and nothing once the date has passed (see `followUpOf`).
+ *
+ * @example
+ *   <FollowUpBell entry={entry} /> // bell, tooltip "Follow-up Mon 09:00"
+ */
+export function FollowUpBell({ entry, size = 12 }: { entry: Pick<Classified, "status" | "until">; size?: number }) {
+  const followUp = followUpOf(entry);
+  if (!followUp) return null;
+  const label = t("snooze.reminderAt", { until: untilText(followUp.at) });
+  return (
+    <span className="reminder-bell" title={label}>
+      <Bell size={size} aria-label={label} />
+    </span>
+  );
+}
+
+/**
+ * The detail's chip for an item that waits for a follow-up date: bell, date and time. Gone once
+ * the item is back in the inbox (see `followUpOf`).
+ *
+ * @param onRemove  Adds a × that takes the follow-up off the item.
+ *
+ * @example
+ *   <FollowUpChip entry={entry} onRemove={() => remove(entry)} /> // [bell] Mon, 26 Oct, 09:00 [×]
+ */
+export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until">; onRemove?: () => void }) {
+  const followUp = followUpOf(entry);
+  if (!followUp) return null;
+  const text = reminderText(followUp.at);
+  return (
+    <span className="chip reminder-chip" title={t("snooze.reminderAt", { until: text })}>
+      <Bell size={13} className="chip-icon" />
+      {text}
+      {onRemove && (
+        <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>
+          <X size={12} />
+        </button>
+      )}
+    </span>
+  );
+}

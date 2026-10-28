@@ -1,0 +1,1217 @@
+/* The list yields width before the detail pane drops below 320px. */
+.shell {
+  --list-fit: min(var(--list-w), calc(100vw - var(--sidebar-w) - 320px));
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) var(--list-fit) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+}
+
+.shell.wide {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+}
+
+.resizer-slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 0;
+}
+
+.resizer-slot.sidebar-edge {
+  left: var(--sidebar-w);
+}
+
+.resizer-slot.list-edge {
+  left: calc(var(--sidebar-w) + var(--list-fit));
+}
+
+.resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 7px;
+  cursor: col-resize;
+}
+
+.resizer::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+  background: var(--text-faint);
+  content: "";
+  opacity: 0;
+  transition: opacity 120ms var(--ease);
+}
+
+.resizer.row {
+  top: -4px;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: auto;
+  height: 7px;
+  cursor: row-resize;
+}
+
+.resizer.row::after {
+  top: 3px;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: auto;
+  height: 1px;
+}
+
+.resizer:hover::after,
+.resizing .resizer:active::after {
+  opacity: 0.5;
+}
+
+.resizing,
+.resizing * {
+  cursor: col-resize !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.resizing.rows,
+.resizing.rows * {
+  cursor: row-resize !important;
+}
+
+.boot {
+  height: 100%;
+  background: var(--panel);
+}
+
+/* Sidebar: no background of its own, so the native vibrancy shows. */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 10px 10px;
+  border-right: 1px solid var(--divider);
+  background: var(--sidebar);
+}
+
+/* Leaves room for the traffic lights of the overlay title bar. */
+.sidebar-top {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: 2px;
+  align-items: center;
+  height: 44px;
+  padding-left: 84px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.search-pill {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 30px;
+  margin: 2px 0 12px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+  color: var(--text-faint);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.03);
+}
+
+.search-pill span {
+  flex: 1;
+  text-align: left;
+}
+
+.nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-item {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-align: left;
+  transition: background 100ms var(--ease), color 100ms var(--ease);
+}
+
+.nav-item span:not(.nav-count, .repo-dot, .repo-check) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.nav-item.on {
+  background: var(--hover);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.nav-count {
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.nav-item.unread,
+.nav-item.unread .nav-count {
+  font-weight: 700;
+}
+
+.nav-item.unread .nav-count {
+  color: var(--text);
+}
+
+.nav-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 8px 6px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav.repos {
+  flex: 1;
+  align-content: start;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.repo-label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.nav-item .repo-label .repo-name {
+  flex: 0 1 auto;
+}
+
+.repo-direct {
+  flex: none;
+}
+
+.repo-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--text-faint);
+  opacity: 0.6;
+}
+
+.scope-notice {
+  display: grid;
+  flex: none;
+  gap: 6px;
+  margin: 8px 4px 0;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.scope-notice strong {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.scope-notice ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scope-command {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--track);
+  color: var(--text);
+  text-align: left;
+}
+
+.scope-command code {
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.sidebar-foot {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
+  margin-top: auto;
+  padding: 10px 4px 0;
+}
+
+.foot-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.foot-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.foot-text small {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The dot carries the warning (3:1 as a graphic); the text keeps the normal footer contrast. */
+.foot-text small.offline::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--st-snoozed);
+  content: "";
+  vertical-align: 1px;
+}
+
+.error-bar {
+  position: fixed;
+  top: 52px;
+  right: 16px;
+  max-width: 420px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--new) 50%, transparent);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  color: var(--new);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Navigation left, the chosen section right, actions across the bottom; a fixed height keeps
+   the dialog from jumping when switching sections. */
+.dialog.settings {
+  position: relative;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  width: min(880px, calc(100vw - 32px));
+  height: min(620px, 85vh);
+  overflow: hidden;
+}
+
+.dialog.settings.welcome {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(560px, calc(100vw - 32px));
+  height: auto;
+}
+
+.settings-nav {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 18px 10px;
+}
+
+.dialog .settings-nav h2,
+.settings-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 24px;
+}
+
+.dialog .settings-nav h2 {
+  margin: 0 8px 20px;
+}
+
+.settings-heading {
+  margin-bottom: 2px;
+}
+
+.dialog.settings strong {
+  font-weight: 500;
+}
+
+.settings-body {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 0 max(0px, calc(24px - var(--gutter, 0px))) 22px 24px;
+  overflow-y: auto;
+}
+
+/* The section's title and the close button stay in view, on the panel's own color, while the settings scroll beneath. */
+.settings-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 6px;
+  background: var(--panel);
+}
+
+.settings-head .settings-heading {
+  margin: 0;
+}
+
+.settings-head .dialog-close {
+  position: static;
+}
+
+.dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.settings-warning {
+  color: var(--new);
+}
+
+.dialog.settings .dialog-actions {
+  grid-column: 1 / -1;
+  padding: 12px 16px;
+}
+
+.link-btn {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 550;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+/* A text link shows focus like a link: a full-strength underline instead of a tinted box. */
+.link-btn:focus-visible {
+  box-shadow: none;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
+}
+
+.link-btn:hover {
+  text-decoration-color: currentColor;
+}
+
+.dialog h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 550;
+}
+
+.dialog-intro {
+  margin: -10px 0 0;
+  color: var(--text-muted);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field > span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.field small {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.field-group {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Inactive controls are exempt from contrast; they dim, their text stays muted. */
+.field-group:disabled {
+  color: var(--text-muted);
+}
+
+.field-group:disabled .segmented,
+.field-group:disabled .segment-field {
+  opacity: 0.5;
+}
+
+.delivery-rows {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.delivery-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reset-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  resize: vertical;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.org-row {
+  padding-block: 8px;
+}
+
+.org-avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-m);
+}
+
+.org-avatar.placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--track);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.repo-filter {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+.org-select {
+  position: relative;
+}
+
+.org-select-button,
+.org-select-menu button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+
+.org-select-button {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+}
+
+.org-select-button:hover {
+  border-color: var(--text-faint);
+}
+
+.org-select .org-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-s);
+  font-size: 11px;
+}
+
+.org-select strong {
+  font-weight: 550;
+}
+
+.org-select-summary {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.org-select-chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.org-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 26;
+  max-height: 280px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  list-style: none;
+}
+
+.org-select-menu button {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-m);
+}
+
+.org-select-menu button:hover,
+.org-select-menu button.on {
+  background: var(--hover);
+}
+
+.repo-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+}
+
+.radios {
+  display: flex;
+  gap: 14px;
+}
+
+.radio {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--text);
+}
+
+/* Drawn by hand, so ring and dot share the same gray instead of the system accent. */
+.radio input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 50%;
+  appearance: none;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+}
+
+.radio input:checked {
+  background: radial-gradient(circle, var(--text-faint) 0 3px, transparent 3.5px);
+}
+
+/* Hidden by visibility, not removal, so the mode row keeps its height when switching modes. */
+.repo-search[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
+.repo-search {
+  flex: 1;
+  min-width: 160px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.repo-list {
+  display: grid;
+  align-content: start;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.field .repo-list {
+  max-height: 260px;
+}
+
+.repo-list label {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 2px;
+  font-size: 12.5px;
+}
+
+.repo-error {
+  color: var(--new);
+}
+
+.org-add {
+  display: flex;
+  gap: 8px;
+}
+
+.org-add input {
+  flex: 1;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.segmented {
+  display: inline-flex;
+  justify-self: start;
+  padding: 2px;
+  border-radius: var(--radius-m);
+  background: var(--control-fill);
+}
+
+.segmented button {
+  height: 26px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+
+.segmented button:not(.on):hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* Weight, not only the faint fill, tells the selected segment apart. */
+.segmented button.on {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+.toggle-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.toggle-row > span {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+
+/* One bordered card for a main switch and the parts that refine it, divided by lines. */
+.toggle-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.toggle-card .toggle-row {
+  border: 0;
+  border-radius: 0;
+}
+
+.toggle-card > .toggle-row + .toggle-row {
+  border-top: 1px solid var(--border);
+}
+
+.toggle-card-note {
+  margin: 0;
+  padding: 6px 12px 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.toggle-card-part {
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.toggle-card-part legend {
+  float: left;
+  width: 100%;
+  padding: 6px 12px 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.toggle-row.compact {
+  padding-block: 6px;
+}
+
+/* Inactive controls are exempt from contrast; muted text still meets 4.5:1. */
+.toggle-card-part:disabled .toggle-row {
+  color: var(--text-muted);
+}
+
+.toggle-card-part:disabled .switch {
+  opacity: 0.5;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 140ms var(--ease);
+  appearance: none;
+}
+
+.switch::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  content: "";
+  transition: translate 160ms var(--ease);
+}
+
+.switch:checked {
+  background: var(--green-fill);
+}
+
+.switch:checked::after {
+  translate: 14px 0;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-actions kbd {
+  border-color: rgb(255 255 255 / 0.3);
+  background: transparent;
+  color: inherit;
+}
+
+.usage {
+  display: grid;
+  gap: 4px;
+}
+
+.usage meter {
+  width: 100%;
+  height: 8px;
+}
+
+.usage-ring circle {
+  fill: none;
+  stroke-width: 2;
+}
+
+.usage-track {
+  stroke: var(--border-strong);
+}
+
+.usage-left {
+  stroke-linecap: round;
+  transition: stroke-dasharray 300ms var(--ease);
+}
+
+.usage-ring.ok .usage-left {
+  stroke: var(--st-done);
+}
+
+.usage-ring.mid .usage-left {
+  stroke: var(--st-snoozed);
+}
+
+.usage-ring.low .usage-left {
+  stroke: var(--new);
+}
+
+/* A running refresh: the spinning icon plus a small stop square, so the click to stop is clear. */
+.icon-btn.stoppable {
+  position: relative;
+}
+
+.stop-mark {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 1.5px;
+  background: var(--text);
+}
+
+/* A small action at the end of a sidebar heading, right-aligned with the counts below. */
+.heading-action {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  margin-right: -2px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.heading-action:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.heading-action[hidden] {
+  display: grid;
+  visibility: hidden;
+}
+
+/* Takes the dot's place once a repo is picked, with the same footprint so the names do not move. */
+.repo-check {
+  display: grid;
+  flex: none;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  /* 12px wide, but takes the dot's 7px in the row: 12 - 2 × 2.5. */
+  margin: 0 -2.5px;
+  place-items: center;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 3px;
+}
+
+/* Filled without a border, so the hand-drawn check sits in the exact middle of the 12px box. */
+.repo-check.on {
+  border: 0;
+  background: var(--text-muted);
+}
+
+.repo-check svg {
+  fill: none;
+  stroke: var(--panel);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.status-map {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.status-map strong {
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.status-map-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  gap: 10px;
+  align-items: center;
+  min-height: 30px;
+}
+
+.status-map-value {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-map-choice {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-m);
+  background: var(--track);
+}
+
+.status-map-choice button {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.status-map-choice button:hover:not(.on, .auto) {
+  background: var(--hover);
+  color: var(--text-muted);
+}
+
+/* Selected like any segment; the app's guess stays at normal weight, the viewer's own choice is bold and has the reset button. */
+.status-map-choice button.auto,
+.status-map-choice button.on {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+.status-map-choice button.on {
+  font-weight: 600;
+}
+
+.attribute-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attribute-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+}
+
+.attribute-row.droppable:hover {
+  border-color: var(--st-accepted);
+}
+
+.attribute-grip {
+  flex: none;
+  color: var(--text-faint);
+  cursor: grab;
+}
+
+.attribute-name {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.attribute-name small {
+  color: var(--text-faint);
+}
+
+/* Column heads above the two switches of each attribute row, aligned with them. */
+.attribute-head {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding-right: 13px;
+}
+
+.attribute-head small {
+  width: 36px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.attribute-head small:first-of-type {
+  margin-left: auto;
+}
+
+.orb-list {
+  display: grid;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.orb-list li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.orb-list li:last-child {
+  border-bottom: 0;
+}
+
+.orb-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.untracked-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.untracked-list li {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.untracked-list li:last-child {
+  border-bottom: 0;
+}
+
+/* Shrinks with the pane, so long titles end in an ellipsis instead of widening the dialog. */
+.untracked-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.untracked-title {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.untracked-title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.untracked-text small {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.untracked-list .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* With the tint, a stripe makes the dev window unmistakable; decorative, so no contrast rule. */
+:root[data-env="dev"] .sidebar {
+  box-shadow: inset 0 3px 0 var(--orange);
+}

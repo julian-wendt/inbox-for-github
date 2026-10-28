@@ -1,0 +1,927 @@
+.inbox {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--divider);
+  background: var(--panel);
+}
+
+.pane-header {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.pane-header h1 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bulb {
+  position: relative;
+  display: grid;
+}
+
+/* Icon button on the same track and at the height of the compact segmented control. */
+.chip-btn {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--control-fill);
+  color: var(--text-muted);
+}
+
+.chip-btn.header-select {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  width: auto;
+  max-width: 180px;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.header-select span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Header controls are greyed out instead of hidden, so the others never jump. */
+.chip-btn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.chip-btn:hover:not(:disabled),
+.chip-btn[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text);
+}
+
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 26;
+  width: 300px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.popover strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Bridges the gap to the button, so a hover-opened popover stays open on the way over. */
+.popover::before {
+  position: absolute;
+  inset: -8px 0 auto;
+  height: 8px;
+  content: "";
+}
+
+.popover p {
+  margin: 6px 0 0;
+}
+
+.popover ul {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding-left: 16px;
+}
+
+.popover .link-btn {
+  margin-top: 10px;
+}
+
+.inbox .pane-header .segmented,
+.assigned .pane-header .header-controls {
+  margin-left: auto;
+}
+
+/* Keeps the bar titles where they are when the grip is not offered (time grouping). */
+.bar-grip.hidden {
+  visibility: hidden;
+}
+
+/* Ends flush with the rows: their right margin plus the scrollbar, together at least 8px. */
+.inbox .pane-header {
+  padding-right: max(8px, var(--gutter, 0px));
+}
+
+/* Above the sliding body, so the search bar and the content pass under it. */
+.inbox .pane-header,
+.assigned .pane-header {
+  position: relative;
+  z-index: 2;
+  background: var(--panel);
+}
+
+.dock-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* --text-muted on the gray fond keeps 4.5:1 in both themes. */
+.search-bar {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 0 8px 0 14px;
+  border-radius: var(--radius-m);
+  color: var(--text-muted);
+}
+
+/* Its own strip under the header, as wide as the rows and the header's buttons, pushing the content down; a table's rows start at 12px. */
+.search-dock {
+  display: flex;
+  flex: none;
+  padding: 8px max(8px, var(--gutter, 0px)) 0 8px;
+  overflow: hidden;
+}
+
+.assigned .search-dock {
+  padding: 8px max(12px, var(--gutter, 0px)) 0 12px;
+}
+
+.search-dock .search-bar {
+  height: 36px;
+  background: var(--control-fill);
+}
+
+.search-bar input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.search-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+/* A yellow 30% wash keeps the row text above 5:1 in both themes, selected rows included. */
+.hit {
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--yellow) 30%, transparent);
+  color: inherit;
+}
+
+.search-count {
+  flex: none;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.search-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.search-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.segmented.compact button {
+  height: 22px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* The label's own color, so it keeps the label's contrast. */
+.segment-count {
+  margin-left: 5px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.inbox-list {
+  flex: 1;
+  margin: 0;
+  padding: 6px 0;
+  /* Always room for the scrollbar, so rows and header do not shift when the list starts to scroll. */
+  overflow-y: scroll;
+  list-style: none;
+}
+
+.inbox-row {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 60px;
+  margin: 0 max(0px, calc(8px - var(--gutter, 0px))) 0 8px;
+  padding: 0 12px;
+  border-radius: var(--radius-m);
+}
+
+.inbox-row:hover {
+  background: var(--hover);
+}
+
+.inbox-row.selected,
+.inbox-row.marked {
+  background: var(--selected);
+}
+
+.row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row-title {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-context {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.row-context > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kind-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--text-muted);
+}
+
+.row-end {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.inbox-empty {
+  display: grid;
+  flex: 1;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  /* Like the list, so the scrollbar's room and the header's alignment stay when it empties. */
+  overflow-y: scroll;
+  color: var(--text-faint);
+}
+
+.inbox-empty-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.inbox-empty-mark.loading {
+  background: none;
+  color: var(--text-muted);
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  height: 38px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+  font-weight: 500;
+  translate: -50% 0;
+}
+
+.toast-undo {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--hover);
+  color: var(--text-muted);
+}
+
+/* A list's time group: a quiet, foldable heading like the sidebar's, no bar background. */
+.list-bar {
+  margin: 10px max(0px, calc(8px - var(--gutter, 0px))) 2px 8px;
+}
+
+.list-bar .bar {
+  height: 26px;
+  padding-left: 6px;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.list-bar .bar span {
+  letter-spacing: 0;
+}
+
+.list-bar .bar .bar-chevron {
+  margin-right: 0;
+}
+
+.list-bar .bar:hover {
+  color: var(--text-muted);
+}
+
+/* Keyboard position without a background: the heading takes the full text color. */
+.list-bar .bar.selected {
+  color: var(--text);
+}
+
+.fresh-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--st-accepted);
+}
+
+/* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
+.kind-icon.st-open {
+  color: var(--st-open);
+}
+
+.kind-icon.st-accepted {
+  color: var(--st-accepted);
+}
+
+.reminder-bell {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--st-snoozed);
+}
+
+/* The bell's glyph sits high in its box; this centers it on the kind icon beside it. */
+.row-context .reminder-bell {
+  transform: translateY(1px);
+}
+
+.kind-icon.st-snoozed {
+  color: var(--st-snoozed);
+}
+
+.kind-icon.st-done {
+  color: var(--st-done);
+}
+
+/* Assigned to me: a full-width table with collapsible bars */
+.assigned {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--panel);
+}
+
+.assigned .pane-header {
+  padding-right: 16px;
+}
+
+/* A visible scrollbar takes the place of the right padding, so both sides keep about the same room. */
+.assigned-scroll {
+  flex: 1;
+  padding: 6px max(0px, calc(12px - var(--gutter, 0px))) 24px 12px;
+  overflow-y: scroll;
+}
+
+.assigned-empty {
+  padding: 40px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* One gap between every row, item rows and status bars alike. */
+.bar-group {
+  display: grid;
+  gap: 4px;
+}
+
+.bar-group + .bar-group {
+  margin-top: 4px;
+}
+
+/* Where a dragged bar will land: just above this one. */
+.bar-group.drop-target {
+  box-shadow: 0 -2px 0 var(--st-accepted);
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 4px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+}
+
+.bar.selected {
+  background: var(--selected);
+}
+
+.bar:focus,
+.bar:focus-visible {
+  outline: none;
+}
+
+.bar span {
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+/* What a bar holds, after its count; cut off where the bar ends. */
+.bar-hint {
+  min-width: 0;
+  margin-left: 4px;
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 12px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-chevron {
+  margin-right: 3px;
+  color: var(--text-faint);
+  transition: rotate 140ms var(--ease);
+}
+
+.bar[aria-expanded="true"] .bar-chevron {
+  rotate: 90deg;
+}
+
+.table-row {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  height: 40px;
+  /* The kind icon starts where the bar title does (53px); the star's center is the chevron's (35px). */
+  padding: 0 12px 0 53px;
+  border-radius: var(--radius-m);
+}
+
+/* Selection shows as the row background; a focus ring on top is noise. Stated for :focus-visible
+   too, so the global focus style cannot win on order. */
+.table-row:focus,
+.table-row:focus-visible {
+  outline: none;
+}
+
+.table-row:hover {
+  background: var(--hover);
+}
+
+.table-row.selected,
+.table-row.marked {
+  background: var(--selected);
+}
+
+.marked-chip {
+  gap: 4px;
+  cursor: pointer;
+}
+
+.marked-chip:hover {
+  background: var(--hover);
+}
+
+.table-number {
+  flex: none;
+  min-width: 46px;
+  color: var(--text-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-title {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.table-title-text {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.inbox-row.unread .row-title {
+  font-weight: 700;
+}
+
+/* Mail's unread dot, in the row's left padding, so read and unread rows keep their alignment;
+   in the tables it sits before the star (which starts at 24px). */
+.inbox-row .fresh-dot,
+.table-row .fresh-dot {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  translate: 0 -50%;
+}
+
+.table-row .fresh-dot {
+  left: 11px;
+}
+
+.table-row.unread .table-title-text {
+  font-weight: 700;
+}
+
+/* Quiet and absolute, so it does not read like the relative time at the end of the row. */
+.table-opened {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+/* One chip line; chips that do not fit wrap onto a second line that is clipped away. */
+.table-attrs {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 0;
+  height: 24px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.assignee-avatar {
+  display: inline-flex;
+}
+
+.table-attrs .chip {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.table-attrs .label {
+  height: 24px;
+  padding: 0 11px;
+  white-space: nowrap;
+}
+
+.assignee-pill {
+  gap: 5px;
+  padding: 0 4px 0 9px;
+}
+
+.people {
+  display: inline-flex;
+}
+
+.people .assignee-avatar + .assignee-avatar {
+  margin-left: -5px;
+  transition: margin-left 140ms var(--ease);
+}
+
+.assignee-pill:hover .assignee-avatar + .assignee-avatar {
+  margin-left: 2px;
+}
+
+.option-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--option);
+}
+
+/* GitHub Projects option colors; dots are decoration next to the text, 3:1 in both themes. */
+.option-gray {
+  --option: var(--st-open);
+}
+
+.option-blue {
+  --option: var(--st-accepted);
+}
+
+.option-green {
+  --option: var(--st-done);
+}
+
+.option-yellow {
+  --option: var(--st-snoozed);
+}
+
+.option-orange {
+  --option: var(--orange);
+}
+
+.option-red {
+  --option: var(--new);
+}
+
+.option-pink {
+  --option: var(--pink);
+}
+
+.option-purple {
+  --option: var(--mention);
+}
+
+
+.bar-grip {
+  color: var(--text-faint);
+  opacity: 0;
+  cursor: grab;
+}
+
+.bar:hover .bar-grip {
+  opacity: 1;
+}
+
+/* The avatar joins the chips; the time stands apart in its own right-aligned column. */
+.table-update {
+  flex: none;
+  width: 36px;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The detail as a pop-up above the table */
+.item-popup {
+  position: relative;
+  display: flex;
+  width: min(940px, calc(100vw - 64px));
+  height: min(88vh, 900px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+}
+
+.item-popup > .detail {
+  flex: 1;
+}
+
+
+.overlay:has(> .item-popup) {
+  place-items: center;
+  padding-top: 0;
+}
+
+
+/* Marks an assignment the viewer has not opened since it was made. */
+.new-mark {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--st-snoozed) 18%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Today: the viewer's own pick, set apart from the status bars by a heading like the sidebar's and some room, not by color. */
+.today-card {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 22px;
+}
+
+.today-card.divided {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+}
+
+/* With no bars below, a line sets Today apart from the empty-table note; inset like the heading. */
+.today-card.divided::after {
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  border-top: 1px solid var(--border-strong);
+  content: "";
+}
+
+.today-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 12px 2px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.today-head span {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.today-empty {
+  margin: 0;
+  padding: 4px 12px 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* The star sits in the row's left padding; it shows on hover, and stays when pinned. */
+.star-btn {
+  position: absolute;
+  left: 24px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-faint);
+  opacity: 0;
+}
+
+.table-row:hover .star-btn,
+.star-btn.on,
+.star-btn:focus-visible {
+  opacity: 1;
+}
+
+.star-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.star-btn.on {
+  color: var(--yellow);
+}
+
+.star-btn.on svg {
+  fill: currentColor;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 220px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+}
+
+.context-menu hr {
+  margin: 4px 6px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.menu-slot {
+  position: relative;
+}
+
+.submenu {
+  position: absolute;
+  top: -5px;
+  left: calc(100% + 2px);
+}
+
+.menu-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu-row.active {
+  background: var(--selected);
+}
+
+.menu-icon {
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  width: 16px;
+  color: var(--text-muted);
+}
+
+.menu-label {
+  flex: 1;
+}
+
+.menu-row kbd,
+.menu-more {
+  color: var(--text-faint);
+}
+
+.elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  justify-content: center;
+  max-width: 480px;
+  margin: 10px auto 0;
+  color: var(--text-faint);
+  font-size: 12.5px;
+}
+
+/* The label on its own line, so the links below wrap as one centered group. */
+.elsewhere-label {
+  flex-basis: 100%;
+  text-align: center;
+}

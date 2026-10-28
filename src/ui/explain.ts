@@ -1,0 +1,146 @@
+import type { Classified } from "../classify";
+import type { Bucket, Reopen } from "../model";
+import { t } from "./i18n";
+import { ago, agoInSentence, updateSummary } from "./labels";
+import { sameLogin } from "../timeline";
+import { untilText } from "./snooze";
+
+export interface Explanation {
+  tone: "inbox" | "reminder" | "done" | "snoozed" | "involved" | "authored" | "assigned";
+  title: string;
+  /** One sentence per reason: why the item is here and what moves it on. */
+  lines: string[];
+}
+
+const comesBack = (reopenOn: Reopen) => t("explain.comesBack", { rule: t(`reopen.${reopenOn}`) });
+
+/**
+ * Explains in plain words why an item sits where it is and what moves it on, from the same
+ * classification that sorted it, so the text cannot drift from the behavior.
+ *
+ * @param entry     The classified item.
+ * @param reopenOn  The "reopenOn" setting, which decides when manual statuses fall back.
+ * @param me        The viewer's login, to tell their own pull requests apart.
+ * @returns A tone for styling, a short title and one sentence per reason.
+ *
+ * @example
+ *   explain(entry, "mention");
+ *   // { tone: "done", title: "Done", lines: ["You responded to the review request.", …] }
+ */
+export function explain(entry: Classified, reopenOn: Reopen, me = ""): Explanation {
+  const { item, mention, answered, asks, status, statusAt, bucket } = entry;
+  const trigger = reopenOn === "mention-or-assigned-post" ? (item.reasons.includes("assigned") ? "any-post" : "mention") : reopenOn;
+  const waitsInPlace = status === "snoozed" && (bucket === "assigned" || bucket === "authored" || asks.length > 0);
+
+  // In the inbox the asks say why, whatever else is stored: a follow-up that waits in place, a part that is done.
+  if (asks.length > 0) {
+    const lines = asks.map((ask) => {
+      switch (ask) {
+        case "due":
+          return t("explain.due", { ago: statusAt ? agoInSentence(statusAt) : "" });
+        case "update":
+          return t("explain.update", { what: updateSummary(entry.updates ?? []) });
+        case "review":
+          return t("explain.review");
+        case "reopened":
+          return t("explain.reopened", { ago: statusAt ? agoInSentence(statusAt) : "" });
+        case "mention":
+          return mention!.self
+            ? t("explain.reminder", { ago: agoInSentence(mention!.at) })
+            : t("explain.mention", { name: mention!.by, ago: agoInSentence(mention!.at) });
+      }
+    });
+    if (waitsInPlace) lines.push(entry.until ? t("explain.stillWaiting", { until: untilText(entry.until) }) : t("explain.stillWaitingNoDate"));
+    const reminderOnly = asks.length === 1 && mention?.self;
+    return { tone: reminderOnly ? "reminder" : "inbox", title: t("explain.inboxTitle"), lines };
+  }
+
+  if (entry.updates) {
+    return { tone: bucket === "assigned" ? "assigned" : "done", title: t("explain.handedOffTitle"), lines: [t("explain.handedOff"), t("explain.handedOffBack")] };
+  }
+  if (item.closed) {
+    const title = t(item.closed.state === "merged" ? "explain.mergedSince" : "explain.closedSince", { ago: ago(item.closed.at) });
+    return { tone: "done", title, lines: [t("explain.closed")] };
+  }
+  if (waitsInPlace) {
+    const title = statusAt ? t("explain.snoozedSince", { ago: ago(statusAt) }) : t("status.snoozed");
+    return { tone: "snoozed", title, lines: [entry.until ? t("explain.waitsHere", { until: untilText(entry.until) }) : t("explain.waitsHereNoDate"), t("explain.undoHint")] };
+  }
+  // An own pull request that is assigned to the viewer belongs to Created by me, as the sidebar has it.
+  if (bucket === "assigned" && item.kind === "pr" && sameLogin(item.author, me)) {
+    return { tone: "authored", title: t("bucket.authored"), lines: [t("explain.authored"), t("explain.involvedComesBack")] };
+  }
+  if (bucket === "assigned") {
+    return { tone: "assigned", title: t("row.assigned"), lines: [t("explain.assigned"), t("explain.assignedComesBack")] };
+  }
+  if (status === "snoozed") {
+    const title = statusAt ? t("explain.snoozedSince", { ago: ago(statusAt) }) : t("status.snoozed");
+    const back = entry.until ? t("explain.snoozedUntil", { until: untilText(entry.until), rule: t(`reopen.${trigger}`) }) : comesBack(trigger);
+    return { tone: "snoozed", title, lines: [back, t("explain.undoHint")] };
+  }
+  if (status === "done" && !answered && item.reasons.includes("assigned")) {
+    return { tone: "done", title: t("explain.doneStillOpen", { ago: statusAt ? ago(statusAt) : "" }), lines: [t("explain.doneStillOpenHint"), comesBack(trigger)] };
+  }
+  if (status === "done" && !answered) {
+    const title = statusAt ? t("explain.doneSince", { ago: ago(statusAt) }) : t("status.done");
+    return { tone: "done", title, lines: [t("explain.markedDone"), comesBack(trigger)] };
+  }
+  if (answered === "review") {
+    return {
+      tone: "done",
+      title: t("status.done"),
+      lines: [t("explain.reviewAnswered"), t("explain.reviewComesBack")],
+    };
+  }
+  if (answered === "mention") {
+    return { tone: "done", title: t("status.done"), lines: [t("explain.mentionAnswered"), comesBack("mention")] };
+  }
+  if (bucket === "authored") {
+    return { tone: "authored", title: t("bucket.authored"), lines: [t("explain.authored"), t("explain.involvedComesBack")] };
+  }
+  return {
+    tone: "involved",
+    title: t("bucket.involved"),
+    lines: [t("explain.involved"), t("explain.involvedComesBack")],
+  };
+}
+
+/**
+ * What a bucket holds and how items leave or return, for the overview behind the list header's
+ * info button and for the settings. Shares its wording with `explain`.
+ *
+ * @param bucket    The bucket to describe.
+ * @param reopenOn  The "reopenOn" setting, which decides when manual statuses fall back.
+ * @returns A lead sentence and the rules as short points.
+ *
+ * @example
+ *   bucketHelp("inbox", "mention").points[0]; // "Mention: until you reply."
+ */
+export function bucketHelp(bucket: Bucket, reopenOn: Reopen): { lead: string; points: string[] } {
+  switch (bucket) {
+    case "inbox":
+      return {
+        lead: t("help.inbox.lead"),
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.due"), t("help.inbox.update"), t("help.inbox.reopened")],
+      };
+    case "assigned":
+      return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back")] };
+    case "involved":
+      return {
+        lead: t("help.involved.lead"),
+        points: [t("explain.involvedComesBack")],
+      };
+    case "authored":
+      return { lead: t("help.authored.lead"), points: [t("help.authored.unassigned"), t("help.authored.leaves")] };
+    case "snoozed":
+      return {
+        lead: t("help.snoozed.lead"),
+        points: [comesBack(reopenOn), t("explain.undoHint")],
+      };
+    case "done":
+      return {
+        lead: t("help.done.lead"),
+        points: [t("help.done.mention"), t("help.done.review"), t("help.done.closed"), t("help.done.manual", { rule: t(`reopen.${reopenOn}`) }), t("explain.undoHint")],
+      };
+  }
+}

@@ -1,0 +1,144 @@
+/* Light is the default; dark applies via the system or an explicit data-theme. The accent is a neutral near-text gray. */
+:root {
+  --font: "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  /* Mid tones that keep 3:1 as dots on light and dark backgrounds alike. */
+  --orange: #dc5a1e;
+  --pink: #db61a2;
+
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 10px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --bg: #f3f4f6;
+  --panel: #f9fafb;
+  --sidebar: rgb(240 241 244 / 0.72);
+  --text: #18191b;
+  --text-muted: #4d5159;
+  --text-faint: #646973;
+  --border: #e2e4e8;
+  --border-strong: #cdd0d6;
+  /* Lines between the panes; dimmer than card frames. */
+  --divider: #e2e4e8;
+  --hover: rgb(0 0 0 / 0.035);
+  --track: rgb(0 0 0 / 0.075);
+  /* Fill of buttons, segmented controls and the search bar; decorative; --text-muted on it is 6.8:1 in light and 5.1:1 in dark, --text-faint 4.7:1 and 3.9:1 (icons only). */
+  --control-fill: rgb(0 0 0 / 0.05);
+  --selected: rgb(0 0 0 / 0.055);
+  --accent: #2b2d31;
+  /* Text in lists, the table and the detail, a little dimmer than --text: about 12:1 in both themes. */
+  --text-content: #303338;
+  /* Follows --accent, so one definition serves both themes. */
+  /* Keyboard focus fill: 3.1:1 against the panel; --text on it 5.5:1. */
+  --focus-fill: color-mix(in srgb, var(--accent) 52%, transparent);
+  /* The active part of a date or time field; softer than --focus-fill by choice, so below 3:1. */
+  --segment-fill: color-mix(in srgb, var(--accent) 24%, transparent);
+  --accent-soft: rgb(0 0 0 / 0.06);
+  --on-accent: #ffffff;
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18);
+  --overlay: rgb(15 16 17 / 0.18);
+
+  /* One tone per hue; AA as text on panel and post header, yellow (light) 3:1 for icons only. */
+  --yellow: #c66c00;
+  --green: #1a7a35;
+  --blue: #0969da;
+  --red: #cf222e;
+  --purple: #7445c9;
+  /* Status roles name a hue, so every state of one color is the same color. */
+  --st-open: var(--text-faint);
+  --st-snoozed: var(--yellow);
+  --st-done: var(--green);
+  --st-accepted: var(--blue);
+  --new: var(--red);
+  --mention: var(--purple);
+  /* Filled green under white text (button, switch); dark mode takes the deeper light tone for 4.5:1. */
+  --green-fill: var(--green);
+  /* Raised card areas such as post headers, as on GitHub. */
+  --surface: #eff0f3;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151619;
+    --panel: #191a1d;
+    --sidebar: rgb(25 26 29 / 0.55);
+    --text: #e9eaec;
+    --text-muted: #9ba0a8;
+    --text-faint: #858a93;
+    --border: #28292d;
+    --border-strong: #34363b;
+    --divider: #28292d;
+    --hover: rgb(255 255 255 / 0.04);
+    --track: rgb(255 255 255 / 0.09);
+  --control-fill: rgb(255 255 255 / 0.09);
+    --selected: rgb(255 255 255 / 0.065);
+    --accent: #d6d8dc;
+    --text-content: #d8dade;
+    /* Keyboard focus fill: 3.0:1 against the panel; --text on it 4.8:1. */
+    --focus-fill: color-mix(in srgb, var(--accent) 40%, transparent);
+    --segment-fill: color-mix(in srgb, var(--accent) 20%, transparent);
+    --accent-soft: rgb(255 255 255 / 0.08);
+    --on-accent: #0b0c0d;
+    --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+    --overlay: rgb(0 0 0 / 0.45);
+    --yellow: #ebb45c;
+    --green: #3fb950;
+    --blue: #4493f8;
+    --red: #ff6b6f;
+    --purple: #b796f5;
+    --green-fill: #1a7a35;
+    --surface: #212226;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #151619;
+  --panel: #191a1d;
+  --sidebar: rgb(25 26 29 / 0.55);
+  --text: #e9eaec;
+  --text-muted: #9ba0a8;
+  --text-faint: #858a93;
+  --border: #28292d;
+  --border-strong: #34363b;
+  --divider: #28292d;
+  --hover: rgb(255 255 255 / 0.04);
+  --track: rgb(255 255 255 / 0.09);
+  --control-fill: rgb(255 255 255 / 0.09);
+  --selected: rgb(255 255 255 / 0.065);
+  --accent: #d6d8dc;
+  --text-content: #d8dade;
+  /* Keyboard focus fill: 3.0:1 against the panel; --text on it 4.8:1. */
+  --focus-fill: color-mix(in srgb, var(--accent) 40%, transparent);
+  --segment-fill: color-mix(in srgb, var(--accent) 20%, transparent);
+  --accent-soft: rgb(255 255 255 / 0.08);
+  --on-accent: #0b0c0d;
+  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  --overlay: rgb(0 0 0 / 0.45);
+  --yellow: #ebb45c;
+  --green: #3fb950;
+  --blue: #4493f8;
+  --red: #ff6b6f;
+  --purple: #b796f5;
+  --green-fill: #1a7a35;
+  --surface: #212226;
+  color-scheme: dark;
+}
+
+/* Dev builds only (data-env is set in main.tsx): an orange tint marks the window; 8% keeps --text-faint at 4.5:1. */
+:root[data-env="dev"] {
+  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(240 241 244 / 0.85));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-env="dev"]:not([data-theme="light"]) {
+    --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+  }
+}
+
+:root[data-env="dev"][data-theme="dark"] {
+  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+}
