@@ -104,7 +104,10 @@ node scripts/demo-screenshots.mjs --out demo-screenshots [--langs en,de] [--them
 ```
 
 The result is the browser's rendering of the same page, not the native window's frame; for a
-shot of the window itself, start the demo in Tauri and capture it with macOS.
+shot of the window itself, start the demo in Tauri and capture it with macOS. The script removes
+the dev build's orange mark, paints a neutral ground per theme where the window's vibrancy would
+show through the sidebar, and widens the sidebar and the list so names and titles fit. The README
+shows `docs/images/inbox-dark.png`, the `en-dark-inbox-detail` shot.
 
 To show a new case, add it to `buildDemoWorld` (and `demoSeed` for follow-ups, filings and
 read marks); `src/demo/demo.test.ts` says which view each item must land in.

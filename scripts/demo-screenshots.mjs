@@ -5,6 +5,9 @@
  *
  * Needs no dependency: it drives Chrome or Edge headless over the DevTools protocol (Node 22+)
  * against the Vite dev server, which stands in for the Tauri window; Tauri's window API is stubbed.
+ * The shots look like the installed app: the dev build's orange mark is removed, a neutral ground
+ * per theme stands in for the window's vibrancy behind the translucent sidebar, and the traffic
+ * lights macOS draws over the overlay title bar are painted where `tauri.conf.json` puts them.
  *
  *   VITE_DEMO=1 npx vite &                       # serves http://localhost:1420
  *   node scripts/demo-screenshots.mjs --out demo-screenshots
@@ -46,6 +49,24 @@ window.__TAURI_INTERNALS__ = {
 };
 window.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => {} };
 `;
+
+/** Columns wide enough that the search field, the viewer's name and the item titles fit (see useColumnWidths). */
+const WIDTHS = `localStorage.setItem("column-widths", JSON.stringify({ sidebar: 264, list: 440 }));`;
+
+/** What shows through the translucent sidebar in place of the window's vibrancy, per theme. */
+const GROUND = { dark: { r: 30, g: 31, b: 35, a: 1 }, light: { r: 236, g: 237, b: 240, a: 1 } };
+
+/** Close, minimize and zoom as macOS draws them, 12px wide on a 20px step, at trafficLightPosition. */
+const TRAFFIC_LIGHTS = `(() => {
+  const lights = document.createElement("div");
+  lights.style.cssText = "position:fixed;left:18px;top:16px;display:flex;gap:8px;z-index:2147483647;pointer-events:none";
+  for (const [fill, rim] of [["#ff5f57", "#e0443e"], ["#febc2e", "#dea123"], ["#28c840", "#1aab29"]]) {
+    const light = document.createElement("span");
+    light.style.cssText = \`width:12px;height:12px;border-radius:50%;background:\${fill};box-shadow:inset 0 0 0 0.5px \${rim}\`;
+    lights.append(light);
+  }
+  document.body.append(lights);
+})()`;
 
 /** The shots of one run: what to press (keys of the app), then the file name. Views follow the keys 1–5. */
 const SHOTS = [
@@ -91,12 +112,16 @@ try {
   await send("Page.enable");
   await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 2, mobile: false });
   await send("Page.addScriptToEvaluateOnNewDocument", { source: TAURI_STUB });
+  await send("Page.addScriptToEvaluateOnNewDocument", { source: WIDTHS });
 
   for (const lang of langs) {
     for (const theme of themes) {
+      await send("Emulation.setDefaultBackgroundColorOverride", { color: GROUND[theme] });
       for (const shot of SHOTS) {
         await send("Page.navigate", { url: `${base}?lang=${lang}&theme=${theme}` });
         await sleep(5000);
+        await send("Runtime.evaluate", { expression: "delete document.documentElement.dataset.env" });
+        await send("Runtime.evaluate", { expression: TRAFFIC_LIGHTS });
         for (const key of shot.keys) await press(key);
         await sleep(600);
         const image = await send("Page.captureScreenshot", { format: "png" });
