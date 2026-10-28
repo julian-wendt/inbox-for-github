@@ -820,53 +820,6 @@
   font-weight: 600;
 }
 
-/* Today: the viewer's own pick, set apart from the status bars by a heading like the sidebar's and some room, not by color. */
-.today-card {
-  position: relative;
-  display: grid;
-  gap: 4px;
-  margin-bottom: 22px;
-}
-
-.today-card.divided {
-  margin-bottom: 14px;
-  padding-bottom: 14px;
-}
-
-/* With no bars below, a line sets Today apart from the empty-table note; inset like the heading. */
-.today-card.divided::after {
-  position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  border-top: 1px solid var(--border-strong);
-  content: "";
-}
-
-.today-head {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 6px 12px 2px;
-  color: var(--text-faint);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.today-head span {
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.today-empty {
-  margin: 0;
-  padding: 4px 12px 0;
-  color: var(--text-muted);
-  font-size: 12.5px;
-}
-
 /* The star sits in the row's left padding; it shows on hover, and stays when pinned. */
 .star-btn {
   position: absolute;

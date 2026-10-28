@@ -3,16 +3,15 @@ import type { Item, Status } from "../model";
 import { isBot, latest, posts, sameLogin } from "../timeline";
 import { workStatus, type StatusMap } from "../workStatus";
 import type { AuthoredGroup } from "./authored";
-import type { Planned } from "./plan";
 import type { SnoozeGroup } from "./timeGroups";
 
 /**
- * A bar in the "Assigned to me" table: "focus" for the items marked today, then the work
- * statuses, "planned" for items planned for a later day, "later" for snoozed or blocked ones, and "finished" for what is done but still open
- * on GitHub: done on its board, or the viewer's part done. Assignments not opened yet sit in
- * their work status bar, marked as new in their row.
+ * A bar in the "Assigned to me" table: the work statuses, "later" for snoozed or blocked ones,
+ * and "finished" for what is done but still open on GitHub: done on its board, or the viewer's
+ * part done. Assignments not opened yet sit in their work status bar, marked as new in their row;
+ * so do those pinned for today or planned for a day, with their star or day (Planned lists them).
  */
-export type PlateGroup = "focus" | "review" | "progress" | "todo" | "planned" | "later" | "finished";
+export type PlateGroup = "review" | "progress" | "todo" | "later" | "finished";
 
 /** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a bar of Created by me or a day bar of Planned. */
 export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup | DayGroup;
@@ -67,7 +66,7 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
 }
 
 /** The bars in display order. */
-export const PLATE_GROUPS: PlateGroup[] = ["focus", "review", "progress", "todo", "planned", "later", "finished"];
+export const PLATE_GROUPS: PlateGroup[] = ["review", "progress", "todo", "later", "finished"];
 
 /** At most this many items can be marked "today". */
 export const FOCUS_MAX = 3;
@@ -108,30 +107,26 @@ export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MO
 
 /**
  * The viewer's plate for "Assigned to me": every open item assigned to them that is not done,
- * in the table's bars. Items marked "today" get their own bar on top, snoozed ones go to "later",
- * and the rest by their work status (see `workStatus`), where a blocked board status also counts
- * as "later". Each bar is sorted by when the viewer was assigned (`assignedAt`), newest first.
+ * in the table's bars. Snoozed ones go to "later", the rest by their work status (see
+ * `workStatus`), where a blocked board status also counts as "later". Each bar is sorted by when
+ * the viewer was assigned (`assignedAt`), newest first.
  *
  * @param entries    All classified items; only current assignments that are open or snoozed are used,
  *                   without the viewer's own pull requests, which belong to "Created by me".
- * @param focus      Item ids marked "today".
  * @param statusMap  The viewer's board status mapping.
- * @param order      The viewer's bar order (see `orderBars`).
+ * @param order      The viewer's bar order (see `orderBars`); bars it names that no longer exist are ignored.
  * @param me         The viewer's login.
- * @param planned    Items planned for a later day; their bar is sorted by that day, soonest first.
  * @returns The non-empty bars in that order.
  *
  * @example
- *   groupPlate(classified, ["I_1"], settings.statusMap); // [{ group: "focus", entries }, { group: "review", entries }, …]
+ *   groupPlate(classified, settings.statusMap); // [{ group: "review", entries }, { group: "todo", entries }, …]
  */
-export function groupPlate(entries: Classified[], focus: string[] = [], statusMap: StatusMap = {}, order: PlateGroup[] = [], me = "", planned: Planned[] = []): { group: PlateGroup; entries: Classified[] }[] {
+export function groupPlate(entries: Classified[], statusMap: StatusMap = {}, order: PlateGroup[] = [], me = ""): { group: PlateGroup; entries: Classified[] }[] {
   const groups = new Map<PlateGroup, Classified[]>(PLATE_GROUPS.map((g) => [g, []]));
-  const days = new Map(planned.map((p) => [p.id, p.day]));
-  for (const entry of entries.filter((e) => onPlate(e, me))) groups.get(plateGroup(entry, focus, statusMap, days))!.push(entry);
+  for (const entry of entries.filter((e) => onPlate(e, me))) groups.get(plateGroup(entry, statusMap))!.push(entry);
   const newest = (a: Classified, b: Classified) => assignedAt(b.item, me).at.localeCompare(assignedAt(a.item, me).at);
-  const soonest = (a: Classified, b: Classified) => days.get(a.item.id)!.localeCompare(days.get(b.item.id)!) || newest(a, b);
   return orderBars(order)
-    .map((group) => ({ group, entries: groups.get(group)!.sort(group === "planned" ? soonest : newest) }))
+    .map((group) => ({ group, entries: groups.get(group)!.sort(newest) }))
     .filter((g) => g.entries.length > 0);
 }
 
@@ -169,11 +164,9 @@ export function shownStatus(entry: Pick<Classified, "item" | "status">, statusMa
   return entry.status === "open" && workStatus(entry.item, statusMap) === "done" ? "done" : entry.status;
 }
 
-function plateGroup(entry: Classified, focus: string[], statusMap: StatusMap, planned: Map<string, string>): PlateGroup {
+function plateGroup(entry: Classified, statusMap: StatusMap): PlateGroup {
   if (entry.updates) return "finished";
   if (entry.status === "snoozed") return "later";
-  if (focus.includes(entry.item.id)) return "focus";
-  if (planned.has(entry.item.id)) return "planned";
   const work = workStatus(entry.item, statusMap);
   return work === "snoozed" ? "later" : work === "done" ? "finished" : work;
 }
@@ -251,10 +244,10 @@ export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, see
 
 /** The bars that ask for work now; planned, blocked and finished items are parked. */
 export function isActiveBar(group: PlateGroup): boolean {
-  return group !== "planned" && group !== "later" && group !== "finished";
+  return group !== "later" && group !== "finished";
 }
 
-/** The number for the sidebar: everything on the plate except the planned, blocked and finished bars. */
+/** The number for the sidebar: everything on the plate except the Later and Done bars. */
 export function plateCount(groups: { group: PlateGroup; entries: Classified[] }[]): number {
   return groups.filter((g) => isActiveBar(g.group)).reduce((n, g) => n + g.entries.length, 0);
 }

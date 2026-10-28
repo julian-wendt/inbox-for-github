@@ -234,7 +234,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Mir zugewiesen
 
 - [ ] Umschalter „Typ · Status“ (kein „Zeit“ und „Repo“ mehr; eine gespeicherte Wahl davon zeigt
-      „Typ“). Leisten unter Heute: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Ohne Typ, Später (mit den auf dem Board blockierten), ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Ohne Typ“
+      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Ohne Typ, Später (mit den auf dem Board blockierten), ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Ohne Typ“
       grau, „Fertig“ grün. Jede Status-Leiste hat eine leise Beschreibung hinter der Zahl.
 - [ ] In jeder Typ-Leiste zuerst Review, dann In Arbeit, Backlog, Erledigt; darin nach dem
       Zeitpunkt der Zuweisung (Sortierknopf dreht das).
@@ -244,9 +244,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Eigene PRs fehlen hier (sie stehen in „Von mir erstellt“), fremde zugewiesene PRs stehen oben.
 - [ ] T heftet ein Item für heute an oder nimmt es heraus. P öffnet mittig das Planmenü: T Heute,
       M Morgen, 1–5 die übrigen Wochentage dieser Woche, W Nächsten Montag, X Plan entfernen (nur
-      wenn geplant). Geplante Items stehen in „Geplant“ (über „Später“), der nächste Tag zuerst,
-      mit dem Tag leise hinter dem Titel („Morgen“, „Do“); die Seitenleiste zählt sie nicht mit.
-- [ ] Am geplanten Tag stehen sie morgens in Heute (höchstens drei, ältester Plan zuerst); ein
+      wenn geplant). Angeheftete und geplante Items bleiben in ihrer Leiste, mit Stern bzw. dem
+      Tag leise hinter dem Titel („Morgen“, „Do“); keine eigene Leiste „Heute“ oder „Geplant“ mehr.
+- [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; höchstens drei, ältester Plan zuerst); ein
       Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
 - [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
       (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; es zählt gegen die drei, Geplantes

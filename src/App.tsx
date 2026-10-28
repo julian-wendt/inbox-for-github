@@ -105,8 +105,8 @@ export default function App() {
     [askBase, inbox.me],
   );
   const plateAll = useMemo(
-    () => groupPlate(scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me ?? "", inbox.settings.planned),
-    [scoped, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me, inbox.settings.planned],
+    () => groupPlate(scoped, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me ?? ""),
+    [scoped, inbox.settings.statusMap, inbox.settings.plateOrder, inbox.me],
   );
   const setBucket = (view: View) => {
     setChosen(view);
@@ -126,12 +126,12 @@ export default function App() {
     <G extends string>(groups: { group: G; entries: Classified[] }[], filter: SprintFilter, choices: string[]) =>
       filter === "all"
         ? groups
-        : groups.map((g) => ({ ...g, entries: g.entries.filter((c) => matchesSprint(c.item, filter, choices, hidden)) })).filter((g) => g.group === "focus" || g.entries.length > 0),
+        : groups.map((g) => ({ ...g, entries: g.entries.filter((c) => matchesSprint(c.item, filter, choices, hidden)) })).filter((g) => g.entries.length > 0),
     [hidden],
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["planned", "later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`]);
+  const bars = useCollapsed("assigned-collapsed", ["later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
@@ -140,12 +140,10 @@ export default function App() {
     const order = sort.of("assigned");
     const byStatus = plateNewest.map((g) => ({ ...g, entries: oriented(g.entries, order) }));
     if (inbox.settings.tableGrouping === "status") return byStatus;
-    // Today stays on top and what is finished but open at the bottom, in every grouping.
-    const today = byStatus.filter((g) => g.group === "focus");
-    const finished = byStatus.filter((g) => g.group === "finished");
-    const parked = byStatus.filter((g) => g.group === "planned" || g.group === "later");
-    const working = plateNewest.filter((g) => g.group !== "focus" && isActiveBar(g.group)).flatMap((g) => g.entries);
-    return [...today, ...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? ""), ...parked, ...finished];
+    // What waits and what is finished but open stay at the bottom, in every grouping.
+    const parked = byStatus.filter((g) => !isActiveBar(g.group));
+    const working = plateNewest.filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
+    return [...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? ""), ...parked];
   }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.me]);
   const [popup, setPopup] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -183,15 +181,15 @@ export default function App() {
   const unreadPlateIds = useMemo(
     () =>
       new Set(
-        groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned)
+        groupPlate(inbox.classified, inbox.settings.statusMap, [], me)
           .filter((g) => isActiveBar(g.group))
           .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me)).map((c) => c.item.id)),
       ),
-    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.planned, me],
+    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.statusMap, me],
   );
   /** The items a view's count stands for, whatever filters narrow its list. */
   const itemsOfView = (view: View): Classified[] => {
-    if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
+    if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.statusMap, [], me).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
     if (view === "authored") return groupAuthored(inbox.classified, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
     if (view === "planned") return inbox.classified.filter((c) => dated(c) !== null);
     return inbox.classified.filter((c) => c.bucket === view);
@@ -244,14 +242,14 @@ export default function App() {
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : authored;
   const viewGroups: { group: string; entries: Classified[] }[] | undefined = table ? tableGroups : timeGroups;
   const barKey = useCallback((group: string) => (bucket === "assigned" ? group : `${bucket}:${group}`), [bucket]);
-  const folded = useCallback((group: string) => group !== "focus" && bars.collapsed.has(barKey(group)), [bars.collapsed, barKey]);
+  const folded = useCallback((group: string) => bars.collapsed.has(barKey(group)), [bars.collapsed, barKey]);
   const searchCount = useMemo(() => (viewGroups ? viewGroups.reduce((n, g) => n + g.entries.length, 0) : listed.length), [viewGroups, listed]);
   const entries = useMemo(() => (viewGroups ? viewGroups.filter((g) => !folded(g.group)).flatMap((g) => g.entries) : listed), [viewGroups, folded, listed]);
   // Bars take part in the keyboard selection too, as "bar:<group>".
   const ids = useMemo(
     () =>
       viewGroups
-        ? viewGroups.flatMap((g) => [...(!g.group || g.group === "focus" ? [] : [`bar:${g.group}`]), ...(folded(g.group) ? [] : g.entries.map((c) => c.item.id))])
+        ? viewGroups.flatMap((g) => [...(g.group ? [`bar:${g.group}`] : []), ...(folded(g.group) ? [] : g.entries.map((c) => c.item.id))])
         : entries.map((c) => c.item.id),
     [viewGroups, folded, entries],
   );
@@ -274,7 +272,7 @@ export default function App() {
   const setBar = (group: string, open: boolean) => folded(group) === open && toggleBar(group);
   /** ← on an item folds its bar and selects it, like a tree in the Finder. */
   const foldCurrent = () => {
-    const group = viewGroups?.find((g) => g.group !== "focus" && g.entries.some((c) => c.item.id === selection.selected))?.group;
+    const group = viewGroups?.find((g) => g.entries.some((c) => c.item.id === selection.selected))?.group;
     if (!group) return;
     setBar(group, false);
     selection.select(`bar:${group}`);
@@ -324,7 +322,7 @@ export default function App() {
       ...countBy(all, (c) => c.bucket),
       inbox: all.filter((c) => c.bucket === "inbox").length,
       planned: all.filter((c) => datedOf(c, focus, plans, today) !== null).length,
-      assigned: plateCount(groupPlate(all, focus, inbox.settings.statusMap, [], me, plans)),
+      assigned: plateCount(groupPlate(all, inbox.settings.statusMap, [], me)),
       authored: authoredCount(groupAuthored(all, me)),
     } as Record<View, number>;
   }, [inRepos, focus, inbox.settings.statusMap, plans, today, me]);
@@ -990,7 +988,7 @@ export default function App() {
           layout={bucket === "planned" ? layout : undefined}
           onLayout={setLayout}
           onSprint={(filter) => setSprints((current) => ({ ...current, [bucket]: filter }))}
-          onToggleAll={(fold) => bars.setAll(tableGroups.filter((g) => g.group !== "focus").map((g) => barKey(g.group)), fold)}
+          onToggleAll={(fold) => bars.setAll(tableGroups.map((g) => barKey(g.group)), fold)}
           hiddenBoards={inbox.settings.hiddenBoards}
           statusMap={inbox.settings.statusMap}
           attributes={columnKeys}

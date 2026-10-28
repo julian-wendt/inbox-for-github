@@ -38,7 +38,7 @@ describe("matchesText", () => {
 describe("filterGroups", () => {
   const entry = (title: string, number: number) => ({ item: { title, number } }) as unknown as Classified;
   const groups = [
-    { group: "focus", entries: [entry("Other", 1)] },
+    { group: "review", entries: [entry("Other", 1)] },
     { group: "todo", entries: [entry("Fix login", 2), entry("Docs", 3)] },
     { group: "later", entries: [entry("Docs again", 4)] },
   ];
@@ -47,9 +47,9 @@ describe("filterGroups", () => {
     expect(filterGroups(groups, " ")).toBe(groups);
   });
 
-  it("narrows entries, drops empty groups and keeps focus", () => {
+  it("narrows entries and drops empty groups", () => {
     const result = filterGroups(groups, "login");
-    expect(result.map((g) => [g.group, g.entries.length])).toEqual([["focus", 0], ["todo", 1]]);
+    expect(result.map((g) => [g.group, g.entries.length])).toEqual([["todo", 1]]);
   });
 });
 

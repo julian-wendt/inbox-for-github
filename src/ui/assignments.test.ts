@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, onPlate, orderBars, plateCount, shownStatus } from "./assignments";
+import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, onPlate, orderBars, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -43,10 +43,9 @@ describe("groupPlate", () => {
     ]);
   });
 
-  it("puts items marked today on top, but never snoozed ones", () => {
-    const groups = groupPlate([entry("a"), entry("b"), entry("z", { status: "snoozed", bucket: "snoozed" })], ["b", "z"]);
+  it("files snoozed items under Later, whatever their work status", () => {
+    const groups = groupPlate([entry("a"), entry("z", { status: "snoozed", bucket: "snoozed" })]);
     expect(groups.map((g) => [g.group, g.entries.map((e) => e.item.id)])).toEqual([
-      ["focus", ["b"]],
       ["todo", ["a"]],
       ["later", ["z"]],
     ]);
@@ -54,7 +53,7 @@ describe("groupPlate", () => {
 
   it("sorts each bar by when the viewer was assigned, newest first", () => {
     const at = (day: string) => ({ activities: [{ kind: "assigned" as const, at: `2026-10-${day}T00:00:00Z`, actor: "bob", assignee: "me" }] });
-    const groups = groupPlate([entry("old", {}, at("02")), entry("new", {}, at("09"))], [], {}, [], "me");
+    const groups = groupPlate([entry("old", {}, at("02")), entry("new", {}, at("09"))], {}, [], "me");
     expect(groups[0].entries.map((e) => e.item.id)).toEqual(["new", "old"]);
   });
 });
@@ -103,15 +102,19 @@ describe("assignedAt", () => {
 
 describe("bar order", () => {
   it("completes a partial order with each remaining bar before the one it precedes by default", () => {
-    expect(orderBars(["todo", "review"])).toEqual(["progress", "todo", "focus", "review", "planned", "later", "finished"]);
+    expect(orderBars(["todo", "review"])).toEqual(["progress", "todo", "review", "later", "finished"]);
   });
 
   it("puts a bar missing from a saved order where it belongs by default", () => {
-    expect(orderBars(["review", "focus", "progress", "todo", "later", "finished"])).toEqual(["review", "focus", "progress", "todo", "planned", "later", "finished"]);
+    expect(orderBars(["review", "progress", "todo", "finished"])).toEqual(["review", "progress", "todo", "later", "finished"]);
+  });
+
+  it("ignores bars a saved order names that no longer exist, like Today and Planned", () => {
+    expect(orderBars(["focus", "review", "planned"] as unknown as PlateGroup[])).toEqual(["review", "progress", "todo", "later", "finished"]);
   });
 
   it("moves a bar to just before the one it was dropped on", () => {
-    expect(moveBar([], "later", "review")).toEqual(["focus", "later", "review", "progress", "todo", "planned", "finished"]);
+    expect(moveBar([], "later", "review")).toEqual(["later", "review", "progress", "todo", "finished"]);
   });
 });
 
@@ -206,13 +209,3 @@ describe("lastOthersActivity", () => {
   });
 });
 
-describe("groupPlate with planned items", () => {
-  it("files planned items in their bar, soonest day first, and keeps Today above it", () => {
-    const groups = groupPlate([entry("a"), entry("b"), entry("c")], ["c"], {}, [], "", [{ id: "a", day: "2026-10-29" }, { id: "b", day: "2026-10-28" }, { id: "c", day: "2026-10-28" }]);
-    expect(groups.map((g) => [g.group, g.entries.map((e) => e.item.id)])).toEqual([["focus", ["c"]], ["planned", ["b", "a"]]]);
-  });
-
-  it("leaves planned items out of the sidebar count", () => {
-    expect(plateCount(groupPlate([entry("a"), entry("b")], [], {}, [], "", [{ id: "a", day: "2026-10-28" }]))).toBe(1);
-  });
-});

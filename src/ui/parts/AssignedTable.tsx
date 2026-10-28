@@ -3,7 +3,7 @@ import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
-import { assignedAt, FOCUS_MAX, hasNewActivity, isNewAssignment, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
+import { assignedAt, hasNewActivity, isNewAssignment, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
 import { lang, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
@@ -31,7 +31,6 @@ const HINTS: Partial<Record<TableGroup, MessageKey>> = {
   review: "table.reviewHint",
   progress: "table.progressHint",
   todo: "table.todoHint",
-  planned: "table.plannedHint",
   later: "table.laterHint",
   finished: "table.finishedHint",
   pr: "table.prHint",
@@ -46,7 +45,7 @@ interface Props {
   /** How many items match the search, for the bar. */
   searchCount: number;
   searchRef: RefObject<HTMLInputElement | null>;
-  /** "assigned": Assigned to me, with Today, stars, the new mark and the grouping switch. "authored": Created by me, with the opening time. "planned": Planned by day. */
+  /** "assigned": Assigned to me, with stars, the new mark and the grouping switch. "authored": Created by me, with the opening time. "planned": Planned by day. */
   mode: "assigned" | "authored" | "planned";
   /** Planned: the layout menu in the header, list or table. */
   layout?: Layout;
@@ -124,9 +123,7 @@ interface Props {
 export function AssignedTable(props: Props) {
   const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf, onFocus } = props;
   const assigned = props.mode === "assigned";
-  const today = groups.find((g) => g.group === "focus")?.entries ?? [];
-  const bars = groups.filter((g) => g.group !== "focus");
-  const anyOpen = bars.some((g) => !collapsed.has(g.group));
+  const anyOpen = groups.some((g) => !collapsed.has(g.group));
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -219,7 +216,7 @@ export function AssignedTable(props: Props) {
           title={t("table.columns")}
           entries={props.columns.map((c) => ({ label: c.name, checked: c.shown, keepOpen: true, onSelect: () => props.onColumn(c.key, !c.shown) }))}
         />
-        <button className="chip-btn" disabled={bars.length === 0} onClick={() => props.onToggleAll(anyOpen)} title={t(anyOpen ? "table.collapseAll" : "table.expandAll")} aria-label={t(anyOpen ? "table.collapseAll" : "table.expandAll")}>
+        <button className="chip-btn" disabled={groups.length === 0} onClick={() => props.onToggleAll(anyOpen)} title={t(anyOpen ? "table.collapseAll" : "table.expandAll")} aria-label={t(anyOpen ? "table.collapseAll" : "table.expandAll")}>
           {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
         </button>
         <SortButton order={props.sort} onFlip={props.onSort} by={props.mode === "planned" ? "return" : undefined} />
@@ -228,16 +225,7 @@ export function AssignedTable(props: Props) {
             <div className="dock-body" ref={body}>
         {shown && <SearchField value={props.search ?? ""} onChange={props.onSearch} count={props.searchCount} inputRef={props.searchRef} />}
         <div className="assigned-scroll" ref={scroll}>
-          {assigned && (
-            <div className={`today-card${bars.length === 0 ? " divided" : ""}`}>
-              <div className="today-head">
-                {t("table.focus")}
-                <span>{t("focus.count", { count: today.length, max: FOCUS_MAX })}</span>
-              </div>
-              {today.length > 0 ? today.map(row) : <p className="today-empty">{t("focus.empty")}</p>}
-            </div>
-          )}
-          {bars.map(({ group, entries }) => (
+          {groups.map(({ group, entries }) => (
             <div
               key={group}
               className={`bar-group${over === group && dragged !== group ? " drop-target" : ""}`}
@@ -282,7 +270,7 @@ export function AssignedTable(props: Props) {
               {!collapsed.has(group) && entries.map(row)}
             </div>
           ))}
-          {bars.length === 0 && today.length === 0 && (
+          {groups.length === 0 && (
             <div className="assigned-empty">
               <p>{t(props.mode === "assigned" ? "list.empty.assigned" : props.mode === "planned" ? "list.empty.planned" : "list.empty.authored")}</p>
               <Elsewhere counts={props.counts} current={props.mode} onJump={props.onJump} />

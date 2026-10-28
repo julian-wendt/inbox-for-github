@@ -134,7 +134,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
         points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.later", { rule: t(`reopen.${reopenOn}`) })],
       };
     case "assigned":
-      return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back")] };
+      return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back"), t("help.assigned.dated")] };
     case "authored":
       return { lead: t("help.authored.lead"), points: [t("help.authored.unassigned"), t("help.authored.leaves")] };
     case "planned":

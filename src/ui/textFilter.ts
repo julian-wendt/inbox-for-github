@@ -87,5 +87,5 @@ export function numberSpans(number: number, query: string): Span[] {
  */
 export function filterGroups<G extends string>(groups: { group: G; entries: Classified[] }[], query: string): { group: G; entries: Classified[] }[] {
   if (query.trim() === "") return groups;
-  return groups.map((g) => ({ ...g, entries: g.entries.filter((c) => matchesText(c.item, query)) })).filter((g) => g.group === "focus" || g.entries.length > 0);
+  return groups.map((g) => ({ ...g, entries: g.entries.filter((c) => matchesText(c.item, query)) })).filter((g) => g.entries.length > 0);
 }
