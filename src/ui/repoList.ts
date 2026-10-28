@@ -18,7 +18,7 @@ export function repoList(entries: Classified[], me: string): [repo: string, coun
   for (const c of entries) {
     const view = viewOf(c, me);
     if (view === null) continue;
-    const counted = view !== "done" && view !== "snoozed";
+    const counted = view !== "done" && view !== "planned";
     counts.set(c.item.repo, (counts.get(c.item.repo) ?? 0) + (counted ? 1 : 0));
   }
   return [...counts].sort((a, b) => b[1] - a[1]);

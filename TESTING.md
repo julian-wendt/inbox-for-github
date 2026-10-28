@@ -19,9 +19,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Sidebar
 
-- [ ] Zwei Abschnitte: „Anfragen & Updates“ mit Inbox, Wiedervorlage, Erledigt (Tasten 1–3)
-      und „Meine Issues & Pull Requests“ mit Mir zugewiesen, Von mir erstellt (4–5); der Tooltip
-      nennt die Taste. „Beobachtet“ und „Alle“ gibt es nicht mehr.
+- [ ] Zwei Gruppen ohne Überschrift, durch eine kurze Linie getrennt: Inbox, Geplant, Erledigt
+      (Tasten 1–3) und Mir zugewiesen, Von mir erstellt (4–5); der Tooltip nennt die Taste.
+      „Beobachtet“ und „Alle“ gibt es nicht mehr.
 - [ ] ⌘K findet nur Items, die in einer Ansicht stehen; ein Sprung landet in deren Ansicht, ein
       eigener zugewiesener PR in „Von mir erstellt“.
 - [ ] Footer zeigt Verbrauchsring, Einstellungen, Fragezeichen; der Radiergummi sitzt in der Überschrift „Nach Repository filtern“.
@@ -32,7 +32,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       beim zuletzt gewählten Item weiter.
 - [ ] Die Zahlen an den Ansichten folgen dem Repo-Filter und passen dann zur Liste; Issues/Pull Requests,
       Sonstige/Reviews und Sprint ändern sie nicht. Der Kopf der Liste zeigt keine Zahl neben dem Titel.
-- [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox, Wiedervorlage und Erledigt Alle → Sonstige → Reviews, sonst
+- [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox und Erledigt Alle → Reviews → Sonstige, sonst
       Alle → Issues → Pull Requests, danach wieder Alle. ⌘G wechselt in „Mir zugewiesen“ zwischen
       Typ und Status, in den Listen die Zeitgruppen an und aus (auch in den Einstellungen sichtbar);
       in „Von mir erstellt“ tut ⌘G nichts. T und G allein schalten nichts mehr um. `/` öffnet die Palette nicht mehr, ⌘K schon.
@@ -192,7 +192,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Badge am Dock sinkt um eins. Das Badge zählt nur, was wieder oder noch zu tun ist: ungelesene Inbox-Items und ungelesene Zuweisungen (ohne die Leisten Später und Fertig); ein mit U markiertes Item in Wiedervorlage oder Erledigt zählt nicht. Ein neuer Beitrag eines anderen macht sie wieder fett.
       Die Zeit zählt nur bei vorderem Fenster: zu einer anderen App wechseln stoppt sie und
       beginnt beim Zurückkommen von vorn; schnelles Durchblättern mit ↑/↓ liest nichts.
-- [ ] Ansicht in der Seitenleiste samt Zahl ist fett, solange sie Ungelesenes hat; Wiedervorlage,
+- [ ] Ansicht in der Seitenleiste samt Zahl ist fett, solange sie Ungelesenes hat; Geplant,
       Erledigt und Von mir erstellt nie.
 - [ ] U oder R auf einem gelesenen Item macht es ungelesen (fett, Badge +1), auch direkt nach dem Öffnen;
       U erneut oder späteres Öffnen macht es gelesen. Mit markierten Items gilt U für alle. Auch im
@@ -205,11 +205,19 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       eine neue Auswahl (Pfeiltasten, Klick) scrollt zu ihr. Gilt ebenso für Mir zugewiesen
       und Von mir erstellt, und für ausgewählte Gruppenleisten.
 - [ ] Umschalter „Alle · Reviews · Sonstige“ statt Issues/Pull Requests, mit Anzahl neben Reviews und Sonstige („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch fällige Wiedervorlagen und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
-- [ ] Wiedervorlage und Erledigt haben denselben Umschalter: Reviews sind PRs mit deiner
+- [ ] Erledigt hat denselben Umschalter: Reviews sind PRs mit deiner
       Review-Anfrage, Erwähnungen Items, in denen du erwähnt wurdest; Zuweisungen nur unter „Alle“.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst
       eine Erwähnung darin holt sie zusätzlich in die Inbox, bis du antwortest.
 - [ ] Kontextmenü, ⌘K und Hilfe bieten „Annehmen“ nicht mehr an.
+- [ ] Listenspalte schmal ziehen: unter etwa 460 px steht statt des Umschalters ein Filter-Menü
+      mit der aktuellen Wahl („Alle“, „Reviews · 3“ …) und statt Sortierknopf, Ein-/Ausklappen und
+      Liste/Tabelle ein Zahnrad-Menü mit genau diesen Einträgen (Sortierung als Häkchen); unter 340 px
+      zeigt das Filter-Menü nur sein Icon. Titel und Glühbirne bleiben immer, die Controls stehen
+      in jeder Breite rechtsbündig; breiter gezogen kommt alles zurück. Gilt in Inbox, Geplant (Liste) und Erledigt.
+- [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes Item zeigt in der
+      Kontextzeile einen gelben Stern, ein geplantes den Tag mit Kalender-Icon („Morgen“, „Do“);
+      es bleibt in seiner Liste. Von mir erstellt zeigt den Stern beim Überfahren der Zeile.
 - [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
       erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
       Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.
@@ -240,6 +248,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       mit dem Tag leise hinter dem Titel („Morgen“, „Do“); die Seitenleiste zählt sie nicht mit.
 - [ ] Am geplanten Tag stehen sie morgens in Heute (höchstens drei, ältester Plan zuerst); ein
       Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
+- [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
+      (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; es zählt gegen die drei, Geplantes
+      rückt nur in den freien Platz nach. D, P oder T nehmen den Chip weg.
 - [ ] „Neu“ steht an Zuweisungen, die du seit der Zuweisung nicht geöffnet hast; nach dem Öffnen
       verschwindet es. Selbst zugewiesene sind nie neu.
 - [ ] Der erste Start nach dem Update lädt einmal vollständig (Issue-Typen), danach wieder Deltas.
@@ -318,12 +329,21 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Rechtsklick auf ein markiertes Item zeigt das Menü für alle; auf ein anderes das eigene,
       und die Markierung geht weg.
 
-## Wiedervorlage (Ansicht)
+## Geplant (Ansicht)
 
-- [ ] Leisten nach Ablauf: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
+- [ ] Alles mit Datum, aus allen Views: für heute Angeheftetes (Stern), Geplantes (Kalender) und
+      Wiedervorlagen (Glocke), auch die, die in ihrer Tabelle warten. Umschalter Alle · Issues ·
+      Pull Requests, kein Reviews/Sonstige.
+- [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
-- [ ] Die Zeile zeigt, wann das Item zurückkommt (Uhrzeit heute, Wochentag, sonst Datum); Tooltip
-      mit Datum und Uhrzeit.
+- [ ] Rechts in der Zeile „Heute“, der geplante Tag („Morgen“, „Do“) oder wann die Wiedervorlage
+      zurückkommt (Uhrzeit heute, Wochentag, sonst Datum); Tooltip mit vollem Datum. Übertragenes
+      aus Heute trägt „Seit gestern“ in Rot in der Kontextzeile.
+- [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
+      oder Mir zugewiesen steht, zählt dort weiter.
+- [ ] Das Icon-Menü im Kopf (Liste/Tabelle) schaltet die Darstellung um; die Tabelle hat
+      dieselben Tagesleisten, Sprint-Filter, Eigenschaften und Pop-up-Detail wie Mir zugewiesen,
+      rechts den Tag oder die Rückkehrzeit. Die Wahl bleibt nach einem Neustart.
 - [ ] F → D öffnet den Dialog mit morgen (TT.MM.JJJJ, mit Punkten) und 09:00, der Fokus steht auf
       dem Tag. Die Uhrzeit ist 24 h, auch bei 12-Stunden-Uhr im System. ↑/↓ ändern den Teil (⇧ in
       Zehnern; 23 → 00 und 31. → 1. laufen über, das Jahr nicht), ←/→ wechseln die Teile. „1“ „4“ tippt
@@ -369,7 +389,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Jede Ansicht ist gefüllt: Inbox (Erwähnung, Review-Anfrage, Team-Anfrage, Erinnerung an
       dich selbst, fällige Wiedervorlage, Update zu „Mein Teil erledigt“), Mir zugewiesen (alle
       Typen, Blockiert, Fertig, Später, ein fremder PR), Von mir erstellt (Entwurf mit Konflikten,
-      Wiedervorlage, PR mit Reviews), Wiedervorlage (drei Items), Erledigt (gemergt, geschlossen,
+      Wiedervorlage, PR mit Reviews), Geplant (fünf Wiedervorlagen), Erledigt (gemergt, geschlossen,
       beantwortet). Avatare sind farbige Initialen, nichts lädt aus dem Netz.
 - [ ] Kommentieren, Schließen, Wiedereröffnen und Zuweisen funktionieren und ändern nur die
       Demo-Welt; nach einem Neustart ist alles wie am Anfang. Zeiten wie „vor 2 Std.“ stimmen

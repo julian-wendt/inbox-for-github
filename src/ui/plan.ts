@@ -1,7 +1,9 @@
+import type { Classified } from "../classify";
 import { FOCUS_MAX, localDay } from "./assignments";
 import { lang, t } from "./i18n";
+import { reminderText, untilShort } from "./snooze";
 
-/** An assigned item the viewer plans for a later day; `day` is a local date ("2026-10-28"). */
+/** An item the viewer plans for a later day; `day` is a local date ("2026-10-28"). */
 export interface Planned {
   id: string;
   day: string;
@@ -44,34 +46,65 @@ export function setPlan(planned: Planned[], id: string, day: string | null): Pla
   return day ? [...rest, { id, day }] : rest;
 }
 
+/** The settings that make up "Today": the pins, the day they stand for, the plans and when each pin was made. */
+export interface Today {
+  focus: string[];
+  focusDay: string | null;
+  planned: Planned[];
+  pinnedOn: Record<string, string>;
+}
+
 /**
- * The state of "Today" once a new day has begun: yesterday's pins are gone, and the items planned
- * for today or earlier move in, oldest plan first, as far as `FOCUS_MAX` allows. Those that do
- * not fit stay planned. Plans of items that are loaded but cannot be pinned any more (closed,
- * unassigned, snoozed) are dropped. Returns null while nothing is to be done: Today is from this
- * day, or it is empty, no plan is due and none is dropped.
+ * The state of "Today" once a new day has begun: what was pinned and is still open stays, carried
+ * over, and the items planned for today or earlier move in behind it, oldest plan first, as far
+ * as `FOCUS_MAX` allows. Those that do not fit stay planned. Pins and plans of items that are
+ * loaded but cannot be pinned any more (closed, unassigned, snoozed) are dropped. `pinnedOn`
+ * keeps the day each pin came into Today; a pin recorded before that existed counts from the day
+ * Today was last set. Returns null while nothing is to be done: Today is from this day, or it is
+ * empty, no plan is due and none is dropped.
  *
- * @param state      The settings `focus`, `focusDay` and `planned`.
+ * @param state      The settings `focus`, `focusDay`, `planned` and `pinnedOn`.
  * @param today      The local date of today (see `localDay`).
  * @param pinnable   Whether an item can be pinned now.
- * @param loaded     Whether an item is loaded at all; plans of items not loaded yet are kept.
+ * @param loaded     Whether an item is loaded at all; pins and plans of items not loaded yet are kept.
  *
  * @example
- *   rollOver({ focus: ["I_1"], focusDay: "2026-10-26", planned: [{ id: "I_2", day: "2026-10-27" }] }, "2026-10-27", () => true);
- *   // { focus: ["I_2"], focusDay: "2026-10-27", planned: [] }
+ *   rollOver({ focus: ["I_1"], focusDay: "2026-10-26", planned: [{ id: "I_2", day: "2026-10-27" }], pinnedOn: { I_1: "2026-10-26" } }, "2026-10-27", () => true);
+ *   // { focus: ["I_1", "I_2"], focusDay: "2026-10-27", planned: [], pinnedOn: { I_1: "2026-10-26", I_2: "2026-10-27" } }
  */
-export function rollOver(
-  state: { focus: string[]; focusDay: string | null; planned: Planned[] },
-  today: string,
-  pinnable: (id: string) => boolean,
-  loaded: (id: string) => boolean = () => false,
-): { focus: string[]; focusDay: string | null; planned: Planned[] } | null {
+export function rollOver(state: Today, today: string, pinnable: (id: string) => boolean, loaded: (id: string) => boolean = () => false): Today | null {
   if (state.focusDay === today) return null;
-  const kept = state.planned.filter((p) => pinnable(p.id) || !loaded(p.id));
-  const due = kept.filter((p) => p.day <= today && pinnable(p.id)).sort((a, b) => a.day.localeCompare(b.day)).slice(0, FOCUS_MAX);
-  if (state.focus.length === 0 && due.length === 0 && kept.length === state.planned.length) return null;
+  const keep = (id: string) => pinnable(id) || !loaded(id);
+  const carried = state.focus.filter(keep);
+  const kept = state.planned.filter((p) => keep(p.id));
+  const due = kept
+    .filter((p) => p.day <= today && pinnable(p.id) && !carried.includes(p.id))
+    .sort((a, b) => a.day.localeCompare(b.day))
+    .slice(0, Math.max(0, FOCUS_MAX - carried.length));
+  const focus = [...carried, ...due.map((p) => p.id)];
+  if (focus.length === 0 && state.focus.length === 0 && kept.length === state.planned.length) return null;
   const moved = new Set(due.map((p) => p.id));
-  return { focus: due.map((p) => p.id), focusDay: due.length > 0 ? today : null, planned: kept.filter((p) => !moved.has(p.id)) };
+  const pinnedOn = Object.fromEntries(focus.map((id) => [id, moved.has(id) ? today : (state.pinnedOn[id] ?? state.focusDay ?? today)]));
+  return { focus, focusDay: focus.length > 0 ? today : null, planned: kept.filter((p) => !moved.has(p.id)), pinnedOn };
+}
+
+/** The record without `id`, for taking an item out of `pinnedOn`. */
+export function without(pinnedOn: Record<string, string>, id: string): Record<string, string> {
+  return Object.fromEntries(Object.entries(pinnedOn).filter(([key]) => key !== id));
+}
+
+/**
+ * Since when an item carried over in Today has waited: "Since yesterday", the short weekday
+ * within the past week ("Since Mon"), else day and month ("Since 12 Oct").
+ *
+ * @example
+ *   carriedText("2026-10-26", new Date(2026, 9, 28)); // "Since Mon" (English)
+ */
+export function carriedText(day: string, now = new Date()): string {
+  const ago = Math.round((dateOf(localDay(now)).getTime() - dateOf(day).getTime()) / 86_400_000);
+  if (ago <= 1) return t("focus.sinceYesterday");
+  const date = dateOf(day);
+  return t("focus.since", { day: ago < 7 ? date.toLocaleDateString(lang(), { weekday: "short" }) : date.toLocaleDateString(lang(), { day: "numeric", month: "short" }) });
 }
 
 /** A local date ("2026-10-28") as a Date at local midnight. */
@@ -122,4 +155,48 @@ export function dayShort(day: string, now = new Date()): string {
 /** A planned day in full, for a tooltip: "Thursday, 29 October 2026". */
 export function dayLong(day: string): string {
   return dateOf(day).toLocaleDateString(lang(), { dateStyle: "full" });
+}
+
+/** Whether T and P take the item: open here and on GitHub. */
+export function isPinnable(entry: Pick<Classified, "status" | "item">): boolean {
+  return entry.status === "open" && !entry.item.closed;
+}
+
+/** Why an item is in Planned: pinned for today, planned for a day, or a follow-up, with its date when it has one. */
+export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string } | { kind: "followUp"; until?: string };
+
+/**
+ * Why an item shows in the Planned view, or null: pinned for today or planned for a later day,
+ * both only while it can be pinned, or set to follow up, with or without a date.
+ *
+ * @example
+ *   datedOf(entry, ["I_1"], [], "2026-10-28"); // { kind: "today", day: "2026-10-28" } for I_1
+ */
+export function datedOf(entry: Pick<Classified, "status" | "item" | "until">, focus: readonly string[], planned: Planned[], today = localDay()): Dated | null {
+  const { id } = entry.item;
+  if (isPinnable(entry)) {
+    if (focus.includes(id)) return { kind: "today", day: today };
+    const plan = planned.find((p) => p.id === id);
+    if (plan) return { kind: "planned", day: plan.day };
+  }
+  if (entry.status === "snoozed") return { kind: "followUp", until: entry.until };
+  return null;
+}
+
+/** The moment a dated item stands for, as an ISO time (local midnight for a day), or undefined without a date. */
+export function datedAt(dated: Dated): string | undefined {
+  return dated.kind === "followUp" ? dated.until : dateOf(dated.day).toISOString();
+}
+
+/**
+ * What a row of Planned shows at its end, with its tooltip: "Today", the planned day, or when the
+ * follow-up returns; nothing for a follow-up without a date.
+ *
+ * @example
+ *   datedText({ kind: "planned", day: "2026-10-29" }, new Date(2026, 9, 28)); // { text: "Tomorrow", title: "Planned for Thursday, 29 October 2026" }
+ */
+export function datedText(dated: Dated, now = new Date()): { text: string; title: string } | undefined {
+  if (dated.kind === "today") return { text: t("plate.focus"), title: dayLong(dated.day) };
+  if (dated.kind === "planned") return { text: dayShort(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
+  return dated.until ? { text: untilShort(dated.until, now), title: reminderText(dated.until) } : undefined;
 }

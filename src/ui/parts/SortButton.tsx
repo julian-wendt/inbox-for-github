@@ -8,7 +8,7 @@ import type { SortOrder } from "../useSortOrders";
  *
  * @example
  *   <SortButton order={sort.of(bucket)} onFlip={() => sort.flip(bucket)} />
- *   <SortButton order={sort.of("snoozed")} onFlip={flip} by="return" />
+ *   <SortButton order={sort.of("planned")} onFlip={flip} by="return" />
  */
 export function SortButton({ order, onFlip, by }: { order: SortOrder; onFlip: () => void; by?: "return" }) {
   const label = t(by === "return" ? (order === "newest" ? "sort.soonest" : "sort.latest") : order === "newest" ? "sort.newest" : "sort.oldest");

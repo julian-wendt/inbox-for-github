@@ -171,16 +171,18 @@ export interface Settings {
   maxItems: number;
   /** Items the viewer stopped tracking: left out everywhere, whatever happens on GitHub. */
   untracked: UntrackedItem[];
-  /** Item ids marked "today" in Assigned to me, at most three. */
+  /** Item ids marked "today" (T), at most three; any open item in any view. */
   focus: string[];
-  /** The local date ("2026-10-23") the focus was set on; a new day empties it. */
+  /** The local date ("2026-10-23") Today was last set or rolled over to (see `rollOver`). */
   focusDay: string | null;
-  /** Assigned items planned for a later day; on that day they move into Today (see `rollOver`). */
+  /** Items planned for a later day (P); on that day they move into Today (see `rollOver`). */
   planned: Planned[];
+  /** Per pinned item, the local date it came into Today; an earlier day than today marks it as carried over. */
+  pinnedOn: Record<string, string>;
   /** The attributes of the Assigned to me table in the viewer's order, with their switches; null until changed (see `resolveAttributes`). */
   tableAttributes: AttributeSetting[] | null;
   /** Per table, its own attribute switches from its header menu; attributes without one follow `tableAttributes`. */
-  tableColumns: Partial<Record<"assigned" | "authored", Record<string, boolean>>>;
+  tableColumns: Partial<Record<"assigned" | "authored" | "planned", Record<string, boolean>>>;
   /** The attributes of the detail view's meta line, like `tableAttributes`, in the same order. */
   detailAttributes: AttributeSetting[] | null;
   /** The order of the bars in Assigned to me; bars left out follow in their default order. */
@@ -207,7 +209,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: true, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], statusMap: {}, plateOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: true, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, statusMap: {}, plateOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

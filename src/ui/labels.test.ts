@@ -143,11 +143,12 @@ describe("views", () => {
     ({ bucket, status: "open", item: { kind: "issue", author: "alice", closed: null, reasons: ["assigned"], ...item } }) as Classified;
 
   it("offers five views, without Watching and All", () => {
-    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "snoozed", "done", "assigned", "authored"]);
+    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "done", "assigned", "authored"]);
   });
 
   it("finds an item's view, none for what the viewer merely takes part in", () => {
     expect(viewOf(entry("inbox"), "me")).toBe("inbox");
+    expect(viewOf(entry("snoozed"), "me")).toBe("planned");
     expect(viewOf(entry("involved", { reasons: ["involved"] }), "me")).toBeNull();
     expect(viewOf(entry("assigned"), "me")).toBe("assigned");
     expect(viewOf(entry("assigned", { kind: "pr", author: "me" }), "me")).toBe("authored");

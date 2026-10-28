@@ -301,7 +301,7 @@ describe("Snoozing on the plate", () => {
     app.snooze(issue, new Date(world.now.getTime() + 2 * MINUTE).toISOString());
 
     expect(app.onPlate(issue)).toBe(true);
-    expect(app.views().snoozed).not.toContain(issue.id);
+    expect(app.views().planned).toContain(issue.id);
     world.advance(3 * MINUTE);
     expect(app.entry(issue).asks).toEqual(["due"]);
     expect(app.statuses.get(issue.id)).toMatchObject({ status: "open", due: true });
@@ -405,7 +405,7 @@ describe("Follow-ups", () => {
 
     expect(app.statuses.get(issue.id)?.status).toBe("snoozed");
     expect(app.views().authored).toContain(issue.id);
-    expect(app.views().snoozed).not.toContain(issue.id);
+    expect(app.views().planned).toContain(issue.id);
     expect(app.followUp(issue)).toBe(inAnHour(world));
     expect(groupAuthored(app.classified(), "octocat").map((g) => g.group)).toEqual(["later"]);
 
@@ -491,7 +491,7 @@ describe("Follow-ups", () => {
     await app.refresh();
 
     app.snooze(issue, inAnHour(world));
-    expect(app.viewOf(issue)).toBe("snoozed");
+    expect(app.viewOf(issue)).toBe("planned");
 
     world.advance(2 * HOUR);
     expect(app.viewOf(issue)).toBe("inbox");

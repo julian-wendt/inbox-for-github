@@ -4,6 +4,7 @@ import { isBot, latest, posts, sameLogin } from "../timeline";
 import { workStatus, type StatusMap } from "../workStatus";
 import type { AuthoredGroup } from "./authored";
 import type { Planned } from "./plan";
+import type { SnoozeGroup } from "./timeGroups";
 
 /**
  * A bar in the "Assigned to me" table: "focus" for the items marked today, then the work
@@ -13,8 +14,11 @@ import type { Planned } from "./plan";
  */
 export type PlateGroup = "focus" | "review" | "progress" | "todo" | "planned" | "later" | "finished";
 
-/** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`) or a bar of Created by me. */
-export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup;
+/** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a bar of Created by me or a day bar of Planned. */
+export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup | DayGroup;
+
+/** A day bar of Planned as a table: `day:today` to `day:undated` (see `groupBySnoozeEnd`). */
+export type DayGroup = `day:${SnoozeGroup}`;
 
 /** A type bar: pull requests, one issue type by name (`type:Bug`), or issues without a type. */
 export type TypeGroup = "pr" | `type:${string}` | "notype";

@@ -1,10 +1,11 @@
+import { CalendarDays, Star } from "lucide-react";
 import { motion } from "motion/react";
 import { numberSpans, titleSpans } from "../textFilter";
 import { Highlight } from "./Highlight";
 import type { Classified } from "../../classify";
 import { t } from "../i18n";
 import { compactAgo, rowContext } from "../labels";
-import { reminderText, untilShort } from "../snooze";
+import { carriedText, dayLong, dayShort } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
 import { KindIcon, FollowUpBell } from "./ItemMarks";
@@ -16,6 +17,14 @@ interface Props {
   marked: boolean;
   /** Not opened since what put it here; the title prints bold. */
   unread: boolean;
+  /** Pinned for today (T): a filled star in the context line. */
+  pinned: boolean;
+  /** Planned for a later day (P): that day in the context line. */
+  plannedDay?: string;
+  /** In Today since a day before today: carried over, marked since when. */
+  carriedSince?: string;
+  /** What the row's view shows at its end instead of the time: in Planned, the day or the return time. */
+  when?: { text: string; title: string };
   onMark: (range: boolean) => void;
   avatar: boolean;
   onSelect: () => void;
@@ -29,7 +38,7 @@ interface Props {
   still: boolean;
 }
 
-export function InboxRow({ entry, selected, marked, unread, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
+export function InboxRow({ entry, selected, marked, unread, pinned, plannedDay, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
   const { item, mention, status } = entry;
   const person = mention?.by ?? item.author;
   const ref = useScrollIntoView<HTMLLIElement>(selected);
@@ -62,12 +71,28 @@ export function InboxRow({ entry, selected, marked, unread, onMark, avatar, onSe
         <span className={`row-context${mention?.self ? " reminder" : ""}`}>
           <KindIcon item={item} size={13} status={status} />
           <FollowUpBell entry={entry} />
+          {pinned && (
+            <span className="row-mark today" title={t("menu.today")} aria-label={t("menu.today")}>
+              <Star size={12} />
+            </span>
+          )}
+          {carriedSince && (
+            <span className="row-mark carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>
+              {carriedText(carriedSince)}
+            </span>
+          )}
+          {plannedDay && (
+            <span className="row-mark" title={t("plan.on", { date: dayLong(plannedDay) })}>
+              <CalendarDays size={12} />
+              {dayShort(plannedDay)}
+            </span>
+          )}
           {/* "Assigned to you · app"; in Assigned to me the group heading names the repo already. */}
           <span>{`${rowContext(entry)} · ${item.repo.split("/")[1]}`}</span>
         </span>
       </span>
       <span className="row-end">
-        {entry.bucket === "snoozed" && entry.until ? <time title={reminderText(entry.until)}>{untilShort(entry.until)}</time> : <time>{compactAgo(time)}</time>}
+        {when ? <time title={when.title}>{when.text}</time> : <time>{compactAgo(time)}</time>}
         <span>#<Highlight spans={numberSpans(item.number, query)} /></span>
       </span>
     </motion.li>

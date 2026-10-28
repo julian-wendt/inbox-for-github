@@ -22,7 +22,7 @@ import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { followUpOf } from "./ui/followUp";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
-import { Bell, CalendarClock, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, Star, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
+import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, Star, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
 import { Detail } from "./ui/parts/Detail";
 import { Help } from "./ui/parts/Help";
@@ -42,10 +42,11 @@ import { useOrca } from "./ui/useOrca";
 import { openInOrca } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, planChoices, rollOver, setPlan } from "./ui/plan";
+import { choiceKey, choiceText, datedAt, datedOf, isPinnable, planChoices, rollOver, setPlan, without } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
+import { usePlannedLayout } from "./ui/usePlannedLayout";
 import { groupBySnoozeEnd, groupByTime } from "./ui/timeGroups";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
@@ -80,7 +81,8 @@ export default function App() {
   const [chosen, setChosen] = useState<View>("inbox");
   const views = VIEWS;
   const bucket = chosen;
-  const table = bucket === "assigned" || bucket === "authored";
+  const [layout, setLayout] = usePlannedLayout();
+  const table = bucket === "assigned" || bucket === "authored" || (bucket === "planned" && layout === "table");
   const [repoFilter, setRepoFilter] = useState<string[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
   const [ask, setAsk] = useState<AskFilter>("all");
@@ -114,7 +116,7 @@ export default function App() {
     setMarks(new Set());
   };
   // Each table keeps its own sprint filter while the viewer switches views.
-  const [sprints, setSprints] = useState<Record<"assigned" | "authored", SprintFilter>>({ assigned: "all", authored: "all" });
+  const [sprints, setSprints] = useState<Record<"assigned" | "authored" | "planned", SprintFilter>>({ assigned: "all", authored: "all", planned: "all" });
   // The free-text search over title and number: null while the search bar is closed, else the typed text.
   const [search, setSearch] = useState<string | null>(null);
   const query = search ?? "";
@@ -191,40 +193,50 @@ export default function App() {
   const itemsOfView = (view: View): Classified[] => {
     if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
     if (view === "authored") return groupAuthored(inbox.classified, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
+    if (view === "planned") return inbox.classified.filter((c) => dated(c) !== null);
     return inbox.classified.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
   const movesUp = inbox.settings.movesUp;
   const rowTime = useCallback((c: Classified) => sortTime(c, me, movesUp), [me, movesUp]);
-  // Snoozed lists by when items come back, soonest first; the sort button turns the dated ones around.
-  const snoozeGroups = useMemo(
-    () =>
-      bucket === "snoozed"
-        ? groupBySnoozeEnd(askBase.filter((c) => matchesAsk(c, ask, me) && matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "", sort.of("snoozed") === "oldest")
-        : [],
-    [bucket, askBase, ask, query, me, sort],
+  // Planned lists everything with a date, soonest first; the sort button turns the dated ones around.
+  const focus = inbox.settings.focus;
+  const plans = inbox.settings.planned;
+  // The local date, set with the rollover check rather than read during render; the rows' marks and Today's date follow it.
+  const [today, setToday] = useState(localDay);
+  const dated = useCallback((c: Classified) => datedOf(c, focus, plans, today), [focus, plans, today]);
+  const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
+  const plannedGroups = useMemo(
+    () => (bucket === "planned" ? groupBySnoozeEnd(plannedAll.filter((c) => matchesText(c.item, query)), (c) => datedAt(datedOf(c, focus, plans, today)!), (c) => c.statusAt ?? "", sort.of("planned") === "oldest") : []),
+    [bucket, plannedAll, query, focus, plans, today, sort],
+  );
+  // Planned as a table: the day bars, narrowed by its sprint filter like the other tables.
+  const plannedSprints = useMemo(() => sprintChoices(plannedAll.map((c) => c.item), hidden), [plannedAll, hidden]);
+  const plannedTable = useMemo(
+    (): { group: TableGroup; entries: Classified[] }[] => bySprint(plannedGroups.map((g) => ({ group: `day:${g.group}` as TableGroup, entries: g.entries })), sprints.planned, plannedSprints),
+    [plannedGroups, bySprint, sprints.planned, plannedSprints],
   );
   const listed = useMemo(
     () =>
       table
         ? []
-        : bucket === "snoozed"
-          ? snoozeGroups.flatMap((g) => g.entries)
+        : bucket === "planned"
+          ? plannedGroups.flatMap((g) => g.entries)
           : oriented(sortByRecency((asking ? askBase.filter((c) => matchesAsk(c, ask, me)) : scoped.filter((c) => c.bucket === bucket)).filter((c) => matchesText(c.item, query)), rowTime), sort.of(bucket)),
-    [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, snoozeGroups],
+    [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, plannedGroups],
   );
   const timeGroups = useMemo(
     () =>
-      !table && inbox.settings.groupByTime && bucket === "snoozed"
-        ? snoozeGroups.map((g) => ({ ...g, heading: t(`time.group.${g.group}`) }))
+      !table && inbox.settings.groupByTime && bucket === "planned"
+        ? plannedGroups.map((g) => ({ ...g, heading: t(`time.group.${g.group}`) }))
         : !table && inbox.settings.groupByTime
           ? groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: t(`time.group.${g.group}`) }))
           : undefined,
-    [bucket, table, listed, snoozeGroups, inbox.settings.groupByTime, sort, rowTime],
+    [bucket, table, listed, plannedGroups, inbox.settings.groupByTime, sort, rowTime],
   );
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Done stays open in the inbox.
-  const tableGroups = bucket === "assigned" ? plate : authored;
+  const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : authored;
   const viewGroups: { group: string; entries: Classified[] }[] | undefined = table ? tableGroups : timeGroups;
   const barKey = useCallback((group: string) => (bucket === "assigned" ? group : `${bucket}:${group}`), [bucket]);
   const folded = useCallback((group: string) => group !== "focus" && bars.collapsed.has(barKey(group)), [bars.collapsed, barKey]);
@@ -297,8 +309,8 @@ export default function App() {
 
   const counts = useMemo(
     () =>
-      ({ ...countBy(scoped, (c) => c.bucket), inbox: inboxAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }) as Record<View, number>,
-    [scoped, inboxAll, plateAll, authoredAll],
+      ({ ...countBy(scoped, (c) => c.bucket), inbox: inboxAll.length, planned: plannedAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }) as Record<View, number>,
+    [scoped, inboxAll, plannedAll, plateAll, authoredAll],
   );
   // The picked repos narrow the sidebar's counts like the list; the other filters do not.
   const viewCounts = useMemo(() => {
@@ -306,10 +318,11 @@ export default function App() {
     return {
       ...countBy(all, (c) => c.bucket),
       inbox: all.filter((c) => c.bucket === "inbox").length,
-      assigned: plateCount(groupPlate(all, inbox.settings.focus, inbox.settings.statusMap, [], me, inbox.settings.planned)),
+      planned: all.filter((c) => datedOf(c, focus, plans, today) !== null).length,
+      assigned: plateCount(groupPlate(all, focus, inbox.settings.statusMap, [], me, plans)),
       authored: authoredCount(groupAuthored(all, me)),
     } as Record<View, number>;
-  }, [inRepos, inbox.settings.focus, inbox.settings.statusMap, inbox.settings.planned, me]);
+  }, [inRepos, focus, inbox.settings.statusMap, plans, today, me]);
   const findable = useMemo(() => inbox.classified.filter((c) => viewOf(c, me) !== null), [inbox.classified, me]);
   // The badge says there is something to do again, or still: unread inbox items and unread assignments, marks by hand included.
   const badgeIds = useMemo(() => new Set([...unreadInboxIds, ...unreadPlateIds]), [unreadInboxIds, unreadPlateIds]);
@@ -335,7 +348,7 @@ export default function App() {
     [inbox.settings.tableAttributes, inbox.settings.detailAttributes, attributes],
   );
   const detailKeys = useMemo(() => shownKeys(combined, "detail"), [combined]);
-  const tableView = bucket === "authored" ? "authored" : "assigned";
+  const tableView = bucket === "authored" ? "authored" : bucket === "planned" ? "planned" : "assigned";
   const ownColumns = inbox.settings.tableColumns[tableView];
   const columnKeys = useMemo(() => tableKeys(combined, ownColumns), [combined, ownColumns]);
   // Assigned to me also switches the opening date after the title; Created by me times its rows by it.
@@ -364,7 +377,7 @@ export default function App() {
     setRepoFilter([]);
     setKind("all");
     setAsk("all");
-    setSprints({ assigned: "all", authored: "all" });
+    setSprints({ assigned: "all", authored: "all", planned: "all" });
     setSearch(null);
   };
   // With "hoverActs", keys act on the row under the mouse; the arrow keys and an open pop-up hand them back to the selection.
@@ -372,13 +385,18 @@ export default function App() {
   const target = hoveredEntry ?? current;
   const withCurrent = (fn: (c: Classified) => void) => () => target && fn(target);
 
-  const pinnable = (c: Classified) => c.status === "open" && onPlate(c, me);
+  const pinnable = isPinnable;
   const toggleFocus = (c: Classified) => {
     const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
     const on = focus.includes(c.item.id);
     if (!on && focus.length >= FOCUS_MAX) return actions.notify(t("focus.full"));
-    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned };
-    const next = { focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id], focusDay: localDay(), planned: setPlan(inbox.settings.planned, c.item.id, null) };
+    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned, pinnedOn: inbox.settings.pinnedOn };
+    const next = {
+      focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id],
+      focusDay: localDay(),
+      planned: setPlan(inbox.settings.planned, c.item.id, null),
+      pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
+    };
     void inbox.saveSettings({ ...inbox.settings, ...next });
     actions.announce(
       t(on ? "focus.removed" : "focus.added", { number: c.item.number }),
@@ -389,8 +407,8 @@ export default function App() {
 
   /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today. */
   const planFor = (c: Classified, day: string | null, text: string) => {
-    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned };
-    const next = { focus: inbox.settings.focus.filter((id) => id !== c.item.id), focusDay: inbox.settings.focusDay, planned: setPlan(inbox.settings.planned, c.item.id, day) };
+    const previous = { focus: inbox.settings.focus, focusDay: inbox.settings.focusDay, planned: inbox.settings.planned, pinnedOn: inbox.settings.pinnedOn };
+    const next = { focus: inbox.settings.focus.filter((id) => id !== c.item.id), focusDay: inbox.settings.focusDay, planned: setPlan(inbox.settings.planned, c.item.id, day), pinnedOn: without(inbox.settings.pinnedOn, c.item.id) };
     void inbox.saveSettings({ ...inbox.settings, ...next });
     actions.announce(
       day ? t("plan.added", { number: c.item.number, day: text }) : t("plan.removed", { number: c.item.number }),
@@ -749,7 +767,7 @@ export default function App() {
       ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(pinnable(c) ? [{ label: t("menu.today"), keys: "T", icon: <Star size={14} />, checked: inbox.settings.focus.includes(item.id), onSelect: () => toggleFocus(c) }] : []),
-      ...(pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarClock size={14} />, items: planEntries(c) }] : []),
+      ...(pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, items: planEntries(c) }] : []),
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
       ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <SquareTerminal size={14} />, onSelect: () => openOrca(c, orcaId) }] : []),
@@ -762,13 +780,15 @@ export default function App() {
     ];
   };
 
-  // "Today" starts over each morning with what was planned for it: checked on start and every few minutes while the app stays open.
+  // Each morning "Today" keeps what is unfinished and takes in what was planned for it: checked on start and every few minutes while the app stays open.
   const { settings, saveSettings, ready, classified } = inbox;
   useEffect(() => {
     if (!ready) return;
     const check = () => {
-      const pinnable = (id: string) => classified.some((c) => c.item.id === id && c.status === "open" && onPlate(c, me));
-      const next = rollOver(settings, localDay(), pinnable, (id) => classified.some((c) => c.item.id === id));
+      const day = localDay();
+      setToday(day);
+      const pinnable = (id: string) => classified.some((c) => c.item.id === id && isPinnable(c));
+      const next = rollOver(settings, day, pinnable, (id) => classified.some((c) => c.item.id === id));
       if (next) void saveSettings({ ...settings, ...next });
     };
     check();
@@ -847,7 +867,7 @@ export default function App() {
   /** Shows an item in its view with every filter cleared, so it cannot be hidden by one. */
   const jumpTo = (c: Classified) => {
     setRepoFilter([]);
-    setSprints({ assigned: "all", authored: "all" });
+    setSprints({ assigned: "all", authored: "all", planned: "all" });
     if (kind !== "all" && kind !== c.item.kind) setKind("all");
     setAsk("all");
     setBucket(viewOf(c, me) ?? "inbox");
@@ -929,7 +949,9 @@ export default function App() {
           onSelectBar={(group) => selection.select(`bar:${group}`)}
           onToggle={toggleBar}
           sprint={sprints[bucket]}
-          sprints={bucket === "assigned" ? plateSprints : authoredSprints}
+          sprints={bucket === "assigned" ? plateSprints : bucket === "planned" ? plannedSprints : authoredSprints}
+          layout={bucket === "planned" ? layout : undefined}
+          onLayout={setLayout}
           onSprint={(filter) => setSprints((current) => ({ ...current, [bucket]: filter }))}
           onToggleAll={(fold) => bars.setAll(tableGroups.filter((g) => g.group !== "focus").map((g) => barKey(g.group)), fold)}
           hiddenBoards={inbox.settings.hiddenBoards}
@@ -938,8 +960,9 @@ export default function App() {
           columns={tableColumns}
           onColumn={setColumn}
           showOpened={showOpened}
-          focus={inbox.settings.focus}
-          planned={inbox.settings.planned}
+          datedOf={dated}
+          pinnedOn={inbox.settings.pinnedOn}
+          today={today}
           onFocus={toggleFocus}
           onMove={(bar, target) => void inbox.saveSettings({ ...inbox.settings, plateOrder: moveBar(inbox.settings.plateOrder, bar as PlateGroup, target as PlateGroup) })}
           seen={inbox.seen}
@@ -967,6 +990,11 @@ export default function App() {
         <InboxList
           timeOf={rowTime}
           unread={unreadInboxIds}
+          datedOf={dated}
+          pinnedOn={inbox.settings.pinnedOn}
+          today={today}
+          layout={bucket === "planned" ? layout : undefined}
+          onLayout={setLayout}
           onMenu={openMenu}
           counts={counts}
           onJump={setBucket}

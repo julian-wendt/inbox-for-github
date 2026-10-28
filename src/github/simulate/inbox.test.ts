@@ -192,7 +192,7 @@ describe("Status and log", () => {
     await app.refresh();
 
     app.snooze(issue);
-    expect(app.viewOf(issue)).toBe("snoozed");
+    expect(app.viewOf(issue)).toBe("planned");
     app.done(issue);
     expect(app.viewOf(issue)).toBe("done");
     app.open(issue);
@@ -254,7 +254,7 @@ describe("Status and log", () => {
     world.advance(MINUTE);
     world.comment(issue, "bob", "Just a remark");
     await app.reload(issue);
-    expect(app.viewOf(issue)).toBe("snoozed");
+    expect(app.viewOf(issue)).toBe("planned");
 
     world.advance(MINUTE);
     world.comment(issue, "bob", "@octocat now it matters");
@@ -288,7 +288,7 @@ describe("Snoozed until a date (Wiedervorlage)", () => {
     expect(app.viewOf(issue)).toBeNull();
     const until = new Date(world.now.getTime() + 2 * MINUTE).toISOString();
     app.snooze(issue, until);
-    expect(app.viewOf(issue)).toBe("snoozed");
+    expect(app.viewOf(issue)).toBe("planned");
 
     expect(app.entry(issue).asks).toEqual([]);
     world.advance(3 * MINUTE);

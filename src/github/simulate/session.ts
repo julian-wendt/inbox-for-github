@@ -1,3 +1,4 @@
+import { datedOf } from "../../ui/plan";
 import { classify, type Classified } from "../../classify";
 import { snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
@@ -246,7 +247,7 @@ export class InboxSession {
       inbox: ids((c) => c.bucket === "inbox"),
       assigned: ids((c) => onPlate(c, this.me)),
       authored: ids((c) => isOwnOpen(c, this.me)),
-      snoozed: ids((c) => c.bucket === "snoozed"),
+      planned: ids((c) => datedOf(c, [], []) !== null),
       done: ids((c) => c.bucket === "done"),
     };
   }

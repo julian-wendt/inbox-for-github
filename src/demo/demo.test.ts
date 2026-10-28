@@ -54,13 +54,13 @@ describe("the demo world", () => {
     expect(session.followUp(refs.ownKeys)).not.toBeNull();
   });
 
-  it("files answered, closed and merged items under Done and waiting ones under Wiedervorlage", () => {
+  it("files answered, closed and merged items under Done and dated ones under Planned", () => {
     const views = session.views();
 
     expect(views.done).toEqual(expect.arrayContaining(ids("sidebarTokens", "xmlPayloads", "glossary", "buildTooling")));
     expect(session.entry(refs.buildTooling).item.closed?.state).toBe("merged");
     expect(session.entry(refs.xmlPayloads).item.closed?.state).toBe("closed");
-    expect(views.snoozed.sort()).toEqual(ids("negativeBalances", "frameBudget", "rateHeaders"));
+    expect(views.planned.sort()).toEqual(ids("signature", "ownKeys", "negativeBalances", "frameBudget", "rateHeaders"));
   });
 
   it("carries timelines with reviews, threads, dismissals, force pushes and bot comments", () => {

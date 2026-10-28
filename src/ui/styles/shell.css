@@ -199,6 +199,23 @@
   color: var(--text);
 }
 
+/* The view groups carry no headings: the first follows the search pill, the second a short line. */
+.nav.views {
+  margin-top: 14px;
+}
+
+.nav.views + .nav.views {
+  margin-top: 10px;
+}
+
+.nav.views + .nav.views::before {
+  display: block;
+  height: 1px;
+  margin: 0 8px 10px;
+  background: var(--border);
+  content: "";
+}
+
 .nav-heading {
   display: flex;
   justify-content: space-between;

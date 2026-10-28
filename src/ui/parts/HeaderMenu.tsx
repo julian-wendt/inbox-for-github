@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ContextMenu, type MenuEntry } from "./ContextMenu";
 
 /**
@@ -30,14 +31,8 @@ export function HeaderMenu({ icon, label, title, entries, disabled = false }: { 
         {label && <span>{label}</span>}
         <ChevronDown size={12} aria-hidden />
       </button>
-      {at && (
-        <ContextMenu
-          x={at.left}
-          y={at.bottom + 4}
-          entries={entries}
-          onClose={() => setAt(null)}
-        />
-      )}
+      {/* On the body, outside the header's stacking context, so the pane resizers cannot show through the menu. */}
+      {at && createPortal(<ContextMenu x={at.left} y={at.bottom + 4} entries={entries} onClose={() => setAt(null)} />, document.body)}
     </>
   );
 }

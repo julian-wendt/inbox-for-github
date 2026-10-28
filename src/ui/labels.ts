@@ -3,26 +3,28 @@ import type { Update } from "../handoff";
 import type { Bucket, Item, Status } from "../model";
 import { lastReplyAt, sameLogin } from "../timeline";
 import { lastOthersActivity, MOVES_UP_DEFAULT, onPlate, type MovesUp } from "./assignments";
-import { lang, t, type Lang, type MessageKey } from "./i18n";
+import { lang, t, type Lang } from "./i18n";
 
 /** Titles are getters, so they follow the language set at render time. */
 /**
- * A sidebar view: a bucket, except "involved". What the viewer merely takes part in (commented,
- * edited, or answered long ago) shows nowhere until a mention, review request or assignment.
+ * A sidebar view: a bucket, except "involved" and "snoozed", plus "planned". What the viewer merely
+ * takes part in (commented, edited, or answered long ago) shows nowhere until a mention, review
+ * request or assignment; follow-ups show in Planned with everything else that has a date.
  */
-export type View = Exclude<Bucket, "involved">;
+export type View = Exclude<Bucket, "involved" | "snoozed"> | "planned";
 
 /**
- * The sidebar's two sections: who waits for the viewer (mentions and reviews, with their snoozed
- * and done ones), and the viewer's own work (assigned to them, opened by them).
+ * The sidebar's two groups, set apart by a line, without headings: what comes in, is dated and
+ * is finished (the inbox, everything with a date, and done ones), and the viewer's own work
+ * (assigned to them, opened by them).
  */
-export const VIEW_SECTIONS: { title: MessageKey; views: View[] }[] = [
-  { title: "sidebar.asks", views: ["inbox", "snoozed", "done"] },
-  { title: "sidebar.mine", views: ["assigned", "authored"] },
+export const VIEW_SECTIONS: View[][] = [
+  ["inbox", "planned", "done"],
+  ["assigned", "authored"],
 ];
 
 /** The sidebar views on keys 1–5, in the sections' order. */
-export const VIEWS: { id: View; readonly title: string }[] = VIEW_SECTIONS.flatMap((s) => s.views).map((id) => ({
+export const VIEWS: { id: View; readonly title: string }[] = VIEW_SECTIONS.flat().map((id) => ({
   id,
   get title() {
     return t(`bucket.${id}`);
@@ -38,6 +40,7 @@ export const VIEWS: { id: View; readonly title: string }[] = VIEW_SECTIONS.flatM
  */
 export function viewOf(entry: Classified, me: string): View | null {
   if (entry.bucket === "involved") return null;
+  if (entry.bucket === "snoozed") return "planned";
   if (entry.bucket === "assigned" && !onPlate(entry, me)) return sameLogin(entry.item.author, me) ? "authored" : null;
   return entry.bucket;
 }

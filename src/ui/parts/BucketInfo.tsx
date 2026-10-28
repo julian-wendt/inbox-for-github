@@ -1,8 +1,9 @@
 import { Lightbulb } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { Bucket, Reopen } from "../../model";
+import type { Reopen } from "../../model";
 import { bucketHelp } from "../explain";
 import { t } from "../i18n";
+import type { View } from "../labels";
 
 /**
  * Light-bulb button for the list header; opens a short overview of what the bucket holds and how
@@ -11,7 +12,7 @@ import { t } from "../i18n";
  * @example
  *   <BucketInfo bucket="inbox" reopenOn="mention" onShowRules={() => setDialog("rules")} />
  */
-export function BucketInfo({ bucket, reopenOn, onShowRules }: { bucket: Bucket; reopenOn: Reopen; onShowRules: () => void }) {
+export function BucketInfo({ bucket, reopenOn, onShowRules }: { bucket: View; reopenOn: Reopen; onShowRules: () => void }) {
   const [open, setOpen] = useState(false);
   const help = bucketHelp(bucket, reopenOn);
 

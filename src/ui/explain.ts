@@ -1,7 +1,7 @@
 import type { Classified } from "../classify";
-import type { Bucket, Reopen } from "../model";
+import type { Reopen } from "../model";
 import { t } from "./i18n";
-import { ago, agoInSentence, updateSummary } from "./labels";
+import { ago, agoInSentence, updateSummary, type View } from "./labels";
 import { sameLogin } from "../timeline";
 import { untilText } from "./snooze";
 
@@ -108,18 +108,18 @@ export function explain(entry: Classified, reopenOn: Reopen, me = ""): Explanati
 }
 
 /**
- * What a bucket holds and how items leave or return, for the overview behind the list header's
- * info button and for the settings. Shares its wording with `explain`.
+ * What a view holds and how items leave or return, for the overview behind the list header's
+ * info button and for the help. Shares its wording with `explain`.
  *
- * @param bucket    The bucket to describe.
+ * @param view      The view to describe.
  * @param reopenOn  The "reopenOn" setting, which decides when manual statuses fall back.
  * @returns A lead sentence and the rules as short points.
  *
  * @example
  *   bucketHelp("inbox", "mention").points[0]; // "Mention: until you reply."
  */
-export function bucketHelp(bucket: Bucket, reopenOn: Reopen): { lead: string; points: string[] } {
-  switch (bucket) {
+export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points: string[] } {
+  switch (view) {
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
@@ -127,17 +127,12 @@ export function bucketHelp(bucket: Bucket, reopenOn: Reopen): { lead: string; po
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back")] };
-    case "involved":
-      return {
-        lead: t("help.involved.lead"),
-        points: [t("explain.involvedComesBack")],
-      };
     case "authored":
       return { lead: t("help.authored.lead"), points: [t("help.authored.unassigned"), t("help.authored.leaves")] };
-    case "snoozed":
+    case "planned":
       return {
-        lead: t("help.snoozed.lead"),
-        points: [comesBack(reopenOn), t("explain.undoHint")],
+        lead: t("help.planned.lead"),
+        points: [t("help.planned.today"), t("help.planned.plan"), t("help.planned.followUp", { rule: t(`reopen.${reopenOn}`) }), t("explain.undoHint")],
       };
     case "done":
       return {

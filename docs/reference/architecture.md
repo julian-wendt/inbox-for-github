@@ -25,7 +25,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
    untracked items, repos filtered in the settings and closed items outside the window.
 5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–5); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
-   Created by me (`groupAuthored`), `InboxList` the Inbox, Follow-ups (`groupBySnoozeEnd`) and Done.
+   Created by me (`groupAuthored`), `InboxList` the Inbox, Planned (`datedOf` for what has a date,
+   `groupBySnoozeEnd` for the day bars) and Done.
    The sidebar counts follow the picked repositories; the other filters narrow only the list.
 
 ## Buckets and statuses
@@ -49,8 +50,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
   table, in the bar `later` with board-blocked items; only its date ends it (no "reopenOn"), and a
-  mention since adds it to the inbox while it stays waiting. Other items leave their list for the
-  Wiedervorlage view. At its date the stored status becomes "open" with `due`, which holds the
+  mention since adds it to the inbox while it stays waiting. Other items leave their list; every
+  follow-up shows in the Planned view with the items pinned for today and planned for a later day
+  (settings `focus`, `planned`, `pinnedOn`). At its date the stored status becomes "open" with `due`, which holds the
   item in the inbox (ask `due`) until the viewer files it; the log says "follow-up came due"
   (source `auto:snooze-ended`), and the list shows no mark of it. `followUpOf` gives the date
   that the bell and chip show, and only while the item waits.

@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 import type { Budget, Scope } from "../../github/client";
-import { CircleCheck, CircleHelp, Clock, Eraser, Inbox, RefreshCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
+import { CalendarDays, CircleCheck, CircleHelp, Eraser, Inbox, RefreshCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
 import { lang, t } from "../i18n";
 import { ago, VIEW_SECTIONS, type VIEWS, type View } from "../labels";
 import { Avatar } from "./Avatar";
@@ -11,7 +11,7 @@ const ICONS: Record<View, LucideIcon> = {
   inbox: Inbox,
   assigned: UserCheck,
   authored: SquarePen,
-  snoozed: Clock,
+  planned: CalendarDays,
   done: CircleCheck,
 };
 
@@ -81,28 +81,25 @@ export function Sidebar(props: Props) {
         <Search size={14} /> <span>{t("sidebar.search")}</span> <kbd>⌘K</kbd>
       </button>
 
-      {VIEW_SECTIONS.map((section) => (
-        <div key={section.title}>
-          <h3 className="nav-heading">{t(section.title)}</h3>
-          <ul className="nav">
-            {props.views
-              .filter((b) => section.views.includes(b.id))
-              .map((b) => {
-                const Icon = ICONS[b.id];
-                const key = props.views.indexOf(b) + 1;
-                const hasUnread = (props.unread[b.id] ?? 0) > 0;
-                return (
-                  <li key={b.id}>
-                    <button className={`nav-item${bucket === b.id ? " on" : ""}${hasUnread ? " unread" : ""}`} onClick={() => props.onBucket(b.id)} onContextMenu={(e) => props.onViewMenu(b.id, e)} title={`${b.title} (${key})`}>
-                      <Icon size={15} strokeWidth={1.8} />
-                      <span>{b.title}</span>
-                      {viewCounts && counts[b.id] > 0 && <span className="nav-count">{counts[b.id]}</span>}
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
+      {VIEW_SECTIONS.map((section, i) => (
+        <ul key={i} className="nav views">
+          {props.views
+            .filter((b) => section.includes(b.id))
+            .map((b) => {
+              const Icon = ICONS[b.id];
+              const key = props.views.indexOf(b) + 1;
+              const hasUnread = (props.unread[b.id] ?? 0) > 0;
+              return (
+                <li key={b.id}>
+                  <button className={`nav-item${bucket === b.id ? " on" : ""}${hasUnread ? " unread" : ""}`} onClick={() => props.onBucket(b.id)} onContextMenu={(e) => props.onViewMenu(b.id, e)} title={`${b.title} (${key})`}>
+                    <Icon size={15} strokeWidth={1.8} />
+                    <span>{b.title}</span>
+                    {viewCounts && counts[b.id] > 0 && <span className="nav-count">{counts[b.id]}</span>}
+                  </button>
+                </li>
+              );
+            })}
+        </ul>
       ))}
 
       {repos.length > 0 && (

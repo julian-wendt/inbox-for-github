@@ -19,9 +19,11 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { dayLong, dayShort, type Planned } from "../plan";
+import { carriedText, datedText, dayLong, dayShort, type Dated } from "../plan";
+import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
 import { KindIcon, FollowUpBell } from "./ItemMarks";
+import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
 const HINTS: Partial<Record<TableGroup, MessageKey>> = {
@@ -43,8 +45,11 @@ interface Props {
   /** How many items match the search, for the bar. */
   searchCount: number;
   searchRef: RefObject<HTMLInputElement | null>;
-  /** "assigned": Assigned to me, with Today, stars, the new mark and the grouping switch. "authored": Created by me, with the opening time. */
-  mode: "assigned" | "authored";
+  /** "assigned": Assigned to me, with Today, stars, the new mark and the grouping switch. "authored": Created by me, with the opening time. "planned": Planned by day. */
+  mode: "assigned" | "authored" | "planned";
+  /** Planned: the layout menu in the header, list or table. */
+  layout?: Layout;
+  onLayout?: (layout: Layout) => void;
   title: string;
   reopenOn: Reopen;
   onShowRules: () => void;
@@ -72,10 +77,12 @@ interface Props {
   /** The status bar selected with the keyboard, if any. */
   selectedBar: TableGroup | null;
   onSelectBar: (group: TableGroup) => void;
-  /** Item ids pinned for today. */
-  focus: string[];
-  /** Items planned for a later day; their rows show that day after the title. */
-  planned: Planned[];
+  /** Why an item has a date, if it has one (see `datedOf`): the star, the day after the title and, in Planned, the time at the end follow it. */
+  datedOf: (entry: Classified) => Dated | null;
+  /** Per pinned item, the day it came into Today; one before `today` marks the row as carried over. */
+  pinnedOn: Record<string, string>;
+  /** The local date ("2026-10-28"). */
+  today: string;
   /** Pins an item for today or removes it. */
   onFocus: (entry: Classified) => void;
   /** A bar dragged onto another: move it there. */
@@ -114,36 +121,42 @@ interface Props {
  *   <AssignedTable mode="assigned" groups={plate} collapsed={bars.collapsed} onToggle={bars.toggle} … />
  */
 export function AssignedTable(props: Props) {
-  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, focus, onFocus } = props;
+  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf, onFocus } = props;
   const assigned = props.mode === "assigned";
   const today = groups.find((g) => g.group === "focus")?.entries ?? [];
   const bars = groups.filter((g) => g.group !== "focus");
   const anyOpen = bars.some((g) => !collapsed.has(g.group));
-  const plannedDays = new Map(props.planned.map((p) => [p.id, p.day]));
-  const row = (entry: Classified) => (
-    <Row
-      query={props.search ?? ""}
-      key={entry.item.id}
-      entry={entry}
-      me={me}
-      attributes={attributes}
-      hiddenBoards={hiddenBoards}
-      statusMap={statusMap}
-      fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me), marked: props.unreadMarks.has(entry.item.id) }}
-      selected={entry.item.id === selected}
-      marked={props.marks.has(entry.item.id)}
-      onMark={(range) => props.onMark(entry.item.id, range)}
-      showOpened={props.showOpened}
-      pinned={focus.includes(entry.item.id)}
-      plannedDay={assigned ? plannedDays.get(entry.item.id) : undefined}
-      onFocus={assigned ? () => onFocus(entry) : undefined}
-      onMenu={(e) => props.onMenu(entry, e)}
-      onOpen={() => {
-        onSelect(entry.item.id);
-        onOpen(entry.item.id);
-      }}
-    />
-  );
+  const row = (entry: Classified) => {
+    const dated = datedOf(entry);
+    const pinned = dated?.kind === "today";
+    return (
+      <Row
+        query={props.search ?? ""}
+        key={entry.item.id}
+        entry={entry}
+        me={me}
+        attributes={attributes}
+        hiddenBoards={hiddenBoards}
+        statusMap={statusMap}
+        fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me), marked: props.unreadMarks.has(entry.item.id) }}
+        selected={entry.item.id === selected}
+        marked={props.marks.has(entry.item.id)}
+        onMark={(range) => props.onMark(entry.item.id, range)}
+        showOpened={props.showOpened}
+        pinned={pinned}
+        plannedDay={dated?.kind === "planned" ? dated.day : undefined}
+        carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
+        when={props.mode === "planned" && dated ? datedText(dated) : undefined}
+        assigned={assigned}
+        onFocus={() => onFocus(entry)}
+        onMenu={(e) => props.onMenu(entry, e)}
+        onOpen={() => {
+          onSelect(entry.item.id);
+          onOpen(entry.item.id);
+        }}
+      />
+    );
+  };
   const [dragged, setDragged] = useState<TableGroup | null>(null);
   const [over, setOver] = useState<TableGroup | null>(null);
   const byStatus = assigned && props.grouping === "status";
@@ -160,6 +173,7 @@ export function AssignedTable(props: Props) {
     if (group === "unassigned") return t("table.unassigned");
     if (group === "taken") return t("table.taken");
     if (group.startsWith("type:")) return dotted(entries[0]?.item.issueType?.color.toLowerCase() ?? "gray", group.slice(5));
+    if (group.startsWith("day:")) return t(`time.group.${group.slice(4)}` as MessageKey);
     return t(`table.${group as PlateGroup}`);
   };
   // Created by me has no board-blocked items in Later, only snoozed ones.
@@ -189,6 +203,7 @@ export function AssignedTable(props: Props) {
             </button>
           ))}
         </div>
+        {props.layout && props.onLayout && <LayoutSwitch layout={props.layout} onLayout={props.onLayout} />}
         {assigned && (
           <div className="segmented compact table-grouping" role="radiogroup" aria-label={t("table.groupBy")}>
             {(["type", "status"] as const).map((g) => (
@@ -206,7 +221,7 @@ export function AssignedTable(props: Props) {
         <button className="chip-btn" disabled={bars.length === 0} onClick={() => props.onToggleAll(anyOpen)} title={t(anyOpen ? "table.collapseAll" : "table.expandAll")} aria-label={t(anyOpen ? "table.collapseAll" : "table.expandAll")}>
           {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
         </button>
-        <SortButton order={props.sort} onFlip={props.onSort} />
+        <SortButton order={props.sort} onFlip={props.onSort} by={props.mode === "planned" ? "return" : undefined} />
         <BucketInfo key={props.mode} bucket={props.mode} reopenOn={props.reopenOn} onShowRules={props.onShowRules} />
       </header>
             <div className="dock-body" ref={body}>
@@ -268,7 +283,7 @@ export function AssignedTable(props: Props) {
           ))}
           {bars.length === 0 && today.length === 0 && (
             <div className="assigned-empty">
-              <p>{t(props.mode === "assigned" ? "list.empty.assigned" : "list.empty.authored")}</p>
+              <p>{t(props.mode === "assigned" ? "list.empty.assigned" : props.mode === "planned" ? "list.empty.planned" : "list.empty.authored")}</p>
               <Elsewhere counts={props.counts} current={props.mode} onJump={props.onJump} />
             </div>
           )}
@@ -298,18 +313,24 @@ interface RowProps {
   pinned: boolean;
   /** The day it is planned for, shown after the title. */
   plannedDay?: string;
-  /** Pins or unpins it for today and makes it a row of Assigned to me, timed by the assignment; without it the row is timed by the opening. */
-  onFocus?: () => void;
+  /** The day the item came into Today when that was before today: it carries over, marked. */
+  carriedSince?: string;
+  /** A row of Assigned to me, timed by the assignment; otherwise the row is timed by the opening. */
+  assigned: boolean;
+  /** Shown at the end instead of the time: in Planned, the day or the return time. */
+  when?: { text: string; title: string };
+  /** Pins or unpins it for today. */
+  onFocus: () => void;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, pinned, plannedDay, onFocus, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, pinned, plannedDay, carriedSince, when, assigned, onFocus, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
   const opened = t("table.openedOn", { date: full(item.createdAt) });
-  const assignment = onFocus ? assignedAt(item, me) : null;
+  const assignment = assigned ? assignedAt(item, me) : null;
   const assignedTitle = assignment && (assignment.by ? t("table.assignedBy", { name: assignment.by, date: full(assignment.at) }) : t("table.assignedOn", { date: full(assignment.at) }));
   return (
     <div
@@ -327,18 +348,16 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       ref={ref}
     >
       {(fresh.activity || fresh.marked) && <span className="fresh-dot" title={t(fresh.activity ? "plate.newDot" : "row.unread")} aria-label={t(fresh.activity ? "plate.newDot" : "row.unread")} />}
-      {onFocus && (
-        <button
-          className={`star-btn${pinned ? " on" : ""}`}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={onFocus}
-          title={t(pinned ? "focus.unpin" : "focus.pin")}
-          aria-label={t(pinned ? "focus.unpin" : "focus.pin")}
-          aria-pressed={pinned}
-        >
-          <Star size={14} />
-        </button>
-      )}
+      <button
+        className={`star-btn${pinned ? " on" : ""}`}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={onFocus}
+        title={t(pinned ? "focus.unpin" : "focus.pin")}
+        aria-label={t(pinned ? "focus.unpin" : "focus.pin")}
+        aria-pressed={pinned}
+      >
+        <Star size={14} />
+      </button>
       <KindIcon item={item} size={14} status={shownStatus(entry, statusMap)} />
       <span className="table-number">#<Highlight spans={numberSpans(item.number, query)} /></span>
       {fresh.assignment && (
@@ -348,6 +367,11 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       )}
       <span className="table-title">
         <span className="table-title-text"><Highlight spans={titleSpans(item.title, query)} /></span>
+        {carriedSince && (
+          <span className="table-carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>
+            {carriedText(carriedSince)}
+          </span>
+        )}
         {plannedDay && (
           <span className="table-planned" title={t("plan.on", { date: dayLong(plannedDay) })}>
             {dayShort(plannedDay)}
@@ -364,8 +388,8 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       <span className="table-attrs">
         <AttributeChips keys={attributes} item={entry.item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} />
       </span>
-      <time className="table-update" title={assignedTitle ?? opened}>
-        {compactAgo(assignment?.at ?? item.createdAt)}
+      <time className="table-update" title={when?.title ?? assignedTitle ?? opened}>
+        {when?.text ?? compactAgo(assignment?.at ?? item.createdAt)}
       </time>
     </div>
   );

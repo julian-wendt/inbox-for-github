@@ -4,6 +4,34 @@
   min-width: 0;
   border-right: 1px solid var(--divider);
   background: var(--panel);
+  container-type: inline-size;
+}
+
+/* In a narrow column the segmented filter becomes a menu naming the choice and the other controls
+   a gear menu, so the title keeps its room; the bulb stays on its own. Narrower still, the filter
+   menu shows only its icon. */
+.header-full {
+  display: contents;
+}
+
+.header-compact {
+  display: none;
+}
+
+@container (max-width: 459px) {
+  .header-full {
+    display: none;
+  }
+
+  .header-compact {
+    display: contents;
+  }
+}
+
+@container (max-width: 339px) {
+  .header-compact .header-select > span {
+    display: none;
+  }
 }
 
 .pane-header {
@@ -118,8 +146,8 @@
   margin-top: 10px;
 }
 
-.inbox .pane-header .segmented,
-.assigned .pane-header .header-controls {
+/* Everything after the spacer sits at the right edge, in every width. */
+.pane-header .header-controls {
   margin-left: auto;
 }
 
@@ -433,6 +461,28 @@
   transform: translateY(1px);
 }
 
+/* Today's star and a planned day, before the context text. */
+.row-mark {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  align-items: center;
+  font-size: 11.5px;
+}
+
+.row-mark.today {
+  color: var(--yellow);
+}
+
+.row-mark.today svg {
+  fill: currentColor;
+}
+
+.row-mark.carried {
+  color: var(--red);
+  font-weight: 600;
+}
+
 .kind-icon.st-snoozed {
   color: var(--st-snoozed);
 }
@@ -620,6 +670,17 @@
   flex: none;
   color: var(--text-faint);
   font-size: 11.5px;
+}
+
+/* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
+.table-carried {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* One chip line; chips that do not fit wrap onto a second line that is clipped away. */

@@ -141,10 +141,30 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   marks already show it. Exceptions per reason or repo, an organization filter, bundling
   and sound are left for later.
 - **Assigned to me is a status table** grouped by the board status, normalized per board, with
-  linked pull requests as the fallback. Today (T) holds up to three items and starts over each
-  morning with what was planned for that day (P, #55). Planning is not snoozing: a planned item
-  stays on the plate, in its own bar, instead of leaving it. T and G became ⌘T and ⌘G, since
-  they switch the app, not an item, which freed T for Today and P for the plan menu.
+  linked pull requests as the fallback. Today (T) holds up to three items; each morning what
+  was planned for that day moves in (P, #55). What was not finished stays, marked since when, and
+  counts against the three, so leftovers are dealt with first (D, P or T) instead of vanishing
+  quietly. Planning is not snoozing: a planned item stays on the plate, in its own bar, instead
+  of leaving it. T and G became ⌘T and ⌘G, since they switch the app, not an item, which freed
+  T for Today and P for the plan menu. T and P take any open item in any view, not only assignments: a mention can be
+  answered on Thursday too. Elsewhere than Assigned to me the row shows a star or its day, and
+  a planned inbox item stays in the inbox, because someone still waits; F is the key that hides.
+- **Planned replaces the Follow-ups view.** Today, plans and follow-ups all answer "when?", so
+  one view lists everything with a date, by day, from Today to Without a date, with a star, a
+  calendar or a bell per row. Follow-ups that wait in their table show there too; before, only
+  those that left their list did. The two verbs stay apart: P keeps an item in its list and brings
+  it to Today on its day, F hides it until its date and brings it to the inbox. No separate Today
+  view: with at most three items it would be thin, so Today is the first bar of Planned. The
+  sidebar keeps five views on keys 1–5, with Planned where Follow-ups was. Planned renders as a
+  list with the detail beside it or as a table like Assigned to me, picked from an icon menu in
+  its header and remembered per device, since the view is a conversation list for some and a
+  work table for others.
+- **The sidebar's view groups have no headings.** "Requests & updates" and "My issues & pull
+  requests" suggested a split by whose work it is, which the views do not make: an assigned
+  issue with a mention sits in the inbox and in Assigned to me. The real split is what comes in,
+  is dated and is finished (lists, across all items) against what the viewer owns (tables, by
+  role); Inbox → Planned → Done reads as that lifecycle on its own, so a short line between the
+  groups says enough, and a heading would have to find an abstract word for it.
 - **Untracking is local and deliberate.** It hides an item everywhere, also from new activity; it
   sits in the right-click menu under "More" and in the palette, not on a key, and can be undone.
 - **Keyboard focus without rings.** A fill that meets 3:1, only after keyboard use. Whether to

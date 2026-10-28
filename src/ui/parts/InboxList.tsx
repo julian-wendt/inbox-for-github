@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, LoaderCircle } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, ListFilter, LoaderCircle, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, type RefObject } from "react";
 import type { Classified } from "../../classify";
@@ -6,6 +6,8 @@ import type { Reopen } from "../../model";
 import { t } from "../i18n";
 import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
+import { datedText, type Dated } from "../plan";
+import type { Layout } from "../usePlannedLayout";
 import type { SortOrder } from "../useSortOrders";
 import { BucketInfo } from "./BucketInfo";
 import { Elsewhere } from "./Elsewhere";
@@ -15,6 +17,9 @@ import { useScrollToBar } from "../useScrollIntoView";
 import { useSearchDock } from "../useSearchDock";
 import { InboxRow } from "./InboxRow";
 import { MarkedChip } from "./MarkedChip";
+import { LayoutSwitch } from "./LayoutSwitch";
+import { HeaderMenu } from "./HeaderMenu";
+import type { MenuEntry } from "./ContextMenu";
 import { SearchField } from "./SearchField";
 
 interface Props {
@@ -62,10 +67,19 @@ interface Props {
   timeOf: (entry: Classified) => string;
   /** Ids of the unread items, printed bold. */
   unread: ReadonlySet<string>;
+  /** Why an item has a date, if it has one (see `datedOf`): the rows' star, day and, in Planned, the time at the end follow it. */
+  datedOf: (entry: Classified) => Dated | null;
+  /** Per pinned item, the day it came into Today; one before `today` marks the row as carried over. */
+  pinnedOn: Record<string, string>;
+  /** The local date ("2026-10-28"). */
+  today: string;
+  /** Planned: the layout menu in the header, list or table. */
+  layout?: Layout;
+  onLayout?: (layout: Layout) => void;
   onJump: (bucket: View) => void;
 }
 
-export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, avatars, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, marks, onMark, onClearMarks, search, onSearch, searchCount, searchRef }: Props) {
+export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, avatars, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, marks, onMark, onClearMarks, search, onSearch, searchCount, searchRef }: Props) {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const empty = useRef<HTMLDivElement>(null);
@@ -78,12 +92,40 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
 
   const { body, shown, moving } = useSearchDock(search !== null);
 
+  // In a narrow column the segmented filter gives way to a menu naming the choice, and the other
+  // controls to a gear menu; the bulb stays on its own.
+  const asking = ASK_VIEWS.includes(bucket);
+  const filterEntries: MenuEntry[] = asking
+    ? ASK_FILTERS.map((f) => ({ label: f === "all" ? t(`inbox.filter.${f}`) : `${t(`inbox.filter.${f}`)} · ${askCounts[f]}`, checked: ask === f, onSelect: () => onAsk(f) }))
+    : KINDS.map((k) => ({ label: k.title, checked: kind === k.id, onSelect: () => onKind(k.id) }));
+  const filterLabel = asking ? t(`inbox.filter.${ask}`) : KINDS.find((k) => k.id === kind)!.title;
+  const orders = [
+    { order: "newest", label: t(bucket === "planned" ? "sort.menu.soonest" : "sort.menu.newest") },
+    { order: "oldest", label: t(bucket === "planned" ? "sort.menu.latest" : "sort.menu.oldest") },
+  ] as const;
+  const moreEntries: MenuEntry[] = [
+    ...orders.map((o) => ({
+      label: o.label,
+      checked: sort === o.order,
+      onSelect: () => {
+        if (sort !== o.order) onSort();
+      },
+    })),
+    ...(timeGroups ? [{ label: t(anyOpen ? "table.collapseAll" : "table.expandAll"), divided: true, onSelect: () => onToggleAll(anyOpen) }] : []),
+    ...(layout && onLayout ? (["list", "table"] as const).map((l, i) => ({ label: t(`layout.${l}`), checked: layout === l, divided: i === 0, onSelect: () => onLayout(l) })) : []),
+  ];
+
   return (
     <section className="inbox" ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{title}</h1>
         <MarkedChip count={marks.size} onClear={onClearMarks} />
-        {ASK_VIEWS.includes(bucket) ? (
+        <span className="header-controls" aria-hidden />
+        <span className="header-compact">
+          <HeaderMenu icon={<ListFilter size={13} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} />
+        </span>
+        <span className="header-full">
+        {asking ? (
           <div className="segmented compact" role="radiogroup" aria-label={t("inbox.filter")}>
             {ASK_FILTERS.map((f) => (
               <button key={f} role="radio" aria-checked={ask === f} className={ask === f ? "on" : ""} onClick={() => onAsk(f)}>
@@ -101,6 +143,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             ))}
           </div>
         )}
+        {layout && onLayout && <LayoutSwitch layout={layout} onLayout={onLayout} />}
         {timeGroups && (
           <button
             className="chip-btn"
@@ -112,7 +155,11 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
           </button>
         )}
-        <SortButton order={sort} onFlip={onSort} by={bucket === "snoozed" ? "return" : undefined} />
+        <SortButton order={sort} onFlip={onSort} by={bucket === "planned" ? "return" : undefined} />
+        </span>
+        <span className="header-compact">
+          <HeaderMenu icon={<Settings size={13} />} title={t("list.options")} entries={moreEntries} />
+        </span>
         <BucketInfo key={bucket} bucket={bucket} reopenOn={reopenOn} onShowRules={onShowRules} />
       </header>
       <div className="dock-body" ref={body}>
@@ -122,7 +169,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             <span className={`inbox-empty-mark${loading ? " loading" : ""}`}>
               {loading ? <LoaderCircle size={20} className="spin" /> : "✓"}
             </span>
-            <p>{loading ? t("list.loading") : t(bucket === "snoozed" ? "list.empty.snoozed" : bucket === "done" ? "list.empty.done" : "list.empty.inbox")}</p>
+            <p>{loading ? t("list.loading") : t(bucket === "planned" ? "list.empty.planned" : bucket === "done" ? "list.empty.done" : "list.empty.inbox")}</p>
             {!loading && <Elsewhere counts={counts} current={bucket} onJump={onJump} />}
           </div>
         ) : (
@@ -155,23 +202,31 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       </motion.li>,
                     ]
                   : []),
-                ...(group && folded(group) ? [] : rows).map((entry) => (
-                  <InboxRow
-                    query={search ?? ""}
-                    still={moving}
-                    key={entry.item.id}
-                    entry={entry}
-                    selected={entry.item.id === selected}
-                    marked={marks.has(entry.item.id)}
-                    unread={bucket === "inbox" && unread.has(entry.item.id)}
-                    onMark={(range) => onMark(entry.item.id, range)}
-                    avatar={avatars}
-                    onSelect={() => onSelect(entry.item.id)}
-                    onOpen={() => onOpen(entry)}
-                    onMenu={(e) => onMenu(entry, e)}
-                    time={timeOf(entry)}
-                  />
-                )),
+                ...(group && folded(group) ? [] : rows).map((entry) => {
+                  const dated = datedOf(entry);
+                  const pinned = dated?.kind === "today";
+                  return (
+                    <InboxRow
+                      query={search ?? ""}
+                      still={moving}
+                      key={entry.item.id}
+                      entry={entry}
+                      selected={entry.item.id === selected}
+                      marked={marks.has(entry.item.id)}
+                      unread={bucket === "inbox" && unread.has(entry.item.id)}
+                      pinned={pinned}
+                      plannedDay={dated?.kind === "planned" ? dated.day : undefined}
+                      carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
+                      when={bucket === "planned" && dated ? datedText(dated) : undefined}
+                      onMark={(range) => onMark(entry.item.id, range)}
+                      avatar={avatars}
+                      onSelect={() => onSelect(entry.item.id)}
+                      onOpen={() => onOpen(entry)}
+                      onMenu={(e) => onMenu(entry, e)}
+                      time={timeOf(entry)}
+                    />
+                  );
+                }),
               ])}
             </AnimatePresence>
           </ul>

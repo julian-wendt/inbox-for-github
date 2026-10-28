@@ -117,10 +117,10 @@ describe("explain, where the inbox and a stored status meet", () => {
 });
 
 describe("bucketHelp", () => {
-  it("describes every bucket and follows the reopen setting", () => {
-    for (const bucket of ["inbox", "involved", "snoozed", "done"] as const) {
-      expect(bucketHelp(bucket, "mention").points.length).toBeGreaterThan(0);
+  it("describes every view and follows the reopen setting", () => {
+    for (const view of ["inbox", "planned", "done", "assigned", "authored"] as const) {
+      expect(bucketHelp(view, "mention").points.length).toBeGreaterThan(0);
     }
-    expect(bucketHelp("snoozed", "any-post").points[0]).toMatch(/jemand anderes kommentiert/);
+    expect(bucketHelp("planned", "any-post").points[2]).toMatch(/jemand anderes kommentiert/);
   });
 });
