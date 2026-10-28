@@ -66,13 +66,44 @@ export function orcaFailure(text: string): Error {
  *   orcaRepoIds(output).get("julian-wendt/inbox-for-github"); // "da7a86b6-…"
  */
 export function orcaRepoIds(json: string): Map<string, string> {
-  const { repos } = orcaResult<{ repos: { id: string; gitRemoteIdentity?: { canonicalKey?: string } | null }[] }>(json);
   const ids = new Map<string, string>();
-  for (const repo of repos) {
+  for (const repo of reposOf(json)) {
     const key = repo.gitRemoteIdentity?.canonicalKey?.toLowerCase();
     if (key?.startsWith("github.com/")) ids.set(key.slice("github.com/".length), repo.id);
   }
   return ids;
+}
+
+/** What Orca knows: its GitHub repos (see `orcaRepoIds`) and where a missing one goes (see `repoHome`). */
+export interface OrcaRepos {
+  ids: Map<string, string>;
+  home: string | null;
+}
+
+/**
+ * The folder a repo Orca lacks is cloned into: the one most of Orca's repos sit in, the first
+ * of them on a tie. Null while Orca has no repo with a path.
+ *
+ * @param json  The output of `orca repo list --json`.
+ *
+ * @example
+ *   repoHome(output); // "/Users/me/Repos" for repos at /Users/me/Repos/a and /Users/me/Repos/b
+ */
+export function repoHome(json: string): string | null {
+  const counts = new Map<string, number>();
+  for (const { path } of reposOf(json)) {
+    const parent = path?.replace(/\/+$/, "").replace(/\/[^/]+$/, "");
+    if (parent) counts.set(parent, (counts.get(parent) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  for (const [parent, n] of counts) if (best === null || n > counts.get(best)!) best = parent;
+  return best;
+}
+
+type OrcaRepo = { id: string; path?: string; gitRemoteIdentity?: { canonicalKey?: string } | null };
+
+function reposOf(json: string): OrcaRepo[] {
+  return orcaResult<{ repos: OrcaRepo[] }>(json).repos;
 }
 
 /**
@@ -133,6 +164,16 @@ export function createArgs(repoId: string, item: Pick<Item, "kind" | "number">):
   return ["worktree", "create", "--repo", `id:${repoId}`, "--name", worktreeName(item), link, String(item.number), "--no-parent", "--activate"];
 }
 
+/**
+ * A folder as people read it, with the home folder as "~".
+ *
+ * @example
+ *   pathText("/Users/me/Repos"); // "~/Repos"
+ */
+export function pathText(path: string): string {
+  return path.replace(/^\/Users\/[^/]+(?=\/|$)/, "~");
+}
+
 function orca(args: string[]): Promise<string> {
   return invoke<string>("orca", { args }).catch((e: unknown) => {
     throw orcaFailure(String(e));
@@ -146,8 +187,82 @@ function orca(args: string[]): Promise<string> {
  * @example
  *   const ids = await loadOrcaRepos();
  */
-export async function loadOrcaRepos(): Promise<Map<string, string>> {
-  return orcaRepoIds(await orca(["repo", "list"]));
+export async function loadOrcaRepos(): Promise<OrcaRepos> {
+  const json = await orca(["repo", "list"]);
+  return { ids: orcaRepoIds(json), home: repoHome(json) };
+}
+
+/** A git checkout directly inside the repo folder, as the shell's `repo_checkouts` lists it. */
+export interface Checkout {
+  path: string;
+  /** The URL of its `origin` remote. */
+  origin: string;
+}
+
+/** How `addToOrca` brought a repo in: from a checkout in the repo folder, or by cloning it there. */
+export type Added = { id: string; how: "added" | "cloned"; path: string };
+
+/**
+ * Brings a GitHub repo Orca lacks into Orca. It looks in the repo folder for a checkout whose
+ * `origin` is that repo (`checkoutFor`) and adds it (`repo add`); without one it clones the repo
+ * into the folder (`project setup-clone`, which returns a repo Orca already has under that URL
+ * instead). A folder whose origin is another repo, a fork included, is never added. Git's own
+ * credentials do the cloning.
+ *
+ * @param repo    The item's repo, "owner/name".
+ * @param folder  The repo folder: the setting, or `repoHome`; "~" stands for the home folder.
+ * @returns       Orca's id for the repo, how it came in and its path.
+ * @throws        When the name is not a GitHub repo name, the folder cannot be read, Orca fails,
+ *                or Orca still lacks the repo.
+ *
+ * @example
+ *   const { id, how } = await addToOrca("octo-org/app", "~/Repos"); // how: "added"
+ */
+export async function addToOrca(repo: string, folder: string): Promise<Added> {
+  if (!isRepoName(repo)) throw new Error(`${repo} is not a GitHub repository`);
+  const [home, checkouts] = await invoke<[string, Checkout[]]>("repo_checkouts", { folder }).catch((e: unknown) => {
+    throw new Error(String(e));
+  });
+  const checkout = checkoutFor(checkouts, repo);
+  orcaResult(await orca(checkout ? ["repo", "add", "--path", checkout.path] : cloneArgs(repo, home)));
+  const id = orcaRepoFor((await loadOrcaRepos()).ids, repo);
+  if (!id) throw new Error(`Orca has no ${repo} after adding it`);
+  return { id, how: checkout ? "added" : "cloned", path: checkout?.path ?? `${home}/${repo.split("/")[1]}` };
+}
+
+/**
+ * The checkout of a GitHub repo among `checkouts`: the one whose `origin` points at it, in
+ * https or ssh form, with or without ".git", in any case.
+ *
+ * @example
+ *   checkoutFor([{ path: "/u/Repos/app", origin: "git@github.com:Octo/App.git" }], "octo/app"); // that checkout
+ */
+export function checkoutFor(checkouts: Checkout[], repo: string): Checkout | undefined {
+  return checkouts.find((c) => githubRepoOf(c.origin) === repo.toLowerCase());
+}
+
+/** The "owner/name" in lower case a GitHub remote URL points at, or null for other hosts. */
+function githubRepoOf(url: string): string | null {
+  const match = /^(?:https:\/\/(?:[^@/]+@)?github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/]+\/[^/]+?)(?:\.git)?\/?$/i.exec(url.trim());
+  return match ? match[1].toLowerCase() : null;
+}
+
+/** Whether `repo` is a GitHub "owner/name": letters, digits, ".", "_" and "-", and neither part "." or "..". */
+export function isRepoName(repo: string): boolean {
+  const parts = repo.split("/");
+  return parts.length === 2 && parts.every((p) => /^[\w.-]+$/.test(p) && p !== "." && p !== "..");
+}
+
+/**
+ * The arguments for `orca project setup-clone` that clone a GitHub repo into a folder below
+ * `home` named like the repo, on this Mac.
+ *
+ * @example
+ *   cloneArgs("octo-org/app", "/Users/me/Repos");
+ *   // ["project", "setup-clone", "--project", "github:octo-org/app", "--host", "local", "--url", "https://github.com/octo-org/app.git", "--destination", "/Users/me/Repos"]
+ */
+export function cloneArgs(repo: string, home: string): string[] {
+  return ["project", "setup-clone", "--project", `github:${repo}`, "--host", "local", "--url", `https://github.com/${repo}.git`, "--destination", home];
 }
 
 /** Shows the item's title in Orca's sidebar; a failure leaves the short name and is only logged. */

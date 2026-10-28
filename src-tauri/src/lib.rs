@@ -33,10 +33,13 @@ fn gh_token() -> Result<String, String> {
 /// Orca's command-line entry in its app bundle, see `docs/reference/orca.md`.
 const ORCA_CLI: &str = "/Applications/Orca.app/Contents/Resources/bin/orca";
 const ORCA_BUNDLE_ID: &str = "com.stablyai.orca";
-/// The only Orca commands the web view may run (`worktree set` for the display name); removing
-/// worktrees or typing into terminals stays in Orca.
-const ORCA_COMMANDS: [[&str; 2]; 7] = [
+/// The only Orca commands the web view may run (`worktree set` for the display name, `repo add`
+/// for a checkout `repo_checkouts` found, `project setup-clone` to clone a repo Orca lacks, see
+/// `clones_from_github`); removing worktrees or repos and typing into terminals stays in Orca.
+const ORCA_COMMANDS: [[&str; 2]; 9] = [
     ["repo", "list"],
+    ["repo", "add"],
+    ["project", "setup-clone"],
     ["worktree", "list"],
     ["worktree", "create"],
     ["worktree", "set"],
@@ -49,7 +52,8 @@ const ORCA_COMMANDS: [[&str; 2]; 7] = [
 /// Off the main thread, since every call starts Orca's runtime in Node mode.
 #[tauri::command(async)]
 fn orca(args: Vec<String>) -> Result<String, String> {
-    if !ORCA_COMMANDS.iter().any(|c| args.len() >= 2 && args[0] == c[0] && args[1] == c[1]) {
+    let allowed = ORCA_COMMANDS.iter().any(|c| args.len() >= 2 && args[0] == c[0] && args[1] == c[1]);
+    if !allowed || (args[0] == "project" && !clones_from_github(&args)) {
         return Err(format!("Orca command not allowed: {}", args.join(" ")));
     }
     let output = Command::new(ORCA_CLI).args(&args).arg("--json").output().map_err(|e| e.to_string())?;
@@ -59,6 +63,53 @@ fn orca(args: Vec<String>) -> Result<String, String> {
     }
     let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
     Err(if stderr.is_empty() { stdout } else { stderr })
+}
+
+/// A clone only from github.com onto this Mac: `--host local` and an `https://github.com/` URL.
+fn clones_from_github(args: &[String]) -> bool {
+    let value = |flag: &str| args.iter().position(|a| a == flag).and_then(|i| args.get(i + 1));
+    value("--host").is_some_and(|h| h == "local") && value("--url").is_some_and(|u| u.starts_with("https://github.com/"))
+}
+
+/// A git checkout directly inside the repo folder, with the URL of its `origin` remote.
+#[derive(serde::Serialize)]
+struct Checkout {
+    path: String,
+    origin: String,
+}
+
+/// The repo folder with "~" expanded, and the git checkouts directly inside it that have an
+/// `origin` remote, read from each `.git/config`. Reads nothing else and goes one level deep.
+#[tauri::command(async)]
+fn repo_checkouts(folder: String) -> Result<(String, Vec<Checkout>), String> {
+    let home = std::env::var("HOME").map_err(|e| e.to_string())?;
+    let folder = match folder.strip_prefix('~') {
+        Some(rest) if rest.is_empty() || rest.starts_with('/') => format!("{home}{rest}"),
+        _ => folder,
+    };
+    let mut checkouts = Vec::new();
+    for entry in fs::read_dir(&folder).map_err(|e| format!("{folder}: {e}"))?.flatten() {
+        let path = entry.path();
+        if let Some(origin) = fs::read_to_string(path.join(".git/config")).ok().as_deref().and_then(origin_url) {
+            checkouts.push(Checkout { path: path.to_string_lossy().into_owned(), origin });
+        }
+    }
+    Ok((folder, checkouts))
+}
+
+/// The `url` of the `[remote "origin"]` section of a git config file.
+fn origin_url(config: &str) -> Option<String> {
+    let mut in_origin = false;
+    for line in config.lines().map(str::trim) {
+        if line.starts_with('[') {
+            in_origin = line == r#"[remote "origin"]"#;
+        } else if let Some(url) = line.strip_prefix("url").map(str::trim_start).and_then(|l| l.strip_prefix('=')) {
+            if in_origin {
+                return Some(url.trim().to_string());
+            }
+        }
+    }
+    None
 }
 
 /// Brings Orca's window to the front after a worktree or terminal was chosen there.
@@ -181,7 +232,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![gh_token, log_write, log_reveal, orca, orca_activate])
+        .invoke_handler(tauri::generate_handler![gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts])
         .setup(|app| {
             // The web view picks the item; the window must come forward first, also when hidden.
             let handle = app.handle().clone();

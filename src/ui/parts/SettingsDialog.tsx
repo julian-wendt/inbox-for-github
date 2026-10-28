@@ -284,6 +284,20 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                 <small>{t("settings.closedDaysHint")}</small>
               </div>
               <div className="field">
+                <span>{t("settings.repoFolder")}</span>
+                <input
+                  key={draft.repoFolder}
+                  className="repo-search"
+                  defaultValue={draft.repoFolder}
+                  placeholder={t("settings.repoFolderPlaceholder")}
+                  spellCheck={false}
+                  aria-label={t("settings.repoFolder")}
+                  onBlur={(e) => e.target.value.trim() !== draft.repoFolder && change({ repoFolder: e.target.value.trim() })}
+                  onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                />
+                <small>{t("settings.repoFolderHint")}</small>
+              </div>
+              <div className="field">
                 <span>{t("settings.logging")}</span>
                 <div className="segmented">
                   {LOG_LEVELS.map((level) => (

@@ -40,7 +40,7 @@ import { useHotkeys } from "./ui/useHotkeys";
 import { useWindowFocus } from "./ui/useWindowFocus";
 import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
-import { openInOrca } from "./orca";
+import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
 import { choiceKey, choiceText, datedAt, datedOf, dayShort, isPinnable, planChoices, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
@@ -92,7 +92,8 @@ export default function App() {
   const reselect = useRef<(id: string) => void>(() => undefined);
   const actions = useStatusActions(inbox.setStatus, inbox.restoreStatus, (id) => inbox.statuses.get(id), (id) => reselect.current(id));
   const columns = useColumnWidths();
-  const orcaRepo = useOrca();
+  const orca = useOrca();
+  const [cloning, setCloning] = useState<ReadonlySet<string>>(() => new Set());
   useTheme(inbox.settings.theme);
 
   const inRepos = useMemo(() => inbox.classified.filter((c) => repoFilter.length === 0 || repoFilter.includes(c.item.repo)), [inbox.classified, repoFilter]);
@@ -279,7 +280,6 @@ export default function App() {
     selection.select(`bar:${group}`);
   };
   const current = entries.find((c) => c.item.id === selection.selected) ?? null;
-  const currentOrca = current ? orcaRepo(current.item.repo) : undefined;
   const [marks, setMarks] = useState<Set<string>>(new Set());
   const marked = useMemo(() => markedIn(marks, ids).flatMap((id) => entries.filter((c) => c.item.id === id)), [marks, ids, entries]);
   const clearMarks = () => marks.size > 0 && setMarks(new Set());
@@ -792,6 +792,26 @@ export default function App() {
       .then((outcome) => actions.notify(t(outcome === "created" ? "orca.created" : "orca.revealed", { number })))
       .catch((e: unknown) => actions.notify(t("orca.failed", { number, error: e instanceof Error ? e.message : String(e) })));
   };
+  /** Where a repo Orca lacks is looked for and cloned: the setting, else where most of Orca's repos sit. */
+  const repoFolder = inbox.settings.repoFolder.trim() || orca.home;
+  /** Whether "Open in Orca" is offered: Orca has the repo, or runs and there is a folder to bring it in from. */
+  const orcaOffered = (c: Classified) => !!orca.repoOf(c.item.repo) || (orca.available && !!repoFolder);
+  /** Opens an item in Orca, cloning its repo into Orca first when Orca lacks it (see `addToOrca`); once per repo at a time. */
+  const runOrca = (c: Classified) => {
+    const { number, repo } = c.item;
+    const repoId = orca.repoOf(repo);
+    if (repoId) return openOrca(c, repoId);
+    if (!orca.available || !repoFolder) return actions.notify(t("noop.noOrca", { number, repo }));
+    if (cloning.has(repo)) return actions.notify(t("orca.stillAdding", { repo }));
+    setCloning((now) => new Set([...now, repo]));
+    actions.notify(t("orca.adding", { number, repo, home: pathText(repoFolder) }));
+    void addToOrca(repo, repoFolder)
+      .then(({ id }) => (orca.reload(), openOrca(c, id)))
+      .catch((e: unknown) => actions.notify(t("orca.failed", { number, error: e instanceof Error ? e.message : String(e) })))
+      .finally(() => setCloning((now) => new Set([...now].filter((r) => r !== repo))));
+  };
+  /** The tooltip line for an item whose repo Orca lacks: where it comes from. */
+  const orcaHint = (c: Classified) => (orcaOffered(c) && repoFolder && !orca.repoOf(c.item.repo) ? t("orca.addHint", { repo: c.item.repo, home: pathText(repoFolder) }) : undefined);
   const reloadCurrent = (c: Classified) => {
     setReloading(c.item.id);
     void inbox.reloadItem(c.item.id).finally(() => setReloading(null));
@@ -799,7 +819,6 @@ export default function App() {
   /** The context menu of one item: the controls it has elsewhere, under the same shortcuts. */
   const menuEntries = (c: Classified): MenuEntry[] => {
     const { item } = c;
-    const orcaId = orcaRepo(item.repo);
     const planned = dated(c) !== null;
     const statuses: MenuEntry[] = statusesFor(c).map((s) => ({
       label: s.id === "done" && onPlate(c, me) && !c.updates ? t("action.handOff") : s.title,
@@ -820,7 +839,7 @@ export default function App() {
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
-      ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => openOrca(c, orcaId) }] : []),
+      ...(orcaOffered(c) ? [{ label: t(orca.repoOf(item.repo) ? "orca.open" : "orca.addOpen"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => runOrca(c) }] : []),
       { label: t("menu.copyLink"), keys: "C", icon: <Link size={14} />, onSelect: () => void copy(itemLink(item, "url")) },
       { label: t("menu.copyRef"), icon: <Hash size={14} />, onSelect: () => void copy(itemLink(item, "ref")) },
       { label: t("menu.copyMarkdown"), icon: <Code size={14} />, onSelect: () => void copy(itemLink(item, "markdown")) },
@@ -881,11 +900,7 @@ export default function App() {
       "mod+z": actions.undo,
       "mod+y": actions.redo,
       "ctrl+o": withCurrent((c) => void openUrl(c.item.url)),
-      w: withCurrent((c) => {
-        const repoId = orcaRepo(c.item.repo);
-        if (repoId) openOrca(c, repoId);
-        else actions.notify(t("noop.noOrca", { number: c.item.number, repo: c.item.repo }));
-      }),
+      w: withCurrent(runOrca),
       "ctrl+a": marked.length > 0 ? () => (assignAll(open), clearMarks()) : withCurrent(assignMe),
       "ctrl+u": marked.length > 0 ? () => (leaveAll(open), clearMarks()) : withCurrent((c) => leave(c)),
       c: withCurrent((c) => void copy(itemLink(c.item, "url"))),
@@ -1115,7 +1130,8 @@ export default function App() {
             onStatus={(s) => current && applyStatus(current, s)}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
-            onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}
+            onOrca={current && orcaOffered(current) ? () => runOrca(current) : undefined}
+            orcaHint={current ? orcaHint(current) : undefined}
             onAssignMe={() => current && assignMe(current)}
             onPlan={(at: DOMRect) => current && plan(current, at)}
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
@@ -1149,7 +1165,8 @@ export default function App() {
                 onStatus={(s) => current && applyStatus(current, s)}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
-            onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}
+            onOrca={current && orcaOffered(current) ? () => runOrca(current) : undefined}
+            orcaHint={current ? orcaHint(current) : undefined}
             onAssignMe={() => current && assignMe(current)}
             onPlan={(at: DOMRect) => current && plan(current, at)}
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
@@ -1193,7 +1210,7 @@ export default function App() {
             onPlan={current && pinnable(current) ? () => plan(current) : undefined}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
-            onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}
+            onOrca={current && orcaOffered(current) ? () => runOrca(current) : undefined}
             onAssignMe={() => current && assignMe(current)}
             onFollowUp={() => current && snooze(current)}
             onRemoveFollowUp={current && hasFollowUp(current) ? () => removeFollowUp(current) : undefined}

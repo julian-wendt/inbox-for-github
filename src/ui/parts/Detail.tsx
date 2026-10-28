@@ -66,8 +66,10 @@ interface Props {
   onStatus: (status: Status) => void;
   onCopy: (format: LinkFormat) => void;
   onReload: () => void;
-  /** "Open in Orca" (W), offered while Orca knows the item's repo. */
+  /** "Open in Orca" (W), offered while Orca knows the item's repo or can clone it (see `orcaHint`). */
   onOrca?: () => void;
+  /** Said in the Orca button's tooltip when Orca lacks the repo: where it comes from. */
+  orcaHint?: string;
   /** Adds the viewer to the assignees on GitHub; offered while the item is open and not assigned to them. */
   onAssignMe?: () => void;
   /** "Plan" in the status switch, before the follow-up, opens the plan choices below this button. */
@@ -96,7 +98,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -195,7 +197,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             <GitHubMark />
           </button>
           {onOrca && (
-            <button className="chip-btn" title={`${t("orca.open")} (W)`} aria-label={t("orca.open")} onClick={onOrca}>
+            <button className="chip-btn" title={`${t(orcaHint ? "orca.addOpen" : "orca.open")} (W)${orcaHint ? `\n${orcaHint}` : ""}`} aria-label={t(orcaHint ? "orca.addOpen" : "orca.open")} onClick={onOrca}>
               <OrcaMark size={18} />
             </button>
           )}

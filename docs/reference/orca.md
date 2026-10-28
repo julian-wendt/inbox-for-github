@@ -37,9 +37,23 @@ lookup in `src/ui/useOrca.ts`.
   opens one.
 - The mark the app shows for Orca (`OrcaMark`) is the path of the bundle's
   `Contents/Resources/app.asar.unpacked/resources/logo.svg`.
+- `orca project setup-clone --project github:<owner>/<name> --host local --url <clone-url>
+  --destination <parent>` runs
+  `git clone -- <url> <parent>/<name>` with `<parent>` as working directory and git's own
+  credentials, and returns a repo Orca already has under that URL instead of cloning again
+  (read from Orca's main bundle, `out/main/index.js`, `cloneAfterPathLock`, 2026-10-28). The
+  shell lets the app clone only from `https://github.com/` with `--host local`.
+- `orca repo add --path <path>` registers an existing checkout. The app runs it only for a
+  checkout directly inside the repo folder (the setting, else the folder most of Orca's repos
+  sit in, `repoHome`) whose `origin` remote is the item's repo; the shell's `repo_checkouts`
+  reads those remotes from each `.git/config`. A folder with another origin, a fork included,
+  is never added; without a match the app clones into the repo folder.
 - `orca agent-context --json` prints the schema of all 288 commands, useful when Orca changes.
 
 ## Not verified
+
+- Cloning a private repo: it relies on git finding credentials for github.com (for example
+  `gh auth setup-git`); not tried, since a test clone registers a repo in the user's Orca.
 
 - Whether `worktree create --pr` starts the worktree from the pull request's head branch or from
   the repo's default base. Orca has code that fetches `refs/pull/<n>/head`, but it was not
@@ -49,6 +63,7 @@ lookup in `src/ui/useOrca.ts`.
 
 ## What the web view may run
 
-The `orca` shell command only runs `repo list`, `worktree list`, `worktree create`,
-`worktree set`, `terminal list`, `terminal switch` and `terminal create`. Removing worktrees, sending input to
-terminals and starting agents stay in Orca.
+The `orca` shell command only runs `repo list`, `repo add`, `project setup-clone` (from github.com, local),
+`worktree list`, `worktree create`, `worktree set`, `terminal list`, `terminal switch` and
+`terminal create`. Removing worktrees or repos, sending input to terminals and starting agents
+stay in Orca.

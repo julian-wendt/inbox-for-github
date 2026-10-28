@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import { createArgs, openInOrca, orcaFailure, orcaRepoFor, orcaRepoIds, orcaResult, worktreeFor, type OrcaWorktree } from "./orca";
+import { addToOrca, checkoutFor, cloneArgs, createArgs, isRepoName, openInOrca, orcaFailure, orcaRepoFor, orcaRepoIds, orcaResult, pathText, repoHome, worktreeFor, type OrcaWorktree } from "./orca";
+import type { Checkout } from "./orca";
 import type { PullState } from "./model";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
@@ -122,5 +123,94 @@ describe("openInOrca", () => {
     answer([worktree({ linkedIssue: 7 })]);
     await openInOrca("r", { kind: "issue", number: 7, pull: null, title: "Fix it" });
     expect(calls()).toEqual(["worktree list", "terminal list", "terminal create", "orca_activate"]);
+  });
+});
+
+describe("repoHome", () => {
+  it("is the folder most of Orca's repos sit in", () => {
+    const repos = [{ id: "a", path: "/u/Repos/a" }, { id: "b", path: "/u/Work/b" }, { id: "c", path: "/u/Work/c/" }];
+    expect(repoHome(ok({ repos }))).toBe("/u/Work");
+  });
+
+  it("takes the first folder on a tie", () => {
+    expect(repoHome(ok({ repos: [{ id: "a", path: "/u/Repos/a" }, { id: "b", path: "/u/Work/b" }] }))).toBe("/u/Repos");
+  });
+
+  it("is null while Orca has no repo with a path", () => {
+    expect(repoHome(ok({ repos: [{ id: "a" }] }))).toBeNull();
+  });
+});
+
+describe("addToOrca", () => {
+  const listed = (keys: string[]) => ok({ repos: keys.map((key, i) => ({ id: `id-${i}`, path: `/u/Repos/${key.split("/")[2]}`, gitRemoteIdentity: { canonicalKey: key } })) });
+  const orcaCalls = () => vi.mocked(invoke).mock.calls.filter(([command]) => command === "orca").map(([, args]) => (args as { args: string[] }).args);
+
+  beforeEach(() => vi.mocked(invoke).mockReset());
+
+  function answer(checkouts: Checkout[], after: string[]) {
+    vi.mocked(invoke).mockImplementation((command, args) => {
+      if (command === "repo_checkouts") return Promise.resolve(["/u/Repos", checkouts]);
+      if (command !== "orca") return Promise.resolve();
+      return Promise.resolve((args as { args: string[] }).args[0] === "repo" && (args as { args: string[] }).args[1] === "list" ? listed(["github.com/o/known", ...after]) : ok({}));
+    });
+  }
+
+  it("adds the checkout in the repo folder whose origin is the repo", async () => {
+    answer([{ path: "/u/Repos/other", origin: "https://github.com/o/other.git" }, { path: "/u/Repos/my-app", origin: "git@github.com:Octo/App.git" }], ["github.com/octo/app"]);
+    await expect(addToOrca("octo/app", "~/Repos")).resolves.toEqual({ id: "id-1", how: "added", path: "/u/Repos/my-app" });
+    expect(orcaCalls()).toEqual([["repo", "add", "--path", "/u/Repos/my-app"], ["repo", "list"]]);
+    expect(vi.mocked(invoke).mock.calls[0]).toEqual(["repo_checkouts", { folder: "~/Repos" }]);
+  });
+
+  it("clones the repo into the folder when no checkout there has it as origin, a fork included", async () => {
+    answer([{ path: "/u/Repos/app", origin: "https://github.com/me/app.git" }], ["github.com/octo/app"]);
+    await expect(addToOrca("octo/app", "~/Repos")).resolves.toEqual({ id: "id-1", how: "cloned", path: "/u/Repos/app" });
+    expect(orcaCalls()).toEqual([cloneArgs("octo/app", "/u/Repos"), ["repo", "list"]]);
+  });
+
+  it("fails when Orca still lacks the repo afterwards", async () => {
+    answer([], []);
+    await expect(addToOrca("octo/app", "~/Repos")).rejects.toThrow("Orca has no octo/app after adding it");
+  });
+
+  it("refuses a name that is not a GitHub repo, without calling anything", async () => {
+    answer([], []);
+    await expect(addToOrca("octo/..", "~/Repos")).rejects.toThrow("not a GitHub repository");
+    expect(vi.mocked(invoke)).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkoutFor", () => {
+  it("knows GitHub's https and ssh remotes, with and without .git, in any case", () => {
+    const at = (origin: string) => checkoutFor([{ path: "/p", origin }], "octo/app")?.path;
+    expect(at("https://github.com/octo/app")).toBe("/p");
+    expect(at("https://token@github.com/Octo/App.git/")).toBe("/p");
+    expect(at("ssh://git@github.com/octo/app.git")).toBe("/p");
+    expect(at("git@github.com:octo/app.git")).toBe("/p");
+    expect(at("https://gitlab.com/octo/app.git")).toBeUndefined();
+    expect(at("https://github.com/octo/app-two.git")).toBeUndefined();
+  });
+});
+
+describe("isRepoName", () => {
+  it("takes owner/name of GitHub's letters and rejects paths and flags around it", () => {
+    expect(isRepoName("octo-org/my.app_2")).toBe(true);
+    expect(isRepoName("octo/..")).toBe(false);
+    expect(isRepoName("octo/a/b")).toBe(false);
+    expect(isRepoName("octo/a b")).toBe(false);
+  });
+});
+
+describe("cloneArgs", () => {
+  it("clones the GitHub repo into the folder on this Mac", () => {
+    expect(cloneArgs("octo/app", "/u/Repos")).toEqual(["project", "setup-clone", "--project", "github:octo/app", "--host", "local", "--url", "https://github.com/octo/app.git", "--destination", "/u/Repos"]);
+  });
+});
+
+describe("pathText", () => {
+  it("writes the home folder as ~ and leaves other paths alone", () => {
+    expect(pathText("/Users/me/Repos")).toBe("~/Repos");
+    expect(pathText("/Users/me")).toBe("~");
+    expect(pathText("/opt/src")).toBe("/opt/src");
   });
 });

@@ -413,9 +413,18 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## In Orca öffnen
 
-- [ ] Mit Orca installiert und dem Repo in Orca registriert: Kontextmenü, ⌘K und ein Button im
-      Detail-Kopf bieten „In Orca öffnen“ (W) an, mit Orcas Logo (dem Wal) in Textfarbe; bei Items aus anderen Repos, ohne Orca und im
-      Demo-Modus fehlen sie, W meldet dann „Orca kennt <Repo> nicht“. Die Hilfe listet W.
+- [ ] Mit Orca installiert: Kontextmenü, ⌘K und ein Button im Detail-Kopf bieten „In Orca öffnen“
+      (W) bei jedem Item an, mit Orcas Logo (dem Wal) in Textfarbe. Ohne Orca, wenn Orca noch kein Repo hat, und im Demo-Modus fehlen sie;
+      W meldet dann, dass Orca nicht läuft oder kein Repo hat. Die Hilfe listet W.
+- [ ] Item aus einem Repo, das Orca nicht kennt: Kontextmenü und Button sagen „In Orca aufnehmen
+      und öffnen“, der Tooltip nennt den Repository-Ordner (Einstellungen › Allgemein, leer: der
+      Ordner, in dem die meisten Orca-Repos liegen, etwa `~/Repos`). Liegt dort ein Checkout, dessen
+      origin das Repo ist (auch unter anderem Ordnernamen, https oder ssh), nimmt Orca ihn auf; sonst
+      klont es das Repo dorthin. Danach öffnet sich das Item wie gewohnt. Ein Fork (origin ist dein
+      Fork) wird nicht aufgenommen. W während des Aufnehmens meldet „wird noch aufgenommen“.
+- [ ] Einstellungen › Allgemein › Repository-Ordner: `~/Work` eintragen und mit Enter oder Klick
+      daneben übernehmen; der Tooltip nennt dann `~/Work`. Ein Ordner, den es nicht gibt, nennt den
+      Fehler im Hinweis. Feld leeren stellt den Orca-Ordner wieder her.
 - [ ] Erstes Öffnen eines Issues: Hinweis „wird in Orca geöffnet…“, dann „neuer Worktree in Orca“;
       Orca kommt nach vorn und zeigt den Worktree unter dem Titel des Issues (Ordner und Branch
       heißen `issue-<Nummer>`), verknüpft mit dem Issue und nicht unter einem anderen Worktree.
