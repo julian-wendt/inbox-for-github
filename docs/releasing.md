@@ -39,7 +39,7 @@ version. The `Checks` workflow runs typecheck, lint and tests on every PR.
 
 **`Cargo.lock` needs `.value` in its filter** (verified 2026-10-27, release-please 17.6.0): the `toml`
 updater parses with a tagging parser that wraps every string in an object with its position, so
-`@.name=='…'` never matches and the lockfile stays behind (the first release PR, #53, left it at
+`@.name=='…'` never matches and the lockfile stays behind (the first release PR left it at
 0.1.0, and `cargo build --locked` then fails). The filter in `release-please-config.json` is
 `@.name.value=='inbox-for-github'`. `Cargo.toml` (`$.package.version`) works as is. Check on each
 release PR that `src-tauri/Cargo.lock` is among the changed files.
