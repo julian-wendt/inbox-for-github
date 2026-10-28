@@ -102,7 +102,8 @@
 }
 
 .help-body {
-  margin-top: 16px;
+  margin: 16px -26px 0 0;
+  padding-right: max(0px, calc(26px - var(--gutter, 0px)));
   overflow-y: auto;
   color: var(--text-muted);
   font-size: 13px;
@@ -147,7 +148,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 30px;
+  min-height: 30px;
 }
 
 .help dt {

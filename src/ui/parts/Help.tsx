@@ -1,10 +1,11 @@
 import { X } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Reopen } from "../../model";
 import { bucketHelp } from "../explain";
 import { t, type MessageKey } from "../i18n";
 import { VIEWS } from "../labels";
+import { useGutter } from "../useGutter";
 
 export type HelpTab = "rules" | "keys" | "basics";
 
@@ -75,6 +76,8 @@ const BASICS: MessageKey[] = ["help.basics.local", "help.basics.history", "help.
 export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: number; onClose: () => void }) {
   const { reopenOn, refreshMinutes, onClose } = props;
   const [tab, setTab] = useState(props.tab);
+  const body = useRef<HTMLDivElement>(null);
+  useGutter(() => body.current);
 
   useEffect(() => {
     const close = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -105,7 +108,7 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
           ))}
         </div>
 
-        <div className="help-body" role="tabpanel">
+        <div className="help-body" role="tabpanel" ref={body}>
           {tab === "rules" &&
             VIEWS.map((b) => {
               const help = bucketHelp(b.id, reopenOn);
