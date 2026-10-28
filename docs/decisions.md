@@ -176,8 +176,9 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   assignments (not the parked bars Later and Done), marks by hand included; a mark on an item in
   Follow-ups or Done does not count. The tables show no count in their header: the sidebar's
   number is the one count of what asks for you.
-- **The inbox switch is "All · Other · Reviews".** Reviews are pending review requests; "Other" is
-  everything else that keeps an item there (mentions, due follow-ups, updates).
+- **The inbox switch is "All · Reviews · Other".** Reviews are pending review requests; "Other" is
+  everything else that keeps an item there (mentions, due follow-ups, updates). Reviews come first
+  like pull requests do in the kind switch, so the second position means the same in every view.
 - **Keys that write to GitHub carry Control.** ⌃A assigns you, ⌃U removes you, ⌃O opens the
   item in the browser, ⌃R reloads it; no plain letter does either, so a key under the pointer
   never writes to GitHub by accident. U and R both toggle read and unread.

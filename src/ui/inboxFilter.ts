@@ -2,10 +2,10 @@ import type { Classified } from "../classify";
 import type { View } from "./labels";
 import { mentionsOf } from "../timeline";
 
-/** The switch of the Inbox, Snoozed and Done: everything, only mentions, or only review requests. */
+/** The switch of the Inbox, Snoozed and Done: everything, only review requests, or everything else ("Other"). */
 export type AskFilter = "all" | "mention" | "review";
 
-export const ASK_FILTERS: AskFilter[] = ["all", "mention", "review"];
+export const ASK_FILTERS: AskFilter[] = ["all", "review", "mention"];
 
 /** The views that offer the mentions/reviews switch instead of Issues/Pull Requests. */
 export const ASK_VIEWS: View[] = ["inbox", "snoozed", "done"];

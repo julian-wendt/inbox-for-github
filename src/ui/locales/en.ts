@@ -219,7 +219,7 @@ export const en = {
   "keys.unassign": "Remove me as assignee (writes to GitHub)",
   "assign.nothing": "Nothing to assign: already assigned to you, or closed.",
   "unassign.nothing": "Nothing to remove: you are not assigned.",
-  "keys.kind": "Step the filter in the header: all, issues, pull requests, or all, mentions, reviews",
+  "keys.kind": "Step the filter in the header: all, issues, pull requests, or all, reviews, other",
   "keys.grouping": "Switch the grouping: type or status bars in Assigned to me, time groups or none in the lists",
   "keys.snooze": "Follow up: the item waits, in its table if it sits in one, and comes back to the inbox at its date",
   "keys.done": "Done",

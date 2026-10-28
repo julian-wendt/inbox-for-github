@@ -204,7 +204,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       selbst zurück, auch nicht nach einem Refresh (⌘R) oder wenn die Mitteilungen laufen. Erst
       eine neue Auswahl (Pfeiltasten, Klick) scrollt zu ihr. Gilt ebenso für Mir zugewiesen
       und Von mir erstellt, und für ausgewählte Gruppenleisten.
-- [ ] Umschalter „Alle · Sonstige · Reviews“ statt Issues/Pull Requests, mit Anzahl neben Sonstige und Reviews („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch fällige Wiedervorlagen und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
+- [ ] Umschalter „Alle · Reviews · Sonstige“ statt Issues/Pull Requests, mit Anzahl neben Reviews und Sonstige („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch fällige Wiedervorlagen und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
 - [ ] Wiedervorlage und Erledigt haben denselben Umschalter: Reviews sind PRs mit deiner
       Review-Anfrage, Erwähnungen Items, in denen du erwähnt wurdest; Zuweisungen nur unter „Alle“.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst

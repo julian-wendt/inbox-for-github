@@ -221,7 +221,7 @@ export const de: Messages = {
   "keys.unassign": "Mich als Zuständigen entfernen (schreibt nach GitHub)",
   "assign.nothing": "Nichts zuzuweisen: du bist schon zugewiesen, oder es ist geschlossen.",
   "unassign.nothing": "Nichts zu entfernen: du bist nicht zugewiesen.",
-  "keys.kind": "Filter im Kopf weiterschalten: alle, Issues, Pull Requests oder alle, Erwähnungen, Reviews",
+  "keys.kind": "Filter im Kopf weiterschalten: alle, Issues, Pull Requests oder alle, Reviews, Sonstige",
   "keys.grouping": "Gruppierung wechseln: Typ- oder Status-Leisten in „Mir zugewiesen“, Zeitgruppen oder keine in den Listen",
   "keys.snooze": "Wiedervorlage: das Item wartet, in seiner Tabelle, wenn es in einer steht, und kommt zum Datum in die Inbox zurück",
   "keys.reminderRemove": "Wiedervorlage entfernen, auch eine längst vergangene; bei markierten Items bei allen",
