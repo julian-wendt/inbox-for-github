@@ -1,10 +1,16 @@
+import { Circle, CircleCheck, Clock, type LucideIcon } from "lucide-react";
 import type { Status } from "../../model";
 
-/** A plain status ring; only its color tells the states apart (gray open, blue snoozed, green done). */
+const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: Clock, done: CircleCheck };
+
+/**
+ * A status as an icon in its color: a gray ring for open, a yellow clock for a follow-up, a green
+ * check for done. Shape and color both tell the states apart, so neither alone carries it.
+ *
+ * @example
+ *   <StatusIcon status="snoozed" size={13} />
+ */
 export function StatusIcon({ status, size = 14 }: { status: Status; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 14 14" aria-hidden style={{ flex: "none" }}>
-      <circle cx="7" cy="7" r="5.5" fill="none" stroke={`var(--st-${status})`} strokeWidth="1.5" />
-    </svg>
-  );
+  const Icon = ICONS[status];
+  return <Icon size={size} strokeWidth={2.2} color={`var(--st-${status})`} aria-hidden style={{ flex: "none" }} />;
 }

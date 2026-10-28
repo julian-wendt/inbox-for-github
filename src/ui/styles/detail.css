@@ -151,10 +151,6 @@
   color: var(--text-muted);
 }
 
-.reminder-chip .chip-icon {
-  color: var(--st-snoozed);
-}
-
 .chip-x {
   display: inline-flex;
   flex: none;

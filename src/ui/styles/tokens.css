@@ -50,6 +50,7 @@
   --st-snoozed: var(--yellow);
   --st-done: var(--green);
   --st-accepted: var(--blue);
+  --st-planned: var(--blue);
   --new: var(--red);
   --mention: var(--purple);
   /* Filled green under white text (button, switch); dark mode takes the deeper light tone for 4.5:1. */

@@ -192,7 +192,7 @@ export function ReviewRow({ line, me, avatars }: { line: ReviewLine; me: string;
 }
 
 /**
- * A timeline line for a status change made in this app, which GitHub never sees: the status ring
+ * A timeline line for a status change made in this app, which GitHub never sees: the status icon
  * and a sentence like "You snoozed it · 2 hours ago".
  *
  * @example

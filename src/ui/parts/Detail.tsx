@@ -1,5 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { AtSign, Bell, ChevronDown, ChevronRight, Link, RefreshCw, SquareTerminal, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, SquareTerminal, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
 import type { Reopen, Status, StatusChange, WriteFailure } from "../../model";
@@ -10,7 +10,7 @@ import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
-import type { Dated } from "../plan";
+import { datedText, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
@@ -69,6 +69,8 @@ interface Props {
   onOrca?: () => void;
   /** Adds the viewer to the assignees on GitHub; offered while the item is open and not assigned to them. */
   onAssignMe?: () => void;
+  /** "Plan" in the status switch, before the follow-up, opens the plan choices below this button. */
+  onPlan: (at: DOMRect) => void;
   /** "Snoozed" in the status switch opens the snooze choices below this button. */
   onSnooze: (at: DOMRect) => void;
   /** Takes the follow-up date off the item; the chip shows a × for it. */
@@ -93,7 +95,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, onAssignMe, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -139,6 +141,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
     if (openAt === "latest") timelineEnd.current?.scrollIntoView({ block: "end" });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only when the item opens, not when the setting changes
 
+  // A plan is the item's "when" while it is open, so Plan, not Open, shows as chosen.
+  const dated = datedOf(entry);
+  const plan = dated ? datedText(dated) : null;
   return (
     <section className="detail">
       <header className="pane-header" data-tauri-drag-region>
@@ -152,19 +157,32 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             </span>
           ) : (
             <div className="segmented compact status-switch" role="radiogroup" aria-label={t("detail.status")}>
-              {statusesFor(entry).map((s) => (
+              {statusesFor(entry).map((s) => [
+                s.id === "snoozed" && (
+                  <button
+                    key="plan"
+                    role="radio"
+                    aria-checked={!!plan}
+                    className={plan ? "on" : ""}
+                    title={`${plan?.title ?? t("detail.plan")} (P)`}
+                    onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
+                  >
+                    <CalendarDays size={13} strokeWidth={2.2} color="var(--st-planned)" aria-hidden /> {plan?.text ?? t("detail.plan")}
+                    <ChevronDown size={12} className="segment-more" />
+                  </button>
+                ),
                 <button
                   key={s.id}
                   role="radio"
-                  aria-checked={status === s.id}
-                  className={status === s.id ? "on" : ""}
+                  aria-checked={status === s.id && !(plan && s.id === "open")}
+                  className={status === s.id && !(plan && s.id === "open") ? "on" : ""}
                   title={`${s.title} (${s.key})`}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} /> {s.title}
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
-                </button>
-              ))}
+                </button>,
+              ])}
             </div>
           )}
           {onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me)) && (
@@ -186,7 +204,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
           <button className="chip-btn" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
             <Link size={15} />
           </button>
-          <WhyHint why={explain(entry, reopenOn, me, datedOf(entry))} />
+          <WhyHint why={explain(entry, reopenOn, me, dated)} />
           {onClose && (
             <button className="chip-btn" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
               <X size={15} />

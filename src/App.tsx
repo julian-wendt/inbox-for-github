@@ -22,7 +22,7 @@ import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { followUpOf } from "./ui/followUp";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
-import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, Star, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
+import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, SquareTerminal, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
 import { Detail } from "./ui/parts/Detail";
 import { Help } from "./ui/parts/Help";
@@ -42,7 +42,7 @@ import { useOrca } from "./ui/useOrca";
 import { openInOrca } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, datedAt, datedOf, isPinnable, planChoices, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, datedAt, datedOf, dayShort, isPinnable, planChoices, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -404,7 +404,7 @@ export default function App() {
     const steps = [todayStep(previous, next), ...(on ? [] : followUpEnds(c))];
     for (const s of steps) s.run();
     actions.announce(
-      t(on ? "focus.removed" : "focus.added", { number: c.item.number }),
+      on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
       () => steps.forEach((s) => s.undo()),
       () => steps.forEach((s) => s.run()),
     );
@@ -413,6 +413,15 @@ export default function App() {
   const todayStep = (previous: Today, next: Today) => ({ run: () => void inbox.updateSettings((s) => ({ ...s, ...next })), undo: () => void inbox.updateSettings((s) => ({ ...s, ...previous })) });
   /** An item has one "when": a plan or Today pin on a follow-up ends it, as a step; none when there is no follow-up. */
   const followUpEnds = (c: Classified) => (c.status === "snoozed" ? [followUpStep(c)] : []);
+  /** What a plan or pin ends for the toast: the item's follow-up, with its date when it has one. */
+  const endedFollowUp = (c: Classified) => (c.status !== "snoozed" ? null : c.until ? t("replaced.followUpAt", { until: untilText(c.until) }) : t("replaced.followUp"));
+  /** What a follow-up ends for the toast: the item's Today pin or its plan. */
+  const endedPlan = (c: Classified) => {
+    const when = dated(c);
+    return when?.kind === "today" ? t("replaced.today") : when?.kind === "planned" ? t("replaced.plan", { day: dayShort(when.day) }) : null;
+  };
+  /** A toast that also names the "when" the change replaced, so ⌘Z is one look away. */
+  const replacing = (toast: string, replaced: string | null) => (replaced ? t("replaced.toast", { toast, replaced }) : toast);
 
   /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today and ends its follow-up. */
   const planFor = (c: Classified, day: string | null, text: string) => {
@@ -427,7 +436,7 @@ export default function App() {
     const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : [])];
     for (const s of steps) s.run();
     actions.announce(
-      day ? t("plan.added", { number: c.item.number, day: text }) : t("plan.removed", { number: c.item.number }),
+      day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t("plan.removed", { number: c.item.number }),
       () => steps.forEach((s) => s.undo()),
       () => steps.forEach((s) => s.run()),
     );
@@ -438,11 +447,13 @@ export default function App() {
     return [
       ...(withToday ? [{ label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), onSelect: () => toggleFocus(c) }] : []),
       ...planChoices().map((choice, i) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === day, divided: withToday && i === 0, onSelect: () => planFor(c, choice.day, choiceText(choice)) })),
-      ...(day ? [{ label: t("plan.remove"), keys: "X", divided: true, onSelect: () => planFor(c, null, "") }] : []),
+      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !planChoices().some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayShort(localDay(new Date(at)))) }) },
+      ...(day ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
     ];
   };
-  /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones. */
-  const plan = (c: Classified) => (pinnable(c) ? setMenu({ entries: planEntries(c, true), ...paneCenter(), centered: true }) : actions.notify(t("noop.notPlannable", { number: c.item.number })));
+  /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones, or below the detail's Plan button. */
+  const plan = (c: Classified, at?: DOMRect) =>
+    pinnable(c) ? setMenu({ entries: planEntries(c, true), ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -462,7 +473,7 @@ export default function App() {
   };
   const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean } | null>(null);
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean } | null>(null);
-  const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void } | null>(null);
+  const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
   const bulk = (text: string, steps: { run: () => void; undo: () => void }[]) => {
     if (steps.length === 0) return;
@@ -624,7 +635,7 @@ export default function App() {
     steps.push(statusStep(c, "snoozed", until));
     for (const s of steps) s.run();
     actions.announce(
-      until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : `#${c.item.number} → ${t("status.snoozed")}`,
+      replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),
       () => steps.forEach((s) => s.undo()),
       () => steps.forEach((s) => s.run()),
     );
@@ -788,21 +799,24 @@ export default function App() {
   const menuEntries = (c: Classified): MenuEntry[] => {
     const { item } = c;
     const orcaId = orcaRepo(item.repo);
+    const planned = dated(c) !== null;
+    const statuses: MenuEntry[] = statusesFor(c).map((s) => ({
+      label: s.id === "done" && onPlate(c, me) && !c.updates ? t("action.handOff") : s.title,
+      keys: s.key,
+      icon: <StatusIcon status={s.id} size={14} />,
+      checked: c.status === s.id && !(planned && s.id === "open"),
+      onSelect: () => applyStatus(c, s.id),
+      // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
+      ...(s.id === "snoozed" && { items: snoozeEntries(c) }),
+    }));
+    const planItem: MenuEntry[] = pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, checked: planned, items: planEntries(c, true) }] : [];
     return [
-      ...statusesFor(c).map((s) => ({
-        label: s.id === "done" && onPlate(c, me) && !c.updates ? t("action.handOff") : s.title,
-        keys: s.key,
-        icon: <StatusIcon status={s.id} size={14} />,
-        checked: c.status === s.id,
-        onSelect: () => applyStatus(c, s.id),
-        // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
-        ...(s.id === "snoozed" && { items: snoozeEntries(c) }),
-      })),
+      ...statuses.slice(0, 1),
+      ...planItem,
+      ...statuses.slice(1),
       ...(leavable(c) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => leave(c) }] : []),
       ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
-      ...(pinnable(c) ? [{ label: t("menu.today"), keys: "T", icon: <Star size={14} />, checked: inbox.settings.focus.includes(item.id), onSelect: () => toggleFocus(c) }] : []),
-      ...(pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, items: planEntries(c) }] : []),
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
       ...(orcaId ? [{ label: t("orca.open"), keys: "W", icon: <SquareTerminal size={14} />, onSelect: () => openOrca(c, orcaId) }] : []),
@@ -1102,6 +1116,7 @@ export default function App() {
             onReload={() => current && reloadCurrent(current)}
             onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}
             onAssignMe={() => current && assignMe(current)}
+            onPlan={(at: DOMRect) => current && plan(current, at)}
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
@@ -1135,6 +1150,7 @@ export default function App() {
             onReload={() => current && reloadCurrent(current)}
             onOrca={currentOrca ? () => current && openOrca(current, currentOrca) : undefined}
             onAssignMe={() => current && assignMe(current)}
+            onPlan={(at: DOMRect) => current && plan(current, at)}
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
@@ -1157,6 +1173,7 @@ export default function App() {
       {pickingDate && (
         <SnoozeDatePicker
           onPick={pickingDate.pick}
+          day={pickingDate.day}
           onClose={() => setPickingDate(null)}
         />
       )}

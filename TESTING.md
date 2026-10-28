@@ -96,6 +96,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Status und Protokoll
 
+- [ ] Die Status tragen Icons statt farbiger Ringe: Offen ein grauer Ring, Wiedervorlage eine gelbe
+      Uhr, Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
+      in Hell und Dunkel gut erkennbar.
 - [ ] Item mit F auf Wiedervorlage legen, mit D erledigen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten, sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
 - [ ] D auf einem erledigten Item ändert nichts; F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
@@ -243,9 +246,20 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Kein Avatar.
 - [ ] Eigene PRs fehlen hier (sie stehen in „Von mir erstellt“), fremde zugewiesene PRs stehen oben.
 - [ ] T heftet ein Item für heute an oder nimmt es heraus. P öffnet mittig das Planmenü: T Heute,
-      M Morgen, 1–5 die übrigen Wochentage dieser Woche, W Nächsten Montag, X Plan entfernen (nur
-      wenn geplant). Angeheftete und geplante Items bleiben in ihrer Leiste, mit Stern bzw. dem
+      M Morgen, 1–5 die übrigen Wochentage dieser Woche, W Nächsten Montag, D Datum wählen, X Plan
+      entfernen (nur wenn geplant). D öffnet den Datumsdialog ohne Uhrzeit, „Planen für“, ab morgen;
+      heute oder früher lässt den Knopf aus. Ein so gewählter Tag trägt im Menü den Haken an
+      „Datum wählen…“. Angeheftete und geplante Items bleiben in ihrer Leiste, mit Stern bzw. dem
       Tag leise hinter dem Titel („Morgen“, „Do“); keine eigene Leiste „Heute“ oder „Geplant“ mehr.
+- [ ] Im Detail-Umschalter steht „Planen“ (blauer Kalender) zwischen Offen und Wiedervorlage; ein
+      Klick öffnet darunter dieselben Wahlen wie P. Ist das Item angeheftet oder geplant, ist
+      „Planen“ gewählt statt „Offen“ und nennt den Tag („Heute“, „Morgen“, „Do“). Im Kontextmenü
+      steht „Planen für“ mit Heute und den Tagen ebenso vor „Wiedervorlage“, ein eigener Eintrag
+      „Heute“ fehlt. Auf einem erledigten Item sagt ein Klick, warum es nicht geht.
+- [ ] Ein Wann ersetzt das andere, und der Toast sagt es: F auf einem geplanten Item zeigt
+      „#12 → Wiedervorlage Mo., 09:00 · Plan für Do entfernt“ (aus Heute: „· aus Heute genommen“),
+      P oder T auf einer Wiedervorlage „#12 → Do · Wiedervorlage für Mo., 09:00 entfernt“. ⌘Z
+      nimmt beides zusammen zurück. Ohne vorheriges Wann bleibt der Toast wie bisher.
 - [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; höchstens drei, ältester Plan zuerst); ein
       Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
 - [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
@@ -365,7 +379,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Items mit Wiedervorlage-Datum zeigen rechts in der Zeile statt des Alters, wann sie
       zurückkommen (Uhrzeit heute, Wochentag, sonst Datum); Tooltip „Wiedervorlage Mo., 26. Okt., 09:00“.
       Keine Glocke in der Zeile.
-- [ ] Im Detail steht bei solchen Items ein Chip mit Glocke, Wochentag, Datum und Uhrzeit (24 h)
+- [ ] Im Detail steht bei solchen Items ein Chip mit gelber Uhr, Wochentag, Datum und Uhrzeit (24 h)
       hinter dem Typ-Icon und einem ×; nach Ablauf ist der Chip weg.
 
 ## Einstellungen

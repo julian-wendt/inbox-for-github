@@ -1,10 +1,11 @@
-import { Bell, CircleDot, GitPullRequest, X } from "lucide-react";
+import { CircleDot, GitPullRequest, X } from "lucide-react";
 import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
 import { followUpOf } from "../followUp";
 import { reminderText } from "../snooze";
+import { StatusIcon } from "./StatusIcon";
 
 /**
  * Glyph telling issues and pull requests apart, with the kind as its tooltip. Given a status, it
@@ -26,13 +27,13 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
 }
 
 /**
- * The detail's chip for an item that waits for a follow-up date: bell, date and time. Gone once
+ * The detail's chip for an item that waits for a follow-up date: the follow-up icon, date and time. Gone once
  * the item is back in the inbox (see `followUpOf`).
  *
  * @param onRemove  Adds a × that takes the follow-up off the item.
  *
  * @example
- *   <FollowUpChip entry={entry} onRemove={() => remove(entry)} /> // [bell] Mon, 26 Oct, 09:00 [×]
+ *   <FollowUpChip entry={entry} onRemove={() => remove(entry)} /> // [clock] Mon, 26 Oct, 09:00 [×]
  */
 export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until">; onRemove?: () => void }) {
   const followUp = followUpOf(entry);
@@ -40,7 +41,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
   const text = reminderText(followUp.at);
   return (
     <span className="chip reminder-chip" title={t("snooze.reminderAt", { until: text })}>
-      <Bell size={13} className="chip-icon" />
+      <StatusIcon status="snoozed" size={13} />
       {text}
       {onRemove && (
         <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>

@@ -21,21 +21,24 @@ function momentOf(when: When): Date | null {
 }
 
 /**
- * A small dialog to snooze until a chosen date and time, starting at tomorrow 09:00. Date
- * (DD.MM.YYYY) and time (24-hour HH:MM) are `SegmentField`s, whatever the system's format; a
- * day past the end of a newly chosen month moves to its last day. Enter or the button snoozes,
- * Escape or a click outside cancels. Past times are not accepted.
+ * A small dialog to snooze until a chosen date and time, starting at tomorrow 09:00, or with
+ * `day` to plan for a chosen day. Date (DD.MM.YYYY) and time (24-hour HH:MM) are `SegmentField`s,
+ * whatever the system's format; a day past the end of a newly chosen month moves to its last day.
+ * Enter or the button confirms, Escape or a click outside cancels. Past times are not accepted,
+ * and without a time neither is today.
  *
- * @param onPick  Called with the chosen time as ISO 8601.
+ * @param onPick  Called with the chosen time as ISO 8601; with `day`, local midnight of the day.
+ * @param day     Asks for a day only, to plan for it: the dialog says so and has no time field.
  *
  * @example
  *   <SnoozeDatePicker onPick={(until) => snooze(entry, until)} onClose={() => setPicking(null)} />
+ *   <SnoozeDatePicker day onPick={(at) => plan(entry, localDay(new Date(at)))} onClose={() => setPicking(null)} />
  */
-export function SnoozeDatePicker({ onPick, onClose }: { onPick: (until: string) => void; onClose: () => void }) {
+export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (until: string) => void; onClose: () => void; day?: boolean }) {
   const [openedAt] = useState(() => Date.now());
   const [when, setWhen] = useState<When>(() => {
     const d = new Date(snoozeUntil("tomorrow"));
-    return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hours: d.getHours(), minutes: d.getMinutes() };
+    return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hours: day ? 0 : d.getHours(), minutes: day ? 0 : d.getMinutes() };
   });
   const years = yearsFrom(new Date(openedAt).getFullYear());
   const at = momentOf(when);
@@ -78,7 +81,7 @@ export function SnoozeDatePicker({ onPick, onClose }: { onPick: (until: string) 
           pick();
         }}
       >
-        <h2>{t("snooze.pickTitle")}</h2>
+        <h2>{t(day ? "plan.pickTitle" : "snooze.pickTitle")}</h2>
         <div className="snooze-when">
           <SegmentField
             label={t("snooze.date")}
@@ -91,22 +94,24 @@ export function SnoozeDatePicker({ onPick, onClose }: { onPick: (until: string) 
             ]}
             onChange={(index, value) => setPart((["day", "month", "year"] as const)[index], value)}
           />
-          <SegmentField
-            label={t("snooze.time")}
-            separator=":"
-            parts={[
-              { label: t("snooze.hour"), value: when.hours, segment: HOURS },
-              { label: t("snooze.minute"), value: when.minutes, segment: MINUTES },
-            ]}
-            onChange={(index, value) => setPart(index === 0 ? "hours" : "minutes", value)}
-          />
+          {!day && (
+            <SegmentField
+              label={t("snooze.time")}
+              separator=":"
+              parts={[
+                { label: t("snooze.hour"), value: when.hours, segment: HOURS },
+                { label: t("snooze.minute"), value: when.minutes, segment: MINUTES },
+              ]}
+              onChange={(index, value) => setPart(index === 0 ? "hours" : "minutes", value)}
+            />
+          )}
         </div>
         <div className="dialog-actions">
           <button type="button" className="btn" onClick={onClose}>
             {t("snooze.cancel")}
           </button>
           <button type="submit" className="btn success" disabled={!valid}>
-            {t("snooze.confirm")}
+            {t(day ? "plan.confirm" : "snooze.confirm")}
           </button>
         </div>
       </motion.form>
