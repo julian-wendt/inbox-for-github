@@ -35,6 +35,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 - **GitHub writes are limited** to plain comments, close/reopen and assigning or unassigning yourself. No review actions, no edits of others' text.
 - **Statuses, notes and settings never leave the Mac.**
 - **Frugal with the API:** measure a query's cost with `rateLimit(dryRun: true) { cost }` before shipping it; filter locally instead of refetching. See [`github-api.md`](docs/reference/github-api.md).
+- **Public repo:** no employer, clients, their orgs, repos or boards, work circumstances, real people or personal data in code, commits, PRs or issues; examples come from the demo's fictional world. See [`CONTRIBUTING.md`](CONTRIBUTING.md#public-content).
 - **No breaking changes without asking:** settings keys, DB tables and columns, the cache format, the bundle identifier. Add next to it instead.
 - **Ask first** before adding dependencies or touching lockfiles, `.github/`, release scripts or `tauri.conf.json`.
 - **Commit as you go:** one commit per logical step on the feature branch, conventional messages, pushed. No asking needed. Never tag or release by hand, never push to `main`.

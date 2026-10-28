@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only reviewer for changes in Inbox for GitHub. Checks a diff against the repo's product rules — both locales complete, contrast, comment budget, GitHub write limits, frugal queries, breaking changes. Use before handing over a larger change or when asked for a review.
+description: Read-only reviewer for changes in Inbox for GitHub. Checks a diff against the repo's product rules — both locales complete, contrast, comment budget, GitHub write limits, frugal queries, breaking changes, public content. Use before handing over a larger change or when asked for a review.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -23,6 +23,9 @@ Check, and report only real findings with file and line:
 6. **Breaking changes:** no removed or renamed settings keys, tables, columns or cache fields
    without a migration; additive columns go through `Store.open`.
 7. **Rules and tests:** new item-placement or grouping logic sits in a pure function with a test.
+8. **Public content:** nothing from the list in `CONTRIBUTING.md` ("Public content") in the diff,
+   the commit messages or the PR text: employer, clients and their orgs, repos or boards, work
+   circumstances, real people, personal data, secrets. Examples use the demo's fictional names.
 
 Answer with a short list ordered by severity, each with what is wrong, where, and what to do.
 Say plainly when you found nothing.

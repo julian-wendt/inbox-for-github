@@ -93,6 +93,28 @@ picks up a release nobody reviewed:
 - A new or changed query MUST have its cost measured (`rateLimit(dryRun: true) { cost }`), and
   SHOULD reuse an existing request before adding one.
 
+## Public content
+
+The repository is public, and so is everything around it. Code, tests, fixtures, docs, comments,
+commit messages, branch names, PR titles and descriptions, issues, release notes and screenshots
+MUST NOT contain:
+
+- the author's employer, its clients, their organizations, repositories, project boards, internal
+  tools or host names, not even as an example or test value
+- the author's work situation: whose device the app runs on, account plans and quotas, standby
+  duties, working hours, who stands in for whom
+- real people other than the author: names, logins, avatars, quotes from their comments
+- personal data: e-mail addresses (commits use the GitHub noreply address), phone numbers, postal
+  addresses, local paths with a user name (write `~` or `/Users/me`)
+- secrets, tokens, real log excerpts, and screenshots or data from a real account; screenshots come
+  from the demo mode (`VITE_DEMO=1`)
+- links to or numbers of issues and PRs in the private predecessor; only this repository's own
+  numbers count
+
+Examples MUST come from the demo's fictional world: the organizations `octo-org`, `lumen-labs`
+and `harbor-works`, made-up logins, the board "Roadmap". When a real case prompted a change,
+describe it in those terms instead of quoting it.
+
 ## Documentation
 
 - Code style and the comment budget are in [`docs/conventions/code-style.md`](docs/conventions/code-style.md).

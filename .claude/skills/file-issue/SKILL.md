@@ -11,6 +11,8 @@ description: File a GitHub issue in julian-wendt/inbox-for-github for deferred w
    issues keep their titles.
 3. **Body, in English:** Goal or Problem, what exists today (with file and function names),
    the proposal, and "To decide" for open questions. Name measured costs or facts with their date.
+   The issue is public: follow "Public content" in `CONTRIBUTING.md`. A real item that prompted it
+   is described with the demo's fictional names, never linked or quoted.
 4. `gh issue create -R julian-wendt/inbox-for-github --title "…" --body-file <file>`, then give the
    user the link.
 5. When closing an issue, comment what was done with the commit hashes, and what is left.
