@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
+import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, mergeDelta, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
@@ -119,7 +120,7 @@ const ref = (item: Item) => `${item.repo}#${item.number}`;
 
 /** Debug: a status change as `from → to`, whether a snooze date or handoff snapshot existed before and after, and its source. */
 function logStatusChange(item: string, before: StoredStatus | undefined, after: StoredStatus | undefined, source: string | null): void {
-  const state = (s: StoredStatus | undefined) => (s ? `${s.status}${s.until ? "+until" : ""}${s.handoff ? "+handoff" : ""}${s.due ? "+due" : ""}` : "none");
+  const state = (s: StoredStatus | undefined) => (s ? `${s.status}${s.until ? "+until" : ""}${s.handoff ? "+handoff" : ""}` : "none");
   log.debug("status change", { item, change: `${state(before)} → ${state(after)}`, source: source ?? "unknown", ...logContext(), build: __APP_COMMIT__ });
 }
 
@@ -536,14 +537,14 @@ export function useInbox(): Inbox {
   useEffect(() => {
     for (const c of classified) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
-      if (c.statusReset) void writeStatus(c.item.id, "open", true, { due: c.asks.includes("due") }, c.asks.includes("due") ? "auto:snooze-ended" : "auto:reopen");
+      if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
       if (me && legacyDone(c, me) && !converting.current.has(c.item.id)) {
         // A "done" on an assignment from before "my part done" becomes one, from now on.
         converting.current.add(c.item.id);
         void writeStatus(c.item.id, "done", true, { handoff: snapshotOf(c.item) }, "auto:legacy-done");
       }
     }
-  }, [classified, writeStatus, me]);
+  }, [classified, writeStatus, me, statuses, now]);
 
   const latestClassified = useRef(classified);
   useEffect(() => {

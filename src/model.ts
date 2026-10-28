@@ -195,8 +195,6 @@ export interface StoredStatus {
   until?: string;
   /** With "done": the viewer's part of an assignment ended; what happens after it is an update for them. */
   handoff?: Handoff;
-  /** An "open" written when a snooze date passed: the item stays in the inbox until the viewer files it. */
-  due?: boolean;
 }
 
 /**
@@ -209,7 +207,7 @@ export interface Handoff {
 }
 
 /** What a status change may carry besides the status: see `StoredStatus`. */
-export type StatusExtra = Pick<StoredStatus, "until" | "due" | "handoff">;
+export type StatusExtra = Pick<StoredStatus, "until" | "handoff">;
 
 /** A write to GitHub that failed and was undone here, kept for the item's timeline. */
 export interface WriteFailure {

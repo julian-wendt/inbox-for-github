@@ -42,6 +42,9 @@ export function groupByTime<T>(list: T[], timeOf: (entry: T) => string, oldest =
   return order.map((group) => ({ group, entries: buckets.get(group)! })).filter((g) => g.entries.length > 0);
 }
 
+/** The bar at the inbox's bottom that holds the follow-ups which left it; folded by default. */
+export const WAITING_GROUP = "later";
+
 /** When a snooze ends, by local calendar days; "undated" snoozes have no date and wait for activity. */
 export type SnoozeGroup = "today" | "tomorrow" | "week" | "nextWeek" | "later" | "undated";
 

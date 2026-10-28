@@ -52,7 +52,7 @@ export function demoSeed(refs: DemoRefs, now = Date.now()): MemorySeed {
   );
 
   return {
-    settings: { orgs: [...new Set(["lumen-labs", "harbor-works", DEMO_VIEWER])], notifications: false, dockBadge: false, focus: [id("settings"), id("savedFilters")], focusDay: localDay(new Date(now)) },
+    settings: { orgs: [...new Set(["lumen-labs", "harbor-works", DEMO_VIEWER])], notifications: false, dockBadge: false, focus: [id("settings"), id("savedFilters")], focusDay: localDay(new Date(now)), planned: [{ id: id("leak"), day: localDay(new Date(now + DAY)) }], plannedAt: { [id("leak")]: iso(-HOUR) } },
     statuses,
     statusLog,
     seen,

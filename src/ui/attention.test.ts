@@ -11,10 +11,8 @@ function entry(id: string, overrides: Partial<Classified> = {}): Classified {
 }
 
 describe("arrivals", () => {
-  const due = entry("I_due", { asks: ["due"], statusReset: true });
-
-  it("notifies on the first result only for follow-ups that came due while the app was closed", () => {
-    expect(arrivals([entry("I_1"), due], null)).toEqual([due]);
+  it("takes the first result as the baseline and notifies about nothing in it, a follow-up that came back included", () => {
+    expect(arrivals([entry("I_1"), entry("I_2", { asks: ["reopened"], statusReset: true })], null)).toEqual([]);
   });
 
   it("notifies afterwards for every item new in the inbox, and nothing outside it", () => {
@@ -22,14 +20,16 @@ describe("arrivals", () => {
     expect(arrivals([entry("I_1"), entry("I_2"), watched], new Set(["I_1"])).map((c) => c.item.id)).toEqual(["I_2"]);
   });
 
+  it("lets an item that only asks again come back without a notification", () => {
+    const back = entry("I_2", { asks: ["reopened"] });
+    const asked = entry("I_3", { asks: ["reopened", "mention"] });
+    expect(arrivals([back, asked], new Set()).map((c) => c.item.id)).toEqual(["I_3"]);
+  });
+
 });
 
 describe("notificationTitle", () => {
   const at = "2026-10-05T00:00:00Z";
-
-  it("says the follow-up is due before anything else", () => {
-    expect(notificationTitle({ asks: ["due", "mention"], mention: { by: "bob", at, excerpt: "", self: false } })).toBe("Follow-up due");
-  });
 
   it("names who mentioned the viewer, their own self-mention, or a review request", () => {
     expect(notificationTitle({ asks: ["mention"], mention: { by: "bob", at, excerpt: "", self: false } })).toBe("bob mentioned you");
@@ -41,8 +41,7 @@ describe("notificationTitle", () => {
 describe("notifyReason", () => {
   const at = "2026-10-05T00:00:00Z";
 
-  it("files a due follow-up and the viewer's own notes before mentions and reviews", () => {
-    expect(notifyReason({ asks: ["due", "mention"], mention: { by: "bob", at, excerpt: "", self: false } })).toBe("due");
+  it("files the viewer's own notes before mentions and reviews", () => {
     expect(notifyReason({ asks: ["mention"], mention: { by: "me", at, excerpt: "", self: true } })).toBe("reminder");
     expect(notifyReason({ asks: ["update"], mention: null })).toBe("update");
     expect(notifyReason({ asks: ["review"], mention: null })).toBe("review");

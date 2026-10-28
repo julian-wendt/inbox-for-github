@@ -149,7 +149,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Mitteilungen
 
 - [ ] Einstellungen › Mitteilungen zeigt eine Karte: Hauptschalter, „Melden bei“ mit einem Schalter
-      je Grund (Erwähnungen, Review-Anfragen, Wiedervorlagen, Deine Selbst-Erwähnungen, Neues zu Items, bei denen dein Teil erledigt ist), „Auch wenn die App im Vordergrund ist“; darunter das Dock-Badge. Hauptschalter aus:
+      je Grund (Erwähnungen, Review-Anfragen, Deine Selbst-Erwähnungen, Neues zu Items, bei denen dein Teil erledigt ist), „Auch wenn die App im Vordergrund ist“; darunter das Dock-Badge. Hauptschalter aus:
       der Rest der Karte bleibt sichtbar, gedämpft und gesperrt. Ein Grund aus, und für ihn kommt
       keine Mitteilung mehr, das Item steht trotzdem in der Inbox.
 - [ ] Mit dem Fenster im Vordergrund kommt keine Mitteilung; Fenster im Hintergrund oder
@@ -204,7 +204,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       selbst zurück, auch nicht nach einem Refresh (⌘R) oder wenn die Mitteilungen laufen. Erst
       eine neue Auswahl (Pfeiltasten, Klick) scrollt zu ihr. Gilt ebenso für Mir zugewiesen
       und Von mir erstellt, und für ausgewählte Gruppenleisten.
-- [ ] Umschalter „Alle · Reviews · Sonstige“ statt Issues/Pull Requests, mit Anzahl neben Reviews und Sonstige („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch fällige Wiedervorlagen und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
+- [ ] Umschalter „Alle · Reviews · Sonstige“ statt Issues/Pull Requests, mit Anzahl neben Reviews und Sonstige („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch wieder Geöffnetes und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
 - [ ] Erledigt hat denselben Umschalter: Reviews sind PRs mit deiner
       Review-Anfrage, Erwähnungen Items, in denen du erwähnt wurdest; Zuweisungen nur unter „Alle“.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst
@@ -229,7 +229,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       steht unter „Zugewiesen“.
 - [ ] Rechts in der Zeile nur das Alter („3W“), Tooltip „Eröffnet am …“; kein Avatar. Sortiert nach
       Eröffnung, der Sortierknopf dreht das.
-- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. D erledigt dort nichts: auf einem eigenen PR, einem eigenen Issue ohne weiteren Zuständigen oder ohne dich als Zuständigen sagt eine Meldung, dass es auf GitHub noch offen ist (schließen oder mergen dort, oder F). Hat ein eigenes Issue außer dir einen weiteren Zuständigen, wird D zu „Mein Teil erledigt“. Eine fällige Wiedervorlage legt D ab, ohne das Item zu verstecken. Mit Markierten überspringt D diese und nennt, wie viele.
+- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. D erledigt dort nichts: auf einem eigenen PR, einem eigenen Issue ohne weiteren Zuständigen oder ohne dich als Zuständigen sagt eine Meldung, dass es auf GitHub noch offen ist (schließen oder mergen dort, oder F). Hat ein eigenes Issue außer dir einen weiteren Zuständigen, wird D zu „Mein Teil erledigt“. Ein wieder geöffnetes eigenes Item legt D ab, ohne es zu verstecken. Mit Markierten überspringt D diese und nennt, wie viele.
 
 ## Mir zugewiesen
 
@@ -284,13 +284,13 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] F auf einer Zuweisung oder einem eigenen Item öffnet die Zeiten (Ohne Datum, Später heute,
       Morgen früh, Nächste Woche, Datum wählen). Das Item bleibt in seiner Tabelle: eine Zuweisung
       rückt in die Leiste „Später“ (mit den auf dem Board blockierten, eingeklappt, nicht
-      mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; unter „Wiedervorlage“ in
-      der Seitenleiste steht keins von beiden. Mit Datum zeigt es Glocke und Uhrzeit im Tooltip.
+      mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; in „Geplant“
+      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt.
       O holt es zurück, F bietet erneut die Zeiten; ⌘Z nimmt es zurück.
-- [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Leiste und in der Inbox,
-      mit Mitteilung. Es trägt dann keine Glocke und keinen Chip mehr, und die Zeile nennt keinen
-      Ablauf, nur den üblichen Anlass; im Protokoll steht „Wiedervorlage fällig“. Es bleibt in der
-      Inbox, bis du D oder F drückst.
+- [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Arbeitsleiste, ohne
+      Mitteilung und ohne Chip; im Protokoll steht „Wiedervorlage fällig“. War darin eine Erwähnung
+      oder ein Review schon beantwortet, steht es zusätzlich als „wieder offen“ in der Inbox, bis
+      du antwortest, D oder F drückst.
 - [ ] Eine Erwähnung auf einem Item in Wiedervorlage: sie steht in der Inbox, das Item bleibt in
       „Später“. Andere Beiträge holen es nicht zurück, auch nicht mit „Jeder Beitrag“.
 - [ ] Das × im Chip entfernt die Wiedervorlage, ebenso X auf dem Item (auch Kontextmenü und ⌘K,
@@ -331,13 +331,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Geplant (Ansicht)
 
-- [ ] Alles mit Datum, aus allen Views: für heute Angeheftetes (Stern), Geplantes (Kalender) und
-      Wiedervorlagen (Glocke), auch die, die in ihrer Tabelle warten. Umschalter Alle · Issues ·
+- [ ] Für heute Angeheftetes (Stern) und Geplantes (Kalender), aus allen Views; keine
+      Wiedervorlagen (die warten unten in der Inbox oder in ihrer Tabelle). Umschalter Alle · Issues ·
       Pull Requests, kein Reviews/Sonstige.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
-- [ ] Rechts in der Zeile „Heute“, der geplante Tag („Morgen“, „Do“) oder wann die Wiedervorlage
-      zurückkommt (Uhrzeit heute, Wochentag, sonst Datum); Tooltip mit vollem Datum. Übertragenes
+- [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum. Übertragenes
       aus Heute trägt „Seit gestern“ in Rot in der Kontextzeile.
 - [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
       oder Mir zugewiesen steht, zählt dort weiter.
@@ -352,17 +351,20 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Wiedervorlage fällig
 
-- [ ] Ein Item, auf dem du nur beteiligt bist, mit F → H auf Wiedervorlage legen (oder F → D mit einer Zeit in zwei Minuten): zur Zeit steht es in der Inbox, ohne Markierung des Ablaufs, das
-      Protokoll zeigt „Wiedervorlage fällig“. Es bleibt dort, bis du F oder D drückst.
-- [ ] Zur Zeit kommt eine Mitteilung „Wiedervorlage fällig“ mit dem Titel des Items, auch wenn das
-      Item vorher nur erwähnt oder beantwortet war.
-- [ ] App mit ⌘Q beenden, die Zeit verstreichen lassen, neu starten: die Mitteilung kommt beim
-      Start; andere Inbox-Items melden sich nicht.
+- [ ] Ein Inbox-Item mit beantworteter Erwähnung mit F → D auf eine Zeit in zwei Minuten legen: es
+      steht in der Leiste „Später“ unten in der Inbox (eingeklappt, auch nach einem Update, das die
+      Leiste neu bringt). Zur Zeit steht es wieder oben als „wieder offen“, ohne Mitteilung; das
+      Protokoll zeigt „Wiedervorlage fällig“. Antwort, D oder F nehmen es heraus.
+- [ ] Dasselbe mit einem Item, bei dem nie jemand auf dich gewartet hat: es verschwindet zur Zeit
+      aus „Später“ und steht nirgends mehr (nur das Protokoll kennt es).
+- [ ] App mit ⌘Q beenden, die Zeit verstreichen lassen, neu starten: das Item steht wieder in der
+      Inbox, keine Mitteilung.
 - [ ] Fenster mit ⌘W oder dem roten Knopf schließen: die App bleibt im Dock, Klick aufs Icon holt
-      das Fenster an derselben Stelle zurück. Eine Wiedervorlage in zwei Minuten meldet sich auch
-      bei geschlossenem Fenster pünktlich. ⌘Q beendet die App.
-- [ ] Items mit Wiedervorlage-Datum zeigen eine Glocke (Inbox-Liste in der Meta-Zeile neben dem
-      Typ-Icon, Tabelle neben dem Titel); Tooltip „Wiedervorlage Mo., 09:00“. Nach Ablauf ist sie weg.
+      das Fenster an derselben Stelle zurück. Eine neue Erwähnung meldet sich auch
+      bei geschlossenem Fenster. ⌘Q beendet die App.
+- [ ] Items mit Wiedervorlage-Datum zeigen rechts in der Zeile statt des Alters, wann sie
+      zurückkommen (Uhrzeit heute, Wochentag, sonst Datum); Tooltip „Wiedervorlage Mo., 26. Okt., 09:00“.
+      Keine Glocke in der Zeile.
 - [ ] Im Detail steht bei solchen Items ein Chip mit Glocke, Wochentag, Datum und Uhrzeit (24 h)
       hinter dem Typ-Icon und einem ×; nach Ablauf ist der Chip weg.
 

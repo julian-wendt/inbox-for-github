@@ -6,9 +6,9 @@ review. An item stays in the inbox until you act on it.
 
 ## What it does
 
-- **Five views:** *Inbox* (someone waits for you: a mention, a review request, a follow-up that
-  came due), *Follow-ups*, *Done*, *Assigned to me* (by type or board status, with "my part
-  done") and *Created by me*. Answered mentions and reviews move to *Done* on their own;
+- **Five views:** *Inbox* (someone waits for you: a mention or a review request; your
+  follow-ups wait in its *Later* bar), *Planned* (what you pinned for today or planned for a
+  day), *Done*, *Assigned to me* (by type or board status, with "my part done") and *Created by me*. Answered mentions and reviews move to *Done* on their own;
   follow-ups and done items come back when someone needs you again. A light bulb in the detail
   view explains why an item is where it is.
 - **Your own status** per item: open, follow-up (F) or done (D), with undo (⌘Z). Statuses and

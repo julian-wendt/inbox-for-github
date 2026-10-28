@@ -81,7 +81,7 @@ describe("explain", () => {
     expect(why(item(), { status: "snoozed", changedAt: at(4) }).title).toMatch(/^Wiedervorlage seit /);
     expect(why(item(), { status: "done", changedAt: at(4) }).lines[0]).toBe("Von dir als erledigt markiert.");
     const reopened = why(item({ comments: [comment("bob", "@me?", 2), comment(ME, "yes", 3)] }), { status: "open", changedAt: at(4) });
-    expect(reopened.lines[0]).toMatch(/^Von dir wieder geöffnet/);
+    expect(reopened.lines[0]).toMatch(/^Seit .* wieder offen/);
     expect(why(item()).title).toBe("Beobachtet");
   });
 });
@@ -141,6 +141,6 @@ describe("bucketHelp", () => {
     for (const view of ["inbox", "planned", "done", "assigned", "authored"] as const) {
       expect(bucketHelp(view, "mention").points.length).toBeGreaterThan(0);
     }
-    expect(bucketHelp("planned", "any-post").points[2]).toMatch(/jemand anderes kommentiert/);
+    expect(bucketHelp("inbox", "any-post").points.at(-1)).toMatch(/jemand anderes kommentiert/);
   });
 });

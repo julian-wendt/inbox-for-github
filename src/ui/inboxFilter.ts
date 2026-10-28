@@ -26,6 +26,6 @@ export function matchesAsk(entry: Pick<Classified, "item" | "mention" | "asks" |
   if (filter === "all") return true;
   const requested = entry.item.reasons.includes("review");
   if (entry.bucket !== "inbox") return filter === "review" ? requested : mentionsOf(entry.item, me).length > 0;
-  const review = (requested && entry.asks.some((a) => a === "review" || a === "reopened" || a === "due")) || entry.asks.includes("commits");
+  const review = (requested && entry.asks.some((a) => a === "review" || a === "reopened")) || entry.asks.includes("commits");
   return filter === "review" ? review : entry.mention !== null || !review;
 }

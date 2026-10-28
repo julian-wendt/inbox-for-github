@@ -293,7 +293,7 @@ describe("My part done", () => {
 });
 
 describe("Snoozing on the plate", () => {
-  it("keeps a snoozed assignment on the plate, not under Snoozed, and brings it back to the inbox at its date", async () => {
+  it("keeps a snoozed assignment on the plate, not under Snoozed, and back at work at its date", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     await app.refresh();
@@ -301,10 +301,10 @@ describe("Snoozing on the plate", () => {
     app.snooze(issue, new Date(world.now.getTime() + 2 * MINUTE).toISOString());
 
     expect(app.onPlate(issue)).toBe(true);
-    expect(app.views().planned).toContain(issue.id);
+    expect(app.views().planned).not.toContain(issue.id);
     world.advance(3 * MINUTE);
-    expect(app.entry(issue).asks).toEqual(["due"]);
-    expect(app.statuses.get(issue.id)).toMatchObject({ status: "open", due: true });
+    expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(app.statuses.get(issue.id)).toMatchObject({ status: "open" });
     expect(app.onPlate(issue)).toBe(true);
   });
 
@@ -405,14 +405,15 @@ describe("Follow-ups", () => {
 
     expect(app.statuses.get(issue.id)?.status).toBe("snoozed");
     expect(app.views().authored).toContain(issue.id);
-    expect(app.views().planned).toContain(issue.id);
+    expect(app.views().planned).not.toContain(issue.id);
     expect(app.followUp(issue)).toBe(inAnHour(world));
     expect(groupAuthored(app.classified(), "octocat").map((g) => g.group)).toEqual(["later"]);
 
     world.advance(2 * HOUR);
 
-    expect(app.views().inbox).toContain(issue.id);
-    expect(app.entry(issue).asks).toEqual(["due"]);
+    expect(app.views().inbox).not.toContain(issue.id);
+    expect(app.views().authored).toContain(issue.id);
+    expect(app.entry(issue).asks).toEqual([]);
     expect(app.followUp(issue)).toBeNull();
   });
 
@@ -443,9 +444,13 @@ describe("Follow-ups", () => {
   it("files the returned item with D without finishing it: it leaves the inbox and stays in its table", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
+    world.comment(issue, "alice", "@octocat is this still planned?");
+    world.advance(MINUTE);
+    world.comment(issue, "octocat", "Yes, after the release.");
     await app.refresh();
     app.snooze(issue, inAnHour(world));
     world.advance(2 * HOUR);
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
 
     app.done(issue);
 
@@ -491,7 +496,8 @@ describe("Follow-ups", () => {
     await app.refresh();
 
     app.snooze(issue, inAnHour(world));
-    expect(app.viewOf(issue)).toBe("planned");
+    expect(app.viewOf(issue)).toBe("inbox");
+    expect(app.views().inbox).not.toContain(issue.id);
 
     world.advance(2 * HOUR);
     expect(app.viewOf(issue)).toBe("inbox");

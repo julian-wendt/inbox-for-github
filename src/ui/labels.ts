@@ -9,7 +9,7 @@ import { lang, t, type Lang } from "./i18n";
 /**
  * A sidebar view: a bucket, except "involved" and "snoozed". What the viewer merely takes part in
  * (commented, edited, or answered long ago) shows nowhere until a mention, review request or
- * assignment; follow-ups show in Planned with everything else that has a date.
+ * assignment; follow-ups that left the inbox wait in the bar at its bottom.
  */
 export type View = Exclude<Bucket, "involved" | "snoozed">;
 
@@ -40,7 +40,7 @@ export const VIEWS: { id: View; readonly title: string }[] = VIEW_SECTIONS.flat(
  */
 export function viewOf(entry: Classified, me: string): View | null {
   if (entry.bucket === "involved") return null;
-  if (entry.bucket === "snoozed") return "planned";
+  if (entry.bucket === "snoozed") return "inbox";
   if (entry.bucket === "assigned" && !onPlate(entry, me)) return sameLogin(entry.item.author, me) ? "authored" : null;
   return entry.bucket;
 }

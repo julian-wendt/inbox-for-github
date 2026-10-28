@@ -19,10 +19,11 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
+import { followUpWhen } from "../followUp";
 import { carriedText, datedText, dayLong, dayShort, type Dated } from "../plan";
 import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { KindIcon, FollowUpBell } from "./ItemMarks";
+import { KindIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -146,7 +147,7 @@ export function AssignedTable(props: Props) {
         pinned={pinned}
         plannedDay={dated?.kind === "planned" ? dated.day : undefined}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
-        when={props.mode === "planned" && dated ? datedText(dated) : undefined}
+        when={props.mode === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
         assigned={assigned}
         onFocus={() => onFocus(entry)}
         onMenu={(e) => props.onMenu(entry, e)}
@@ -383,7 +384,6 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
           </span>
         )}
       </span>
-      <FollowUpBell entry={entry} />
       {/* One line high: attributes that do not fit wrap to a hidden second line, so the last ones go first. */}
       <span className="table-attrs">
         <AttributeChips keys={attributes} item={entry.item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} />

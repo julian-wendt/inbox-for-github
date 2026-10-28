@@ -23,9 +23,9 @@ describe("matchesAsk", () => {
     expect([matchesAsk(both, "review", "me"), matchesAsk(both, "mention", "me"), matchesAsk(both, "all", "me")]).toEqual([true, true, true]);
   });
 
-  it("files a due snooze by what it was about", () => {
-    expect(matchesAsk(entry(["review"], ["due"]), "review", "me")).toBe(true);
-    expect(matchesAsk(entry(["involved"], ["due"]), "mention", "me")).toBe(true);
+  it("files a reopened item by what it was about", () => {
+    expect(matchesAsk(entry(["review"], ["reopened"]), "review", "me")).toBe(true);
+    expect(matchesAsk(entry(["involved"], ["reopened"]), "mention", "me")).toBe(true);
   });
 
   it("files new commits after a review under reviews, without a pending request", () => {

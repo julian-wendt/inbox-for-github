@@ -71,6 +71,7 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
   world.at(3 * DAY, () => world.comment(installNote, me, "@juniper check the install steps again once 2.0 ships."));
 
   const tooltip = world.issue({ repo: REPO.atlas, title: "Tooltip flickers on hover in Safari", author: "lena-f", ago: 9 * DAY, labels: [BUG] });
+  world.at(8 * DAY + HOUR, () => world.comment(tooltip, "lena-f", "@juniper can you reproduce this in Safari 18?"));
   world.at(8 * DAY, () => world.comment(tooltip, me, "I can reproduce this. Will look after the release."));
 
   const ownKeys = world.issue({ repo: REPO.relay, title: "Rotate the staging API keys", author: me, ago: 5 * DAY, labels: [CHORE] });

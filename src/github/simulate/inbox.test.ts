@@ -192,7 +192,7 @@ describe("Status and log", () => {
     await app.refresh();
 
     app.snooze(issue);
-    expect(app.viewOf(issue)).toBe("planned");
+    expect(app.viewOf(issue)).toBe("inbox");
     app.done(issue);
     expect(app.viewOf(issue)).toBe("done");
     app.open(issue);
@@ -254,7 +254,7 @@ describe("Status and log", () => {
     world.advance(MINUTE);
     world.comment(issue, "bob", "Just a remark");
     await app.reload(issue);
-    expect(app.viewOf(issue)).toBe("planned");
+    expect(app.viewOf(issue)).toBe("inbox");
 
     world.advance(MINUTE);
     world.comment(issue, "bob", "@octocat now it matters");
@@ -280,7 +280,7 @@ describe("Status and log", () => {
 });
 
 describe("Snoozed until a date (Wiedervorlage)", () => {
-  it("returns an item only involved at its time, marked due, and holds it there until filed", async () => {
+  it("ends at its time; an item nobody asked the viewer for shows nowhere again", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "alice" });
     world.comment(issue, "octocat", "I will watch this.");
@@ -288,22 +288,36 @@ describe("Snoozed until a date (Wiedervorlage)", () => {
     expect(app.viewOf(issue)).toBeNull();
     const until = new Date(world.now.getTime() + 2 * MINUTE).toISOString();
     app.snooze(issue, until);
-    expect(app.viewOf(issue)).toBe("planned");
+    expect(app.viewOf(issue)).toBe("inbox");
 
     expect(app.entry(issue).asks).toEqual([]);
     world.advance(3 * MINUTE);
     const back = app.entry(issue);
 
-    expect(back).toMatchObject({ bucket: "inbox" });
-    expect(back.asks).toContain("due");
-    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "open", automatic: true });
-    world.advance(DAY);
-    expect(app.viewOf(issue)).toBe("inbox");
-    app.done(issue);
+    expect(back).toMatchObject({ bucket: "involved", asks: [] });
+    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:snooze-ended" });
+    expect(app.viewOf(issue)).toBeNull();
+  });
+
+  it("brings an answered mention back at its time, asking again until the viewer replies", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ author: "alice" });
+    world.comment(issue, "alice", "@octocat please look");
+    world.comment(issue, "octocat", "Looking.");
+    await app.refresh();
+    expect(app.viewOf(issue)).toBe("done");
+    app.snooze(issue, new Date(world.now.getTime() + 2 * MINUTE).toISOString());
+    world.advance(3 * MINUTE);
+
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+
+    world.advance(MINUTE);
+    world.comment(issue, "octocat", "Done.");
+    await app.refresh();
     expect(app.viewOf(issue)).toBe("done");
   });
 
-  it("notifies about a snooze that ended while the app was closed, and not about the rest of the inbox", async () => {
+  it("notifies about nothing on the first result, a snooze that ended while the app was closed included", async () => {
     const { world, app } = sim;
     const quiet = world.issue();
     world.comment(quiet, "alice", "@octocat old news");
@@ -315,7 +329,7 @@ describe("Snoozed until a date (Wiedervorlage)", () => {
 
     const atStart = app.items.map((item) => classify(item, "octocat", app.statuses.get(item.id), ruleSwitches(), "mention", world.now.getTime()));
 
-    expect(arrivals(atStart, null).map((c) => c.item.id)).toEqual([snoozed.id]);
+    expect(arrivals(atStart, null)).toEqual([]);
   });
 
   it("shows the date on a bell while the item waits, and nothing once it is back", async () => {

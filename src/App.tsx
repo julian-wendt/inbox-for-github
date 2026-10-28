@@ -47,7 +47,7 @@ import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { usePlannedLayout } from "./ui/usePlannedLayout";
-import { groupBySnoozeEnd, groupByTime } from "./ui/timeGroups";
+import { groupBySnoozeEnd, groupByTime, WAITING_GROUP, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -131,7 +131,7 @@ export default function App() {
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["planned", "later", "finished"]);
+  const bars = useCollapsed("assigned-collapsed", ["planned", "later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
@@ -225,15 +225,20 @@ export default function App() {
           : oriented(sortByRecency((asking ? askBase.filter((c) => matchesAsk(c, ask, me)) : scoped.filter((c) => c.bucket === bucket)).filter((c) => matchesText(c.item, query)), rowTime), sort.of(bucket)),
     [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, plannedGroups],
   );
-  const timeGroups = useMemo(
-    () =>
-      !table && inbox.settings.groupByTime && bucket === "planned"
-        ? plannedGroups.map((g) => ({ ...g, heading: t(`time.group.${g.group}`) }))
-        : !table && inbox.settings.groupByTime
-          ? groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: t(`time.group.${g.group}`) }))
-          : undefined,
-    [bucket, table, listed, plannedGroups, inbox.settings.groupByTime, sort, rowTime],
+  // The follow-ups that left the inbox wait in a bar at its bottom, soonest first, those without a date last.
+  const waiting = useMemo(
+    () => (bucket === "inbox" ? groupBySnoozeEnd(scoped.filter((c) => c.bucket === "snoozed" && matchesAsk(c, ask, me) && matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "").flatMap((g) => g.entries) : []),
+    [bucket, scoped, ask, me, query],
   );
+  const timeGroups = useMemo(() => {
+    if (table) return undefined;
+    const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
+    if (bucket === "planned") return plannedGroups.map((g) => ({ ...g, heading: heading(g.group) }));
+    const bar = waiting.length > 0 ? [{ group: WAITING_GROUP, heading: t("table.later"), entries: waiting }] : [];
+    if (inbox.settings.groupByTime) return [...groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
+    // Without time groups the rows stand under no bar ("") and only the waiting ones under theirs.
+    return bar.length > 0 ? [{ group: "", heading: "", entries: listed }, ...bar] : undefined;
+  }, [bucket, table, listed, plannedGroups, waiting, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Done stays open in the inbox.
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : authored;
@@ -246,7 +251,7 @@ export default function App() {
   const ids = useMemo(
     () =>
       viewGroups
-        ? viewGroups.flatMap((g) => [...(g.group === "focus" ? [] : [`bar:${g.group}`]), ...(folded(g.group) ? [] : g.entries.map((c) => c.item.id))])
+        ? viewGroups.flatMap((g) => [...(!g.group || g.group === "focus" ? [] : [`bar:${g.group}`]), ...(folded(g.group) ? [] : g.entries.map((c) => c.item.id))])
         : entries.map((c) => c.item.id),
     [viewGroups, folded, entries],
   );
@@ -483,7 +488,7 @@ export default function App() {
     const undo = () => void inbox.restoreStatus(c.item.id, previous);
     switch (plan.do) {
       case "resume":
-      case "tick-due":
+      case "clear":
         return { run: () => void inbox.clearStatus(c.item.id), undo };
       case "blocked":
         return null;
@@ -602,9 +607,9 @@ export default function App() {
       case "hand-off":
         hand();
         return actions.announce(t("toast.handedOff", { number }), undo, hand);
-      case "tick-due":
+      case "clear":
         void inbox.clearStatus(id);
-        return actions.announce(t("toast.dueFiled", { number }), undo, () => void inbox.clearStatus(id));
+        return actions.announce(t("toast.filed", { number }), undo, () => void inbox.clearStatus(id));
       case "blocked":
         return actions.notify(t("done.blocked", { number }));
       case "set":
@@ -1052,7 +1057,7 @@ export default function App() {
             selection.select(`bar:${group}`);
             toggleBar(group);
           }}
-          onToggleAll={(fold) => bars.setAll((timeGroups ?? []).map((g) => barKey(g.group)), fold)}
+          onToggleAll={(fold) => bars.setAll((timeGroups ?? []).filter((g) => g.group).map((g) => barKey(g.group)), fold)}
           selectedGroup={selectedBar}
           selected={selection.selected}
           loading={inbox.loading}

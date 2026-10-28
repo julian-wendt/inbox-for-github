@@ -1,7 +1,6 @@
 import type { Classified } from "../classify";
 import { FOCUS_MAX, localDay } from "./assignments";
 import { lang, t } from "./i18n";
-import { reminderText, untilShort } from "./snooze";
 
 /** An item the viewer plans for a later day; `day` is a local date ("2026-10-28"). */
 export interface Planned {
@@ -186,41 +185,36 @@ export function unplan(state: Today, ids: readonly string[]): Today {
   return { focus: state.focus.filter((id) => !gone(id)), focusDay: state.focusDay, planned: state.planned.filter((p) => !gone(p.id)), pinnedOn: keep(state.pinnedOn), plannedAt: keep(state.plannedAt) };
 }
 
-/** Why an item is in Planned: pinned for today, planned for a day, or a follow-up, with its date when it has one. */
-export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string } | { kind: "followUp"; until?: string };
+/** Why an item is in Planned: pinned for today or planned for a day. */
+export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string };
 
 /**
  * Why an item shows in the Planned view, or null: pinned for today or planned for a later day,
- * both only while it can be pinned, or set to follow up, with or without a date.
+ * both only while it can be pinned.
  *
  * @example
  *   datedOf(entry, ["I_1"], [], "2026-10-28"); // { kind: "today", day: "2026-10-28" } for I_1
  */
-export function datedOf(entry: Pick<Classified, "status" | "item" | "until">, focus: readonly string[], planned: Planned[], today = localDay()): Dated | null {
+export function datedOf(entry: Pick<Classified, "status" | "item">, focus: readonly string[], planned: Planned[], today = localDay()): Dated | null {
   const { id } = entry.item;
-  if (isPinnable(entry)) {
-    if (focus.includes(id)) return { kind: "today", day: today };
-    const plan = planned.find((p) => p.id === id);
-    if (plan) return { kind: "planned", day: plan.day };
-  }
-  if (entry.status === "snoozed") return { kind: "followUp", until: entry.until };
-  return null;
+  if (!isPinnable(entry)) return null;
+  if (focus.includes(id)) return { kind: "today", day: today };
+  const plan = planned.find((p) => p.id === id);
+  return plan ? { kind: "planned", day: plan.day } : null;
 }
 
-/** The moment a dated item stands for, as an ISO time (local midnight for a day), or undefined without a date. */
-export function datedAt(dated: Dated): string | undefined {
-  return dated.kind === "followUp" ? dated.until : dateOf(dated.day).toISOString();
+/** The moment a dated item stands for: its day as an ISO time at local midnight. */
+export function datedAt(dated: Dated): string {
+  return dateOf(dated.day).toISOString();
 }
 
 /**
- * What a row of Planned shows at its end, with its tooltip: "Today", the planned day, or when the
- * follow-up returns; nothing for a follow-up without a date.
+ * What a row of Planned shows at its end, with its tooltip: "Today" or the planned day.
  *
  * @example
  *   datedText({ kind: "planned", day: "2026-10-29" }, new Date(2026, 9, 28)); // { text: "Tomorrow", title: "Planned for Thursday, 29 October 2026" }
  */
-export function datedText(dated: Dated, now = new Date()): { text: string; title: string } | undefined {
+export function datedText(dated: Dated, now = new Date()): { text: string; title: string } {
   if (dated.kind === "today") return { text: t("plate.focus"), title: dayLong(dated.day) };
-  if (dated.kind === "planned") return { text: dayShort(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
-  return dated.until ? { text: untilShort(dated.until, now), title: reminderText(dated.until) } : undefined;
+  return { text: dayShort(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
 }

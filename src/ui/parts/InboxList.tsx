@@ -6,7 +6,9 @@ import type { Reopen } from "../../model";
 import { t } from "../i18n";
 import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
+import { followUpWhen } from "../followUp";
 import { datedText, type Dated } from "../plan";
+import { WAITING_GROUP } from "../timeGroups";
 import type { Layout } from "../usePlannedLayout";
 import type { SortOrder } from "../useSortOrders";
 import { BucketInfo } from "./BucketInfo";
@@ -88,7 +90,11 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
   useGutter(() => list.current ?? empty.current, () => section.current);
   useScrollToBar(list, selectedGroup);
 
-  const anyOpen = (timeGroups ?? []).some((g) => !folded(g.group));
+  const anyOpen = (timeGroups ?? []).some((g) => g.group && !folded(g.group));
+  const groups = timeGroups ?? [{ group: "", heading: "", entries }];
+  // Nothing needs the viewer while only the waiting bar holds rows; it still shows, below the empty mark.
+  const idle = groups.every((g) => g.group === WAITING_GROUP || g.entries.length === 0);
+  const anyRows = groups.some((g) => g.entries.length > 0);
 
   const { body, shown, moving } = useSearchDock(search !== null);
 
@@ -164,7 +170,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
       </header>
       <div className="dock-body" ref={body}>
         {shown && <SearchField value={search ?? ""} onChange={onSearch} count={searchCount} inputRef={searchRef} />}
-        {entries.length === 0 ? (
+        {idle && (
           <div className="inbox-empty" ref={empty}>
             <span className={`inbox-empty-mark${loading ? " loading" : ""}`}>
               {loading ? <LoaderCircle size={20} className="spin" /> : "✓"}
@@ -172,10 +178,11 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             <p>{loading ? t("list.loading") : t(bucket === "planned" ? "list.empty.planned" : bucket === "done" ? "list.empty.done" : "list.empty.inbox")}</p>
             {!loading && <Elsewhere counts={counts} current={bucket} onJump={onJump} />}
           </div>
-        ) : (
-          <ul ref={list} className="inbox-list" role="listbox" aria-label={title}>
+        )}
+        {anyRows && (
+          <ul ref={list} className={`inbox-list${idle ? " parked" : ""}`} role="listbox" aria-label={title}>
             <AnimatePresence initial={false} mode="popLayout">
-              {(timeGroups ?? [{ group: null, heading: "", entries }]).flatMap(({ group, heading, entries: rows }) => [
+              {groups.flatMap(({ group, heading, entries: rows }) => [
                 ...(group
                   ? [
                       // Moves like the rows (see InboxRow), so rows never slide over a heading.
@@ -217,7 +224,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       pinned={pinned}
                       plannedDay={dated?.kind === "planned" ? dated.day : undefined}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
-                      when={bucket === "planned" && dated ? datedText(dated) : undefined}
+                      when={bucket === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
                       onMark={(range) => onMark(entry.item.id, range)}
                       avatar={avatars}
                       onSelect={() => onSelect(entry.item.id)}

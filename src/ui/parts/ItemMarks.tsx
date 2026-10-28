@@ -4,7 +4,7 @@ import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
 import { followUpOf } from "../followUp";
-import { reminderText, untilText } from "../snooze";
+import { reminderText } from "../snooze";
 
 /**
  * Glyph telling issues and pull requests apart, with the kind as its tooltip. Given a status, it
@@ -21,24 +21,6 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
   return (
     <span className={`kind-icon${status ? ` st-${status}` : ""}`} title={label}>
       <Icon size={size} strokeWidth={status ? 2.6 : 2} aria-label={label} />
-    </span>
-  );
-}
-
-/**
- * A bell on items that wait for a follow-up date, with the time as its tooltip. Nothing for other
- * items, and nothing once the date has passed (see `followUpOf`).
- *
- * @example
- *   <FollowUpBell entry={entry} /> // bell, tooltip "Follow-up Mon 09:00"
- */
-export function FollowUpBell({ entry, size = 12 }: { entry: Pick<Classified, "status" | "until">; size?: number }) {
-  const followUp = followUpOf(entry);
-  if (!followUp) return null;
-  const label = t("snooze.reminderAt", { until: untilText(followUp.at) });
-  return (
-    <span className="reminder-bell" title={label}>
-      <Bell size={size} aria-label={label} />
     </span>
   );
 }

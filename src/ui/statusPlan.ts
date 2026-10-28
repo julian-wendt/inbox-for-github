@@ -8,7 +8,7 @@ export type StatusPlan =
   | { do: "resume" }
   | { do: "tick-update" }
   | { do: "hand-off" }
-  | { do: "tick-due" }
+  | { do: "clear" }
   | { do: "blocked" }
   | { do: "set"; status: Status }
   | { do: "none" };
@@ -21,8 +21,8 @@ export type StatusPlan =
  *
  * What the viewer opened is finished by closing or merging it on GitHub, so D does not finish it
  * (it would stay open there and drop out of every list for good): "blocked" asks for a warning.
- * Only an issue with another assignee besides the viewer can have "my part done". A follow-up
- * that came due on such an item is filed by D without hiding the item ("tick-due").
+ * Only an issue with another assignee besides the viewer can have "my part done". Back from a
+ * follow-up or a reopen, such an item asks again; D files it without hiding it ("clear").
  *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.
@@ -36,7 +36,7 @@ export function planStatus(c: Classified, status: Status, me: string): StatusPla
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
-  if (openOnGitHubForGood(c, me)) return c.asks.includes("due") ? { do: "tick-due" } : { do: "blocked" };
+  if (openOnGitHubForGood(c, me)) return c.asks.includes("reopened") ? { do: "clear" } : { do: "blocked" };
   if (onPlate(c, me)) return { do: "hand-off" };
   return { do: "set", status };
 }

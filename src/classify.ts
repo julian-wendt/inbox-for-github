@@ -6,12 +6,12 @@ import { lastReplyAt, mentionsOf, sameLogin, type Mention } from "./timeline";
 import { updatesSince, type Update } from "./handoff";
 
 /**
- * Why an item sits in the inbox; "reopened" is an explicit "Offen" that revived an answered
- * request, "due" a follow-up date that has passed and holds until the viewer files it, "update"
+ * Why an item sits in the inbox; "reopened" is a stored "Offen" that revived an answered
+ * request, set by the viewer (O) or written when a follow-up date passed, "update"
  * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off,
  * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`).
  */
-export type Ask = "due" | "update" | "review" | "commits" | "mention" | "reopened";
+export type Ask = "update" | "review" | "commits" | "mention" | "reopened";
 
 export interface Classified {
   item: Item;
@@ -53,9 +53,9 @@ export interface Classified {
  *    snoozes in place instead: it stays in its table until its date, and a mention since adds it
  *    to the inbox without ending the snooze.
  * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
- *    not answered yet (see `reviewAnswered`), a mention is pending, or a snooze date has passed
- *    (`due`, also on the stored "Offen" written for it). A stored "Offen"
- *    (an explicit reopen) counts as a fresh request. With `reviewOnCommits`, a push by someone
+ *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Offen" (an
+ *    explicit reopen, or the one written when a follow-up date passed) counts as a fresh request:
+ *    what was answered before it asks again (`reopened`). With `reviewOnCommits`, a push by someone
  *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
  *    is no such ask.
  * 2b. A plan (`plannedAt`: the item is pinned for today or planned for a day) answers the asks
@@ -128,7 +128,6 @@ export function classify(
   const reviewOpen = reviewed && !reviewAnswered(item, me, reopenedAt);
   const mentionOpen = mention !== null || (mentioned && !!reopenedAt && (lastReplyAt(item, me) ?? "") <= reopenedAt);
   const asks: Ask[] = [];
-  if (statusReset ? snoozeEnded(stored, now) : effective?.due) asks.push("due");
   if (reviewOpen) asks.push(reopenedAt && reviewAnswered(item, me) ? "reopened" : "review");
   else if (pushed) asks.push("commits");
   if (mention) asks.push("mention");
@@ -136,7 +135,7 @@ export function classify(
 
   // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : effective?.until;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : undefined;
   const fresh = plannedAt ? asks.filter((ask) => (askedAt(ask) ?? "") > plannedAt) : asks;
   const parked = fresh.length < asks.length;
   const shown = parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result;

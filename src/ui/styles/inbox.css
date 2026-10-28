@@ -274,6 +274,12 @@
   list-style: none;
 }
 
+/* Only the waiting bar is left: it sits under the empty mark instead of sharing the height with it. */
+.inbox-list.parked {
+  flex: 0 0 auto;
+  max-height: 50%;
+}
+
 .inbox-row {
   position: relative;
   display: flex;
@@ -447,18 +453,6 @@
 
 .kind-icon.st-accepted {
   color: var(--st-accepted);
-}
-
-.reminder-bell {
-  display: grid;
-  flex: none;
-  place-items: center;
-  color: var(--st-snoozed);
-}
-
-/* The bell's glyph sits high in its box; this centers it on the kind icon beside it. */
-.row-context .reminder-bell {
-  transform: translateY(1px);
 }
 
 /* Today's star and a planned day, before the context text. */

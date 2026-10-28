@@ -2,7 +2,7 @@ import { datedOf } from "../../ui/plan";
 import { classify, type Classified } from "../../classify";
 import { snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
-import { REOPEN_DEFAULT } from "../../reopen";
+import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
@@ -157,7 +157,7 @@ export class InboxSession {
     const plan = planStatus(c, status, this.me);
     switch (plan.do) {
       case "resume":
-      case "tick-due":
+      case "clear":
         this.statuses.delete(ref.id);
         break;
       case "blocked":
@@ -280,8 +280,7 @@ export class InboxSession {
   private settle(c: Classified): boolean {
     const { id } = c.item;
     if (c.statusReset) {
-      const due = c.asks.includes("due");
-      this.write(id, "open", true, { due }, due ? "auto:snooze-ended" : "auto:reopen");
+      this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
       return true;
     }
     const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, this.me);

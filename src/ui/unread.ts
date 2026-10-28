@@ -5,7 +5,8 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity } from "./assignmen
 /**
  * Whether an inbox item has something the viewer has not opened yet, like an unread mail: it was
  * never opened, or opened before what put it there (the mention, the latest post or event by
- * someone else, a review request among them, or a passed snooze date or reminder).
+ * someone else, a review request among them, or the stored Open that asks again after a reopen
+ * or a passed follow-up date).
  *
  * @param entry  An item of the inbox.
  * @param seen   When the viewer last opened each item (`useInbox().seen`).
@@ -17,8 +18,8 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity } from "./assignmen
 export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: string): boolean {
   const since = seen.get(entry.item.id);
   if (!since) return true;
-  const due = entry.asks.includes("due") ? entry.statusAt : null;
-  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me), due);
+  const reopened = entry.asks.includes("reopened") ? entry.statusAt : null;
+  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me), reopened);
   return !!last && last > since;
 }
 

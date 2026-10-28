@@ -46,8 +46,8 @@ describe("planStatus", () => {
     expect(planStatus(entry({ author: ME, assignees: [ME, "bob"] }), "done", ME)).toEqual({ do: "hand-off" });
   });
 
-  it("files a follow-up that came due on an own item without finishing it", () => {
-    expect(planStatus(entry({ author: ME, assignees: [ME] }, ["due"]), "done", ME)).toEqual({ do: "tick-due" });
+  it("files an own item that asks again after a follow-up or a reopen, without finishing it", () => {
+    expect(planStatus(entry({ author: ME, assignees: [ME] }, ["reopened"]), "done", ME)).toEqual({ do: "clear" });
   });
 
   it("still lets the viewer put an own item aside", () => {

@@ -236,13 +236,13 @@ export class Store {
   }
 
   async statuses(): Promise<Map<string, StoredStatus>> {
-    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; due: number; handoff: string | null }[]>(
-      "SELECT node_id, status, changed_at, until, due, handoff FROM item_status",
+    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; handoff: string | null }[]>(
+      "SELECT node_id, status, changed_at, until, handoff FROM item_status",
     );
     return new Map(
       rows.map((r) => [
         r.node_id,
-        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.due === 1 && { due: true }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
+        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
       ]),
     );
   }
@@ -263,8 +263,7 @@ export class Store {
    * longer count.
    *
    * @param automatic  True when the app reopens the item by the "reopenOn" setting, not the viewer.
-   * @param extra      `until` with "snoozed" brings it back at that time; `due` with "open"
-   *                   keeps an item whose snooze date passed in the inbox; `handoff` with "done"
+   * @param extra      `until` with "snoozed" brings it back at that time; `handoff` with "done"
    *                   ends the viewer's part of an assignment, keeping how the item looked.
    * @param source     What caused the change, for tracing it later: the input ("key:o", "menu",
    *                   "palette", "click") or the code path ("auto:reopen"); null when unknown.
@@ -275,7 +274,7 @@ export class Store {
     await this.writeStatus(nodeId, status, changedAt, extra);
     await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) VALUES ($1, $2, $3, $4, $5)", [nodeId, status, changedAt, automatic ? 1 : 0, source]);
     return {
-      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.due && { due: true }), ...(extra.handoff && { handoff: extra.handoff }) },
+      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.handoff && { handoff: extra.handoff }) },
       change: { status, at: changedAt, automatic, ...(source && { source }) },
     };
   }
@@ -306,9 +305,9 @@ export class Store {
 
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {
     await this.db.execute(
-      `INSERT INTO item_status (node_id, status, changed_at, until, due, handoff) VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, due = excluded.due, handoff = excluded.handoff`,
-      [nodeId, status, changedAt, extra.until ?? null, extra.due ? 1 : 0, extra.handoff ? JSON.stringify(extra.handoff) : null],
+      `INSERT INTO item_status (node_id, status, changed_at, until, handoff) VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, handoff = excluded.handoff`,
+      [nodeId, status, changedAt, extra.until ?? null, extra.handoff ? JSON.stringify(extra.handoff) : null],
     );
   }
 
@@ -458,7 +457,9 @@ export class Store {
     // Only known keys, so a key the app no longer has is not written back on the next save.
     const stored = Object.fromEntries(rows.filter((r) => r.key in DEFAULT_SETTINGS).map((r) => [r.key, JSON.parse(r.value)]));
     const delivery = stored.notifyDelivery as Partial<Delivery> | undefined;
-    return { ...DEFAULT_SETTINGS, ...stored, notifyDelivery: { ...DEFAULT_DELIVERY, ...delivery } };
+    // The reason "due" went with the due state; its switch is dropped like a dead key.
+    const notifyOn = Object.fromEntries(Object.entries((stored.notifyOn ?? {}) as Record<string, boolean>).filter(([reason]) => reason !== "due"));
+    return { ...DEFAULT_SETTINGS, ...stored, notifyOn, notifyDelivery: { ...DEFAULT_DELIVERY, ...delivery } };
   }
 
   async saveSettings(settings: Settings): Promise<void> {

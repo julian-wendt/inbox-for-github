@@ -29,7 +29,7 @@ const TICK_MS = 30_000;
  * that newly enters it.
  *
  * The first result after app start is the baseline, so a restart does not replay the whole
- * inbox; only snoozes whose date passed while the app was closed notify then (see `arrivals`).
+ * inbox (see `arrivals`).
  *
  * Notifications follow `notify`: none with the main switch off, none for a reason switched off,
  * and none while the window has focus unless `inFront` is set, since the list shows the item

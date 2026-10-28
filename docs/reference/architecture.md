@@ -25,7 +25,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
    untracked items, repos filtered in the settings and closed items outside the window.
 5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–5); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
-   Created by me (`groupAuthored`), `InboxList` the Inbox, Planned (`datedOf` for what has a date,
+   Created by me (`groupAuthored`), `InboxList` the Inbox (with the follow-ups that left it in the
+   bar `WAITING_GROUP` at its bottom), Planned (`datedOf` for what is pinned or planned,
    `groupBySnoozeEnd` for the day bars) and Done.
    The sidebar counts follow the picked repositories; the other filters narrow only the list.
 
@@ -34,7 +35,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Statuses** (`Status` in `src/model.ts`) are the viewer's own: `open`, `snoozed`, `done`.
   They live in `item_status` with a log in `status_log`; nothing is sent to GitHub.
 - **Buckets** (`Bucket`) say where an item belongs: `inbox` (someone waits for an answer: a
-  pending mention, an unanswered review request, a passed follow-up date), `planned` (pinned for
+  pending mention, an unanswered review request, a stored Open that asks again), `planned` (pinned for
   today or planned for a day, with no ask since; only the Planned view shows it), `assigned`,
   `authored`, `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no
   view shows.
@@ -52,12 +53,14 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
   table, in the bar `later` with board-blocked items; only its date ends it (no "reopenOn"), and a
-  mention since adds it to the inbox while it stays waiting. Other items leave their list; every
-  follow-up shows in the Planned view with the items pinned for today and planned for a later day
-  (settings `focus`, `planned`, `pinnedOn`). At its date the stored status becomes "open" with `due`, which holds the
-  item in the inbox (ask `due`) until the viewer files it; the log says "follow-up came due"
-  (source `auto:snooze-ended`), and the list shows no mark of it. `followUpOf` gives the date
-  that the bell and chip show, and only while the item waits.
+  mention since adds it to the inbox while it stays waiting. Other items leave their list for the
+  bucket `snoozed` and wait in the bar "Later" at the inbox's bottom, folded by default; Planned
+  shows only what is pinned for today or planned for a later day (settings `focus`, `planned`,
+  `pinnedOn`). At its date the stored status becomes "open"
+  (automatic, source `auto:snooze-ended`; the log says "follow-up came due"): the item is back
+  where its asks put it, and what was answered before asks again (`reopened`) until the viewer
+  replies, D or F; the list shows no mark of it. `followUpOf` gives the date that the bell and
+  chip show, and only while the item waits.
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
   `pinnedOn`), and `plannedAt` records when each item last got one. `classify` drops the asks
   from before that time: with none left, the item leaves the inbox for `planned`, or stays in its
@@ -69,8 +72,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   and shows nowhere otherwise; its status follows GitHub.
 - A stored status falls back to `open` when its trigger fires (`reopens` in `src/reopen.ts`):
   a new mention, or any post, by the "reopenOn" setting; for snoozes with `until`, also that time.
-  A passed `until` is written back as `open` with `due`, which holds the item in the inbox until
-  the viewer files it, whatever its other reasons.
+  A passed `until` is written back as `open`, which counts like a reopen by hand.
 
 ## Refreshes
 
@@ -104,7 +106,7 @@ settings `snoozeAuthored` and `orbSeeds`). A new column is added in `Store.open`
 | Table | Holds |
 |---|---|
 | `settings` | one row per settings key, JSON values (`Settings` in `src/store.ts`) |
-| `item_status` | the current status per item, `until`, `due`, `handoff` |
+| `item_status` | the current status per item, `until`, `handoff`; `due` is left over from the due state, not read since 2026-10-28 |
 | `status_log` | every status change, with `automatic` for changes by the app and `source` for what caused it (see [`local-development.md`](local-development.md#the-local-database)) |
 | `item_seen` | when the viewer last looked at an item, for "since you were last here" |
 | `item_unread` | items the viewer marked unread by hand (U), with `marked_at`; opening the item removes the row |

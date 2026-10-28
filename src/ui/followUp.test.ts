@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpOf } from "./followUp";
+import { followUpOf, followUpWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -17,17 +17,25 @@ describe("followUpOf", () => {
     expect(followUpOf(classify(item, "me", waiting(ahead), ruleSwitches(), "mention", now))).toEqual({ at: ahead });
   });
 
-  it("is nothing for a follow-up without a date, for an open item and for one that came due", () => {
+  it("is nothing for a follow-up without a date, for an open item and for one that came back", () => {
     expect(followUpOf(classify(item, "me", waiting(), ruleSwitches(), "mention", now))).toBeNull();
     expect(followUpOf(classify(item, "me", undefined, ruleSwitches(), "mention", now))).toBeNull();
-    const due = classify(item, "me", { status: "open", changedAt: "2026-10-10T08:00:00Z", due: true }, ruleSwitches(), "mention", now);
-    expect(due.asks).toContain("due");
-    expect(followUpOf(due)).toBeNull();
+    expect(followUpOf(classify(item, "me", { status: "open", changedAt: "2026-10-10T08:00:00Z" }, ruleSwitches(), "mention", now))).toBeNull();
   });
 
   it("holds an own item in its table while it waits, like an assignment", () => {
     const entry = classify(item, "me", waiting(ahead), ruleSwitches(), "mention", now);
 
     expect(entry).toMatchObject({ bucket: "authored", status: "snoozed", until: ahead, asks: [] });
+  });
+});
+
+describe("followUpWhen", () => {
+  it("names when a follow-up comes back, and nothing without a date", () => {
+    const at = new Date(2026, 9, 20, 9);
+    const until = new Date(2026, 9, 20, 15).toISOString();
+    expect(followUpWhen({ status: "snoozed", until }, at)?.text).toMatch(/15:00/);
+    expect(followUpWhen({ status: "snoozed" }, at)).toBeUndefined();
+    expect(followUpWhen({ status: "open", until }, at)).toBeUndefined();
   });
 });

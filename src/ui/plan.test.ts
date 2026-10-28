@@ -103,17 +103,17 @@ describe("carriedText", () => {
   });
 });
 
-const open = (id: string, status: "open" | "snoozed" | "done" = "open", closed = false, until?: string) =>
-  ({ status, item: { id, closed: closed ? { state: "closed", at: "2026-10-27T10:00:00Z" } : null }, until }) as Parameters<typeof datedOf>[0];
+const open = (id: string, status: "open" | "snoozed" | "done" = "open", closed = false) =>
+  ({ status, item: { id, closed: closed ? { state: "closed", at: "2026-10-27T10:00:00Z" } : null } }) as Parameters<typeof datedOf>[0];
 
 describe("datedOf", () => {
   const planned = [{ id: "b", day: "2026-10-30" }];
 
-  it("takes pins over plans over follow-ups, only while the item can be pinned", () => {
+  it("takes pins over plans, only while the item can be pinned; a follow-up alone is no date", () => {
     expect(datedOf(open("a"), ["a"], planned, "2026-10-28")).toEqual({ kind: "today", day: "2026-10-28" });
     expect(datedOf(open("b"), ["a"], planned, "2026-10-28")).toEqual({ kind: "planned", day: "2026-10-30" });
-    expect(datedOf(open("c", "snoozed", false, "2026-10-29T09:00:00Z"), [], [], "2026-10-28")).toEqual({ kind: "followUp", until: "2026-10-29T09:00:00Z" });
-    expect(datedOf(open("c", "snoozed"), [], [], "2026-10-28")).toEqual({ kind: "followUp", until: undefined });
+    expect(datedOf(open("c", "snoozed"), [], [], "2026-10-28")).toBeNull();
+    expect(datedOf(open("b", "snoozed"), [], planned, "2026-10-28")).toEqual({ kind: "planned", day: "2026-10-30" });
   });
 
   it("leaves out the rest: open without a date, closed or done items also when pinned", () => {
@@ -139,15 +139,12 @@ describe("unplan", () => {
 describe("datedAt and datedText", () => {
   const now = new Date(2026, 9, 28);
 
-  it("turns a day into local midnight and keeps a follow-up's time", () => {
+  it("turns a day into local midnight", () => {
     expect(datedAt({ kind: "planned", day: "2026-10-30" })).toBe(new Date(2026, 9, 30).toISOString());
-    expect(datedAt({ kind: "followUp", until: "2026-10-29T09:00:00Z" })).toBe("2026-10-29T09:00:00Z");
-    expect(datedAt({ kind: "followUp" })).toBeUndefined();
   });
 
-  it("names Today, the planned day, or the return time, and nothing without a date", () => {
-    expect(datedText({ kind: "today", day: "2026-10-28" }, now)?.text).toBe("Today");
-    expect(datedText({ kind: "planned", day: "2026-10-29" }, now)?.text).toBe("Tomorrow");
-    expect(datedText({ kind: "followUp" }, now)).toBeUndefined();
+  it("names Today or the planned day", () => {
+    expect(datedText({ kind: "today", day: "2026-10-28" }, now).text).toBe("Today");
+    expect(datedText({ kind: "planned", day: "2026-10-29" }, now).text).toBe("Tomorrow");
   });
 });

@@ -48,7 +48,7 @@ export class MemoryStore implements Persistence {
   }
 
   setStatus(nodeId: string, status: Status, automatic = false, now = new Date(), extra: StatusExtra = {}, source: string | null = null): Promise<{ stored: StoredStatus; change: StatusChange }> {
-    const stored: StoredStatus = { status, changedAt: now.toISOString(), ...(extra.until && { until: extra.until }), ...(extra.due && { due: true }), ...(extra.handoff && { handoff: extra.handoff }) };
+    const stored: StoredStatus = { status, changedAt: now.toISOString(), ...(extra.until && { until: extra.until }), ...(extra.handoff && { handoff: extra.handoff }) };
     const change: StatusChange = { status, at: stored.changedAt, automatic, ...(source && { source }) };
     this.statusMap.set(nodeId, stored);
     this.logChange(nodeId, change);

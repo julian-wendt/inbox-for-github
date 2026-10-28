@@ -8,7 +8,7 @@ import { compactAgo, rowContext } from "../labels";
 import { carriedText, dayLong, dayShort } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
-import { KindIcon, FollowUpBell } from "./ItemMarks";
+import { KindIcon } from "./ItemMarks";
 
 interface Props {
   entry: Classified;
@@ -23,7 +23,7 @@ interface Props {
   plannedDay?: string;
   /** In Today since a day before today: carried over, marked since when. */
   carriedSince?: string;
-  /** What the row's view shows at its end instead of the time: in Planned, the day or the return time. */
+  /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
   when?: { text: string; title: string };
   onMark: (range: boolean) => void;
   avatar: boolean;
@@ -70,7 +70,6 @@ export function InboxRow({ entry, selected, marked, unread, pinned, plannedDay, 
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
         <span className={`row-context${mention?.self ? " reminder" : ""}`}>
           <KindIcon item={item} size={13} status={status} />
-          <FollowUpBell entry={entry} />
           {pinned && (
             <span className="row-mark today" title={t("menu.today")} aria-label={t("menu.today")}>
               <Star size={12} />

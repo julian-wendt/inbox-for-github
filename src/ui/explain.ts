@@ -40,8 +40,6 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
   if (asks.length > 0) {
     const lines = asks.map((ask) => {
       switch (ask) {
-        case "due":
-          return t("explain.due", { ago: statusAt ? agoInSentence(statusAt) : "" });
         case "update":
           return t("explain.update", { what: updateSummary(entry.updates ?? []) });
         case "review":
@@ -133,7 +131,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
-        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.due"), t("help.inbox.update"), t("help.inbox.reopened")],
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.later", { rule: t(`reopen.${reopenOn}`) })],
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back")] };
@@ -142,7 +140,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
     case "planned":
       return {
         lead: t("help.planned.lead"),
-        points: [t("help.planned.today"), t("help.planned.plan"), t("help.planned.followUp", { rule: t(`reopen.${reopenOn}`) }), t("explain.undoHint")],
+        points: [t("help.planned.today"), t("help.planned.plan")],
       };
     case "done":
       return {

@@ -31,7 +31,7 @@ describe("the demo world", () => {
     expect(session.entry(refs.installNote).mention?.self).toBe(true);
     expect(session.entry(refs.csvExport).asks).toContain("review");
     expect(session.entry(refs.dateFns).asks).toContain("review");
-    expect(session.entry(refs.tooltip).asks).toContain("due");
+    expect(session.entry(refs.tooltip).asks).toEqual(["reopened"]);
     expect(session.entry(refs.rounding).asks).toEqual(["update"]);
   });
 
@@ -54,13 +54,14 @@ describe("the demo world", () => {
     expect(session.followUp(refs.ownKeys)).not.toBeNull();
   });
 
-  it("files answered, closed and merged items under Done and dated ones under Planned", () => {
+  it("files answered, closed and merged items under Done; follow-ups are not Planned's", () => {
     const views = session.views();
 
     expect(views.done).toEqual(expect.arrayContaining(ids("sidebarTokens", "xmlPayloads", "glossary", "buildTooling")));
     expect(session.entry(refs.buildTooling).item.closed?.state).toBe("merged");
     expect(session.entry(refs.xmlPayloads).item.closed?.state).toBe("closed");
-    expect(views.planned.sort()).toEqual(ids("signature", "ownKeys", "negativeBalances", "frameBudget", "rateHeaders"));
+    expect(views.planned).toEqual([]);
+    expect(views.inbox).not.toContain(refs.ownKeys.id);
   });
 
   it("carries timelines with reviews, threads, dismissals, force pushes and bot comments", () => {

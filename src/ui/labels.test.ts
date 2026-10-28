@@ -148,7 +148,7 @@ describe("views", () => {
 
   it("finds an item's view, none for what the viewer merely takes part in", () => {
     expect(viewOf(entry("inbox"), "me")).toBe("inbox");
-    expect(viewOf(entry("snoozed"), "me")).toBe("planned");
+    expect(viewOf(entry("snoozed"), "me")).toBe("inbox");
     expect(viewOf(entry("involved", { reasons: ["involved"] }), "me")).toBeNull();
     expect(viewOf(entry("assigned"), "me")).toBe("assigned");
     expect(viewOf(entry("assigned", { kind: "pr", author: "me" }), "me")).toBe("authored");
