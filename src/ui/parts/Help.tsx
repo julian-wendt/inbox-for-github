@@ -60,6 +60,9 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
   },
 ];
 
+/** The refresh kinds in the help, from the most complete to the narrowest. */
+const SYNCS = ["full", "delta", "item", "view", "boards"] as const;
+
 const BASICS: MessageKey[] = ["help.basics.local", "help.basics.history", "help.basics.token", "help.basics.why", "help.basics.filter", "help.basics.attention"];
 
 /**
@@ -143,12 +146,28 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
           {tab === "keys" && <small>{t("keys.hint")}</small>}
 
           {tab === "basics" && (
-            <ul>
-              {BASICS.map((key) => (
-                <li key={key}>{t(key)}</li>
-              ))}
-              <li>{refreshMinutes > 0 ? t("help.basics.refresh", { count: refreshMinutes }) : t("help.basics.refreshOff")}</li>
-            </ul>
+            <>
+              <section>
+                <ul>
+                  {BASICS.map((key) => (
+                    <li key={key}>{t(key)}</li>
+                  ))}
+                  <li>{refreshMinutes > 0 ? t("help.basics.refresh", { count: refreshMinutes }) : t("help.basics.refreshOff")}</li>
+                </ul>
+              </section>
+              <section>
+                <h3>{t("help.sync.title")}</h3>
+                {t("help.sync.lead")}
+                <ul>
+                  {SYNCS.map((kind) => (
+                    <li key={kind}>
+                      <strong>{t(`help.sync.${kind}`)}:</strong> {t(`help.sync.${kind}.text`)}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <small>{t("help.sync.new")}</small>
+            </>
           )}
         </div>
       </motion.div>
