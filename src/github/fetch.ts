@@ -64,9 +64,10 @@ const PR_FIELDS = `
 `;
 
 const ISSUE_FIELDS = `
-  assignments: timelineItems(itemTypes: [ASSIGNED_EVENT, UNASSIGNED_EVENT, CLOSED_EVENT, REOPENED_EVENT, CONNECTED_EVENT, MARKED_AS_DUPLICATE_EVENT], last: 20) {
+  assignments: timelineItems(itemTypes: [ASSIGNED_EVENT, UNASSIGNED_EVENT, CLOSED_EVENT, REOPENED_EVENT, CONNECTED_EVENT, MARKED_AS_DUPLICATE_EVENT, TRANSFERRED_EVENT], last: 20) {
     nodes {
       __typename ${ASSIGNED} ${STATE_EVENTS}
+      ... on TransferredEvent { ${ACTOR} fromRepository { nameWithOwner } }
       ... on ConnectedEvent { ${ACTOR} subject { ... on PullRequest { number url } } source { ... on PullRequest { number url } } }
       ... on MarkedAsDuplicateEvent { ${ACTOR} canonical { ... on Issue { number url } ... on PullRequest { number url } } }
     }
@@ -165,6 +166,7 @@ export interface RawEvent {
   subject?: { number?: number; url?: string } | null;
   source?: { number?: number; url?: string } | null;
   canonical?: { number?: number; url?: string } | null;
+  fromRepository?: { nameWithOwner: string } | null;
 }
 
 interface SearchResult {
@@ -348,13 +350,14 @@ query ($id: ID!) {
  * @param id     The item's node id.
  * @param options.me      The viewer's login, for the reasons.
  * @param options.boards  Load board status and sprint as well.
- * @returns The item, or null when it no longer exists or is out of reach.
+ * @returns The item, or null when it no longer exists or is out of reach, e.g. transferred to
+ *          another repository under a new id.
  *
  * @example
  *   const fresh = await fetchItem(token, item.id, { me: "octocat", boards: true });
  */
 export async function fetchItem(token: string, id: string, { me = "", boards = true }: Pick<FetchOptions, "me" | "boards"> = {}): Promise<Item | null> {
-  const data = await graphql<{ node: RawItem | null }>(token, NODE_QUERY, { id });
+  const data = await graphql<{ node: RawItem | null }>(token, NODE_QUERY, { id }, undefined, { allowNotFound: true });
   if (!data.node?.id) return null;
   const item = toItem(data.node);
   item.reasons = reasonsOf(item, me);
@@ -392,7 +395,7 @@ export const REFRESH_CHUNK = 50;
 export async function fetchItemsById(token: string, ids: string[], { me = "", boards = true, signal }: Pick<FetchOptions, "me" | "boards" | "signal"> = {}): Promise<Item[]> {
   const items: Item[] = [];
   for (let from = 0; from < ids.length; from += REFRESH_CHUNK) {
-    const data = await graphql<{ nodes: (RawItem | null)[] }>(token, NODES_QUERY, { ids: ids.slice(from, from + REFRESH_CHUNK) }, signal);
+    const data = await graphql<{ nodes: (RawItem | null)[] }>(token, NODES_QUERY, { ids: ids.slice(from, from + REFRESH_CHUNK) }, signal, { allowNotFound: true });
     for (const node of data.nodes) {
       if (!node?.id) continue;
       const item = toItem(node);
@@ -466,10 +469,17 @@ export function toItem(raw: RawItem): Item {
     pull: raw.__typename === "PullRequest" ? toPull(raw) : null,
     linkedPrs: (raw.closedByPullRequestsReferences?.nodes ?? []).map((pr) => ({ number: pr.number, url: pr.url, draft: pr.isDraft, author: pr.author?.login ?? "ghost" })),
     issueType: raw.issueType ?? null,
+    ...transferOf(raw),
     closed: raw.closed && raw.closedAt ? { state: raw.merged ? "merged" : "closed", at: raw.closedAt } : null,
     boards: [],
     reasons: [],
   };
+}
+
+/** The repository the issue was last moved from, as `transferredFrom`; nothing for an issue never moved. */
+function transferOf(raw: RawItem): Pick<Item, "transferredFrom"> {
+  const from = (raw.assignments?.nodes ?? []).filter((e) => e.__typename === "TransferredEvent").at(-1)?.fromRepository?.nameWithOwner;
+  return from ? { transferredFrom: from } : {};
 }
 
 function toComment(raw: RawComment, where?: string): Comment {
@@ -575,6 +585,8 @@ function activitiesOf(raw: RawItem): Activity[] {
         return [{ kind: "state", at, actor, change: "closed", ...(e.stateReason && { reason: e.stateReason }), ...url }];
       case "ReviewDismissedEvent":
         return [{ kind: "dismissed", at, actor, reviewer: e.review?.author?.login ?? "ghost", ...url }];
+      case "TransferredEvent":
+        return e.fromRepository ? [{ kind: "transferred", at, actor, from: e.fromRepository.nameWithOwner }] : [];
       case "ConnectedEvent":
       case "MarkedAsDuplicateEvent":
         return linked?.number && linked.url ? [{ kind: e.__typename === "ConnectedEvent" ? "linked" : "duplicate", at, actor, number: linked.number, url: linked.url }] : [];

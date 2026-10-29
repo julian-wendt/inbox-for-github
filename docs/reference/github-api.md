@@ -14,8 +14,8 @@ numbers below go stale when fields are added.
 
 | Request | Where | Cost |
 |---|---|---|
-| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10 and the commit author, dry run 2026-10-27) |
-| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25) |
+| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29) |
+| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
 | Many items by node id | `NODES_QUERY` (`fetchItemsById`, right click on a view), `REFRESH_CHUNK = 50` | 19 points for 50, 37 for 100, 9 for 25, 4 for 10 (measured 2026-10-26 with `rateLimit(dryRun: true)`); a single `node` costs 1, so from about three items the bulk request is cheaper |
 | Boards for 50 items | `src/github/boards.ts`, `BATCH = 50` | ~6 points |
@@ -60,6 +60,22 @@ Each was checked against the live API during development.
   `last: 20` on issues). Commits have their own (`commitItems`, `last: 20`), since `last` counts
   across all types and a long run of commits would otherwise push review requests out; it costs
   one point per search page of 50 and none on a delta page (dry run 2026-10-25).
+
+## Transferred issues (2026-10-29)
+
+Checked against a real transfer:
+
+- A transferred issue gets a **new node id and a new number** in the target repository. The old
+  node id no longer resolves: `node(id:)` and `nodes(ids:)` answer with `null` data and an error
+  of `type: "NOT_FOUND"` ("Could not resolve to a node with the global id of …"), which
+  `graphql` turns into a thrown error unless told otherwise.
+- The new issue keeps the original `createdAt` and title. Its timeline carries a
+  `TransferredEvent` with `fromRepository { nameWithOwner }` and no reference to the old node id
+  (introspection 2026-10-29: `actor`, `createdAt`, `fromRepository`, `id`, `issue`).
+- Its `updatedAt` moves to the time of the transfer, so the next delta finds it.
+- The app reads the event's `actor` too, for the timeline line "moved this here from …"; the
+  search page stays at 19 points for 50 items and 7 for 20 (dry run 2026-10-29).
+- Only issues can be transferred; pull requests have no such event.
 
 ## Rate limits and retries
 

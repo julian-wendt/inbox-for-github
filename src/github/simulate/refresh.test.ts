@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RateLimitError, lastBudget, pointsSpent } from "../client";
 import { FULL_EVERY_MS } from "../delta";
+import { fetchItem } from "../fetch";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
 
 // Scenarios from TESTING.md: "API-Verbrauch", "Boards", "Offline".
@@ -44,6 +45,19 @@ describe("API usage", () => {
     world.advance(2 * MINUTE);
 
     expect((await app.refresh()).kind).toBe("full");
+  });
+
+  it("fetches in full on demand, which catches a board move a delta misses", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat"] });
+    world.setBoard(issue, { status: "Backlog" });
+    await app.refresh();
+
+    world.advance(10 * MINUTE);
+    world.setBoard(issue, { status: "In progress" });
+
+    expect((await app.refresh(true)).kind).toBe("full");
+    expect(app.entry(issue).item.boards[0].status).toBe("In progress");
   });
 
   it("fetches in full when the organizations change", async () => {
@@ -221,5 +235,106 @@ describe("Offline", () => {
     await app.refresh().catch(() => undefined);
 
     expect(world.budget.remaining).toBe(5000);
+  });
+});
+
+describe("Transferred issues", () => {
+  it("shows a transferred issue once, under its new repository, after the next delta", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    expect((await app.refresh()).kind).toBe("delta");
+
+    expect(app.items.map((i) => [i.id, i.repo])).toEqual([[moved.id, "octo-org/portal"]]);
+  });
+
+  it("keeps the viewer's status and its history across the transfer", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs" });
+    world.comment(issue, "alice", "@octocat could you check the link?");
+    await app.refresh();
+    app.done(issue);
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    await app.refresh();
+
+    expect(app.viewOf(moved)).toBe("done");
+    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.log.get(moved.id)?.map((c) => c.status)).toEqual(["done"]);
+  });
+
+  it("finds the transfer in a full fetch as well", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+
+    world.advance(FULL_EVERY_MS + MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    expect((await app.refresh()).kind).toBe("full");
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
+
+  it("finds the issue at its new place when the old one is reloaded, and keeps its status", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    await app.reload(issue);
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
+
+  it("drops a reloaded item GitHub no longer resolves instead of failing", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat"] });
+    await app.refresh();
+
+    world.entries.delete(issue.id);
+
+    await expect(app.reload(issue)).resolves.toBeUndefined();
+    expect(app.items).toEqual([]);
+  });
+
+  it("takes the transfer over when the new copy is reloaded on its own", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    const cachedCopy = await fetchItem("token", moved.id, { me: "octocat" });
+    app.items = [...app.items, { ...cachedCopy!, transferredFrom: undefined }];
+
+    await app.reload(moved);
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
+
+  it("finds the new copy among the cached items when the old one is reloaded, also when it was cached before transfers were read", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.done(issue);
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    const cachedCopy = await fetchItem("token", moved.id, { me: "octocat" });
+    app.items = [...app.items, { ...cachedCopy!, transferredFrom: undefined }];
+    world.advance(10 * MINUTE);
+
+    await app.reload(issue);
+
+    expect(app.items.map((i) => [i.id, i.transferredFrom])).toEqual([[moved.id, "octo-org/docs"]]);
+    expect(app.statuses.get(moved.id)?.status).toBe("done");
   });
 });

@@ -51,6 +51,8 @@ interface Props {
   onBucket: (bucket: View) => void;
   onJump: (entry: Classified) => void;
   onRefresh: () => void;
+  /** Loads everything in full, also what a quick refresh misses. */
+  onRefreshFull: () => void;
   onSettings: () => void;
   onToggleTheme: () => void;
   /** Switches between the real data and the demo data; the window reloads. Missing when the demo is fixed by the environment. */
@@ -170,6 +172,9 @@ export function CommandPalette(props: Props) {
             <Command.Group heading={t("palette.general")}>
               <Item onSelect={run(props.onRefresh)} keys="⌘R">
                 {t("action.refreshAll")}
+              </Item>
+              <Item onSelect={run(props.onRefreshFull)} keys="⇧⌘R">
+                {t("action.refreshFull")}
               </Item>
               <Item onSelect={run(props.onToggleTheme)}>{t("palette.toggleTheme")}</Item>
               {props.onSwitchDemo && <Item onSelect={run(props.onSwitchDemo)}>{t(props.demo ? "palette.demoOff" : "palette.demoOn")}</Item>}

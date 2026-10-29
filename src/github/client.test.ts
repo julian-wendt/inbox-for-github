@@ -54,4 +54,14 @@ describe("graphql rate limits", () => {
     respond(200, { errors: [{ message: "Could not resolve to a node" }] }, {});
     await expect(graphql("t", "{ ok }")).rejects.not.toBeInstanceOf(RateLimitError);
   });
+
+  it("returns the data for ids that no longer resolve only when asked to", async () => {
+    const gone = { data: { node: null }, errors: [{ type: "NOT_FOUND", message: "Could not resolve to a node with the global id of 'I_old'" }] };
+    respond(200, gone, {});
+    await expect(graphql("t", "{ node }", {}, undefined, { allowNotFound: true })).resolves.toEqual({ node: null });
+    respond(200, gone, {});
+    await expect(graphql("t", "{ node }")).rejects.toThrow("Could not resolve");
+    respond(200, { data: { node: null }, errors: [...gone.errors, { type: "FORBIDDEN", message: "Resource not accessible" }] }, {});
+    await expect(graphql("t", "{ node }", {}, undefined, { allowNotFound: true })).rejects.toThrow("Resource not accessible");
+  });
 });

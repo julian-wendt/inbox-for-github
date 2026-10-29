@@ -70,7 +70,7 @@ A key is a letter of its entry's English label, in both languages: N for "Next w
 that offer the same choice use the same key for it, as Plan (P) and Follow-up (F) do through
 `dayChoices`.
 
-Taken today: ↑/↓ (with ⇧ to mark; J/K are deliberately unused), ←/→, 1–5, T, D, O, F, X, U, R, P, W, ⌃A, ⌃U, ⌃O, ⌃R, C, Space, Enter, Escape, ⌘Z, ⌘Y, ⌘R, ⌘T, ⌘G,
+Taken today: ↑/↓ (with ⇧ to mark; J/K are deliberately unused), ←/→, 1–5, T, D, O, F, X, U, R, P, W, ⌃A, ⌃U, ⌃O, ⌃R, C, Space, Enter, Escape, ⌘Z, ⌘Y, ⌘R, ⇧⌘R, ⌘T, ⌘G,
 ⌘K, ⌘F, ⌘,, ?. A new shortcut MUST also appear in the help (`Help.tsx`, "Shortcuts") and, where it
 acts on an item, in the right-click menu and the palette.
 

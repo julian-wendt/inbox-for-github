@@ -113,7 +113,9 @@ export type Activity =
   /** Someone dismissed the review of `reviewer`. */
   | { kind: "dismissed"; at: string; actor: string; reviewer: string; url?: string }
   /** A pull request linked to the issue, or the item the issue was marked a duplicate of. */
-  | { kind: "linked" | "duplicate"; at: string; actor: string; number: number; url: string };
+  | { kind: "linked" | "duplicate"; at: string; actor: string; number: number; url: string }
+  /** The issue was moved here from the repository `from` (`owner/name`). */
+  | { kind: "transferred"; at: string; actor: string; from: string };
 
 export interface Item {
   id: string;
@@ -143,6 +145,8 @@ export interface Item {
   linkedPrs: LinkedPr[];
   /** Issues only: the issue type, null without one; filled with null for caches from before it was loaded. */
   issueType: IssueType | null;
+  /** Issues only: the repository it was moved from, `owner/name`, when it was transferred; GitHub gives it a new node id there. */
+  transferredFrom?: string;
   /** Set once the item is closed or merged on GitHub; null while open. */
   closed: Closed | null;
   /** Assignments, review requests, reviews without text and commits, oldest first. */

@@ -349,6 +349,27 @@ export class Store {
     return new Map(rows.map((r) => [r.node_id, change]));
   }
 
+  /**
+   * Carries everything stored per item from each old node id to its new one, for issues that
+   * were transferred (see `findTransfers`): status, status log, note, seen, unread mark and
+   * failed writes. A row the new id already has wins over the old one, which goes; log entries
+   * and failures of both stay. Settings that name items are the caller's (see `movedSettings`).
+   *
+   * @param moves  Old node id → new node id.
+   *
+   * @example
+   *   await store.moveItems(new Map([["I_kwDOOld", "I_kwDONew"]]));
+   */
+  async moveItems(moves: ReadonlyMap<string, string>): Promise<void> {
+    for (const [from, to] of moves) {
+      for (const table of ["item_status", "item_note", "item_seen", "item_unread"]) {
+        await this.db.execute(`UPDATE OR IGNORE ${table} SET node_id = $2 WHERE node_id = $1`, [from, to]);
+        await this.db.execute(`DELETE FROM ${table} WHERE node_id = $1`, [from]);
+      }
+      for (const table of ["status_log", "item_write_failure"]) await this.db.execute(`UPDATE ${table} SET node_id = $2 WHERE node_id = $1`, [from, to]);
+    }
+  }
+
   /** The viewer's private notes per item; they never leave this Mac. */
   async notes(): Promise<Map<string, string>> {
     const rows = await this.db.select<{ node_id: string; note: string }[]>("SELECT node_id, note FROM item_note");
