@@ -1,5 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ArrowUpFromLine, Check, CheckCheck, CircleCheck, CircleDot, CircleSlash, Copy, Eye, EyeOff, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestDraft, MessageSquare, Reply, TriangleAlert, UserMinus, UserRound, X, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft, ArrowUpFromLine, Check, CheckCheck, CircleCheck, CircleDot, CircleSlash, Copy, Eye, EyeOff, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestDraft, MessageSquare, Reply, TriangleAlert, UserMinus, UserRound, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { reviewNote, type ReviewLine } from "../reviewLines";
 import { sameLogin } from "../../timeline";
@@ -84,6 +84,10 @@ export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: 
     case "duplicate":
       icon = Copy;
       text = say("activity.duplicate", "activity.duplicateSelf", { number: activity.number });
+      break;
+    case "transferred":
+      icon = ArrowRightLeft;
+      text = say("activity.transferred", "activity.transferredSelf", { repo: activity.from });
       break;
     case "assigned":
       icon = UserRound;

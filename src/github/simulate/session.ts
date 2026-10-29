@@ -9,11 +9,12 @@ import { sameLogin } from "../../timeline";
 import { onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
+import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
-import { canDelta, DELTA_OVERLAP_MS, mergeDelta, withinClosedWindow } from "../delta";
-import { fetchItem, fetchItems } from "../fetch";
+import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withinClosedWindow } from "../delta";
+import { fetchItem, fetchItems, fetchItemsById } from "../fetch";
 import type { GitHubSimulator, Ref } from "./world";
 
 const TOKEN = "simulated-token";
@@ -68,11 +69,11 @@ export class InboxSession {
     return this.world.now.getTime();
   }
 
-  /** A refresh: a delta when the last full fetch is younger than an hour, else a full fetch. @returns Which, and the points it cost. */
-  async refresh(): Promise<{ kind: "full" | "delta"; cost: number }> {
+  /** ⌘R: a delta when the last full fetch is younger than an hour, else a full fetch; ⇧⌘R (`full`) always the latter. @returns Which, and the points it cost. */
+  async refresh(full = false): Promise<{ kind: "full" | "delta"; cost: number }> {
     const { orgs, closedDays, loadBoards, maxItems } = this.settings;
     const key = JSON.stringify([orgs, this.me]);
-    const delta = !!this.last && canDelta({ fullAt: this.last.fullAt, scope: this.last.key }, key, this.nowMs);
+    const delta = !full && !!this.last && canDelta({ fullAt: this.last.fullAt, scope: this.last.key }, key, this.nowMs);
     const before = this.world.requests.length;
     const fetched = await fetchItems(TOKEN, orgs, {
       limit: maxItems,
@@ -82,16 +83,30 @@ export class InboxSession {
       now: this.world.now,
       ...(delta && { since: new Date(this.last!.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
     });
-    this.items = delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched;
+    const moves = findTransfers(this.items, fetched);
+    this.carryOver(moves);
+    this.items = (delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched).filter((item) => !moves.has(item.id));
     this.last = { fetchedAt: this.world.now, fullAt: delta ? this.last!.fullAt : this.world.now, key };
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
   }
 
-  /** ⌃R: loads one item again and keeps the reasons only a search can tell (a review request). */
+  /**
+   * ⌃R, as `useInbox.takeReloaded` does it: loads one item again, keeping the reasons only a
+   * search can tell; a transfer it shows replaces the old copy. When GitHub no longer resolves
+   * it, cached candidates for its transferred copy are loaded, and failing that a refresh runs
+   * before it goes.
+   */
   async reload(ref: Ref): Promise<void> {
-    const fresh = await fetchItem(TOKEN, ref.id, { me: this.me, boards: this.settings.loadBoards });
-    if (!fresh) return;
-    this.items = this.items.map((old) => (old.id === ref.id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old));
+    const options = { me: this.me, boards: this.settings.loadBoards };
+    const found = await fetchItem(TOKEN, ref.id, options);
+    const candidates = found ? [] : transferCandidates(this.items, [ref.id]);
+    const fresh = [...(found ? [found] : []), ...(candidates.length > 0 ? await fetchItemsById(TOKEN, candidates, options) : [])];
+    const moves = findTransfers(this.items, fresh);
+    this.carryOver(moves);
+    this.items = mergeReloaded(this.items, fresh, moves);
+    if (found || moves.has(ref.id)) return;
+    await this.refresh();
+    this.items = this.items.filter((item) => item.id !== ref.id);
   }
 
   /** ⌘↵ in the comment box: posts, then loads just that item. */
@@ -265,6 +280,17 @@ export class InboxSession {
 
   private replace(next: Item): void {
     this.items = this.items.map((i) => (i.id === next.id ? next : i));
+  }
+
+  /** What `Store.moveItems` does for transferred issues, on the session's maps. */
+  private carryOver(moves: ReadonlyMap<string, string>): void {
+    const refill = <T>(map: Map<string, T>, next: Map<string, T>) => {
+      map.clear();
+      for (const [id, value] of next) map.set(id, value);
+    };
+    refill(this.statuses, movedKeys(this.statuses, moves));
+    refill(this.log, movedLists(this.log, moves));
+    refill(this.writeFailures, movedLists(this.writeFailures, moves));
   }
 
   private fail(ref: Ref, kind: "assign" | "unassign", error: string): void {

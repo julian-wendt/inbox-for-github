@@ -1,5 +1,6 @@
 import type { Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
+import { movedKeys, movedLists } from "../transfer";
 
 /** What a `MemoryStore` starts with; everything is optional and starts empty. */
 export interface MemorySeed {
@@ -82,6 +83,16 @@ export class MemoryStore implements Persistence {
     for (const id of cleared.keys()) this.logChange(id, change);
     this.statusMap.clear();
     return Promise.resolve(cleared);
+  }
+
+  moveItems(moves: ReadonlyMap<string, string>): Promise<void> {
+    this.statusMap = movedKeys(this.statusMap, moves);
+    this.noteMap = movedKeys(this.noteMap, moves);
+    this.seenMap = movedKeys(this.seenMap, moves);
+    this.unreadMap = movedKeys(this.unreadMap, moves);
+    this.log = movedLists(this.log, moves);
+    this.failures = movedLists(this.failures, moves);
+    return Promise.resolve();
   }
 
   notes(): Promise<Map<string, string>> {

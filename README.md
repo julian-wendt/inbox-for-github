@@ -39,6 +39,23 @@ there is something to ship, not on a schedule.
 - **A demo mode** with made-up organizations, people and items, for trying the app without
   touching your GitHub: ⌘K, "Show demo data".
 
+## Refreshing
+
+The app reads GitHub through the GraphQL API, which allows 5000 points per hour per account
+(shared with `gh` and anything else using its token). It refreshes in five ways:
+
+| Kind | Trigger | Loads | Cost | Misses |
+|---|---|---|---|---|
+| Full reload | start, changed organizations, every hour, ⇧⌘R | every search up to the item limit, with boards | a few hundred points | nothing within the limit |
+| Quick refresh (delta) | ⌘R and automatically, within an hour of the last full reload | the same searches, only items changed since the last refresh, one page of 20 each | about 15–30 points | what leaves an item's `updatedAt` alone: board moves, withdrawn review requests, items that drop out of a search |
+| One item | ⌃R | the item by id, with boards | 1–2 points | the reasons only a search knows (a review request), which stay as they were |
+| One view | right click on a view | its items by id, with boards | 19 points per 50 | as ⌃R |
+| Boards only | "Load boards" switched back on | status and sprint of all cached items | about 6 points per 50 | everything but the boards |
+
+New items only come in through a quick refresh or a full reload. ⌃R and a view's refresh take
+over everything GitHub shows for the items they load, also an issue moved to another repository.
+The help (?) shows the same under "General".
+
 ## Requirements
 
 - macOS, Node 26+ (the version in `.node-version`) and npm

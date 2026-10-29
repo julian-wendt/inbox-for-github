@@ -58,7 +58,16 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Erster Abruf nach dem Start ist vollständig und teurer; die nächsten (⌘R oder automatisch)
       sind Deltas, etwa 30 Punkte. Zahlen notieren.
 - [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
+- [ ] ⇧⌘R (auch in der Palette und in der Hilfe) lädt sofort vollständig: ein Board-Wechsel
+      seit dem letzten Abruf ist danach zu sehen, der Ring zeigt die höheren Kosten.
 - [ ] Ein auf GitHub geändertes Item (z. B. neuer Kommentar) taucht nach dem nächsten Delta auf.
+- [ ] Ein Test-Issue mit Status (z. B. Erledigt), Notiz und Plan in ein anderes beobachtetes
+      Repository übertragen: nach dem nächsten Delta steht es nur noch einmal da, unter dem neuen
+      Repository und der neuen Nummer, mit Status, Notiz, Plan und Verlauf. Im Verlauf steht
+      „… hat es aus <altes Repo> hierher verschoben“.
+- [ ] Dasselbe, aber vor dem nächsten Delta ⌃R auf der alten Zeile: keine Fehlermeldung, die
+      Zeile wechselt zum neuen Repository. Ebenso ⌃R auf der neuen Zeile: die alte verschwindet,
+      Status und Plan gehen mit.
 
 ## Boards
 
@@ -465,5 +474,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Hilfe und Token
 
 - [ ] `?` öffnet die Hilfe auf „Allgemein“; die drei Reiter sind gleich breit.
+- [ ] „Allgemein“ ist gesetzt wie „So sortiert die App“: je Thema eine fette Überschrift mit
+      Doppelpunkt; „Aktualisieren“ listet darunter die fünf Arten, in beiden Sprachen.
 - [ ] Optional Token-Hinweis: `gh auth refresh -r project` entfernt das Recht, nach ⌘R erscheint
       der Kasten in der Sidebar, der kopierte Befehl fügt es wieder hinzu.

@@ -3,7 +3,7 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, mergeDelta, withinClosedWindow, type Coverage } from "../github/delta";
+import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -15,6 +15,7 @@ import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
+import { movedKeys, movedLists, movedSettings } from "../transfer";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -38,12 +39,17 @@ export interface Inbox {
   fetchedAt: Date | null;
   settings: Settings;
   classified: Classified[];
-  refresh: () => Promise<void>;
+  /**
+   * Loads what changed (a delta within an hour of the last full fetch), or with `full` everything,
+   * which also catches what a delta misses. Resolves to true once the items are shown; false when
+   * stopped, failed or not run.
+   */
+  refresh: (full?: boolean) => Promise<boolean>;
   /** Stops a running refresh; what was shown before stays. */
   stopRefresh: () => void;
-  /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox. */
+  /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox; one GitHub no longer resolves leaves the cache (see `dropGone`). */
   reloadItem: (id: string) => Promise<void>;
-  /** Reloads many items in few requests; resolves to how many came back. */
+  /** Reloads many items in few requests; resolves to how many came back. Those GitHub no longer resolves leave the cache, like in `reloadItem`. */
   reloadItems: (ids: string[]) => Promise<number>;
   /** Changes one item locally and in the cache, e.g. right after a write to GitHub. */
   updateItem: (id: string, change: (item: Item) => Item) => void;
@@ -135,6 +141,15 @@ function logMerge(before: Item[], fetched: Item[], after: Item[]): void {
   });
 }
 
+/** Debug: which cached issues turned out to be transferred, as `old → new`. */
+function logTransfers(before: Item[], fetched: Item[], moves: Map<string, string>): void {
+  const refOf = (items: Item[], id: string) => {
+    const found = items.find((i) => i.id === id);
+    return found ? ref(found) : id;
+  };
+  log.debug("transferred", { items: [...moves].map(([from, to]) => `${refOf(before, from)} → ${refOf(fetched, to)}`).join(",") });
+}
+
 /** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
 function legacyDone(c: Classified, viewer: string): boolean {
   const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, viewer);
@@ -192,6 +207,34 @@ export function useInbox(): Inbox {
     wanted.current = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: settings.maxItems };
   }, [settings.closedDays, settings.loadBoards, settings.maxItems]);
 
+  const latestSettings = useRef(settings);
+  useEffect(() => {
+    latestSettings.current = settings;
+  }, [settings]);
+
+  /**
+   * Carries the local state of transferred issues to their new ids, in the store; the returned
+   * function moves the state, built on what it holds then, for the caller to run with the items.
+   */
+  const carryOver = useCallback(
+    async (moves: ReadonlyMap<string, string>, items: Item[]) => {
+      if (!store) return () => undefined;
+      await store.moveItems(moves);
+      const moved = movedSettings(latestSettings.current, moves, items);
+      if (moved !== latestSettings.current) await store.saveSettings(moved);
+      return () => {
+        setSettings((current) => movedSettings(current, moves, items));
+        setStatuses((current) => movedKeys(current, moves));
+        setStatusLog((current) => movedLists(current, moves));
+        setSeen((current) => movedKeys(current, moves));
+        setUnreadMarks((current) => movedKeys(current, moves));
+        setNotes((current) => movedKeys(current, moves));
+        setWriteFailures((current) => movedLists(current, moves));
+      };
+    },
+    [store],
+  );
+
   const apply = (fetch: CachedFetch) => {
     const { viewer, items, fetchedAt } = fetch;
     lastFetch.current = fetch;
@@ -227,8 +270,8 @@ export function useInbox(): Inbox {
     })().catch((e) => setError(String(e)));
   }, []);
 
-  const refresh = useCallback(async () => {
-    if (!store || settings.orgs.length === 0) return;
+  const refresh = useCallback(async (full = false): Promise<boolean> => {
+    if (!store || settings.orgs.length === 0) return false;
     running.current?.abort();
     const controller = new AbortController();
     running.current = controller;
@@ -252,7 +295,7 @@ export function useInbox(): Inbox {
       const key = JSON.stringify([settings.orgs, viewer.login]);
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
-      const delta = !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const delta = !full && !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
       const coverage: Coverage = delta ? { ...had.coverage, boards: want.boards } : want;
       const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards, signal };
@@ -262,8 +305,11 @@ export function useInbox(): Inbox {
       signal.throwIfAborted();
       const avatar = (await embedAvatar(viewer.avatarUrl, 40)) ?? lastAvatar.current ?? undefined;
       // Onto the items as they are now, so a change made while the refresh ran (e.g. assigning) stays.
-      let items = delta ? mergeDelta((lastFetch.current ?? last).items, fetched, coverage.closedDays) : fetched;
-      if (delta) logMerge((lastFetch.current ?? last).items, fetched, items);
+      const before = lastFetch.current?.items ?? [];
+      const moves = findTransfers(before, fetched);
+      let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
+      if (delta) logMerge(before, fetched, items);
+      if (moves.size > 0) logTransfers(before, fetched, moves);
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
       const fetchedAt = new Date();
       const result: CachedFetch = {
@@ -273,24 +319,28 @@ export function useInbox(): Inbox {
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
       };
+      const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
+      showMoved?.();
       apply(result);
       await store.saveFetch(result);
       noteBudget(lastBudget());
       setUsage({ budget: lastBudget(), lastCost: pointsSpent() - mark });
       log.debug("refresh", { kind: delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining });
       log.debug("cache saved", { items: items.length });
+      return true;
     } catch (e) {
-      if (signal.aborted) return;
+      if (signal.aborted) return false;
       log.debug("refresh failed", { error: String(e), ms: Date.now() - startedAt });
       if (e instanceof RateLimitError) pause(e.until);
       setError(String(e));
+      return false;
     } finally {
       if (running.current === controller) {
         running.current = null;
         setLoading(false);
       }
     }
-  }, [store, settings.orgs, noteBudget, pause]);
+  }, [store, settings.orgs, noteBudget, pause, carryOver]);
 
   const latestMarks = useRef(unreadMarks);
   useEffect(() => {
@@ -371,26 +421,70 @@ export function useInbox(): Inbox {
     [store],
   );
 
+  /**
+   * Handles items GitHub no longer resolves and no cached item turned out to be their transferred
+   * copy: a refresh first, which finds an issue transferred to a place not cached yet and carries
+   * its state over, then what is still cached under these ids goes.
+   * A refresh that fails or is stopped keeps them, so a later one can still pair them.
+   */
+  const dropGone = useCallback(
+    async (ids: string[]) => {
+      log.debug("items gone", { ids: ids.join(",") });
+      if (!(await refresh())) return;
+      const last = lastFetch.current;
+      const gone = new Set(ids);
+      if (!store || !last?.items.some((item) => gone.has(item.id))) return;
+      const next = { ...last, items: last.items.filter((item) => !gone.has(item.id)) };
+      lastFetch.current = next;
+      setItems(next.items);
+      await store.saveFetch(next);
+    },
+    [store, refresh],
+  );
+
+  /**
+   * Puts items loaded by id into the cache, with everything GitHub's answer shows: an item that
+   * names `transferredFrom` replaces its cached old copy and takes its state over. For ids GitHub
+   * no longer resolves, cached issues that may be their transferred copy are loaded too (see
+   * `transferCandidates`); what still has no new place goes through `dropGone`.
+   */
+  const takeReloaded = useCallback(
+    async (token: string, ids: string[], loaded: Item[]) => {
+      const last = lastFetch.current;
+      if (!store || !last) return;
+      let fresh = loaded;
+      const missing = ids.filter((id) => !fresh.some((item) => item.id === id));
+      const candidates = transferCandidates(last.items, missing).filter((id) => !ids.includes(id));
+      if (candidates.length > 0) fresh = [...fresh, ...(await fetchItemsById(token, candidates, { me: last.viewer.login, boards: settings.loadBoards }))];
+      const moves = findTransfers(last.items, fresh);
+      if (moves.size > 0) logTransfers(last.items, fresh, moves);
+      const showMoved = moves.size > 0 ? await carryOver(moves, fresh) : null;
+      const current = lastFetch.current ?? last;
+      const next = { ...current, items: mergeReloaded(current.items, fresh, moves) };
+      lastFetch.current = next;
+      showMoved?.();
+      setItems(next.items);
+      await store.saveFetch(next);
+      const gone = missing.filter((id) => !moves.has(id));
+      if (gone.length > 0) await dropGone(gone);
+    },
+    [store, settings.loadBoards, carryOver, dropGone],
+  );
+
   const reloadItem = useCallback(
     async (id: string) => {
       const last = lastFetch.current;
       if (!store || !last) return;
       try {
-        const fresh = await fetchItem(await ghToken(), id, { me: last.viewer.login, boards: settings.loadBoards });
-        if (!fresh) return;
-        const items = last.items.map((old) =>
-          old.id === id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old,
-        );
-        const next = { ...last, items };
-        lastFetch.current = next;
-        setItems(items);
-        await store.saveFetch(next);
+        const token = await ghToken();
+        const fresh = await fetchItem(token, id, { me: last.viewer.login, boards: settings.loadBoards });
+        await takeReloaded(token, [id], fresh ? [fresh] : []);
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
         setError(String(e));
       }
     },
-    [store, settings.loadBoards, pause],
+    [store, settings.loadBoards, pause, takeReloaded],
   );
 
   const reloadItems = useCallback(
@@ -398,23 +492,17 @@ export function useInbox(): Inbox {
       const last = lastFetch.current;
       if (!store || !last || ids.length === 0) return 0;
       try {
-        const fresh = new Map((await fetchItemsById(await ghToken(), ids, { me: last.viewer.login, boards: settings.loadBoards })).map((item) => [item.id, item]));
-        const items = last.items.map((old) => {
-          const item = fresh.get(old.id);
-          return item ? { ...item, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...item.reasons] } : old;
-        });
-        const next = { ...last, items };
-        lastFetch.current = next;
-        setItems(items);
-        await store.saveFetch(next);
-        return fresh.size;
+        const token = await ghToken();
+        const fresh = await fetchItemsById(token, ids, { me: last.viewer.login, boards: settings.loadBoards });
+        await takeReloaded(token, ids, fresh);
+        return fresh.length;
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
         setError(String(e));
         return 0;
       }
     },
-    [store, settings.loadBoards, pause],
+    [store, settings.loadBoards, pause, takeReloaded],
   );
 
   useEffect(() => {
@@ -571,10 +659,6 @@ export function useInbox(): Inbox {
     [store],
   );
 
-  const latestSettings = useRef(settings);
-  useEffect(() => {
-    latestSettings.current = settings;
-  }, [settings]);
   const updateSettings = useCallback((change: (current: Settings) => Settings) => saveSettings(change(latestSettings.current)), [saveSettings]);
 
   return {
