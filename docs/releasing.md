@@ -12,10 +12,10 @@ passed, since a published tag cannot be taken back.
    below 1.0); `docs:`, `chore:`, `refactor:`, `test:` and `ci:` alone release nothing. The PR carries
    the version in `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`,
    `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`, and the changelog.
-2. **Merge the release PR when you want a release.** It has no checks: it is opened with the
-   workflow's own token, which starts no workflows. The ruleset on `main` therefore lets it in only
-   with "Bypass rules"; the build in the next step runs typecheck, lint and tests before anything
-   is tagged.
+2. **Merge the release PR when you want a release.** Its checks wait for an "Approve and run"
+   click in the PR, since it is opened with the workflow's own token (seen with 0.3.0,
+   2026-10-29); the ruleset on `main` requires them like on any PR. The build in the next step
+   runs typecheck, lint and tests once more on the merged commit before anything is tagged.
 3. **The workflow builds the app** on `macos-latest` when the version in
    `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
    `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
