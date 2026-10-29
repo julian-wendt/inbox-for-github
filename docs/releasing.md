@@ -19,9 +19,10 @@ passed, since a published tag cannot be taken back.
 3. **The workflow builds the app** on `macos-latest` when the version in
    `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
    `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
-   no path of the runner ends up in the binary. It checks that the bundle carries the version, is
-   arm64, has a complete signature, and that neither the binary nor `dist/` holds a `/Users/` or
-   `/home/` path, and keeps the zip as an artifact.
+   no path of the runner ends up in the binary, and the short commit as the bundle version, so
+   About reads "Version 0.3.1 (01d877d)" instead of repeating the version. It checks that the
+   bundle carries the version and the commit, is arm64, has a complete signature, and that neither
+   the binary nor `dist/` holds a `/Users/` or `/home/` path, and keeps the zip as an artifact.
 4. **Only a green build tags.** release-please then creates the tag and a draft release with the
    notes, the zip is attached and the release published. A failed build leaves the version bump on
    `main` without a tag; the next push to `main`, usually the fix, runs the build again.
