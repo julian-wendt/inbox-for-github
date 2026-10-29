@@ -61,7 +61,7 @@ export interface Classified {
  * 2b. A plan (`plannedAt`: the item is pinned for today or planned for a day) answers the asks
  *    the viewer saw when they made it: only an ask that came later shows the item in the inbox.
  *    With none, the item stays in its table ("assigned", "authored") or goes to "planned", which
- *    only the Planned view shows.
+ *    only the Planned view shows; answering a later ask ends only the ask, never the plan.
  * 3. An item assigned to the viewer with nothing pending goes to "assigned".
  * 4. Once the viewer has answered every review request and mention, the item counts as "done"
  *    without a stored status, and `answered` says why.
@@ -142,7 +142,7 @@ export function classify(
 
   if (fresh.length > 0) return { ...shown, bucket: "inbox", status: "open", answered: null, asks: fresh, ...(fresh.includes("commits") && { pushedBy: pushed!.by }) };
   if (assigned) return { ...shown, bucket: "assigned", status: "open", answered: null, asks: fresh };
-  if (parked) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
+  if (plannedAt) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
   if (reviewed || mentioned) {
     return { ...result, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks };
   }

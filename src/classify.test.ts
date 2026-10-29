@@ -468,8 +468,15 @@ describe("planned items", () => {
     expect(planned(answered, at(6), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "planned", asks: [] });
   });
 
-  it("leave an item without any ask as it was", () => {
-    expect(planned(item({ reasons: ["involved"] }), at(3)).bucket).toBe("involved");
-    expect(planned(item({ comments: [comment("alice", "@me?", 2), comment(ME, "done", 3)] }), at(4))).toMatchObject({ bucket: "done", answered: "mention" });
+  it("stay planned once the viewer answers an ask, whether it came before or after the plan", () => {
+    expect(planned(item({ reasons: ["involved"] }), at(3)).bucket).toBe("planned");
+    expect(planned(item({ comments: [comment("alice", "@me?", 2), comment(ME, "done", 3)] }), at(4))).toMatchObject({ bucket: "planned", status: "open", answered: null });
+    expect(planned(item({ comments: [comment("alice", "@me?", 4), comment(ME, "done", 5)] }), at(3))).toMatchObject({ bucket: "planned", status: "open", asks: [] });
+    const reviewed = item({ kind: "pr", reasons: ["review", "involved"], reviewRequests: [{ reviewer: ME, at: at(4) }], reviews: [{ author: ME, at: at(5) }] });
+    expect(planned(reviewed, at(3))).toMatchObject({ bucket: "planned", status: "open" });
+  });
+
+  it("end with a stored Done, which the plan does not outlast", () => {
+    expect(planned(item({ comments: [comment("alice", "@me?", 4)] }), at(3), { status: "done", changedAt: at(6) })).toMatchObject({ bucket: "done", status: "done" });
   });
 });

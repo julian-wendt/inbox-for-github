@@ -513,10 +513,11 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const steps = open.flatMap((c) => planStep(c, status) ?? []);
+    const filed = open.filter((c) => planStep(c, status) !== null);
+    const steps = [...filed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(filed) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
-    const text = plural("marks.toastOne", "marks.toast", steps.length, { status: t(`status.${status}`) });
+    const text = plural("marks.toastOne", "marks.toast", filed.length, { status: t(`status.${status}`) });
     bulk(blocked > 0 ? `${text} · ${t("marks.blocked", { count: blocked })}` : text, steps);
   };
   /** The text for one item or for several: `one` takes no count. */
@@ -602,6 +603,9 @@ export default function App() {
    */
   const applyStatus = (c: Classified, status: Status) => {
     const { id, number } = c.item;
+    const ends = status === "done" ? unplanStep([c]) : [];
+    const step = ends.length > 0 ? planStep(c, status) : null;
+    if (step) return bulk(replacing(`#${number} → ${t("status.done")}`, endedPlan(c)), [step, ...ends]);
     const previous = inbox.statuses.get(id);
     const undo = () => void inbox.restoreStatus(id, previous);
     const plan = planStatus(c, status, me);
@@ -850,6 +854,7 @@ export default function App() {
   };
 
   // Each morning "Today" keeps what is unfinished and takes in what was planned for it: checked on start and every few minutes while the app stays open.
+  // A plan of an item closed on GitHub goes at once, not with the next day.
   const { settings, saveSettings, ready, classified } = inbox;
   useEffect(() => {
     if (!ready) return;
@@ -857,8 +862,10 @@ export default function App() {
       const day = localDay();
       setToday(day);
       const pinnable = (id: string) => classified.some((c) => c.item.id === id && isPinnable(c));
-      const next = rollOver(settings, day, pinnable, (id) => classified.some((c) => c.item.id === id));
-      if (next) void saveSettings({ ...settings, ...next });
+      const closed = [...settings.focus, ...settings.planned.map((p) => p.id)].filter((id) => classified.some((c) => c.item.id === id && c.item.closed));
+      const open = closed.length > 0 ? { ...settings, ...unplan(todayOf(settings), closed) } : settings;
+      const next = rollOver(open, day, pinnable, (id) => classified.some((c) => c.item.id === id));
+      if (next || open !== settings) void saveSettings({ ...open, ...next });
     };
     check();
     const timer = window.setInterval(check, 5 * 60_000);
