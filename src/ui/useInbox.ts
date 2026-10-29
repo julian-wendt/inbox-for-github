@@ -101,7 +101,8 @@ export interface Inbox {
  * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within an hour of a
  * full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
  * the closed window, the item limit or switching boards off filters the cached items instead of
- * refetching; widening them past what the cache covers fetches (switching boards on loads only them). When GitHub's hourly
+ * refetching. A longer closed window loads only the added days, switching boards on only the
+ * boards; a higher item limit fetches in full. When GitHub's hourly
  * GraphQL budget runs low, automatic refreshes wait for its reset (`pausedUntil`); ⌘R still works.
  *
  * @returns The current state and the actions the UI may call.
@@ -296,11 +297,12 @@ export function useInbox(): Inbox {
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
       const same = !full && !!last && had?.key === key && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
-      const widen = same && !covers(had.coverage, want) && widensClosed(had.coverage, want);
+      const widen = same && widensClosed(had.coverage, want);
       const delta = (same && covers(had.coverage, want)) || widen;
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
       const coverage: Coverage = delta ? { ...had.coverage, closedDays: Math.max(had.coverage.closedDays, want.closedDays), boards: want.boards } : want;
-      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards, signal };
+      // Boards switched on come for every item at once through `withBoards` below, not twice.
+      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards && (!delta || had.coverage.boards), signal };
       // The added days first, so the delta's newer copy of an item in both wins the merge.
       const fetched = delta
         ? (await Promise.all([

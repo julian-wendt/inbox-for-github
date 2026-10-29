@@ -25,7 +25,9 @@ numbers below go stale when fields are added.
 A full fetch pages through every search up to the item limit (default 200 per search; two
 qualifiers, for open and, with a closed window, closed items), a few hundred points. A delta
 runs the same searches with one page of 20 each, about 7 points per search. Widening the
-closed window adds the two closed searches over the added days only, paged like a full fetch.
+closed window adds the two closed searches over the added days only, paged like a full fetch:
+the same `QUERY` with another search string, so ~19 points per page of 50, at most 8 pages
+(about 150 points) at the default limit and usually one or two per search.
 
 ## Verified behavior (2026-10-23)
 
