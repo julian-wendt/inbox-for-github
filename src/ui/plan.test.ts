@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, closedPlans, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
 const days = (now: Date) => dayChoices(now).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -135,6 +135,20 @@ describe("closedPlans", () => {
     const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }, { id: "d", day: "2026-10-30" }], {}, {});
     expect(closedPlans(before, (id) => id === "b" || id === "d" || id === "x")).toEqual(["b", "d"]);
     expect(closedPlans(before, () => false)).toEqual([]);
+  });
+});
+
+describe("planOf and replan", () => {
+  it("put an item's pin or plan back as it was, next to what Today holds since", () => {
+    const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-27", b: "2026-10-28" }, { a: "t1", b: "t2", c: "t3" });
+    const later = { ...unplan(before, ["a"]), planned: [{ id: "c", day: "2026-10-29" }, { id: "d", day: "2026-10-30" }] };
+    expect(replan(later, planOf(before, "a"))).toEqual({ ...later, focus: ["b", "a"], pinnedOn: { b: "2026-10-28", a: "2026-10-27" }, plannedAt: { b: "t2", c: "t3", a: "t1" } });
+    expect(replan(unplan(before, ["c"]), planOf(before, "c"))).toEqual(before);
+  });
+
+  it("give an emptied Today its day back with the pin", () => {
+    const before = state(["a"], "2026-10-28", [], { a: "2026-10-28" }, {});
+    expect(replan({ ...unplan(before, ["a"]), focusDay: null }, planOf(before, "a")).focusDay).toBe("2026-10-28");
   });
 });
 

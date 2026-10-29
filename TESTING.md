@@ -267,6 +267,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Erledigt). P zeigt in der Inbox oben „Plan für Donnerstag behalten“ (K): das Item verlässt
       die Inbox, ohne Antwort. D erledigt es und nimmt den Plan weg (⌘Z bringt beides zurück).
       Auf GitHub schließen: nach der nächsten Aktualisierung ist der Plan weg, nicht erst morgen.
+      In der App schließen und mit ⌘Z zurücknehmen: das Item ist wieder offen und geplant wie zuvor.
 - [ ] Ein neuer Kommentar ohne Erwähnung auf einem geplanten Item: keine Inbox, in Geplant (Liste)
       ist die Zeile fett mit dem Punkt, bis du sie öffnest.
 - [ ] Im Detail steht bei einem angehefteten oder geplanten Item vor den Attribut-Chips ein Chip

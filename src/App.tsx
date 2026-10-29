@@ -42,7 +42,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -799,20 +799,24 @@ export default function App() {
       () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true)),
     );
   };
-  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write. */
+  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   const replied = (id: string, change?: StateWrite) => {
     void inbox.reloadItem(id);
     const c = classifiedById(id);
     if (!change || !c) return;
     const reverse = change.action === "close" ? "reopen" : "close";
-    const write = (action: "close" | "reopen", reason?: CloseReason) => () =>
+    const plan = planOf(todayOf(inbox.settings), id);
+    // Only once the item is loaded open again, or the closed-plan effect drops the plan once more.
+    const replace = () => void inbox.updateSettings((s) => ({ ...s, ...replan(todayOf(s), plan) }));
+    const write = (action: "close" | "reopen", reason?: CloseReason, after?: () => void) => () =>
       void queueWrite(() =>
         ghToken()
           .then((token) => setOpen(token, { id, kind: c.item.kind }, action, reason))
           .then(() => inbox.reloadItem(id))
+          .then(after)
           .catch((e: unknown) => actions.notify(String(e))),
       );
-    actions.announce(t(change.action === "close" ? "toast.closed" : "toast.reopened", { number: c.item.number }), write(reverse, change.before), write(change.action, change.reason));
+    actions.announce(t(change.action === "close" ? "toast.closed" : "toast.reopened", { number: c.item.number }), write(reverse, change.before, change.action === "close" ? replace : undefined), write(change.action, change.reason));
   };
   const openOrca = (c: Classified, repoId: string) => {
     const { number } = c.item;

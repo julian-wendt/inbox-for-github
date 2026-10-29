@@ -205,6 +205,38 @@ export function closedPlans(state: Pick<Today, "focus" | "planned">, closed: (id
   return [...state.focus, ...state.planned.map((p) => p.id)].filter(closed);
 }
 
+/**
+ * One item's part of Today: its pin with the day it came in, its plan, and when it got either;
+ * the rest is empty. With `replan` it goes back once a close is undone.
+ *
+ * @example
+ *   planOf({ focus: ["I_1", "I_2"], focusDay: "2026-10-28", planned: [], pinnedOn: { I_1: "2026-10-28" }, plannedAt: {} }, "I_1");
+ *   // { focus: ["I_1"], focusDay: "2026-10-28", planned: [], pinnedOn: { I_1: "2026-10-28" }, plannedAt: {} }
+ */
+export function planOf(state: Today, id: string): Today {
+  const only = (record: Record<string, string>) => (id in record ? { [id]: record[id] } : {});
+  return { focus: state.focus.filter((f) => f === id), focusDay: state.focusDay, planned: state.planned.filter((p) => p.id === id), pinnedOn: only(state.pinnedOn), plannedAt: only(state.plannedAt) };
+}
+
+/**
+ * Today with an item's part (from `planOf`) put back, as it was; what Today holds besides stays.
+ * A pin comes back behind the others, and Today keeps its day unless it had none.
+ *
+ * @example
+ *   replan(unplan(state, ["I_1"]), planOf(state, "I_1")); // state again, with I_1's pin last
+ */
+export function replan(state: Today, part: Today): Today {
+  const ids = new Set([...part.focus, ...part.planned.map((p) => p.id)]);
+  const rest = unplan(state, [...ids]);
+  return {
+    focus: [...rest.focus, ...part.focus],
+    focusDay: rest.focusDay ?? (part.focus.length > 0 ? part.focusDay : null),
+    planned: [...rest.planned, ...part.planned],
+    pinnedOn: { ...rest.pinnedOn, ...part.pinnedOn },
+    plannedAt: { ...rest.plannedAt, ...part.plannedAt },
+  };
+}
+
 /** Why an item is in Planned: pinned for today or planned for a day. */
 export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string };
 
