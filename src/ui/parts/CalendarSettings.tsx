@@ -48,11 +48,11 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
 
   const ask = async () => setAccess((await calendarAccess()) ? "granted" : "denied");
   const chosen = calendars?.find((c) => c.id === settings.calendarId);
-  const option = (calendar: Calendar) => (
+  const option = (calendar: Calendar, inMenu: boolean) => (
     <>
       <span className="option-dot" style={{ "--option": calendar.color ?? "transparent" } as CSSProperties} />
       <strong>{calendar.title}</strong>
-      <span className="calendar-account">({calendar.account})</span>
+      {inMenu ? <span className="org-select-summary">{calendar.account}</span> : <span className="calendar-account">({calendar.account})</span>}
     </>
   );
   const pick = (id: string) => {
@@ -73,7 +73,7 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
         ) : (
           <div className="org-select calendar-select">
             <button className="org-select-button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
-              {chosen ? option(chosen) : <span className="calendar-placeholder">{t("settings.calendarNone")}</span>}
+              {chosen ? option(chosen, false) : <span className="calendar-placeholder">{t("settings.calendarNone")}</span>}
               <ChevronDown size={15} className="org-select-chevron" />
             </button>
             {settings.calendarId && (
@@ -88,7 +88,7 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
                   {(calendars ?? []).map((calendar) => (
                     <li key={calendar.id} role="option" aria-selected={calendar.id === settings.calendarId}>
                       <button className={calendar.id === settings.calendarId ? "on" : ""} onClick={() => pick(calendar.id)}>
-                        {option(calendar)}
+                        {option(calendar, true)}
                       </button>
                     </li>
                   ))}
