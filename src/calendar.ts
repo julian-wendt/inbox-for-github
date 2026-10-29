@@ -7,6 +7,8 @@ export interface Calendar {
   /** The account it belongs to, as Internet Accounts names it. */
   account: string;
   writable: boolean;
+  /** The calendar's color as "#rrggbb", if it has one. */
+  color: string | null;
 }
 
 /** Whether the app may use the calendar; never asks. */

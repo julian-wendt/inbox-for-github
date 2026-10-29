@@ -1,5 +1,5 @@
-import { CalendarDays, ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { calendarAccess, calendarAuthorized, writableCalendars, type Calendar } from "../../calendar";
 import type { Settings } from "../../store";
 import { t } from "../i18n";
@@ -50,7 +50,7 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
   const chosen = calendars?.find((c) => c.id === settings.calendarId);
   const option = (calendar: Calendar | undefined) => (
     <>
-      <CalendarDays size={16} />
+      <span className="option-dot" style={{ "--option": calendar?.color ?? "transparent" } as CSSProperties} />
       <strong>{calendar ? calendar.title : t("settings.calendarOff")}</strong>
       {calendar && <span className="org-select-summary">{calendar.account}</span>}
     </>

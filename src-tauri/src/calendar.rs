@@ -7,6 +7,7 @@ use std::sync::{mpsc, Mutex};
 use block2::RcBlock;
 use objc2::rc::Retained;
 use objc2::runtime::Bool;
+use objc2_core_graphics::{kCGColorSpaceSRGB, CGColor, CGColorRenderingIntent, CGColorSpace};
 use objc2_event_kit::{EKAuthorizationStatus, EKCalendar, EKEntityType, EKEvent, EKEventAvailability, EKEventStore, EKEventStoreChangedNotification, EKSpan};
 use objc2_foundation::{NSDate, NSError, NSNotification, NSNotificationCenter, NSString, NSURL};
 use tauri::Emitter;
@@ -36,6 +37,8 @@ pub struct Calendar {
     /// The account it belongs to, as Internet Accounts names it ("iCloud", an Exchange address).
     account: String,
     writable: bool,
+    /// The calendar's color as "#rrggbb" in sRGB, if it has one.
+    color: Option<String>,
 }
 
 /// An event, with times as milliseconds since 1970 like JavaScript's `Date`.
@@ -86,6 +89,17 @@ fn event_of(event: &EKEvent) -> Option<Event> {
     }
 }
 
+fn hex(color: &CGColor) -> Option<String> {
+    let srgb = CGColorSpace::with_name(Some(unsafe { kCGColorSpaceSRGB }));
+    let color = unsafe { CGColor::new_copy_by_matching_to_color_space(srgb.as_deref(), CGColorRenderingIntent::RenderingIntentDefault, Some(color), None) }?;
+    if CGColor::number_of_components(Some(&color)) < 3 {
+        return None;
+    }
+    let parts = unsafe { std::slice::from_raw_parts(CGColor::components(Some(&color)), 3) };
+    let byte = |c: f64| (c.clamp(0.0, 1.0) * 255.0).round() as u8;
+    Some(format!("#{:02x}{:02x}{:02x}", byte(parts[0]), byte(parts[1]), byte(parts[2])))
+}
+
 fn failed(error: Retained<NSError>) -> String {
     error.localizedDescription().to_string()
 }
@@ -134,6 +148,7 @@ pub fn calendar_list() -> Result<Vec<Calendar>, String> {
                 title: calendar.title().to_string(),
                 account: calendar.source().map(|s| s.title().to_string()).unwrap_or_default(),
                 writable: calendar.allowsContentModifications(),
+                color: calendar.CGColor().and_then(|c| hex(&c)),
             })
             .collect())
     })
