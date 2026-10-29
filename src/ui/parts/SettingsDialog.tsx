@@ -251,7 +251,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </div>
               <div className="field">
                 <span>{t("settings.workdays")}</span>
-                <div className="segmented">
+                <div className="segmented weekdays">
                   {WEEK.map((day) => (
                     <button
                       key={day}
@@ -267,15 +267,17 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </div>
               <div className="field">
                 <span>{t("settings.followUpTime")}</span>
-                <SegmentField
-                  label={t("settings.followUpTime")}
-                  separator=":"
-                  parts={[
-                    { label: t("snooze.hour"), value: clockOf(draft.followUpTime).hours, segment: HOURS },
-                    { label: t("snooze.minute"), value: clockOf(draft.followUpTime).minutes, segment: MINUTES },
-                  ]}
-                  onChange={(index, value) => change({ followUpTime: clockText({ ...clockOf(draft.followUpTime), [index === 0 ? "hours" : "minutes"]: value }) })}
-                />
+                <div className="time-field">
+                  <SegmentField
+                    label={t("settings.followUpTime")}
+                    separator=":"
+                    parts={[
+                      { label: t("snooze.hour"), value: clockOf(draft.followUpTime).hours, segment: HOURS },
+                      { label: t("snooze.minute"), value: clockOf(draft.followUpTime).minutes, segment: MINUTES },
+                    ]}
+                    onChange={(index, value) => change({ followUpTime: clockText({ ...clockOf(draft.followUpTime), [index === 0 ? "hours" : "minutes"]: value }) })}
+                  />
+                </div>
                 <small>{t("settings.followUpTimeHint")}</small>
               </div>
               <div className="field">
