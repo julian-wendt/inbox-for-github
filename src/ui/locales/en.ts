@@ -610,6 +610,8 @@ export const en = {
   "settings.close": "Close",
   "settings.closeHint": "Close (Esc)",
   "settings.section.general": "General",
+  "calendarDay.menu": "Add to calendar…",
+  "calendarDay.failed": "The event could not be saved.",
   "calendarDay.title": "Add to calendar",
   "calendarDay.previous": "Previous workday (←)",
   "calendarDay.next": "Next workday (→)",

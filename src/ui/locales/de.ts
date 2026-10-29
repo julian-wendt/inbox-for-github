@@ -612,6 +612,8 @@ export const de: Messages = {
   "settings.close": "Schließen",
   "settings.closeHint": "Schließen (Esc)",
   "settings.section.general": "Allgemein",
+  "calendarDay.menu": "In den Kalender legen…",
+  "calendarDay.failed": "Der Termin ließ sich nicht speichern.",
   "calendarDay.title": "In den Kalender legen",
   "calendarDay.previous": "Vorheriger Werktag (←)",
   "calendarDay.next": "Nächster Werktag (→)",
