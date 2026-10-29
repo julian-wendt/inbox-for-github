@@ -1,0 +1,7 @@
+# The Rust release every build uses, locally and in CI (see CONTRIBUTING.md on exact pins).
+# llvm-tools ships the libLLVM that rust-objcopy needs to strip a release build (docs/releasing.md).
+[toolchain]
+channel = "1.99.1"
+components = ["llvm-tools"]
+targets = ["aarch64-apple-darwin"]
+profile = "minimal"
