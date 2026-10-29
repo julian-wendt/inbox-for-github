@@ -91,16 +91,19 @@ jobs:
           npm test
 
       # The remaps keep the runner's paths out of the binary; the more specific one comes last and wins.
+      # The short commit is the bundle version, so About reads "Version 0.3.1 (01d877d)".
       - name: Build
         run: |
           export RUSTFLAGS="--remap-path-prefix=$HOME=/build --remap-path-prefix=$GITHUB_WORKSPACE=/src"
-          npm run tauri build -- --bundles app -- --locked
+          npm run tauri build -- --bundles app --config "{\"bundle\":{\"macOS\":{\"bundleVersion\":\"${GITHUB_SHA::7}\"}}}" -- --locked
 
       - name: Check the bundle
         run: |
           plist="$APP/Contents/Info.plist"
           built=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist")
           [ "$built" = "$VERSION" ] || { echo "The bundle says $built, the manifest $VERSION."; exit 1; }
+          build=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$plist")
+          [ "$build" = "${GITHUB_SHA::7}" ] || { echo "The bundle's build is $build, the commit ${GITHUB_SHA::7}."; exit 1; }
           lipo -archs "$APP/Contents/MacOS/inbox-for-github" | grep -qx arm64 || { echo "Not an arm64 build."; exit 1; }
           codesign --verify --deep --strict "$APP" || { echo "The bundle's signature is incomplete; a download would open as damaged."; exit 1; }
           if strings -a "$APP/Contents/MacOS/inbox-for-github" | grep -E '/Users/|/home/'; then

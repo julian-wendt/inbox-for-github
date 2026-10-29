@@ -19,9 +19,10 @@ passed, since a published tag cannot be taken back.
 3. **The workflow builds the app** on `macos-latest` when the version in
    `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
    `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
-   no path of the runner ends up in the binary. It checks that the bundle carries the version, is
-   arm64, has a complete signature, and that neither the binary nor `dist/` holds a `/Users/` or
-   `/home/` path, and keeps the zip as an artifact.
+   no path of the runner ends up in the binary, and the short commit as the bundle version, so
+   About reads "Version 0.3.1 (01d877d)" instead of repeating the version. It checks that the
+   bundle carries the version and the commit, is arm64, has a complete signature, and that neither
+   the binary nor `dist/` holds a `/Users/` or `/home/` path, and keeps the zip as an artifact.
 4. **Only a green build tags.** release-please then creates the tag and a draft release with the
    notes, the zip is attached and the release published. A failed build leaves the version bump on
    `main` without a tag; the next push to `main`, usually the fix, runs the build again.
@@ -80,10 +81,10 @@ npm run build:local              # build, replace /Applications/Inbox for GitHub
 npm run build:local -- --dry-run # only print the version
 ```
 
-`scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g.
-`0.3.2-alpha.2+e9d4fb3` two commits after v0.3.1 (`.dirty` with uncommitted changes), so it
-ranks above the release it follows. The version reaches Tauri as a `--config` override; no file
-changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
+`scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g. `0.3.2-alpha.2`
+two commits after v0.3.1, so it ranks above the release it follows. The short commit (`.dirty`
+with uncommitted changes) is the bundle version; About shows "Version 0.3.2-alpha.2 (e9d4fb3)".
+Both reach Tauri as `--config` overrides; no file changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
 quits the installed app, replaces it and starts it again; the dev window keeps running, and the
 bundle identifier and so the data stay the same.
 

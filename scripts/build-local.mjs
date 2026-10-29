@@ -3,10 +3,11 @@
  * daily use follows `main` between releases. No file in the checkout changes: the version and the
  * signing identity reach Tauri as `--config` overrides.
  *
- * The version is the next patch after `package.json`, then `alpha.<commits since the last tag>`
- * and the short commit as build metadata, e.g. `0.3.2-alpha.2+e9d4fb3` (`.dirty` with uncommitted
- * changes). Semver ranks a prerelease below its release, hence the patch bump: the build must rank
- * above the release it follows. On a tagged commit the version stays the release's.
+ * The version is the next patch after `package.json`, then `alpha.<commits since the last tag>`,
+ * e.g. `0.3.2-alpha.2`. Semver ranks a prerelease below its release, hence the patch bump: the
+ * build must rank above the release it follows. On a tagged commit the version stays the
+ * release's. The short commit (`.dirty` with uncommitted changes) is the bundle version, which the
+ * About window shows in parentheses: "Version 0.3.2-alpha.2 (e9d4fb3)".
  *
  * With `INBOX_SIGNING_IDENTITY` set to the name of a code-signing certificate in the login
  * keychain, the bundle is signed with it instead of ad hoc, so macOS sees the same app across
@@ -61,10 +62,10 @@ const dirty = run("git", ["status", "--porcelain"]) !== "";
 const sha = run("git", ["rev-parse", "--short", "HEAD"]) + (dirty ? ".dirty" : "");
 const [major, minor, patch] = released.split(".").map(Number);
 const version =
-  ahead === 0 && !dirty ? released : `${major}.${minor}.${patch + 1}-alpha.${ahead}+${sha}`;
+  ahead === 0 && !dirty ? released : `${major}.${minor}.${patch + 1}-alpha.${ahead}`;
 
 const identity = process.env.INBOX_SIGNING_IDENTITY;
-console.log(`Version ${version}, signed ${identity ? `as "${identity}"` : "ad hoc"}.`);
+console.log(`Version ${version} (${sha}), signed ${identity ? `as "${identity}"` : "ad hoc"}.`);
 if (dryRun) process.exit(0);
 
 // npm ci empties node_modules, which would break a dev window running from this checkout
@@ -73,7 +74,8 @@ if (!existsSync(installedLock) || statSync("package-lock.json").mtimeMs > statSy
   show("npm", ["ci"]);
 }
 
-const config = { version, ...(identity && { bundle: { macOS: { signingIdentity: identity } } }) };
+const macOS = { bundleVersion: sha, ...(identity && { signingIdentity: identity }) };
+const config = { version, bundle: { macOS } };
 show("npm", ["run", "tauri", "build", "--", "--bundles", "app", "--config", JSON.stringify(config), "--", "--locked"], {
   env: {
     ...process.env,
@@ -102,4 +104,4 @@ show("rm", ["-rf", installed]);
 // ditto keeps the bundle's attributes and signature; cp -R may not
 show("ditto", [built, installed]);
 show("open", [installed]);
-console.log(`Installed ${version} in /Applications and started it.`);
+console.log(`Installed ${version} (${sha}) in /Applications and started it.`);
