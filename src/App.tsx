@@ -205,6 +205,11 @@ export default function App() {
   const [today, setToday] = useState(localDay);
   const dated = useCallback((c: Classified) => datedOf(c, focus, plans, today), [focus, plans, today]);
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
+  // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
+  const unreadPlannedIds = useMemo(
+    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me))).map((c) => c.item.id)),
+    [plannedAll, inbox.seen, inbox.unreadMarks, me],
+  );
   const plannedGroups = useMemo(
     () => (bucket === "planned" ? groupBySnoozeEnd(plannedAll.filter((c) => matchesText(c.item, query)), (c) => datedAt(datedOf(c, focus, plans, today)!), (c) => c.statusAt ?? "", sort.of("planned") === "oldest") : []),
     [bucket, plannedAll, query, focus, plans, today, sort],
@@ -1075,7 +1080,7 @@ export default function App() {
       ) : (
         <InboxList
           timeOf={rowTime}
-          unread={unreadInboxIds}
+          unread={bucket === "planned" ? unreadPlannedIds : unreadInboxIds}
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}

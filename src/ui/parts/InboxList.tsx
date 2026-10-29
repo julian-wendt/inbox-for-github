@@ -67,7 +67,7 @@ interface Props {
   counts: Record<View, number>;
   /** The time each row shows, as it is sorted (`sortTime`). */
   timeOf: (entry: Classified) => string;
-  /** Ids of the unread items, printed bold. */
+  /** Ids of the unread items, printed bold with a dot, in the inbox and in Planned. */
   unread: ReadonlySet<string>;
   /** Why an item has a date, if it has one (see `datedOf`): the rows' star, day and, in Planned, the time at the end follow it. */
   datedOf: (entry: Classified) => Dated | null;
@@ -220,7 +220,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       entry={entry}
                       selected={entry.item.id === selected}
                       marked={marks.has(entry.item.id)}
-                      unread={bucket === "inbox" && unread.has(entry.item.id)}
+                      unread={(bucket === "inbox" || bucket === "planned") && unread.has(entry.item.id)}
                       dated={dated ?? undefined}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
                       when={bucket === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
