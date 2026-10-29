@@ -58,6 +58,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Erster Abruf nach dem Start ist vollständig und teurer; die nächsten (⌘R oder automatisch)
       sind Deltas, etwa 30 Punkte. Zahlen notieren.
 - [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
+- [ ] Eine Review-Anfrage wird auf GitHub zurückgezogen: nach dem nächsten ⌘R (Delta) ist der PR
+      aus der Inbox verschwunden, wenn er dich sonst nicht betrifft; sonst steht er ohne Review-Bitte da.
 - [ ] ⇧⌘R (auch in der Palette und in der Hilfe) lädt sofort vollständig: ein Board-Wechsel
       seit dem letzten Abruf ist danach zu sehen, der Ring zeigt die höheren Kosten.
 - [ ] „Geschlossene und gemergte Items“ kürzer oder aus: keine neuen Punkte, ältere geschlossene

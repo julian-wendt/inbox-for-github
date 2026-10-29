@@ -50,7 +50,7 @@ the window: layout, keys, menus, the notification and Dock behavior, the real to
 API. Time is the world's clock (`world.advance`), never the wall clock.
 
 The simulator reproduces known gaps on purpose (board moves and withdrawn review requests leave
-`updatedAt` alone), so a test can show a delta missing them. When the real API turns out to
+`updatedAt` alone), so a test can show a delta missing them, or catching them another way. When the real API turns out to
 differ, fix the simulator and note the verified fact in `reference/github-api.md`.
 
 ## Checking against real data
