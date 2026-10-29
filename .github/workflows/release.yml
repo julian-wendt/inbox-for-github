@@ -102,6 +102,7 @@ jobs:
           built=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist")
           [ "$built" = "$VERSION" ] || { echo "The bundle says $built, the manifest $VERSION."; exit 1; }
           lipo -archs "$APP/Contents/MacOS/inbox-for-github" | grep -qx arm64 || { echo "Not an arm64 build."; exit 1; }
+          codesign --verify --deep --strict "$APP" || { echo "The bundle's signature is incomplete; a download would open as damaged."; exit 1; }
           if strings -a "$APP/Contents/MacOS/inbox-for-github" | grep -E '/Users/|/home/'; then
             echo "The binary holds local paths."; exit 1
           fi
