@@ -211,11 +211,19 @@ export function CommandPalette(props: Props) {
   );
 }
 
-function Item({ children, onSelect, icon, keys, value }: { children: ReactNode; onSelect: () => void; icon?: ReactNode; keys?: string; value?: string }) {
+/** One palette row; `hint` adds a short second line, which the search matches too. */
+function Item({ children, onSelect, icon, keys, value, hint }: { children: ReactNode; onSelect: () => void; icon?: ReactNode; keys?: string; value?: string; hint?: string }) {
   return (
     <Command.Item onSelect={onSelect} value={value}>
       {icon ?? <span className="palette-icon" />}
-      <span className="palette-label">{children}</span>
+      {hint ? (
+        <span className="palette-text">
+          <span className="palette-label">{children}</span>
+          <small className="palette-hint">{hint}</small>
+        </span>
+      ) : (
+        <span className="palette-label">{children}</span>
+      )}
       {keys && <kbd>{keys}</kbd>}
     </Command.Item>
   );

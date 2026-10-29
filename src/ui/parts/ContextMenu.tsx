@@ -6,6 +6,8 @@ import { keyMatches } from "../keyMatch";
 /** One entry of a context menu; `items` makes it open a submenu instead of running. */
 export interface MenuEntry {
   label: string;
+  /** A short second line for entries whose label does not say everything. */
+  hint?: string;
   icon?: ReactNode;
   /** Shortcut shown on the right; pressing it while the menu is open runs the entry. */
   keys?: string;
@@ -179,7 +181,10 @@ function MenuRow(props: { entry: MenuEntry; slot: boolean; active: boolean; open
       onClick={props.onSelect}
     >
       {slot && <span className="menu-icon">{entry.checked ? <Check size={14} /> : entry.icon}</span>}
-      <span className="menu-label">{entry.label}</span>
+      <span className="menu-label">
+        {entry.label}
+        {entry.hint && <small className="menu-hint">{entry.hint}</small>}
+      </span>
       {entry.keys && <kbd>{entry.keys}</kbd>}
       {entry.items && <ChevronRight size={14} className="menu-more" />}
     </button>
