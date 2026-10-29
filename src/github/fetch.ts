@@ -374,6 +374,7 @@ interface IdsResult {
  * @param token  GitHub token with `repo` and `read:org` scope.
  * @param orgs   Owner logins, as for `fetchItems`; an empty list returns an empty set.
  * @param me     The viewer's login, which stands for their personal repositories in `orgs`.
+ * @param signal Stops between and during the requests.
  * @returns The ids, at most 1000 (where GitHub's search stops).
  *
  * @example

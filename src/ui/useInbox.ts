@@ -342,6 +342,8 @@ export function useInbox(): Inbox {
       return true;
     } catch (e) {
       if (signal.aborted) return false;
+      // Stops the searches still running beside the one that failed.
+      controller.abort();
       log.debug("refresh failed", { error: String(e), ms: Date.now() - startedAt });
       if (e instanceof RateLimitError) pause(e.until);
       setError(String(e));

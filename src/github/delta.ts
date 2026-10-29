@@ -33,6 +33,7 @@ export function mergeDelta(previous: Item[], changed: Item[], closedDays: number
  * Takes back the review requests GitHub no longer has: an open item with the reason "review"
  * whose id is not among `requested` loses that reason, and one left without any reason leaves,
  * as a full fetch would no longer find it. Closed items keep theirs; the search is for open ones.
+ * A request made while the refresh runs may be taken back once; the next delta's overlap returns it.
  *
  * @param items      The items after the delta's merge.
  * @param requested  The ids of all open pull requests requesting the viewer's review (`fetchReviewIds`).
