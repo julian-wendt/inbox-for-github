@@ -53,8 +53,11 @@ living in the plan (`planned`, `focus`); the time lives only in the calendar.
 - An ad hoc rebuild loses the access: after `build:local` replaced 0.3.2-alpha.18 with
   alpha.20, macOS treated it as a new app and access had to be granted again. The permission is
   tied to the code signature, and every ad hoc build gets a new one (see `docs/releasing.md`).
+  The new build's status is "not determined", so the notice's button shows macOS's dialog again
+  (seen with 0.3.2-alpha.23).
 - A store created before access was granted lists no calendars until `reset`, so
-  `calendar_access` resets it after the answer.
+  `calendar_access` resets it after the answer, and also when access is there already, for access
+  granted in System Settings meanwhile (that path not verified yet), then sends `calendar-changed`.
 - An event created through EventKit in the Exchange calendar appears in Outlook after the sync.
 - `eventIdentifier` stays the same after the event was moved to another day in Outlook and synced
   back; `eventWithIdentifier:` then returns the new start and end. The stored link is that
