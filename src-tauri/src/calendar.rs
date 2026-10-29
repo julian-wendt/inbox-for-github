@@ -125,11 +125,11 @@ pub fn calendar_status() -> &'static str {
 }
 
 /// Opens System Settings › Privacy & Security › Calendars, where a declined access is allowed.
-#[tauri::command]
+#[tauri::command(async)]
 pub fn calendar_settings() -> Result<(), String> {
-    Command::new("open")
+    Command::new("/usr/bin/open")
         .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")
-        .spawn()
+        .status()
         .map(|_| ())
         .map_err(|e| e.to_string())
 }
@@ -138,15 +138,13 @@ pub fn calendar_settings() -> Result<(), String> {
 ///
 /// Waits for the answer to macOS's permission dialog, so it runs off the main thread. Returns
 /// false when the user declined now or earlier; the choice then lives in System Settings ›
-/// Privacy & Security › Calendars. Resets the store also when access was there already, since
-/// one made before it was granted in System Settings lists no calendars.
+/// Privacy & Security › Calendars. Resets the store, also when access was there already, since
+/// one made before access was granted (here or in System Settings) lists no calendars, and then
+/// sends `CHANGED_EVENT`, so what read the old store reads again.
 #[tauri::command(async)]
-pub fn calendar_access() -> Result<bool, String> {
+pub fn calendar_access(app: tauri::AppHandle) -> Result<bool, String> {
     if calendar_authorized() {
-        return with_store(|store| {
-            unsafe { store.reset() };
-            Ok(true)
-        });
+        return reset(&app, true);
     }
     let (sender, receiver) = mpsc::channel();
     let answer = RcBlock::new(move |granted: Bool, _: *mut NSError| {
@@ -157,11 +155,16 @@ pub fn calendar_access() -> Result<bool, String> {
         Ok(())
     })?;
     let granted = receiver.recv().map_err(|e| e.to_string())?;
-    // A store made before access was granted shows no calendars until it is reset.
+    reset(&app, granted)
+}
+
+fn reset(app: &tauri::AppHandle, granted: bool) -> Result<bool, String> {
     with_store(|store| {
         unsafe { store.reset() };
-        Ok(granted)
-    })
+        Ok(())
+    })?;
+    let _ = app.emit(CHANGED_EVENT, ());
+    Ok(granted)
 }
 
 /// All calendars for events, writable or not.

@@ -5,6 +5,8 @@ import { calendarAccess, calendarSettings, calendarStatus, type CalendarStatus }
 export interface CalendarAccess {
   /** Null while no calendar is chosen or access is there. */
   missing: Exclude<CalendarStatus, "granted"> | null;
+  /** While `fix` runs; the button waits for it. */
+  busy: boolean;
   /** Shows macOS's permission dialog, or opens System Settings once access was declined. */
   fix: () => Promise<void>;
 }
@@ -23,6 +25,7 @@ export interface CalendarAccess {
  */
 export function useCalendarAccess(calendarId: string): CalendarAccess {
   const [status, setStatus] = useState<CalendarStatus>("granted");
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!calendarId) return;
@@ -42,8 +45,16 @@ export function useCalendarAccess(calendarId: string): CalendarAccess {
   }, [calendarId]);
 
   const fix = async () => {
-    if (status === "ask") setStatus((await calendarAccess()) ? "granted" : "denied");
-    else await calendarSettings();
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (status === "ask") setStatus((await calendarAccess()) ? "granted" : "denied");
+      else await calendarSettings();
+    } catch {
+      // The status is read again on the next focus.
+    } finally {
+      setBusy(false);
+    }
   };
-  return { missing: calendarId && status !== "granted" ? status : null, fix };
+  return { missing: calendarId && status !== "granted" ? status : null, busy, fix };
 }

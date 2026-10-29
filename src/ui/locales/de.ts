@@ -653,7 +653,7 @@ export const de: Messages = {
   "calendarAccess.text": "Pläne kommen nicht in deinen Kalender, und Änderungen dort nicht zurück. Nach einem Update vergisst macOS die Erlaubnis manchmal.",
   "calendarAccess.ask": "Zugriff erlauben",
   "calendarAccess.settings": "Datenschutz & Sicherheit öffnen",
-  "calendarAccess.denied": "Schalte dort unter Kalender Inbox for GitHub ein.",
+  "calendarAccess.denied": "Gib Inbox for GitHub dort unter Kalender vollen Zugriff.",
   "settings.calendar": "Kalender für geplante Items",
   "settings.calendarNone": "Kein Kalender gewählt",
   "settings.calendarClear": "Auswahl aufheben",

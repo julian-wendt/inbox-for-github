@@ -19,7 +19,7 @@ export function CalendarNotice({ access }: { access: CalendarAccess }) {
       </strong>
       <small>{t("calendarAccess.text")}</small>
       {access.missing === "denied" && <small>{t("calendarAccess.denied")}</small>}
-      <button className="btn" onClick={() => void access.fix()}>
+      <button className="btn" disabled={access.busy} onClick={() => void access.fix()}>
         {t(access.missing === "ask" ? "calendarAccess.ask" : "calendarAccess.settings")}
       </button>
     </div>

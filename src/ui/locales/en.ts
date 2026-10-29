@@ -651,7 +651,7 @@ export const en = {
   "calendarAccess.text": "Plans do not reach your calendar, and changes there do not come back. macOS may forget the permission after an update.",
   "calendarAccess.ask": "Allow access",
   "calendarAccess.settings": "Open Privacy & Security",
-  "calendarAccess.denied": "Switch Inbox for GitHub on under Calendars there.",
+  "calendarAccess.denied": "Give Inbox for GitHub full access under Calendars there.",
   "settings.calendar": "Calendar for planned items",
   "settings.calendarNone": "No calendar selected",
   "settings.calendarClear": "Clear",
