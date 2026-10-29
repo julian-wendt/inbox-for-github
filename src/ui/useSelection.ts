@@ -11,8 +11,9 @@ import { useCallback, useEffect, useState } from "react";
  * @param ids     The selectable ids in order.
  * @param header  Ids that only head a group (e.g. "bar:…"); a vanished item is followed by the
  *                next item, not by a header, so an open detail stays open.
- * @returns The selected id, moves by offset (`move(1)` = next) or to a given id, and `select(null)`
- *   to select nothing until the next move or click.
+ * @returns The selected id, moves by offset (`move(1)` = next) or to a given id, `select(null)`
+ *   to select nothing until the next move or click, and `replaced`: true in the render where the
+ *   selected id is a successor standing in for one that left the list.
  */
 export function useSelection(ids: string[], header: (id: string) => boolean = () => false) {
   const [chosen, setChosen] = useState<{ id: string | null; index: number; none?: boolean }>({ id: ids[0] ?? null, index: 0 });
@@ -43,7 +44,8 @@ export function useSelection(ids: string[], header: (id: string) => boolean = ()
     [ids, selected, chosen],
   );
 
-  return { selected, select, move };
+  const replaced = !chosen.none && found < 0 && selected !== null;
+  return { selected, select, move, replaced };
 }
 
 /** What takes a vanished selection's place: the id now at its index, or for an item the nearest item from there. */

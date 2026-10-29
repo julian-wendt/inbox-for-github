@@ -5,7 +5,7 @@ import type { Classified } from "../../classify";
 import type { Status } from "../../model";
 import { t } from "../i18n";
 import { sameLogin } from "../../timeline";
-import { statusesFor, type LinkFormat, type View, type VIEWS } from "../labels";
+import { statusesFor, statusHint, type LinkFormat, type View, type VIEWS } from "../labels";
 import { StatusIcon } from "./StatusIcon";
 import { useGutter } from "../useGutter";
 import { noteInput } from "../inputTrail";
@@ -106,26 +106,30 @@ export function CommandPalette(props: Props) {
                   </Item>
                 )}
                 {statusesFor(props.current).map((s) => (
-                  <Item key={s.id} onSelect={run(() => (s.id === "snoozed" ? props.onFollowUp() : props.onStatus(s.id)))} icon={<StatusIcon status={s.id} />} keys={s.key}>
+                  <Item key={s.id} onSelect={run(() => (s.id === "snoozed" ? props.onFollowUp() : props.onStatus(s.id)))} icon={<StatusIcon status={s.id} />} keys={s.key} hint={statusHint(s.id)}>
                     {t("palette.status", { status: s.title })}
                   </Item>
                 ))}
                 <Item onSelect={run(props.onOpenCurrent)} keys="⌃O">
                   {t("action.openOnGitHub")}
                 </Item>
-                {props.onOrca && <Item onSelect={run(props.onOrca)} keys="W">{t("orca.open")}</Item>}
+                {props.onOrca && (
+                  <Item onSelect={run(props.onOrca)} keys="W" hint={t("hint.orca.open")}>
+                    {t("orca.open")}
+                  </Item>
+                )}
                 {!props.current.item.closed && !props.current.item.assignees.some((a) => sameLogin(a, props.me)) && (
                   <Item onSelect={run(props.onAssignMe)} keys="⌃A">
                     {t("assign.action")}
                   </Item>
                 )}
                 {props.onToday && (
-                  <Item onSelect={run(props.onToday)} keys="T">
+                  <Item onSelect={run(props.onToday)} keys="T" hint={t("hint.menu.today")}>
                     {t("menu.today")}
                   </Item>
                 )}
                 {props.onPlan && (
-                  <Item onSelect={run(props.onPlan)} keys="P">
+                  <Item onSelect={run(props.onPlan)} keys="P" hint={t("hint.menu.plan")}>
                     {t("menu.plan")}
                   </Item>
                 )}
@@ -138,9 +142,13 @@ export function CommandPalette(props: Props) {
                 <Item onSelect={run(() => props.onCopy("url"))} keys="C">
                   {t("menu.copyLink")}
                 </Item>
-                <Item onSelect={run(() => props.onCopy("ref"))}>{t("menu.copyRef")}</Item>
-                <Item onSelect={run(() => props.onCopy("markdown"))}>{t("menu.copyMarkdown")}</Item>
-                <Item onSelect={run(props.onUntrack)}>
+                <Item onSelect={run(() => props.onCopy("ref"))} hint={t("hint.menu.copyRef")}>
+                  {t("menu.copyRef")}
+                </Item>
+                <Item onSelect={run(() => props.onCopy("markdown"))} hint={t("hint.menu.copyMarkdown")}>
+                  {t("menu.copyMarkdown")}
+                </Item>
+                <Item onSelect={run(props.onUntrack)} hint={t("hint.untrack.action")}>
                   {t("untrack.action")}
                 </Item>
               </Command.Group>
@@ -170,10 +178,10 @@ export function CommandPalette(props: Props) {
             )}
 
             <Command.Group heading={t("palette.general")}>
-              <Item onSelect={run(props.onRefresh)} keys="⌘R">
+              <Item onSelect={run(props.onRefresh)} keys="⌘R" hint={t("hint.action.refreshAll")}>
                 {t("action.refreshAll")}
               </Item>
-              <Item onSelect={run(props.onRefreshFull)} keys="⇧⌘R">
+              <Item onSelect={run(props.onRefreshFull)} keys="⇧⌘R" hint={t("hint.action.refreshFull")}>
                 {t("action.refreshFull")}
               </Item>
               <Item onSelect={run(props.onToggleTheme)}>{t("palette.toggleTheme")}</Item>
@@ -181,7 +189,7 @@ export function CommandPalette(props: Props) {
               <Item onSelect={run(props.onSettings)} keys="⌘,">
                 {t("action.settings")}
               </Item>
-              <Item onSelect={run(props.onResetFilters)}>
+              <Item onSelect={run(props.onResetFilters)} hint={t("hint.action.resetView")}>
                 {t("action.resetView")}
               </Item>
               <Item onSelect={run(props.onRules)}>{t("action.rules")}</Item>
@@ -211,11 +219,19 @@ export function CommandPalette(props: Props) {
   );
 }
 
-function Item({ children, onSelect, icon, keys, value }: { children: ReactNode; onSelect: () => void; icon?: ReactNode; keys?: string; value?: string }) {
+/** One palette row; `hint` adds a short second line, which the search matches too. */
+function Item({ children, onSelect, icon, keys, value, hint }: { children: ReactNode; onSelect: () => void; icon?: ReactNode; keys?: string; value?: string; hint?: string }) {
   return (
     <Command.Item onSelect={onSelect} value={value}>
       {icon ?? <span className="palette-icon" />}
-      <span className="palette-label">{children}</span>
+      {hint ? (
+        <span className="palette-text">
+          <span className="palette-label">{children}</span>
+          <small className="palette-hint">{hint}</small>
+        </span>
+      ) : (
+        <span className="palette-label">{children}</span>
+      )}
       {keys && <kbd>{keys}</kbd>}
     </Command.Item>
   );
