@@ -30,6 +30,30 @@ export function mergeDelta(previous: Item[], changed: Item[], closedDays: number
 }
 
 /**
+ * Finds the cached copies of issues that were transferred to another repository, where GitHub
+ * gave them a new node id. A fetched issue that names `transferredFrom` matches the one cached
+ * item in that repository with the same `createdAt` and title, as the transfer keeps both; a
+ * cached item the fetch still returns under its own id is no stale copy and never matches.
+ *
+ * @param previous  The items cached before the fetch.
+ * @param fetched   The items the fetch returned, full or delta.
+ * @returns Old node id → new node id, for each transfer found; empty when there is none.
+ *
+ * @example
+ *   findTransfers(cached, fresh); // Map { "I_old" => "I_new" } after octo-org/docs#42 moved to octo-org/portal#7
+ */
+export function findTransfers(previous: Item[], fetched: Item[]): Map<string, string> {
+  const fetchedIds = new Set(fetched.map((item) => item.id));
+  const moves = new Map<string, string>();
+  for (const fresh of fetched) {
+    if (!fresh.transferredFrom) continue;
+    const candidates = previous.filter((old) => old.kind === "issue" && !fetchedIds.has(old.id) && old.repo === fresh.transferredFrom && old.createdAt === fresh.createdAt && old.title === fresh.title);
+    if (candidates.length === 1) moves.set(candidates[0].id, fresh.id);
+  }
+  return moves;
+}
+
+/**
  * Leaves out closed items older than `closedDays`; 0 leaves out every closed item. Open items stay.
  *
  * @example

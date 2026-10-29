@@ -12,7 +12,7 @@ import { viewOf, type View } from "../../ui/labels";
 import { followUpOf } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
-import { canDelta, DELTA_OVERLAP_MS, mergeDelta, withinClosedWindow } from "../delta";
+import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems } from "../fetch";
 import type { GitHubSimulator, Ref } from "./world";
 
@@ -82,7 +82,8 @@ export class InboxSession {
       now: this.world.now,
       ...(delta && { since: new Date(this.last!.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
     });
-    this.items = delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched;
+    const moves = findTransfers(this.items, fetched);
+    this.items = (delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched).filter((item) => !moves.has(item.id));
     this.last = { fetchedAt: this.world.now, fullAt: delta ? this.last!.fullAt : this.world.now, key };
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
   }

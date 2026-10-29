@@ -3,7 +3,7 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, mergeDelta, withinClosedWindow, type Coverage } from "../github/delta";
+import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -135,6 +135,15 @@ function logMerge(before: Item[], fetched: Item[], after: Item[]): void {
   });
 }
 
+/** Debug: which cached issues turned out to be transferred, as `old → new`. */
+function logTransfers(before: Item[], fetched: Item[], moves: Map<string, string>): void {
+  const refOf = (items: Item[], id: string) => {
+    const found = items.find((i) => i.id === id);
+    return found ? ref(found) : id;
+  };
+  log.debug("transferred", { items: [...moves].map(([from, to]) => `${refOf(before, from)} → ${refOf(fetched, to)}`).join(",") });
+}
+
 /** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
 function legacyDone(c: Classified, viewer: string): boolean {
   const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, viewer);
@@ -262,8 +271,11 @@ export function useInbox(): Inbox {
       signal.throwIfAborted();
       const avatar = (await embedAvatar(viewer.avatarUrl, 40)) ?? lastAvatar.current ?? undefined;
       // Onto the items as they are now, so a change made while the refresh ran (e.g. assigning) stays.
-      let items = delta ? mergeDelta((lastFetch.current ?? last).items, fetched, coverage.closedDays) : fetched;
-      if (delta) logMerge((lastFetch.current ?? last).items, fetched, items);
+      const before = lastFetch.current?.items ?? [];
+      const moves = findTransfers(before, fetched);
+      let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
+      if (delta) logMerge(before, fetched, items);
+      if (moves.size > 0) logTransfers(before, fetched, moves);
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
       const fetchedAt = new Date();
       const result: CachedFetch = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../model";
-import { canDelta, covers, decodeScope, encodeScope, FULL_EVERY_MS, mergeDelta } from "./delta";
+import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta } from "./delta";
 
 const item = (id: string, overrides: Partial<Item> = {}) => ({ id, title: id, closed: null, ...overrides }) as Item;
 const now = Date.parse("2026-10-23T12:00:00Z");
@@ -20,6 +20,33 @@ describe("mergeDelta", () => {
     const fresh = item("fresh", { closed: { state: "merged", at: "2026-10-22T00:00:00Z" } });
     expect(mergeDelta([old, fresh], [], 7, now).map((i) => i.id)).toEqual(["fresh"]);
     expect(mergeDelta([fresh], [], 0, now)).toEqual([]);
+  });
+});
+
+describe("findTransfers", () => {
+  const issue = (id: string, repo: string, overrides: Partial<Item> = {}) => item(id, { kind: "issue", repo, title: "Broken link", createdAt: "2026-10-01T09:00:00Z", ...overrides });
+  const moved = (overrides: Partial<Item> = {}) => issue("I_new", "octo-org/portal", { transferredFrom: "octo-org/docs", ...overrides });
+
+  it("pairs the cached copy in the old repository with the moved issue", () => {
+    expect(findTransfers([issue("I_old", "octo-org/docs"), issue("I_other", "octo-org/app")], [moved()])).toEqual(new Map([["I_old", "I_new"]]));
+  });
+
+  it("needs the same repository, creation time, title and kind", () => {
+    const misses = [issue("a", "octo-org/app"), issue("b", "octo-org/docs", { createdAt: "2026-10-01T09:00:01Z" }), issue("c", "octo-org/docs", { title: "Other" }), issue("d", "octo-org/docs", { kind: "pr" })];
+    expect(findTransfers(misses, [moved()])).toEqual(new Map());
+  });
+
+  it("leaves a cached item alone that the fetch still returns under its own id", () => {
+    const old = issue("I_old", "octo-org/docs");
+    expect(findTransfers([old], [old, moved()])).toEqual(new Map());
+  });
+
+  it("pairs nothing when two cached issues would match", () => {
+    expect(findTransfers([issue("a", "octo-org/docs"), issue("b", "octo-org/docs")], [moved()])).toEqual(new Map());
+  });
+
+  it("finds nothing among issues never moved", () => {
+    expect(findTransfers([issue("I_old", "octo-org/docs")], [issue("I_new", "octo-org/portal")])).toEqual(new Map());
   });
 });
 

@@ -223,3 +223,17 @@ describe("Offline", () => {
     expect(world.budget.remaining).toBe(5000);
   });
 });
+
+describe("Transferred issues", () => {
+  it("shows a transferred issue once, under its new repository, after the next delta", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    expect((await app.refresh()).kind).toBe("delta");
+
+    expect(app.items.map((i) => [i.id, i.repo])).toEqual([[moved.id, "octo-org/portal"]]);
+  });
+});
