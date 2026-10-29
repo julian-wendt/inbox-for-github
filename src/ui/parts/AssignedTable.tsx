@@ -139,7 +139,7 @@ export function AssignedTable(props: Props) {
         marked={props.marks.has(entry.item.id)}
         onMark={(range) => props.onMark(entry.item.id, range)}
         showOpened={props.showOpened}
-        dated={dated ?? undefined}
+        dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
         when={props.mode === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
         assigned={assigned}
@@ -294,7 +294,7 @@ interface RowProps {
   marked: boolean;
   onMark: (range: boolean) => void;
   showOpened: boolean;
-  /** Pinned for today or planned for a day: the day as a blue badge after the title. */
+  /** Pinned for today or planned for a day: the day as a blue badge after the title; left out in Planned, whose end column names it. */
   dated?: Dated;
   /** The day the item came into Today when that was before today: it carries over, marked. */
   carriedSince?: string;

@@ -650,9 +650,14 @@
   font-weight: 700;
 }
 
-/* Badges after the title: the opening date quiet and absolute, so it does not read like the
-   relative time at the end of the row; the planned day blue, like Plan elsewhere. */
-.table-opened,
+/* Quiet and absolute, so it does not read like the relative time at the end of the row. */
+.table-opened {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 11.5px;
+}
+
+/* Badges after the title: the planned day blue, like Plan elsewhere. */
 .table-planned,
 .table-carried {
   display: inline-flex;
@@ -663,11 +668,6 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-}
-
-.table-opened {
-  background: color-mix(in srgb, var(--text) 6%, transparent);
-  color: var(--text-muted);
 }
 
 .table-planned {
