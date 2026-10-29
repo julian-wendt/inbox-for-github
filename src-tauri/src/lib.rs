@@ -1,3 +1,5 @@
+mod calendar;
+
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::Path;
@@ -240,11 +242,20 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts, system_locale])
+        .invoke_handler(tauri::generate_handler![
+            calendar::calendar_access,
+            calendar::calendar_events,
+            calendar::calendar_find,
+            calendar::calendar_list,
+            calendar::calendar_put,
+            calendar::calendar_remove,
+            gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts, system_locale
+        ])
         .setup(|app| {
             // The web view picks the item; the window must come forward first, also when hidden.
             let handle = app.handle().clone();
             app.notification().on_action(move |_| show_main_window(&handle))?;
+            calendar::watch(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| {
