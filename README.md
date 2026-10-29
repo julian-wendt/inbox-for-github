@@ -41,7 +41,7 @@ there is something to ship, not on a schedule.
 
 ## Requirements
 
-- macOS, Node 22+ and npm
+- macOS, Node 26+ (the version in `.node-version`) and npm
 - Rust (`brew install rustup && rustup default stable`)
 - GitHub CLI, logged in: `gh auth login`. The app needs the scopes `repo`, `read:org` and
   `project`; if one is missing, it says so and shows the command that adds it

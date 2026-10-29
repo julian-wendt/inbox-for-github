@@ -2,7 +2,7 @@
 
 ## Setup
 
-See the README for requirements (macOS, Node 22+, Rust via rustup, `gh auth login`). If `cargo`
+See the README for requirements (macOS, Node 26+, Rust via rustup, `gh auth login`). If `cargo`
 comes from Homebrew's rustup, put it on the path for the session:
 
 ```sh
