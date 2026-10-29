@@ -18,7 +18,7 @@ import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
 import { CalendarDay } from "./ui/parts/CalendarDay";
-import { findEvents, moveEvent, putEvent, removeEvent, type CalendarEvent } from "./calendar";
+import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEvent } from "./calendar";
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
@@ -39,6 +39,7 @@ import { useTheme } from "./ui/theme";
 import { useAttention, type Pending } from "./ui/useAttention";
 import { useColumnWidths } from "./ui/useColumnWidths";
 import { useHotkeys } from "./ui/useHotkeys";
+import { useCalendarSync } from "./ui/useCalendarSync";
 import { useWindowFocus } from "./ui/useWindowFocus";
 import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
@@ -516,12 +517,14 @@ export default function App() {
     return [
       {
         run: () =>
-          void findEvents([id]).then(([event]) => {
-            if (!event || localDay(new Date(event.start)) === day) return;
-            before = event;
-            const to = onDay(event, day);
-            return moveEvent(id, to.start, to.end);
-          }),
+          void writing(
+            findEvents([id]).then(([event]) => {
+              if (!event || localDay(new Date(event.start)) === day) return;
+              before = event;
+              const to = onDay(event, day);
+              return moveEvent(id, to.start, to.end);
+            }),
+          ),
         undo: () => void (before && moveEvent(id, before.start, before.end)),
       },
     ];
@@ -991,6 +994,8 @@ export default function App() {
     if (closedPlans(settings, (id) => closed.has(id)).length === 0) return;
     void changeSettings((s) => ({ ...s, ...unplan(todayOf(s), closedPlans(s, (id) => closed.has(id))) }));
   }, [settings, classified, changeSettings]);
+
+  useCalendarSync(ready, settings, changeSettings, actions.notify, (id) => classified.find((c) => c.item.id === id)?.item.number);
 
   // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too.
   useEffect(() => {

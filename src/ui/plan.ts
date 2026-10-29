@@ -128,6 +128,26 @@ export function rollOver(state: Today, today: string, pinnable: (id: string) => 
   return { focus, focusDay: focus.length > 0 ? today : null, planned: kept.filter((p) => !moved.has(p.id)), pinnedOn, plannedAt };
 }
 
+/**
+ * "Today" after the item's calendar event turned up on `day`: on today or earlier the item comes
+ * into Today, as far as `FOCUS_MAX` allows (else it stays planned for that day, due); on a later
+ * day it is planned for it. Null when the item already is where the event says.
+ *
+ * @example
+ *   followEvent({ focus: [], focusDay: null, planned: [{ id: "I_1", day: "2026-10-30" }], pinnedOn: {}, plannedAt: {} }, "I_1", "2026-11-02", "2026-10-29");
+ *   // planned: [{ id: "I_1", day: "2026-11-02" }]
+ */
+export function followEvent(state: Today, id: string, day: string, today: string): Today | null {
+  const plan = state.planned.find((p) => p.id === id)?.day;
+  if (day <= today) {
+    if (state.focus.includes(id)) return null;
+    if (state.focus.length >= FOCUS_MAX) return plan === day ? null : { ...state, planned: setPlan(state.planned, id, day) };
+    return { ...state, focus: [...state.focus, id], focusDay: state.focusDay ?? today, planned: setPlan(state.planned, id, null), pinnedOn: { ...state.pinnedOn, [id]: today } };
+  }
+  if (plan === day) return null;
+  return { ...state, focus: state.focus.filter((f) => f !== id), planned: setPlan(state.planned, id, day), pinnedOn: without(state.pinnedOn, id) };
+}
+
 /** The record without `id`, for taking an item out of `pinnedOn`. */
 export function without(pinnedOn: Record<string, string>, id: string): Record<string, string> {
   return Object.fromEntries(Object.entries(pinnedOn).filter(([key]) => key !== id));

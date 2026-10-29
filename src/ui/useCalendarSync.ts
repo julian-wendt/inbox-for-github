@@ -1,0 +1,120 @@
+import { listen } from "@tauri-apps/api/event";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { CALENDAR_CHANGED, calendarAuthorized, calendarWriting, findEvents, type CalendarEvent } from "../calendar";
+import type { Settings } from "../store";
+import { localDay } from "./assignments";
+import { t } from "./i18n";
+import { dayText, followEvent, todayOf, unplan, without } from "./plan";
+
+/** How often the calendar is read back while nothing else asks for it, in milliseconds. */
+const EVERY = 5 * 60_000;
+
+/** What reading back the calendar changes: the new settings and the items whose plan went or moved. */
+interface Followed {
+  settings: Settings;
+  gone: string[];
+  moved: { id: string; day: string }[];
+}
+
+/**
+ * The settings after the linked events as the calendar has them now, the calendar winning: an
+ * item whose event was deleted loses its plan and its link, one whose event is on another day
+ * follows it there (see `followEvent`). Links of items without a pin or plan are left alone, and
+ * so are links to events that were not asked for, as one made meanwhile.
+ *
+ * @param asked  The event identifiers the calendar was asked for.
+ * @param found  Those of them that still exist, by their identifier.
+ *
+ * @example
+ *   followCalendar(settings, new Set(["E1"]), new Map(), "2026-10-29"); // the item linked to E1 loses its plan
+ */
+export function followCalendar(settings: Settings, asked: ReadonlySet<string>, found: ReadonlyMap<string, CalendarEvent>, today: string): Followed {
+  let state = todayOf(settings);
+  let links = settings.calendarEvents;
+  const gone: string[] = [];
+  const moved: { id: string; day: string }[] = [];
+  for (const [id, event] of Object.entries(settings.calendarEvents)) {
+    if (!asked.has(event) || (!state.focus.includes(id) && !state.planned.some((p) => p.id === id))) continue;
+    const at = found.get(event);
+    if (!at) {
+      state = unplan(state, [id]);
+      links = without(links, id);
+      gone.push(id);
+      continue;
+    }
+    const day = localDay(new Date(at.start));
+    const next = followEvent(state, id, day, today);
+    if (!next) continue;
+    state = next;
+    moved.push({ id, day });
+  }
+  return { settings: gone.length + moved.length === 0 ? settings : { ...settings, ...state, calendarEvents: links }, gone, moved };
+}
+
+/** The toast for what the calendar changed: the item by its number when it is one, else a count. */
+function toastOf({ gone, moved }: Followed, numberOf: (id: string) => number | undefined): string {
+  const number = numberOf(gone[0] ?? moved[0]?.id ?? "");
+  if (gone.length + moved.length > 1 || number === undefined) return t("calendarSync.many", { count: gone.length + moved.length });
+  return gone.length === 1 ? t("calendarSync.removed", { number }) : t("calendarSync.moved", { number, day: dayText(moved[0].day) });
+}
+
+/**
+ * Reads the linked calendar events back and lets the plans follow them (see `followCalendar`):
+ * at start, whenever the calendar store changes (also by a sync from the server), when the window
+ * gets the focus and every few minutes. Skips while no calendar is chosen, without calendar
+ * access, which would make every event look deleted, and while a write of the app's own runs.
+ *
+ * @param ready     Whether the settings are loaded.
+ * @param numberOf  The item's number for the toast, undefined while it is not loaded.
+ *
+ * @example
+ *   useCalendarSync(inbox.ready, inbox.settings, inbox.updateSettings, actions.notify, (id) => byId.get(id)?.item.number);
+ */
+export function useCalendarSync(ready: boolean, settings: Settings, update: (change: (current: Settings) => Settings) => Promise<void>, notify: (text: string) => void, numberOf: (id: string) => number | undefined): void {
+  const latest = useRef({ settings, update, notify, numberOf });
+  useLayoutEffect(() => {
+    latest.current = { settings, update, notify, numberOf };
+  });
+
+  useEffect(() => {
+    if (!ready) return;
+    let running = false;
+    let again = false;
+    const once = async () => {
+      const { calendarId, calendarEvents } = latest.current.settings;
+      const ids = Object.values(calendarEvents);
+      if (!calendarId || ids.length === 0 || calendarWriting() || !(await calendarAuthorized())) return;
+      const asked = new Set(ids);
+      const found = new Map((await findEvents(ids)).map((e) => [e.id, e]));
+      if (calendarWriting()) return;
+      const today = localDay();
+      const followed = followCalendar(latest.current.settings, asked, found, today);
+      if (followed.gone.length + followed.moved.length === 0) return;
+      await latest.current.update((current) => followCalendar(current, asked, found, today).settings);
+      latest.current.notify(toastOf(followed, latest.current.numberOf));
+    };
+    const sync = async () => {
+      if (running) return void (again = true);
+      running = true;
+      try {
+        await once();
+      } finally {
+        running = false;
+      }
+      if (again) {
+        again = false;
+        void sync();
+      }
+    };
+    const run = () => void sync().catch(() => undefined);
+    run();
+    const stop = listen(CALENDAR_CHANGED, run);
+    window.addEventListener("focus", run);
+    const timer = window.setInterval(run, EVERY);
+    return () => {
+      void stop.then((unlisten) => unlisten());
+      window.removeEventListener("focus", run);
+      window.clearInterval(timer);
+    };
+  }, [ready]);
+}

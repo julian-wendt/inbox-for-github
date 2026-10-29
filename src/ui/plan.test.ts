@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, followEvent, rollOver, setPlan, unplan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -175,6 +175,38 @@ describe("planOf and replan", () => {
   it("give an emptied Today its day back with the pin", () => {
     const before = state(["a"], "2026-10-28", [], { a: "2026-10-28" }, {});
     expect(replan({ ...unplan(before, ["a"]), focusDay: null }, planOf(before, "a")).focusDay).toBe("2026-10-28");
+  });
+});
+
+describe("followEvent", () => {
+  const state = (overrides: Partial<Today> = {}): Today => ({ focus: [], focusDay: null, planned: [{ id: "I_1", day: "2026-10-30" }], pinnedOn: {}, plannedAt: { I_1: "x" }, ...overrides });
+
+  it("replans an item whose event moved to a later day", () => {
+    expect(followEvent(state(), "I_1", "2026-11-02", "2026-10-29")?.planned).toEqual([{ id: "I_1", day: "2026-11-02" }]);
+  });
+
+  it("brings an item into Today when its event moved to today, keeping when it was planned", () => {
+    expect(followEvent(state(), "I_1", "2026-10-29", "2026-10-29")).toEqual({ focus: ["I_1"], focusDay: "2026-10-29", planned: [], pinnedOn: { I_1: "2026-10-29" }, plannedAt: { I_1: "x" } });
+  });
+
+  it("plans a pinned item for the later day its event moved to", () => {
+    expect(followEvent(state({ focus: ["I_1"], focusDay: "2026-10-29", planned: [], pinnedOn: { I_1: "2026-10-29" } }), "I_1", "2026-11-02", "2026-10-29")).toEqual({
+      focus: [],
+      focusDay: "2026-10-29",
+      planned: [{ id: "I_1", day: "2026-11-02" }],
+      pinnedOn: {},
+      plannedAt: { I_1: "x" },
+    });
+  });
+
+  it("keeps a full Today and plans the item for the day instead", () => {
+    const full = state({ focus: ["A", "B", "C"], focusDay: "2026-10-29" });
+    expect(followEvent(full, "I_1", "2026-10-29", "2026-10-29")?.planned).toEqual([{ id: "I_1", day: "2026-10-29" }]);
+  });
+
+  it("changes nothing when the item already is where its event is", () => {
+    expect(followEvent(state(), "I_1", "2026-10-30", "2026-10-29")).toBeNull();
+    expect(followEvent(state({ focus: ["I_1"], planned: [] }), "I_1", "2026-10-28", "2026-10-29")).toBeNull();
   });
 });
 
