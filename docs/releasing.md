@@ -20,8 +20,8 @@ passed, since a published tag cannot be taken back.
    `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
    `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
    no path of the runner ends up in the binary. It checks that the bundle carries the version, is
-   arm64, has a complete signature, and that neither the binary nor `dist/` holds a `/Users/` or `/home/` path, and keeps the
-   zip as an artifact.
+   arm64, has a complete signature, and that neither the binary nor `dist/` holds a `/Users/` or
+   `/home/` path, and keeps the zip as an artifact.
 4. **Only a green build tags.** release-please then creates the tag and a draft release with the
    notes, the zip is attached and the release published. A failed build leaves the version bump on
    `main` without a tag; the next push to `main`, usually the fix, runs the build again.
