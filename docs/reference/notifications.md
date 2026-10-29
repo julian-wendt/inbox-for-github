@@ -64,3 +64,38 @@ On [github.com/settings/notifications](https://github.com/settings/notifications
   2026-10-29). Turn Participating off on every channel only if team mentions do not matter.
 
 The app writes nothing to these settings (see the write limits in `CONTRIBUTING.md`).
+
+## Or sort the emails instead
+
+Instead of turning participating email off, a mail rule can file away what the app covers and
+leave the gaps in the inbox, with the emails kept as a searchable archive. From GitHub's
+[email notification headers](https://docs.github.com/en/subscriptions-and-notifications/reference/email-notification-headers)
+(read 2026-10-29):
+
+- **Cc** holds the reason as `<reason>@noreply.github.com`. Every mail client can filter on it.
+  The docs name no `X-GitHub-Reason` header; filter on Cc.
+- **List-Id** names the repository and owner as `OWNER/REPOSITORY <REPOSITORY.OWNER.github.com>`,
+  e.g. `octo-org/portal <portal.octo-org.github.com>`. "List-Id contains `.octo-org.github.com`"
+  limits a rule to one of the watched owners.
+- **From** is always `notifications@github.com`; `X-GitHub-Severity` carries a Dependabot
+  alert's level.
+
+| Cc reason | Meaning (GitHub's words, shortened) | Rule |
+|---|---|---|
+| `assign` | you were assigned | file away |
+| `author` | you created the issue or PR | file away |
+| `comment` | you commented on it | file away |
+| `mention` | you were mentioned | file away |
+| `review_requested` | you or one of your teams were asked to review | file away |
+| `your_activity` | you opened, commented on or closed it yourself | file away |
+| `state_change` | a thread you are subscribed to was closed or opened | file away unless you watch repositories |
+| `push` | someone pushed to a PR you are subscribed to | file away unless you watch repositories |
+| `team_mention` | a team you belong to was mentioned | keep |
+| `subscribed` | activity in a repository you watch | keep |
+| `manual` | a thread you subscribed to by hand | keep |
+| `ci_activity` | a workflow run you triggered finished | keep |
+| `security_alert` | a vulnerability alert | keep |
+
+`state_change` and `push` also come for threads you only watch or subscribed to by hand, which the
+app does not see; with no watched repositories they concern only threads you are involved in.
+Combine every "file away" condition with the List-Id of a watched owner, so mentions elsewhere stay.
