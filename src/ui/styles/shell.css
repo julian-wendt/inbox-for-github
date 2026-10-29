@@ -683,7 +683,7 @@
 .calendar-select .org-select-button:hover,
 .calendar-select .org-select-button:has(+ .calendar-clear:hover) {
   border-color: transparent;
-  background: var(--hover);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
 .calendar-placeholder,
@@ -704,7 +704,7 @@
   height: 22px;
 }
 
-/* As `.chip-btn`: --hover is fainter than the field's own fill. */
+/* As `.chip-btn`, whose fill --hover would lighten; over the hovered field it adds up. */
 .calendar-clear:hover:not(:disabled) {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
