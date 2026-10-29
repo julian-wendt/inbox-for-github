@@ -11,6 +11,28 @@ export interface Calendar {
   color: string | null;
 }
 
+/** An event of the calendar store, times in milliseconds since 1970, as `calendar_events` returns it. */
+export interface CalendarEvent {
+  id: string;
+  calendarId: string;
+  title: string;
+  start: number;
+  end: number;
+  allDay: boolean;
+  /** False for events marked free, which leave the time open. */
+  busy: boolean;
+}
+
+/** What `putEvent` writes: a new event without `id`, else an update of that event. */
+export interface EventDraft {
+  id?: string;
+  calendarId: string;
+  title: string;
+  url: string;
+  start: number;
+  end: number;
+}
+
 /** Whether the app may use the calendar; never asks. */
 export const calendarAuthorized = () => invoke<boolean>("calendar_authorized");
 
@@ -24,6 +46,24 @@ export const calendarAccess = () => invoke<boolean>("calendar_access");
  *   const calendars = await writableCalendars(); // [{ id: "C76D…", title: "Calendar", account: "Exchange", writable: true }]
  */
 export async function writableCalendars(): Promise<Calendar[]> {
-  const all = await invoke<Calendar[]>("calendar_list");
+  const all = await calendars();
   return all.filter((c) => c.writable).sort((a, b) => a.account.localeCompare(b.account) || a.title.localeCompare(b.title));
 }
+
+/** Every calendar for events, writable or not, unsorted. */
+export const calendars = () => invoke<Calendar[]>("calendar_list");
+
+/** The events of all calendars that overlap `from` to `to`, in milliseconds since 1970. */
+export const eventsBetween = (from: number, to: number) => invoke<CalendarEvent[]>("calendar_events", { from, to });
+
+/**
+ * Creates the event, or updates the one `draft.id` names, and returns it as saved; null when that
+ * event was deleted meanwhile, which is never brought back.
+ *
+ * @example
+ *   const saved = await putEvent({ calendarId, title: "Fix the login (octo-org/app#12)", url, start, end });
+ */
+export const putEvent = (draft: EventDraft) => invoke<CalendarEvent | null>("calendar_put", { draft });
+
+/** The app event sent whenever anything in the calendar store changed. */
+export const CALENDAR_CHANGED = "calendar-changed";

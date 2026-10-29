@@ -1,3 +1,5 @@
+import { localDay } from "./assignments";
+
 /** A span of a day in minutes since its local midnight, end exclusive. */
 export interface Span {
   start: number;
@@ -107,4 +109,19 @@ export function placeSpans<T>(spans: readonly { item: T; span: Span }[]): Placed
   }
   close();
   return placed;
+}
+
+/**
+ * The workday before (`direction` -1) or after (+1) `day`, by the "workdays" setting.
+ *
+ * @example
+ *   stepWorkday("2026-10-30", 1, [1, 2, 3, 4, 5]); // "2026-11-02", Friday to Monday
+ */
+export function stepWorkday(day: string, direction: 1 | -1, workdays: readonly number[]): string {
+  const at = midnight(day);
+  for (let n = 1; n <= 7; n++) {
+    const next = new Date(at.getFullYear(), at.getMonth(), at.getDate() + n * direction);
+    if (workdays.length === 0 || workdays.includes(next.getDay())) return localDay(next);
+  }
+  return day;
 }

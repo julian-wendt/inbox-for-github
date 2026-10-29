@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstFree, momentOf, placeSpans, snap, spansOf, type DayEvent } from "./calendarSlot";
+import { firstFree, momentOf, placeSpans, snap, spansOf, stepWorkday, type DayEvent } from "./calendarSlot";
 
 const DAY = "2026-10-29";
 const at = (h: number, m = 0) => new Date(2026, 9, 29, h, m).getTime();
@@ -82,5 +82,12 @@ describe("snap and momentOf", () => {
 
   it("counts wall-clock minutes", () => {
     expect(momentOf(DAY, 9 * 60 + 30)).toBe(at(9, 30));
+  });
+});
+
+describe("stepWorkday", () => {
+  it("skips the days that are not workdays, both ways", () => {
+    expect(stepWorkday("2026-10-30", 1, [1, 2, 3, 4, 5])).toBe("2026-11-02");
+    expect(stepWorkday("2026-11-02", -1, [1, 2, 3, 4, 5])).toBe("2026-10-30");
   });
 });
