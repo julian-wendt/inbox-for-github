@@ -1,9 +1,10 @@
-import { CircleDot, GitPullRequest, X } from "lucide-react";
+import { CalendarDays, CircleDot, GitPullRequest, X } from "lucide-react";
 import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
 import { followUpOf } from "../followUp";
+import { datedText, type Dated } from "../plan";
 import { reminderText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
 
@@ -49,5 +50,25 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
         </button>
       )}
     </span>
+  );
+}
+
+/**
+ * The detail's chip for an item pinned for today or planned for a day: the calendar icon and
+ * "Today", "Tomorrow", the weekday within this work week or the date (see `datedText`), the same
+ * text as the row's mark. A click opens the plan choices below it.
+ *
+ * @param onPlan  Gets the chip's box, to open the plan menu under it.
+ *
+ * @example
+ *   <PlanChip dated={{ kind: "planned", day: "2026-10-29" }} onPlan={(at) => plan(entry, at)} /> // [calendar] Thursday
+ */
+export function PlanChip({ dated, onPlan }: { dated: Dated; onPlan: (at: DOMRect) => void }) {
+  const { text, title } = datedText(dated);
+  return (
+    <button className="chip chip-link plan-chip" title={`${title} (P)`} onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}>
+      <CalendarDays size={13} strokeWidth={2.2} aria-hidden />
+      {text}
+    </button>
   );
 }

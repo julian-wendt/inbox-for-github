@@ -42,7 +42,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, datedAt, datedOf, datedText, dayChoices, dayShort, isPinnable, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -418,7 +418,7 @@ export default function App() {
   /** What a follow-up ends for the toast: the item's Today pin or its plan. */
   const endedPlan = (c: Classified) => {
     const when = dated(c);
-    return when?.kind === "today" ? t("replaced.today") : when?.kind === "planned" ? t("replaced.plan", { day: dayShort(when.day) }) : null;
+    return when?.kind === "today" ? t("replaced.today") : when?.kind === "planned" ? t("replaced.plan", { day: dayText(when.day) }) : null;
   };
   /** A toast that also names the "when" the change replaced, so ⌘Z is one look away. */
   const replacing = (toast: string, replaced: string | null) => (replaced ? t("replaced.toast", { toast, replaced }) : toast);
@@ -458,7 +458,7 @@ export default function App() {
       ...(kept ? [{ label: t("plan.keep", { day: kept }), keys: "K", onSelect: () => keepPlan(c, kept) }] : []),
       { label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
       ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
-      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices().some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayShort(localDay(new Date(at)))) }) },
+      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices().some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
       ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
     ];
   };
@@ -1050,7 +1050,6 @@ export default function App() {
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
-          onFocus={toggleFocus}
           onMove={(bar, target) => void inbox.saveSettings({ ...inbox.settings, plateOrder: moveBar(inbox.settings.plateOrder, bar as PlateGroup, target as PlateGroup) })}
           seen={inbox.seen}
           unreadMarks={inbox.unreadMarks}

@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw, Star } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw, CalendarDays } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
@@ -20,7 +20,7 @@ import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
 import { followUpWhen } from "../followUp";
-import { carriedText, datedText, dayLong, dayShort, type Dated } from "../plan";
+import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
 import { KindIcon } from "./ItemMarks";
@@ -83,8 +83,6 @@ interface Props {
   pinnedOn: Record<string, string>;
   /** The local date ("2026-10-28"). */
   today: string;
-  /** Pins an item for today or removes it. */
-  onFocus: (entry: Classified) => void;
   /** A bar dragged onto another: move it there. */
   onMove: (bar: TableGroup, target: TableGroup) => void;
   seen: Map<string, string>;
@@ -121,7 +119,7 @@ interface Props {
  *   <AssignedTable mode="assigned" groups={plate} collapsed={bars.collapsed} onToggle={bars.toggle} … />
  */
 export function AssignedTable(props: Props) {
-  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf, onFocus } = props;
+  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf } = props;
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
   const row = (entry: Classified) => {
@@ -141,12 +139,10 @@ export function AssignedTable(props: Props) {
         marked={props.marks.has(entry.item.id)}
         onMark={(range) => props.onMark(entry.item.id, range)}
         showOpened={props.showOpened}
-        pinned={pinned}
-        plannedDay={dated?.kind === "planned" ? dated.day : undefined}
+        dated={dated ?? undefined}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
         when={props.mode === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
         assigned={assigned}
-        onFocus={() => onFocus(entry)}
         onMenu={(e) => props.onMenu(entry, e)}
         onOpen={() => {
           onSelect(entry.item.id);
@@ -298,23 +294,19 @@ interface RowProps {
   marked: boolean;
   onMark: (range: boolean) => void;
   showOpened: boolean;
-  /** Pinned for today: the star stays visible and filled. */
-  pinned: boolean;
-  /** The day it is planned for, shown after the title. */
-  plannedDay?: string;
+  /** Pinned for today or planned for a day: the day after the title. */
+  dated?: Dated;
   /** The day the item came into Today when that was before today: it carries over, marked. */
   carriedSince?: string;
   /** A row of Assigned to me, timed by the assignment; otherwise the row is timed by the opening. */
   assigned: boolean;
   /** Shown at the end instead of the time: in Planned, the day or the return time. */
   when?: { text: string; title: string };
-  /** Pins or unpins it for today. */
-  onFocus: () => void;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, pinned, plannedDay, carriedSince, when, assigned, onFocus, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, dated, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
@@ -337,16 +329,6 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       ref={ref}
     >
       {(fresh.activity || fresh.marked) && <span className="fresh-dot" title={t(fresh.activity ? "plate.newDot" : "row.unread")} aria-label={t(fresh.activity ? "plate.newDot" : "row.unread")} />}
-      <button
-        className={`star-btn${pinned ? " on" : ""}`}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={onFocus}
-        title={t(pinned ? "focus.unpin" : "focus.pin")}
-        aria-label={t(pinned ? "focus.unpin" : "focus.pin")}
-        aria-pressed={pinned}
-      >
-        <Star size={14} />
-      </button>
       <KindIcon item={item} size={14} status={shownStatus(entry, statusMap)} />
       <span className="table-number">#<Highlight spans={numberSpans(item.number, query)} /></span>
       {fresh.assignment && (
@@ -361,9 +343,10 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
             {carriedText(carriedSince)}
           </span>
         )}
-        {plannedDay && (
-          <span className="table-planned" title={t("plan.on", { date: dayLong(plannedDay) })}>
-            {dayShort(plannedDay)}
+        {dated && (
+          <span className="table-planned" title={datedText(dated).title}>
+            <CalendarDays size={12} />
+            {datedText(dated).text}
           </span>
         )}
         {showOpened && (

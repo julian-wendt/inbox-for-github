@@ -152,16 +152,19 @@ export function choiceKey(choice: DayChoice): string {
 }
 
 /**
- * A planned day for a narrow column: "Tomorrow", the short weekday within the coming week, else
- * day and month (also for a day already passed, whose item found Today full).
+ * A day as the rows, the tables and the detail's plan chip name it: "Today", "Tomorrow", the
+ * weekday within this work week (on a Sunday the coming one, as `dayChoices` counts it), else day
+ * and month (also for a day already passed, whose item found Today full).
  *
  * @example
- *   dayShort("2026-10-29", new Date(2026, 9, 27)); // "Thu" (English)
+ *   dayText("2026-10-29", new Date(2026, 9, 27)); // "Thursday" (English)
+ *   dayText("2026-11-03", new Date(2026, 9, 27)); // "Nov 3" (English)
  */
-export function dayShort(day: string, now = new Date()): string {
+export function dayText(day: string, now = new Date()): string {
   const ahead = Math.round((dateOf(day).getTime() - dateOf(localDay(now)).getTime()) / 86_400_000);
+  if (ahead === 0) return t("plate.focus");
   if (ahead === 1) return t("plan.tomorrow");
-  if (ahead > 1 && ahead < 7) return dateOf(day).toLocaleDateString(lang(), { weekday: "short" });
+  if (ahead > 1 && ahead < 7 && dateOf(day).getDay() > now.getDay()) return dateOf(day).toLocaleDateString(lang(), { weekday: "long" });
   return dateOf(day).toLocaleDateString(lang(), { day: "numeric", month: "short" });
 }
 
@@ -213,12 +216,13 @@ export function datedAt(dated: Dated): string {
 }
 
 /**
- * What a row of Planned shows at its end, with its tooltip: "Today" or the planned day.
+ * How a dated item names its day, in its row's mark, at the end of a Planned row and on the
+ * detail's plan chip, with the tooltip: "Today" or the planned day (see `dayText`).
  *
  * @example
  *   datedText({ kind: "planned", day: "2026-10-29" }, new Date(2026, 9, 28)); // { text: "Tomorrow", title: "Planned for Thursday, 29 October 2026" }
  */
 export function datedText(dated: Dated, now = new Date()): { text: string; title: string } {
   if (dated.kind === "today") return { text: t("plate.focus"), title: dayLong(dated.day) };
-  return { text: dayShort(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
+  return { text: dayText(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
 }

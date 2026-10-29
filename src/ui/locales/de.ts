@@ -477,8 +477,6 @@ export const de: Messages = {
   "focus.sinceYesterday": "Seit gestern",
   "focus.since": "Seit {day}",
   "focus.carriedHint": "Seit {date} in Heute und noch nicht erledigt. Erledige es mit D, plane es mit P neu oder nimm es mit T heraus.",
-  "focus.pin": "Für heute anheften (T)",
-  "focus.unpin": "Aus Heute entfernen (T)",
   "keys.fold": "Leiste zu- oder aufklappen (in den Tabellen)",
   "sort.newest": "Neueste zuerst · Klick für älteste zuerst",
   "sort.soonest": "Frühester zuerst · Klick für spätesten zuerst",

@@ -936,6 +936,10 @@
   background: var(--hover);
 }
 
+.plan-chip svg {
+  color: var(--st-planned);
+}
+
 .closed-chip {
   color: var(--text-muted);
   font-size: 12px;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
 const days = (now: Date) => dayChoices(now).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -147,5 +147,16 @@ describe("datedAt and datedText", () => {
   it("names Today or the planned day", () => {
     expect(datedText({ kind: "today", day: "2026-10-28" }, now).text).toBe("Today");
     expect(datedText({ kind: "planned", day: "2026-10-29" }, now).text).toBe("Tomorrow");
+  });
+});
+
+describe("dayText", () => {
+  it("says Today, Tomorrow, the weekday within this work week, else the date", () => {
+    const tuesday = new Date(2026, 9, 27);
+    expect(["2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-11-02", "2026-10-26"].map((day) => dayText(day, tuesday))).toEqual(["Today", "Tomorrow", "Thursday", "Friday", "Nov 2", "Oct 26"]);
+  });
+
+  it("names the coming work week's days on a Sunday, as the menus offer them", () => {
+    expect(dayText("2026-11-04", new Date(2026, 10, 1))).toBe("Wednesday");
   });
 });

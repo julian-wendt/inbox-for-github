@@ -221,8 +221,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       selected={entry.item.id === selected}
                       marked={marks.has(entry.item.id)}
                       unread={bucket === "inbox" && unread.has(entry.item.id)}
-                      pinned={pinned}
-                      plannedDay={dated?.kind === "planned" ? dated.day : undefined}
+                      dated={dated ?? undefined}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
                       when={bucket === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
                       onMark={(range) => onMark(entry.item.id, range)}

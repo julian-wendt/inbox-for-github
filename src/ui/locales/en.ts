@@ -475,8 +475,6 @@ export const en = {
   "focus.sinceYesterday": "Since yesterday",
   "focus.since": "Since {day}",
   "focus.carriedHint": "In Today since {date} and not finished yet. Finish it with D, plan it anew with P, or take it out with T.",
-  "focus.pin": "Pin for today (T)",
-  "focus.unpin": "Remove from today (T)",
   "keys.fold": "Fold or unfold a bar (in the tables)",
   "sort.newest": "Newest first · click for oldest first",
   "sort.soonest": "Soonest first · click for latest first",
