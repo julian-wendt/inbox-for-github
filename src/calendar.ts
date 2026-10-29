@@ -69,6 +69,9 @@ export const findEvents = (ids: string[]) => invoke<CalendarEvent[]>("calendar_f
  */
 export const putEvent = (draft: EventDraft) => invoke<CalendarEvent | null>("calendar_put", { draft });
 
+/** Moves the event to `start`–`end` and keeps its title and notes; null when it is gone. */
+export const moveEvent = (id: string, start: number, end: number) => invoke<CalendarEvent | null>("calendar_move", { id, start, end });
+
 /** Deletes the event; one already gone counts as deleted. */
 export const removeEvent = (id: string) => invoke<void>("calendar_remove", { id });
 

@@ -18,7 +18,8 @@ import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
 import { CalendarDay } from "./ui/parts/CalendarDay";
-import { findEvents, putEvent, removeEvent, type CalendarEvent } from "./calendar";
+import { findEvents, moveEvent, putEvent, removeEvent, type CalendarEvent } from "./calendar";
+import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
@@ -408,7 +409,7 @@ export default function App() {
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
       plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() },
     };
-    const steps = [todayStep(previous, next), ...(on ? [] : followUpEnds(c))];
+    const steps = [todayStep(previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())])];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -440,11 +441,11 @@ export default function App() {
       pinnedOn: without(inbox.settings.pinnedOn, c.item.id),
       plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
     };
-    const events = day ? [] : eventEnds([c]);
+    const events = day ? eventMoves(c, day) : eventEnds([c]);
     const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : events)];
     for (const s of steps) s.run();
     actions.announce(
-      day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
+      day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
       () => steps.forEach((s) => s.undo()),
       () => steps.forEach((s) => s.run()),
     );
@@ -506,6 +507,24 @@ export default function App() {
     if (!saved) throw new Error(t("calendarDay.failed"));
     linkEvent(c, saved.id);
     planOnDay(c, day);
+  };
+  /** Moves the item's event to `day` at the same time of day, as a step; none without an event. Undo moves it back. */
+  const eventMoves = (c: Classified, day: string) => {
+    const id = inbox.settings.calendarEvents[c.item.id];
+    if (!id) return [];
+    let before: CalendarEvent | undefined;
+    return [
+      {
+        run: () =>
+          void findEvents([id]).then(([event]) => {
+            if (!event || localDay(new Date(event.start)) === day) return;
+            before = event;
+            const to = onDay(event, day);
+            return moveEvent(id, to.start, to.end);
+          }),
+        undo: () => void (before && moveEvent(id, before.start, before.end)),
+      },
+    ];
   };
   /**
    * Deletes the events of the items that have one, as one step each; undo puts a new event at
@@ -620,13 +639,13 @@ export default function App() {
     const count = waiting.length + unplanned.length;
     const text =
       unplanned.length === 0 ? plural("marks.reminderRemovedOne", "marks.reminderRemoved", count) : waiting.length === 0 ? plural("marks.plansRemovedOne", "marks.plansRemoved", count) : t("marks.whenRemoved", { count });
-    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned), ...eventEnds(unplanned)]);
+    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned)]);
   };
-  /** Takes the plan or Today pin off the items that have one, as one step for all of them; none when none has. */
+  /** Takes the plan or Today pin off the items that have one, as one step for all of them, and deletes their events; none when none has. */
   const unplanStep = (cs: Classified[]) => {
     const { focus, planned } = inbox.settings;
     const ids = cs.map((c) => c.item.id).filter((id) => focus.includes(id) || planned.some((p) => p.id === id));
-    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids))] : [];
+    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids)), ...eventEnds(cs.filter((c) => ids.includes(c.item.id)))] : [];
   };
   /** A time for the marked items: they wait until then. */
   const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), [...open.map((c) => statusStep(c, "snoozed", until)), ...unplanStep(open)]);
@@ -972,6 +991,16 @@ export default function App() {
     if (closedPlans(settings, (id) => closed.has(id)).length === 0) return;
     void changeSettings((s) => ({ ...s, ...unplan(todayOf(s), closedPlans(s, (id) => closed.has(id))) }));
   }, [settings, classified, changeSettings]);
+
+  // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too.
+  useEffect(() => {
+    if (!ready) return;
+    const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
+    const orphans = Object.entries(settings.calendarEvents).filter(([id]) => !dated.has(id));
+    if (orphans.length === 0) return;
+    for (const [, event] of orphans) void removeEvent(event);
+    void changeSettings((s) => ({ ...s, calendarEvents: Object.fromEntries(Object.entries(s.calendarEvents).filter(([id]) => !orphans.some(([gone]) => gone === id))) }));
+  }, [ready, settings, changeSettings]);
 
   // The pop-up belongs to its item: when the item leaves the list, it closes instead of showing the next one.
   if (popup && selection.replaced) setPopup(false);

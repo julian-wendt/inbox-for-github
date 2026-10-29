@@ -33,6 +33,18 @@ export function momentOf(day: string, minutes: number): number {
   return new Date(at.getFullYear(), at.getMonth(), at.getDate(), 0, minutes).getTime();
 }
 
+/**
+ * An event's times moved to `day` at the same wall-clock time and length, in milliseconds.
+ *
+ * @example
+ *   onDay({ start: +new Date(2026, 9, 29, 9, 30), end: +new Date(2026, 9, 29, 10, 30) }, "2026-11-02"); // 09:30–10:30 on 2 November
+ */
+export function onDay(event: { start: number; end: number }, day: string): { start: number; end: number } {
+  const minutes = Math.round((event.start - midnight(localDay(new Date(event.start))).getTime()) / 60_000);
+  const start = momentOf(day, minutes);
+  return { start, end: start + event.end - event.start };
+}
+
 /** `minutes` on the nearest multiple of `STEP`. */
 export const snap = (minutes: number) => Math.round(minutes / STEP) * STEP;
 
