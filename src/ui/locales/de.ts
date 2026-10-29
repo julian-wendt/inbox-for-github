@@ -437,7 +437,7 @@ export const de: Messages = {
   "row.unread": "Ungelesen",
   "detail.sinceLastHere": "Neu, seit du zuletzt hier warst",
   "plate.focus": "Heute",
-  "keys.focus": "Heute: anheften oder entfernen (bis zu 3; Unerledigtes bleibt am nächsten Tag markiert stehen)",
+  "keys.focus": "Heute: anheften oder entfernen (Unerledigtes bleibt am nächsten Tag markiert stehen)",
   "keys.plan": "Für einen späteren Tag planen: dann K Plan trotz neuer Anfrage behalten, T heute, N nächster Werktag, 1–5 ein Wochentag, W nächste Woche, D Datum wählen, X Plan entfernen",
   "keys.read": "Als gelesen oder ungelesen markieren (U oder R)",
   "focus.added": "#{number} → Heute",

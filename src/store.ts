@@ -171,7 +171,7 @@ export interface Settings {
   maxItems: number;
   /** Items the viewer stopped tracking: left out everywhere, whatever happens on GitHub. */
   untracked: UntrackedItem[];
-  /** Item ids marked "today" (T), at most three; any open item in any view. */
+  /** Item ids marked "today" (T); any open item in any view. */
   focus: string[];
   /** The local date ("2026-10-23") Today was last set or rolled over to (see `rollOver`). */
   focusDay: string | null;

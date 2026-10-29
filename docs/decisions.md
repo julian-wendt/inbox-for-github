@@ -43,7 +43,7 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   "leave me alone, I am waiting for others". Both take an item out of the inbox, since each is a
   decision and the inbox lists what is undecided; the earlier rule "someone still waits" was as true of
   a follow-up, which did leave. They differ in where the item comes back: a plan lands in Today
-  on its day (or stays planned when Today is full), a follow-up is simply back in the inbox at
+  on its day, a follow-up is simply back in the inbox at
   its date or on new activity, and a new ask brings a planned item back as well. One "when" per
   item: P and T remove a follow-up, F removes a plan. Planned shows Today and plans only;
   follow-ups that left the inbox wait in a collapsed bar at its bottom, those on assignments in
@@ -193,8 +193,8 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   everything planned for that day moves in (P). What was not finished stays, marked since when,
   so leftovers are dealt with (D, P or T) instead of vanishing quietly. Today first held at most
   three items; the limit went because it forced choices nobody wanted and let a plan that did
-  not fit miss its day without a word. Planning is not snoozing: a planned item stays on the plate, in its own bar, instead
-  of leaving it. T and G became ⌘T and ⌘G, since they switch the app, not an item, which freed
+  not fit miss its day without a word. Planning is not snoozing: a planned item stays on the
+  plate, in its own bar, instead of leaving it. T and G became ⌘T and ⌘G, since they switch the app, not an item, which freed
   T for Today and P for the plan menu. T and P take any open item in any view, not only assignments: a mention can be
   answered on Thursday too. Elsewhere than Assigned to me the row shows a star or its day, and
   a planned inbox item stays in the inbox, because someone still waits; F is the key that hides.

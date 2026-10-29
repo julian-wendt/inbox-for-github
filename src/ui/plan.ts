@@ -94,10 +94,10 @@ export function todayOf(settings: Today): Today {
 /**
  * The state of "Today" once a new day has begun: what was pinned and is still open stays, carried
  * over, and the items planned for today or earlier move in behind it, oldest plan first. Pins
- * and plans of items that are loaded but cannot be pinned any more (closed, done) are dropped. `pinnedOn`
- * keeps the day each pin came into Today; a pin recorded before that existed counts from the day
- * Today was last set. `plannedAt` keeps only the items still pinned or planned; a plan that moves
- * into Today keeps its time. Returns null while nothing is to be done: Today is from this day, or
+ * and plans of items that are loaded but cannot be pinned any more (closed, done) are dropped.
+ * `pinnedOn` keeps the day each pin came into Today; a pin recorded before that existed counts
+ * from the day Today was last set. `plannedAt` keeps only the items still pinned or planned; a
+ * plan that moves into Today keeps its time. Returns null while nothing is to be done: Today is from this day, or
  * it is empty, no plan is due and none is dropped.
  *
  * @param state      The settings `focus`, `focusDay`, `planned`, `pinnedOn` and `plannedAt`.
@@ -128,7 +128,8 @@ export function rollOver(state: Today, today: string, pinnable: (id: string) => 
 
 /**
  * "Today" after the item's calendar event turned up on `day`: on today or earlier the item comes
- * into Today, on a later day it is planned for it. Null when the item already is where the event says.
+ * into Today, on a later day it is planned for it. Null when the item already is where the
+ * event says.
  *
  * @example
  *   followEvent({ focus: [], focusDay: null, planned: [{ id: "I_1", day: "2026-10-30" }], pinnedOn: {}, plannedAt: {} }, "I_1", "2026-11-02", "2026-10-29");
@@ -209,7 +210,7 @@ export function choiceKey(choice: DayChoice): string {
 /**
  * A day as the rows, the tables and the detail's plan chip name it: "Today", "Tomorrow", the
  * weekday within this work week (on a Sunday the coming one, as `dayChoices` counts it), else day
- * and month (also for a day already passed, whose item found Today full).
+ * and month (also for a day already passed, whose item was not loaded that morning).
  *
  * @example
  *   dayText("2026-10-29", new Date(2026, 9, 27)); // "Thursday" (English)

@@ -435,7 +435,7 @@ export const en = {
   "row.unread": "Unread",
   "detail.sinceLastHere": "New since you were last here",
   "plate.focus": "Today",
-  "keys.focus": "Today: pin or remove (up to 3; what you do not finish stays the next day, marked)",
+  "keys.focus": "Today: pin or remove (what you do not finish stays the next day, marked)",
   "keys.plan": "Plan for a later day: then K keep the plan through a new ask, T today, N next workday, 1–5 a weekday, W next week, D pick a date, X remove the plan",
   "keys.read": "Mark as read or unread (U or R)",
   "focus.added": "#{number} → Today",
