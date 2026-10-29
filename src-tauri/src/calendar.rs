@@ -90,6 +90,12 @@ fn failed(error: Retained<NSError>) -> String {
     error.localizedDescription().to_string()
 }
 
+/// Whether the app may read and write events, without asking.
+#[tauri::command]
+pub fn calendar_authorized() -> bool {
+    unsafe { EKEventStore::authorizationStatusForEntityType(EKEntityType::Event) == EKAuthorizationStatus::FullAccess }
+}
+
 /// Whether the app may read and write events, asking the user the first time.
 ///
 /// Waits for the answer to macOS's permission dialog, so it runs off the main thread. Returns
@@ -97,7 +103,7 @@ fn failed(error: Retained<NSError>) -> String {
 /// Privacy & Security › Calendars.
 #[tauri::command(async)]
 pub fn calendar_access() -> Result<bool, String> {
-    if unsafe { EKEventStore::authorizationStatusForEntityType(EKEntityType::Event) } == EKAuthorizationStatus::FullAccess {
+    if calendar_authorized() {
         return Ok(true);
     }
     let (sender, receiver) = mpsc::channel();

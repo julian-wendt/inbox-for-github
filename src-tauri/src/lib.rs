@@ -244,6 +244,7 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             calendar::calendar_access,
+            calendar::calendar_authorized,
             calendar::calendar_events,
             calendar::calendar_find,
             calendar::calendar_list,

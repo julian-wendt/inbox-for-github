@@ -1,4 +1,4 @@
-import { Bell, BellOff, Building2, CircleUserRound, FolderGit2, FolderOpen, ListChecks, Palette, RotateCcw, Settings2, SquareKanban, X, type LucideIcon } from "lucide-react";
+import { Bell, BellOff, Building2, CalendarDays, CircleUserRound, FolderGit2, FolderOpen, ListChecks, Palette, RotateCcw, Settings2, SquareKanban, X, type LucideIcon } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +18,7 @@ import { HOURS, MINUTES } from "../segments";
 import { clockOf, clockText } from "../snooze";
 import { toggleWorkday, WEEK, weekdayName } from "../plan";
 import { SegmentField } from "./SegmentField";
+import { CalendarSettings } from "./CalendarSettings";
 import { guessWorkStatus, WORK_STATUSES, type WorkStatus } from "../../workStatus";
 import { combineAttributes, splitAttributes, type AttributeOption } from "../attributes";
 import { AttributeList } from "./AttributeList";
@@ -30,11 +31,12 @@ import { OrgSelect } from "./OrgSelect";
 import { RepoFilterEditor } from "./RepoFilterEditor";
 import { UsageMeter } from "./UsageMeter";
 
-type Section = "general" | "notify" | "orgs" | "repos" | "look" | "avatars" | "rules" | "boards" | "untracked";
+type Section = "general" | "notify" | "calendar" | "orgs" | "repos" | "look" | "avatars" | "rules" | "boards" | "untracked";
 
 const SECTIONS: { id: Section; icon: LucideIcon }[] = [
   { id: "general", icon: Settings2 },
   { id: "notify", icon: Bell },
+  { id: "calendar", icon: CalendarDays },
   { id: "orgs", icon: Building2 },
   { id: "repos", icon: FolderGit2 },
   { id: "look", icon: Palette },
@@ -371,6 +373,8 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </div>
             </>
           )}
+
+          {section === "calendar" && <CalendarSettings settings={draft} change={change} />}
 
           {section === "notify" && (
             <>
