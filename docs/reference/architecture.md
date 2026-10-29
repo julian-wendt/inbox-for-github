@@ -82,7 +82,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
-  `encodeScope`). Narrowing a setting filters locally; widening it past the coverage fetches.
+  `encodeScope`). Narrowing a setting filters locally. A longer closed window runs a delta plus
+  the closed searches over the added days only (`widensClosed`, `closedBefore`); switching boards
+  on loads only the boards. A higher item limit has no such shortcut and fetches in full.
 - **Transfers:** an issue moved to another repository comes back under a new node id. Every
   fetch, full or delta, compares the issues that name `transferredFrom` with the items cached
   before it (`findTransfers`); the old copy leaves the cache, and its status, log, note, seen,
