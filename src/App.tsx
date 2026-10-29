@@ -8,12 +8,12 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Classified } from "./classify";
 import type { Status, StatusChange, WriteFailure } from "./model";
 import { setLang, t, type MessageKey } from "./ui/i18n";
-import { itemLink, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
+import { itemLink, statusHint, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
 import { covers, setCovered } from "./rules/directOnly";
 import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
 import { OrcaMark } from "./ui/parts/OrcaMark";
 import { repoList } from "./ui/repoList";
-import { paneCenter } from "./ui/paneCenter";
+import { keyMenuAt, paneCenter } from "./ui/paneCenter";
 import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
@@ -461,16 +461,16 @@ export default function App() {
     const kept = when && c.bucket === "inbox" ? datedText(when).text : null;
     const keepLabel = when?.kind === "today" ? t("plan.keepToday") : t("plan.keep", { day: kept ?? "" });
     return [
-      ...(kept ? [{ label: keepLabel, keys: "K", onSelect: () => keepPlan(c, when?.kind === "today" ? null : kept) }] : []),
-      { label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
+      ...(kept ? [{ label: keepLabel, hint: t("hint.plan.keep"), keys: "K", onSelect: () => keepPlan(c, when?.kind === "today" ? null : kept) }] : []),
+      { label: t("menu.today"), hint: t("hint.menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
       ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
-      ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
+      { label: t("plan.remove"), keys: "X", divided: true, disabled: !when, onSelect: () => planFor(c, null, "") },
     ];
   };
-  /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones, or below the detail's Plan button. */
+  /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries(c), ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : keyMenuAt(c.item.id)) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -488,8 +488,8 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean } | null>(null);
-  const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
   const bulk = (text: string, steps: { run: () => void; undo: () => void }[]) => {
@@ -568,14 +568,14 @@ export default function App() {
   const bulkTimes = (): MenuEntry[] => [
     ...dayEntries((day) => bulkLater(followUpOn(day, inbox.settings.followUpTime))),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: bulkLater }) },
-    { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
-    ...(marked.some(hasFollowUp) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeMarkedFollowUps() }] : []),
+    { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
+    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !marked.some(hasFollowUp), onSelect: () => removeMarkedFollowUps() },
   ];
   /** The context menu while several items are marked: what applies to all of them. */
   const bulkEntries = (): MenuEntry[] => [
-    { label: t("status.done"), keys: "D", icon: <StatusIcon status="done" size={14} />, onSelect: () => bulkStatus("done") },
-    { label: t("status.open"), keys: "O", icon: <StatusIcon status="open" size={14} />, onSelect: () => bulkStatus("open") },
-    { label: t("status.snoozed"), keys: "F", icon: <Bell size={14} />, items: bulkTimes() },
+    { label: t("status.done"), hint: statusHint("done"), keys: "D", icon: <StatusIcon status="done" size={14} />, onSelect: () => bulkStatus("done") },
+    { label: t("status.open"), hint: statusHint("open"), keys: "O", icon: <StatusIcon status="open" size={14} />, onSelect: () => bulkStatus("open") },
+    { label: t("status.snoozed"), hint: statusHint("snoozed"), keys: "F", icon: <Bell size={14} />, items: bulkTimes() },
     ...(open.some(assignable) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => (assignAll(open), clearMarks()) }] : []),
     ...(open.some(leavable) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => (leaveAll(open), clearMarks()) }] : []),
     ...(marked.some(hasFollowUp) || marked.some((c) => dated(c) !== null) ? [{ label: t(!marked.some((c) => dated(c) !== null) ? "reminder.remove" : !marked.some(hasFollowUp) ? "plan.remove" : "marks.removeWhen"), keys: "X", icon: <X size={14} />, onSelect: () => removeMarkedFollowUps(true) }] : []),
@@ -610,14 +610,14 @@ export default function App() {
     const on = covers(repo, scopes);
     setMenu({
       entries: [
-        { label: t("sidebar.allUpdates"), icon: <Bell size={14} />, checked: !on, onSelect: () => void inbox.saveSettings({ ...inbox.settings, directOnly: setCovered(repo, scopes, false) }) },
-        { label: t("sidebar.directOnly"), icon: <UserCheck size={14} />, checked: on, onSelect: () => void inbox.saveSettings({ ...inbox.settings, directOnly: setCovered(repo, scopes, true) }) },
+        { label: t("sidebar.allUpdates"), hint: t("hint.sidebar.allUpdates"), icon: <Bell size={14} />, checked: !on, onSelect: () => void inbox.saveSettings({ ...inbox.settings, directOnly: setCovered(repo, scopes, false) }) },
+        { label: t("sidebar.directOnly"), hint: t("hint.sidebar.directOnly"), icon: <UserCheck size={14} />, checked: on, onSelect: () => void inbox.saveSettings({ ...inbox.settings, directOnly: setCovered(repo, scopes, true) }) },
       ],
       x: e.clientX,
       y: e.clientY,
     });
   };
-  const openBulkTimes = () => setMenu({ entries: bulkTimes(), ...paneCenter(), centered: true });
+  const openBulkTimes = () => setMenu({ entries: bulkTimes(), fit: true, ...paneCenter(), centered: true });
   /**
    * A status chosen for an item. "Done" means more where it has more to end: an update is
    * ticked off with a fresh snapshot; an assignment of the table becomes
@@ -675,13 +675,13 @@ export default function App() {
   const snoozeEntries = (c: Classified): MenuEntry[] => [
     ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime)), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
-    { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-    ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeFollowUp(c) }] : []),
+    { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
+    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
   ];
-  /** S on an item: the follow-up choices open in the middle of the detail, also to move the date. */
+  /** S on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {
     if (c.item.closed) return actions.apply(c, "snoozed");
-    setSnoozeMenu({ entry: c, ...paneCenter(), centered: true });
+    setSnoozeMenu({ entry: c, ...keyMenuAt(c.item.id) });
   };
   /** Right click: the marked items' menu on a marked row, else the row's own (which clears the marks). */
   const openMenu = (entry: Classified, e: React.MouseEvent) => {
@@ -855,6 +855,7 @@ export default function App() {
     const planned = dated(c) !== null;
     const statuses: MenuEntry[] = statusesFor(c).map((s) => ({
       label: s.id === "done" && onPlate(c, me) && !c.updates ? t("action.handOff") : s.title,
+      hint: statusHint(s.id === "done" && onPlate(c, me) && !c.updates ? "handOff" : s.id),
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
       checked: c.status === s.id && !(planned && s.id === "open"),
@@ -862,7 +863,7 @@ export default function App() {
       // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
       ...(s.id === "snoozed" && { items: snoozeEntries(c) }),
     }));
-    const planItem: MenuEntry[] = pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, checked: planned, items: planEntries(c) }] : [];
+    const planItem: MenuEntry[] = pinnable(c) ? [{ label: t("menu.plan"), hint: t("hint.menu.plan"), keys: "P", icon: <CalendarDays size={14} />, checked: planned, items: planEntries(c) }] : [];
     return [
       ...statuses.slice(0, 1),
       ...planItem,
@@ -873,13 +874,13 @@ export default function App() {
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
-      ...(orcaOffered(c) ? [{ label: t(orca.repoOf(item.repo) ? "orca.open" : "orca.addOpen"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => runOrca(c) }] : []),
+      ...(orcaOffered(c) ? [{ label: t(orca.repoOf(item.repo) ? "orca.open" : "orca.addOpen"), hint: t(orca.repoOf(item.repo) ? "hint.orca.open" : "hint.orca.addOpen"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => runOrca(c) }] : []),
       { label: t("menu.copyLink"), keys: "C", icon: <Link size={14} />, onSelect: () => void copy(itemLink(item, "url")) },
-      { label: t("menu.copyRef"), icon: <Hash size={14} />, onSelect: () => void copy(itemLink(item, "ref")) },
-      { label: t("menu.copyMarkdown"), icon: <Code size={14} />, onSelect: () => void copy(itemLink(item, "markdown")) },
+      { label: t("menu.copyRef"), hint: t("hint.menu.copyRef"), icon: <Hash size={14} />, onSelect: () => void copy(itemLink(item, "ref")) },
+      { label: t("menu.copyMarkdown"), hint: t("hint.menu.copyMarkdown"), icon: <Code size={14} />, onSelect: () => void copy(itemLink(item, "markdown")) },
       { label: t("action.refreshItem"), keys: "⌃R", icon: <RefreshCw size={14} />, divided: true, onSelect: () => reloadCurrent(c) },
       // Out of the way in a submenu, so it is not hit by accident; ⌘Z still takes it back.
-      { label: t("menu.more"), icon: <Ellipsis size={14} />, items: [{ label: t("untrack.action"), onSelect: () => untrack(c) }] },
+      { label: t("menu.more"), icon: <Ellipsis size={14} />, items: [{ label: t("untrack.action"), hint: t("hint.untrack.action"), onSelect: () => untrack(c) }] },
     ];
   };
 
@@ -1228,9 +1229,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} entries={menu.entries} onClose={() => setMenu(null)} />}
+      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menu.entries} onClose={() => setMenu(null)} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
       )}
       {pickingDate && (
         <SnoozeDatePicker

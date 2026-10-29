@@ -219,6 +219,17 @@ export function statusesFor(entry: Pick<Classified, "item">) {
   return entry.item.closed ? [] : STATUSES;
 }
 
+/**
+ * The menus' second line for a status: what choosing it does. "handOff" is Done on an assignment
+ * of the Assigned to me table, which ends only the viewer's part.
+ *
+ * @example
+ *   statusHint("snoozed"); // "Out of the inbox while you wait for others" (English)
+ */
+export function statusHint(id: Status | "handOff"): string {
+  return t(`hint.status.${id}`);
+}
+
 export type LinkFormat = "url" | "ref" | "markdown";
 
 /**

@@ -6,6 +6,8 @@ import { keyMatches } from "../keyMatch";
 /** One entry of a context menu; `items` makes it open a submenu instead of running. */
 export interface MenuEntry {
   label: string;
+  /** A short second line for entries whose label does not say everything. */
+  hint?: string;
   icon?: ReactNode;
   /** Shortcut shown on the right; pressing it while the menu is open runs the entry. */
   keys?: string;
@@ -16,6 +18,8 @@ export interface MenuEntry {
   divided?: boolean;
   /** The menu stays open after the entry ran, for switches the viewer flips several of. */
   keepOpen?: boolean;
+  /** Shown greyed and skipped, for an entry that always has its place but nothing to do now. */
+  disabled?: boolean;
 }
 
 /**
@@ -27,11 +31,14 @@ export interface MenuEntry {
  * @param entries   The menu, top to bottom.
  * @param onClose   Called when the menu should go away, also after an entry ran.
  * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`).
+ * @param centerX   Centers the menu on x only, below y (see `keyMenuAt`); implied by `centered`.
+ * @param fit       Grows the menu so every hint stays on one line, for the menus a key opens.
  *
  * @example
  *   <ContextMenu x={e.clientX} y={e.clientY} entries={[{ label: "Done", keys: "D", onSelect: done }]} onClose={close} />
  */
-export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean }) {
+export function ContextMenu(props: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean; centerX?: boolean; fit?: boolean }) {
+  const { x, y, entries, onClose, centered = false, centerX = centered, fit = false } = props;
   const [active, setActive] = useState(0);
   const [sub, setSub] = useState<number | null>(null);
   const [subActive, setSubActive] = useState(0);
@@ -41,12 +48,13 @@ export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: n
   useLayoutEffect(() => {
     const box = root.current?.getBoundingClientRect();
     if (!box) return;
-    const left = centered ? x - box.width / 2 : x;
+    const left = centerX ? x - box.width / 2 : x;
     const top = centered ? y - box.height / 2 : y;
     setPos({ x: Math.max(8, Math.min(left, window.innerWidth - box.width - 8)), y: Math.max(8, Math.min(top, window.innerHeight - box.height - 8)) });
-  }, [x, y, centered]);
+  }, [x, y, centered, centerX]);
 
   const run = (entry: MenuEntry) => {
+    if (entry.disabled) return;
     noteInput("menu");
     if (!entry.keepOpen) onClose();
     entry.onSelect?.();
@@ -67,8 +75,8 @@ export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: n
       const index = sub === null ? active : subActive;
       const move = sub === null ? setActive : setSubActive;
       if (e.key === "Escape") return onClose();
-      if (e.key === "ArrowDown") return move((index + 1) % list.length);
-      if (e.key === "ArrowUp") return move((index - 1 + list.length) % list.length);
+      if (e.key === "ArrowDown") return move(step(list, index, 1));
+      if (e.key === "ArrowUp") return move(step(list, index, -1));
       if (e.key === "ArrowLeft" && sub !== null) return setSub(null);
       if (e.key === "Enter" || e.key === "ArrowRight" || e.key === " ") {
         const entry = list[index];
@@ -107,7 +115,7 @@ export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: n
   }, []);
 
   return (
-    <div ref={root} className="context-menu" role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={root} className={`context-menu${fit ? " fit" : ""}`} role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
       {entries.map((entry, i) => (
         <div key={entry.label} className="menu-slot">
           {entry.divided && <hr />}
@@ -162,6 +170,15 @@ function swallowClick(press: PointerEvent) {
   window.setTimeout(done, 600);
 }
 
+/** The next entry from `index` in direction `by` that is not disabled, wrapping around. */
+function step(list: MenuEntry[], index: number, by: 1 | -1): number {
+  for (let n = 1; n <= list.length; n++) {
+    const next = (((index + by * n) % list.length) + list.length) % list.length;
+    if (!list[next].disabled) return next;
+  }
+  return index;
+}
+
 /** Rows of a menu share a column for check marks and icons once any of them has one, so labels align. */
 function hasSlot(entries: MenuEntry[]): boolean {
   return entries.some((e) => e.checked !== undefined || e.icon !== undefined);
@@ -175,11 +192,15 @@ function MenuRow(props: { entry: MenuEntry; slot: boolean; active: boolean; open
       aria-haspopup={entry.items ? "menu" : undefined}
       aria-expanded={entry.items ? open : undefined}
       className={`menu-row${active || open ? " active" : ""}`}
-      onPointerEnter={props.onHover}
+      disabled={entry.disabled}
+      onPointerEnter={entry.disabled ? undefined : props.onHover}
       onClick={props.onSelect}
     >
       {slot && <span className="menu-icon">{entry.checked ? <Check size={14} /> : entry.icon}</span>}
-      <span className="menu-label">{entry.label}</span>
+      <span className="menu-label">
+        {entry.label}
+        {entry.hint && <small className="menu-hint">{entry.hint}</small>}
+      </span>
       {entry.keys && <kbd>{entry.keys}</kbd>}
       {entry.items && <ChevronRight size={14} className="menu-more" />}
     </button>
