@@ -1,10 +1,8 @@
 # Building and releasing
 
 A release is a decision, not a side effect of a merge: a workflow prepares it, you approve it by
-merging a PR, and the app is built on the Mac and attached by hand. Building it on a macOS runner
-instead, with the tag created only after a successful build, is planned (#12); until then
-releases carry no download, because a local build embeds the builder's home directory in the
-binary through the paths of the Cargo registry.
+merging a PR, and a macOS runner builds the app. The tag `v<version>` only exists once that build
+passed, since a published tag cannot be taken back.
 
 ## Releasing
 
@@ -14,23 +12,32 @@ binary through the paths of the Cargo registry.
    below 1.0); `docs:`, `chore:`, `refactor:`, `test:` and `ci:` alone release nothing. The PR carries
    the version in `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`,
    `src-tauri/Cargo.toml` and `src-tauri/Cargo.lock`, and the changelog.
-2. **Merge the release PR when you want a release.** That sets the tag `v<version>` and creates a
-   **draft** release with the notes. Its checks need an "Approve and run" click, since it is opened
-   with the workflow's own token.
-3. **Build and attach the app on the Mac,** from any branch:
+2. **Merge the release PR when you want a release.** It has no checks: it is opened with the
+   workflow's own token, which starts no workflows. The ruleset on `main` therefore lets it in only
+   with "Bypass rules"; the build in the next step runs typecheck, lint and tests before anything
+   is tagged.
+3. **The workflow builds the app** on `macos-latest` when the version in
+   `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
+   `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
+   no path of the runner ends up in the binary. It checks that the bundle carries the version, is
+   arm64, and that neither the binary nor `dist/` holds a `/Users/` or `/home/` path, and keeps the
+   zip as an artifact.
+4. **Only a green build tags.** release-please then creates the tag and a draft release with the
+   notes, the zip is attached and the release published. A failed build leaves the version bump on
+   `main` without a tag; the next push to `main`, usually the fix, runs the build again.
 
-   ```sh
-   npm run release:check     # the checks only
-   npm run release:upload    # build the tag, zip, gh release upload
-   npm run release:publish   # the same, then publish the draft
-   ```
+**Fallback, for a draft without its download** (the publish job failed after tagging): build and
+attach it on the Mac, with the same remaps as CI:
 
-   The script takes the newest release, refuses if it has a download already or if `package.json`
-   at its tag has another version, and builds the tag in a temporary worktree (`npm ci`, then the
-   build below), so your checkout stays as it is. It needs Rust as described below and says so
-   before it installs anything when `cargo` is not on the path.
-4. **Publish the draft** in GitHub, or let `release:publish` do it right after the upload. A draft
-   without a download is a release you have not finished.
+```sh
+export RUSTFLAGS="--remap-path-prefix=$HOME=/build --remap-path-prefix=$PWD=/src"
+npm run release:check     # the checks only
+npm run release:publish   # build the tag, zip, upload, publish the draft
+```
+
+The script takes the newest release, refuses if it has a download already or if `package.json`
+at its tag has another version, and builds the tag in a temporary worktree, so your checkout stays
+as it is. Without a draft, the newest release is an older published one, so do not run it then.
 
 Apple Silicon only, unsigned (first start of a download: System Settings › Privacy & Security ›
 "Open Anyway"). Release PRs may change the version
@@ -49,7 +56,7 @@ release PR that `src-tauri/Cargo.lock` is among the changed files.
 ## Building the app
 
 ```sh
-export PATH=/opt/homebrew/opt/rustup/bin:$PATH   # when rustup comes from Homebrew
+export PATH=/opt/homebrew/opt/rustup/bin:$PATH   # when rustup comes from Homebrew; it installs the Rust of rust-toolchain.toml
 npm ci                                           # installs exactly package-lock.json
 npm run tauri build -- --bundles app -- --locked # --locked: Cargo fails instead of changing Cargo.lock
 ```
@@ -63,7 +70,7 @@ Before a build, go through [`TESTING.md`](../TESTING.md) for what the change tou
 on aarch64): since Rust 1.98 `rust-objcopy` loads `libLLVM.dylib` through `@loader_path/../lib`,
 where the `rustc` component does not ship it ([rust-lang/rust#164063](https://github.com/rust-lang/rust/issues/164063)).
 The build still succeeds, but the binary keeps its debug info (8.7 instead of 7.0 MB).
-`rustup component add llvm-tools` puts the library there and the warning goes away.
+The `llvm-tools` component puts the library there; `rust-toolchain.toml` installs it.
 
 ## Regenerating the app icon
 

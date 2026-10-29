@@ -2,6 +2,16 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-10-29
+
+- **The release is built in CI, and only a green build tags it.** A merge of the release PR builds
+  the app on a macOS runner (free on a public repository); release-please creates the tag and the
+  release only after that, then the app is attached and the release published. A published tag
+  is permanent, so a failed build must not leave one behind. A local build is no release: it
+  embeds the builder's home directory through the Cargo registry's paths, which is why 0.1.0 and
+  0.2.0 carry no download. The release PR comes in with "Bypass rules", since it starts no checks;
+  the build job runs them instead. See [`releasing.md`](releasing.md).
+
 ## 2026-10-28
 
 - **Plan is the calendar, follow-up is waiting.** P and T say "I do this on that day"; F says
@@ -22,8 +32,7 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   PR (release-please); merging that PR tags and drafts the release, and `npm run release:upload`
   attaches the app. No self-hosted runner (it would run repository code unattended with the rights
   of the Mac it runs on), no local agent that polls for releases (same risk as the runner). A build the user starts
-  is what `tauri dev` already is. A macOS runner costs nothing on a public repository and is
-  planned (#12). See [`releasing.md`](releasing.md).
+  is what `tauri dev` already is. Superseded on 2026-10-29: the app is built on a macOS runner.
 - **New commits by others bring a reviewed pull request back, as their own ask.** A push after
   the viewer's review is a real "please look again", unlike a commit in general, so it has its
   own setting (`reviewOnCommits`, on) instead of following `reopenOn`, and its own row label
