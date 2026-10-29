@@ -474,7 +474,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Hilfe und Token
 
 - [ ] `?` öffnet die Hilfe auf „Allgemein“; die drei Reiter sind gleich breit.
-- [ ] Unter „Allgemein“ steht der Abschnitt „Aktualisieren“ mit den fünf Arten, in beiden
-      Sprachen, und passt ohne waagrechtes Scrollen.
+- [ ] „Allgemein“ ist gesetzt wie „So sortiert die App“: je Thema eine fette Überschrift mit
+      Doppelpunkt; „Aktualisieren“ listet darunter die fünf Arten, in beiden Sprachen.
 - [ ] Optional Token-Hinweis: `gh auth refresh -r project` entfernt das Recht, nach ⌘R erscheint
       der Kasten in der Sidebar, der kopierte Befehl fügt es wieder hinzu.

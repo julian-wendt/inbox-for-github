@@ -63,7 +63,8 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
 /** The refresh kinds in the help, from the most complete to the narrowest. */
 const SYNCS = ["full", "delta", "item", "view", "boards"] as const;
 
-const BASICS: MessageKey[] = ["help.basics.local", "help.basics.history", "help.basics.token", "help.basics.why", "help.basics.filter", "help.basics.attention"];
+/** The General tab's topics, each a key with a `.title` next to it. */
+const BASICS = ["local", "history", "token", "why", "filter", "attention"] as const;
 
 /**
  * The help dialog in three tabs: how the app sorts items into its views (following the reopen
@@ -147,26 +148,22 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
 
           {tab === "basics" && (
             <>
+              {BASICS.map((topic) => (
+                <section key={topic}>
+                  <strong>{t(`help.basics.${topic}.title`)}:</strong> {t(`help.basics.${topic}`)}
+                </section>
+              ))}
               <section>
-                <ul>
-                  {BASICS.map((key) => (
-                    <li key={key}>{t(key)}</li>
-                  ))}
-                  <li>{refreshMinutes > 0 ? t("help.basics.refresh", { count: refreshMinutes }) : t("help.basics.refreshOff")}</li>
-                </ul>
-              </section>
-              <section>
-                <h3>{t("help.sync.title")}</h3>
-                {t("help.sync.lead")}
+                <strong>{t("help.sync.title")}:</strong> {refreshMinutes > 0 ? t("help.basics.refresh", { count: refreshMinutes }) : t("help.basics.refreshOff")}
                 <ul>
                   {SYNCS.map((kind) => (
                     <li key={kind}>
-                      <strong>{t(`help.sync.${kind}`)}:</strong> {t(`help.sync.${kind}.text`)}
+                      {t(`help.sync.${kind}`)}: {t(`help.sync.${kind}.text`)}
                     </li>
                   ))}
+                  <li>{t("help.sync.new")}</li>
                 </ul>
               </section>
-              <small>{t("help.sync.new")}</small>
             </>
           )}
         </div>
