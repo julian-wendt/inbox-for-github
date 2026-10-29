@@ -5,10 +5,16 @@ calendars and those of every account under System Settings › Internet Accounts
 Exchange, CalDAV). Only Exchange was tried so far. An Outlook account is reached only when it is
 added there as well; the new Outlook for Mac keeps its own store, which EventKit does not see.
 
-Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_list`,
-`calendar_events`, `calendar_find`, `calendar_put`, `calendar_move`, `calendar_remove`, and the
-app event `calendar-changed`), bindings from `objc2-event-kit` 0.3.2; `src/calendar.ts`, the day
-view `src/ui/parts/CalendarDay.tsx` and the sync `src/ui/useCalendarSync.ts`.
+Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_status`,
+`calendar_settings`, `calendar_list`, `calendar_events`, `calendar_find`, `calendar_put`,
+`calendar_move`, `calendar_remove`, and the app event `calendar-changed`), bindings from
+`objc2-event-kit` 0.3.2; `src/calendar.ts`, the day view `src/ui/parts/CalendarDay.tsx`, the sync
+`src/ui/useCalendarSync.ts` and the access notice `src/ui/useCalendarAccess.ts`.
+
+**Lost access:** while a calendar is chosen and access is missing, a notice at the foot of the
+sidebar says so (`CalendarNotice`). Its button shows macOS's dialog while macOS has not asked
+yet, as after an ad hoc rebuild, or opens Privacy & Security › Calendars once access was
+declined. The status is read again whenever the window gets the focus.
 
 ## How plans and events stay in step
 
@@ -47,8 +53,11 @@ living in the plan (`planned`, `focus`); the time lives only in the calendar.
 - An ad hoc rebuild loses the access: after `build:local` replaced 0.3.2-alpha.18 with
   alpha.20, macOS treated it as a new app and access had to be granted again. The permission is
   tied to the code signature, and every ad hoc build gets a new one (see `docs/releasing.md`).
+  The new build's status is "not determined", so the notice's button shows macOS's dialog again
+  (seen with 0.3.2-alpha.23).
 - A store created before access was granted lists no calendars until `reset`, so
-  `calendar_access` resets it after the answer.
+  `calendar_access` resets it after the answer, and also when access is there already, for access
+  granted in System Settings meanwhile (that path not verified yet), then sends `calendar-changed`.
 - An event created through EventKit in the Exchange calendar appears in Outlook after the sync.
 - `eventIdentifier` stays the same after the event was moved to another day in Outlook and synced
   back; `eventWithIdentifier:` then returns the new start and end. The stored link is that

@@ -408,6 +408,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Kalender
 
+- [ ] Nach `npm run build:local` (neue Ad-hoc-Signatur) mit gewähltem Kalender: unten in der
+      Seitenleiste steht „Kein Kalenderzugriff“; „Zugriff erlauben“ zeigt die Abfrage von macOS,
+      danach verschwindet der Hinweis. Abgelehnt: der Knopf öffnet Datenschutz & Sicherheit ›
+      Kalender; dort eingeschaltet und zurück in der App, verschwindet der Hinweis und die
+      Kalender sind wieder da. Ohne gewählten Kalender erscheint nie ein Hinweis.
 - [ ] Einstellungen › Kalender: „Zugriff erlauben“ fragt macOS einmal; danach die beschreibbaren
       Kalender mit Farbpunkt und Konto, × leert die Wahl. Ohne gewählten Kalender plant P wie
       bisher.

@@ -39,6 +39,7 @@ import { useTheme } from "./ui/theme";
 import { useAttention, type Pending } from "./ui/useAttention";
 import { useColumnWidths } from "./ui/useColumnWidths";
 import { useHotkeys } from "./ui/useHotkeys";
+import { useCalendarAccess } from "./ui/useCalendarAccess";
 import { useCalendarSync } from "./ui/useCalendarSync";
 import { useWindowFocus } from "./ui/useWindowFocus";
 import { useInbox } from "./ui/useInbox";
@@ -1022,6 +1023,7 @@ export default function App() {
   }, [settings, classified, changeSettings]);
 
   useCalendarSync(ready, settings, changeSettings, actions.notify, (id) => classified.find((c) => c.item.id === id)?.item.number);
+  const calendarAccess = useCalendarAccess(settings.calendarId);
 
   // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too; judged on the latest settings, not this render's.
   useEffect(() => {
@@ -1152,6 +1154,7 @@ export default function App() {
         myName={inbox.myName}
         myAvatar={inbox.myAvatar}
         missingScopes={inbox.missingScopes}
+        calendarAccess={calendarAccess}
         loading={inbox.loading}
         fetchedAt={inbox.fetchedAt}
         error={inbox.error}
