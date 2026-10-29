@@ -24,7 +24,10 @@ numbers below go stale when fields are added.
 
 A full fetch pages through every search up to the item limit (default 200 per search; two
 qualifiers, for open and, with a closed window, closed items), a few hundred points. A delta
-runs the same searches with one page of 20 each, about 7 points per search.
+runs the same searches with one page of 20 each, about 7 points per search. Widening the
+closed window adds the two closed searches over the added days only, paged like a full fetch:
+the same `QUERY` with another search string, so ~19 points per page of 50, at most 8 pages
+(about 150 points) at the default limit and usually one or two per search.
 
 ## Verified behavior (2026-10-23)
 
@@ -34,6 +37,9 @@ Each was checked against the live API during development.
   all watched owners (`fetchItems`).
 - Long search queries work; queries over 1000 characters were accepted.
 - `updated:>=` accepts a full datetime (`2026-10-23T10:00:00Z`), not only a date; deltas rely on it.
+- `closed:A..B` includes both days: the counts for `closed:2026-09-01..2026-10-21` and
+  `closed:>=2026-10-22` added up to the one for `closed:>=2026-09-01` (checked 2026-10-29). A
+  wider closed window searches only the added days this way (`searchStates`).
 - The `x-ratelimit-*` and `X-OAuth-Scopes` response headers are readable from the webview
   (exposed via CORS); the budget reading in `graphql` (`lastBudget`) and `tokenScopes` in
   `src/github/client.ts` use them.

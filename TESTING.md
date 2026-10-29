@@ -60,6 +60,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
 - [ ] ⇧⌘R (auch in der Palette und in der Hilfe) lädt sofort vollständig: ein Board-Wechsel
       seit dem letzten Abruf ist danach zu sehen, der Ring zeigt die höheren Kosten.
+- [ ] „Geschlossene und gemergte Items“ kürzer oder aus: keine neuen Punkte, ältere geschlossene
+      verschwinden sofort. Wieder länger bis zum vorigen Wert: ebenfalls kostenlos. Länger als
+      je geladen (etwa 7 → 30 Tage): der Ring zeigt nur die Kosten der zusätzlichen Tage plus ein
+      Delta, nicht die eines vollständigen Abrufs; die älteren geschlossenen erscheinen.
+- [ ] „Höchstens geladene Items“ höher: vollständiger Abruf.
 - [ ] Ein auf GitHub geändertes Item (z. B. neuer Kommentar) taucht nach dem nächsten Delta auf.
 - [ ] Ein Test-Issue mit Status (z. B. Erledigt), Notiz und Plan in ein anderes beobachtetes
       Repository übertragen: nach dem nächsten Delta steht es nur noch einmal da, unter dem neuen

@@ -142,6 +142,18 @@ export function covers(have: Coverage, want: Coverage): boolean {
 }
 
 /**
+ * Whether all the cache lacks for these settings is older closed items: the closed window grew
+ * while the item limit did not. A refresh then searches only the added days (`closedBefore` in
+ * `fetchItems`) instead of fetching everything; a higher limit has no such shortcut.
+ *
+ * @example
+ *   widensClosed({ closedDays: 7, boards: true, maxItems: 200 }, { closedDays: 30, boards: true, maxItems: 200 }); // true
+ */
+export function widensClosed(have: Coverage, want: Coverage): boolean {
+  return have.closedDays < want.closedDays && have.maxItems >= want.maxItems;
+}
+
+/**
  * Whether the next refresh may be a delta: there is an earlier fetch for the same settings
  * (`scope`), and its last full fetch is recent enough.
  *

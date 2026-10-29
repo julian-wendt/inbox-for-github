@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../model";
-import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, transferCandidates } from "./delta";
+import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, transferCandidates, widensClosed } from "./delta";
 
 const item = (id: string, overrides: Partial<Item> = {}) => ({ id, title: id, closed: null, ...overrides }) as Item;
 const now = Date.parse("2026-10-23T12:00:00Z");
@@ -72,6 +72,13 @@ describe("coverage", () => {
     expect(covers(coverage, { closedDays: 0, boards: false, maxItems: 100 })).toBe(true);
     expect(covers(coverage, { closedDays: 30, boards: true, maxItems: 200 })).toBe(false);
     expect(covers(coverage, { closedDays: 7, boards: true, maxItems: 500 })).toBe(false);
+  });
+
+  it("widens only the closed window while the item limit is covered", () => {
+    expect(widensClosed(coverage, { closedDays: 30, boards: true, maxItems: 200 })).toBe(true);
+    expect(widensClosed({ ...coverage, closedDays: 0 }, { closedDays: 7, boards: false, maxItems: 100 })).toBe(true);
+    expect(widensClosed(coverage, { closedDays: 30, boards: true, maxItems: 500 })).toBe(false);
+    expect(widensClosed(coverage, { closedDays: 7, boards: true, maxItems: 200 })).toBe(false);
   });
 });
 
