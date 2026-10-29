@@ -4,6 +4,14 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-10-29
 
+- **A plan holds until its day.** Answering an ask that brought a planned item into the inbox
+  only answers the ask: the item stays in Planned instead of counting as done, so a reply
+  cannot cost the plan. D ends the plan along with the status, and closing on GitHub drops it at
+  once. Plain activity stays in Planned as unread. Plan and Follow-up offer the same days from
+  one function (`dayChoices`), with the same keys; "Later today" went, as a follow-up is about
+  days, and its time is a setting (`followUpTime`, 09:00). One mark, the calendar with the day,
+  replaces the star for Today in rows and tables; in the tables its hover pin button went with it,
+  T and P remain.
 - **The release is built in CI, and only a green build tags it.** A merge of the release PR builds
   the app on a macOS runner (free on a public repository); release-please creates the tag and the
   release only after that, then the app is attached and the release published. A published tag

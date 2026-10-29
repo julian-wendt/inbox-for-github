@@ -64,7 +64,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
   `pinnedOn`), and `plannedAt` records when each item last got one. `classify` drops the asks
   from before that time: with none left, the item leaves the inbox for `planned`, or stays in its
-  table marked with its day; a mention, review request, push or reopen since brings it back. Each
+  table marked with its day; a mention, review request, push or reopen since brings it back, and
+  answering it takes it out again without ending the plan. D and closing on GitHub end it. Each
   morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
   follow-up, F ends a plan or pin (`unplan`).
 - Unassigned, the handoff no longer counts: the item sorts as if no status were stored.

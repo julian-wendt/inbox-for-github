@@ -134,6 +134,14 @@ Writing `en-DE` into the app's `AppleLanguages` at start gave 24-hour time in th
 not in the Tauri window (tried and reverted 2026-10-23). The snooze picker therefore follows the
 first system language; a 24-hour picker needs fields of our own.
 
+## Regional date format
+
+Checked 2026-10-29 with the system JavaScriptCore on macOS (`AppleLocale` `en_US@rg=dezzzz`): the
+default `Intl` locale is `en-US`, so the region from System Settings › Language & Region does not
+reach `toLocaleDateString` ("Nov 3"), and neither does the `-u-rg-dezzzz` extension. `en-DE`
+formats in German order ("3. Nov"). The shell's `system_locale` command reads `AppleLocale`, and
+`dateLocale` (`src/ui/i18n.ts`) joins the app's language with its region.
+
 ## Notifications
 
 Read in the sources of `tauri-plugin-notification` 2.7.0 (`src/desktop.rs`), `notify-rust`

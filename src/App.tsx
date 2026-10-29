@@ -18,9 +18,8 @@ import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
-import { snoozeUntil, untilText } from "./ui/snooze";
+import { followUpOn, untilText } from "./ui/snooze";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { followUpOf } from "./ui/followUp";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
@@ -43,7 +42,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, datedAt, datedOf, dayShort, isPinnable, planChoices, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -206,6 +205,11 @@ export default function App() {
   const [today, setToday] = useState(localDay);
   const dated = useCallback((c: Classified) => datedOf(c, focus, plans, today), [focus, plans, today]);
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
+  // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
+  const unreadPlannedIds = useMemo(
+    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me))).map((c) => c.item.id)),
+    [plannedAll, inbox.seen, inbox.unreadMarks, me],
+  );
   const plannedGroups = useMemo(
     () => (bucket === "planned" ? groupBySnoozeEnd(plannedAll.filter((c) => matchesText(c.item, query)), (c) => datedAt(datedOf(c, focus, plans, today)!), (c) => c.statusAt ?? "", sort.of("planned") === "oldest") : []),
     [bucket, plannedAll, query, focus, plans, today, sort],
@@ -419,7 +423,7 @@ export default function App() {
   /** What a follow-up ends for the toast: the item's Today pin or its plan. */
   const endedPlan = (c: Classified) => {
     const when = dated(c);
-    return when?.kind === "today" ? t("replaced.today") : when?.kind === "planned" ? t("replaced.plan", { day: dayShort(when.day) }) : null;
+    return when?.kind === "today" ? t("replaced.today") : when?.kind === "planned" ? t("replaced.plan", { day: dayText(when.day) }) : null;
   };
   /** A toast that also names the "when" the change replaced, so ⌘Z is one look away. */
   const replacing = (toast: string, replaced: string | null) => (replaced ? t("replaced.toast", { toast, replaced }) : toast);
@@ -442,19 +446,31 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** The plan choices; the menu P opens leads with Today (T), the right-click submenu has it beside. */
-  const planEntries = (c: Classified, withToday = false): MenuEntry[] => {
+  /** The days Plan and Follow-up both offer, under the same keys; `chosen` is checked, `pick` gets the day and its name. */
+  const dayEntries = (pick: (day: string, text: string) => void, chosen?: string): MenuEntry[] =>
+    dayChoices(new Date(), inbox.settings.workdays).map((choice) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === chosen, onSelect: () => pick(choice.day, choiceText(choice)) }));
+  /** Keeps a plan through a new ask: the ask counts as seen, as when planned again, and the item leaves the inbox. */
+  const keepPlan = (c: Classified, day: string | null) => {
+    const previous = todayOf(inbox.settings);
+    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep(previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: new Date().toISOString() } })]);
+  };
+  /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and, with a plan, its removal (X). */
+  const planEntries = (c: Classified): MenuEntry[] => {
     const day = inbox.settings.planned.find((p) => p.id === c.item.id)?.day;
+    const when = dated(c);
+    const kept = when && c.bucket === "inbox" ? datedText(when).text : null;
+    const keepLabel = when?.kind === "today" ? t("plan.keepToday") : t("plan.keep", { day: kept ?? "" });
     return [
-      ...(withToday ? [{ label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), onSelect: () => toggleFocus(c) }] : []),
-      ...planChoices().map((choice, i) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === day, divided: withToday && i === 0, onSelect: () => planFor(c, choice.day, choiceText(choice)) })),
-      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !planChoices().some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayShort(localDay(new Date(at)))) }) },
-      ...(day ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
+      ...(kept ? [{ label: keepLabel, keys: "K", onSelect: () => keepPlan(c, when?.kind === "today" ? null : kept) }] : []),
+      { label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
+      ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
+      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
+      ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
     ];
   };
   /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries(c, true), ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ entries: planEntries(c), ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -513,25 +529,33 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const steps = open.flatMap((c) => planStep(c, status) ?? []);
+    const filed = open.filter((c) => planStep(c, status) !== null);
+    const steps = [...filed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(filed) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
-    const text = plural("marks.toastOne", "marks.toast", steps.length, { status: t(`status.${status}`) });
+    const text = plural("marks.toastOne", "marks.toast", filed.length, { status: t(`status.${status}`) });
     bulk(blocked > 0 ? `${text} · ${t("marks.blocked", { count: blocked })}` : text, steps);
   };
   /** The text for one item or for several: `one` takes no count. */
   const plural = (one: MessageKey, many: MessageKey, count: number, params: Record<string, string | number> = {}) => t(count === 1 ? one : many, { count, ...params });
-  const hasFollowUp = (c: Classified) => followUpOf(c) !== null;
-  /** Takes the follow-up date off an item, as if never set; undo puts back exactly what was stored. */
+  const hasFollowUp = (c: Classified) => c.status === "snoozed";
+  /** Takes the follow-up off an item, as if never set; undo puts back exactly what was stored. */
   const followUpStep = (c: Classified) => {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.clearStatus(c.item.id), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
   const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c)]);
-  /** X on the marked items: every follow-up date among them goes. */
-  const removeMarkedFollowUps = () => {
+  /** X on one item: its plan or Today pin goes, else its follow-up. */
+  const removeWhen = (c: Classified) =>
+    dated(c) ? planFor(c, null, "") : hasFollowUp(c) ? removeFollowUp(c) : actions.notify(t("noop.noFollowUp", { number: c.item.number }));
+  /** X on the marked items: every follow-up among them goes, and with `plans` every plan and Today pin too. */
+  const removeMarkedFollowUps = (plans = false) => {
     const waiting = marked.filter(hasFollowUp);
-    bulk(plural("marks.reminderRemovedOne", "marks.reminderRemoved", waiting.length), waiting.map(followUpStep));
+    const unplanned = plans ? marked.filter((c) => dated(c) !== null) : [];
+    const count = waiting.length + unplanned.length;
+    const text =
+      unplanned.length === 0 ? plural("marks.reminderRemovedOne", "marks.reminderRemoved", count) : waiting.length === 0 ? plural("marks.plansRemovedOne", "marks.plansRemoved", count) : t("marks.whenRemoved", { count });
+    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned)]);
   };
   /** Takes the plan or Today pin off the items that have one, as one step for all of them; none when none has. */
   const unplanStep = (cs: Classified[]) => {
@@ -542,11 +566,10 @@ export default function App() {
   /** A time for the marked items: they wait until then. */
   const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), [...open.map((c) => statusStep(c, "snoozed", until)), ...unplanStep(open)]);
   const bulkTimes = (): MenuEntry[] => [
-    { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
-    { label: t("snooze.later"), keys: "H", onSelect: () => bulkLater(snoozeUntil("later")) },
-    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => bulkLater(snoozeUntil("tomorrow")) },
-    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => bulkLater(snoozeUntil("nextWeek")) },
+    ...dayEntries((day) => bulkLater(followUpOn(day, inbox.settings.followUpTime))),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: bulkLater }) },
+    { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
+    ...(marked.some(hasFollowUp) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeMarkedFollowUps() }] : []),
   ];
   /** The context menu while several items are marked: what applies to all of them. */
   const bulkEntries = (): MenuEntry[] => [
@@ -555,7 +578,7 @@ export default function App() {
     { label: t("status.snoozed"), keys: "F", icon: <Bell size={14} />, items: bulkTimes() },
     ...(open.some(assignable) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => (assignAll(open), clearMarks()) }] : []),
     ...(open.some(leavable) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => (leaveAll(open), clearMarks()) }] : []),
-    ...(marked.some(hasFollowUp) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: removeMarkedFollowUps }] : []),
+    ...(marked.some(hasFollowUp) || marked.some((c) => dated(c) !== null) ? [{ label: t(!marked.some((c) => dated(c) !== null) ? "reminder.remove" : !marked.some(hasFollowUp) ? "plan.remove" : "marks.removeWhen"), keys: "X", icon: <X size={14} />, onSelect: () => removeMarkedFollowUps(true) }] : []),
     { label: marked.some(isUnread) ? t("menu.markRead") : t("menu.markUnread"), keys: "R", icon: marked.some(isUnread) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => (toggleRead(marked), clearMarks()) },
     { label: t("marks.clear"), divided: true, onSelect: () => setMarks(new Set()) },
   ];
@@ -603,27 +626,34 @@ export default function App() {
   const applyStatus = (c: Classified, status: Status) => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
-    const undo = () => void inbox.restoreStatus(id, previous);
+    // D ends a plan too, in the same toast and undo.
+    const ends = status === "done" ? unplanStep([c]) : [];
+    const change = (text: string, run: () => void) => {
+      const again = () => (run(), ends.forEach((s) => s.run()));
+      again();
+      actions.announce(
+        replacing(text, ends.length > 0 ? endedPlan(c) : null),
+        () => (void inbox.restoreStatus(id, previous), ends.forEach((s) => s.undo()), ends.length > 0 && selection.select(id)),
+        again,
+      );
+    };
     const plan = planStatus(c, status, me);
-    const handoff = { handoff: snapshotOf(c.item) };
-    const hand = () => void inbox.setStatus(id, "done", handoff);
+    const hand = () => void inbox.setStatus(id, "done", { handoff: snapshotOf(c.item) });
     switch (plan.do) {
       case "resume":
-        void inbox.clearStatus(id);
-        return actions.announce(t("toast.resumed", { number }), undo, () => void inbox.clearStatus(id));
+        return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));
       case "tick-update":
-        hand();
-        return actions.announce(t("toast.updateDone", { number }), undo, hand);
+        return change(t("toast.updateDone", { number }), hand);
       case "hand-off":
-        hand();
-        return actions.announce(t("toast.handedOff", { number }), undo, hand);
+        return change(t("toast.handedOff", { number }), hand);
       case "clear":
-        void inbox.clearStatus(id);
-        return actions.announce(t("toast.filed", { number }), undo, () => void inbox.clearStatus(id));
+        return change(t("toast.filed", { number }), () => void inbox.clearStatus(id));
       case "blocked":
         return actions.notify(t("done.blocked", { number }));
       case "set":
-        return actions.apply(c, plan.status);
+        if (ends.length === 0) return actions.apply(c, plan.status);
+        if (c.item.closed) return actions.notify(t("closed.noStatus", { number }));
+        return change(`#${number} → ${t(`status.${plan.status}`)}`, () => void inbox.setStatus(id, plan.status));
       case "none":
         return;
     }
@@ -641,13 +671,12 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** The snooze choices for one item, as menu entries; "Pick a date…" opens the date dialog. */
+  /** The follow-up choices for one item: the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
   const snoozeEntries = (c: Classified): MenuEntry[] => [
-    { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-    { label: t("snooze.later"), keys: "H", onSelect: () => followUp(c, snoozeUntil("later")) },
-    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => followUp(c, snoozeUntil("tomorrow")) },
-    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => followUp(c, snoozeUntil("nextWeek")) },
+    ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime)), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
+    { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
+    ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeFollowUp(c) }] : []),
   ];
   /** S on an item: the follow-up choices open in the middle of the detail, also to move the date. */
   const snooze = (c: Classified) => {
@@ -770,20 +799,24 @@ export default function App() {
       () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true)),
     );
   };
-  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write. */
+  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   const replied = (id: string, change?: StateWrite) => {
     void inbox.reloadItem(id);
     const c = classifiedById(id);
     if (!change || !c) return;
     const reverse = change.action === "close" ? "reopen" : "close";
-    const write = (action: "close" | "reopen", reason?: CloseReason) => () =>
+    const plan = planOf(todayOf(inbox.settings), id);
+    // Only once the item is loaded open again, or the closed-plan effect drops the plan once more.
+    const replace = () => void inbox.updateSettings((s) => ({ ...s, ...replan(todayOf(s), plan) }));
+    const write = (action: "close" | "reopen", reason?: CloseReason, after?: () => void) => () =>
       void queueWrite(() =>
         ghToken()
           .then((token) => setOpen(token, { id, kind: c.item.kind }, action, reason))
           .then(() => inbox.reloadItem(id))
+          .then(after)
           .catch((e: unknown) => actions.notify(String(e))),
       );
-    actions.announce(t(change.action === "close" ? "toast.closed" : "toast.reopened", { number: c.item.number }), write(reverse, change.before), write(change.action, change.reason));
+    actions.announce(t(change.action === "close" ? "toast.closed" : "toast.reopened", { number: c.item.number }), write(reverse, change.before, change.action === "close" ? replace : undefined), write(change.action, change.reason));
   };
   const openOrca = (c: Classified, repoId: string) => {
     const { number } = c.item;
@@ -829,13 +862,14 @@ export default function App() {
       // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
       ...(s.id === "snoozed" && { items: snoozeEntries(c) }),
     }));
-    const planItem: MenuEntry[] = pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, checked: planned, items: planEntries(c, true) }] : [];
+    const planItem: MenuEntry[] = pinnable(c) ? [{ label: t("menu.plan"), keys: "P", icon: <CalendarDays size={14} />, checked: planned, items: planEntries(c) }] : [];
     return [
       ...statuses.slice(0, 1),
       ...planItem,
       ...statuses.slice(1),
       ...(leavable(c) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => leave(c) }] : []),
       ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
+      ...(planned ? [{ label: t("plan.remove"), keys: "X", icon: <X size={14} />, onSelect: () => planFor(c, null, "") }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
       { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
@@ -865,6 +899,14 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [ready, settings, saveSettings, classified, me]);
 
+  // A plan of an item closed on GitHub goes at once, not with the next day.
+  const changeSettings = inbox.updateSettings;
+  useEffect(() => {
+    const closed = new Set(classified.filter((c) => c.item.closed).map((c) => c.item.id));
+    if (closedPlans(settings, (id) => closed.has(id)).length === 0) return;
+    void changeSettings((s) => ({ ...s, ...unplan(todayOf(s), closedPlans(s, (id) => closed.has(id))) }));
+  }, [settings, classified, changeSettings]);
+
   const showPopup = popup && table && current !== null;
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
   const openedId = current?.item.id;
@@ -892,7 +934,7 @@ export default function App() {
       d: marked.length > 0 ? () => bulkStatus("done") : withCurrent((c) => applyStatus(c, "done")),
       f: marked.length > 0 ? openBulkTimes : withCurrent(snooze),
       o: marked.length > 0 ? () => bulkStatus("open") : withCurrent((c) => applyStatus(c, "open")),
-      x: marked.length > 0 ? removeMarkedFollowUps : withCurrent((c) => (hasFollowUp(c) ? removeFollowUp(c) : actions.notify(t("noop.noFollowUp", { number: c.item.number })))),
+      x: marked.length > 0 ? () => removeMarkedFollowUps(true) : withCurrent(removeWhen),
       t: withCurrent((c) => (pinnable(c) ? toggleFocus(c) : actions.notify(t("noop.notPinnable", { number: c.item.number })))),
       p: withCurrent(plan),
       u: marked.length > 0 ? () => toggleRead(marked) : withCurrent((c) => toggleRead([c])),
@@ -1028,7 +1070,6 @@ export default function App() {
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
-          onFocus={toggleFocus}
           onMove={(bar, target) => void inbox.saveSettings({ ...inbox.settings, plateOrder: moveBar(inbox.settings.plateOrder, bar as PlateGroup, target as PlateGroup) })}
           seen={inbox.seen}
           unreadMarks={inbox.unreadMarks}
@@ -1054,7 +1095,7 @@ export default function App() {
       ) : (
         <InboxList
           timeOf={rowTime}
-          unread={unreadInboxIds}
+          unread={bucket === "planned" ? unreadPlannedIds : unreadInboxIds}
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
@@ -1214,6 +1255,7 @@ export default function App() {
             onAssignMe={() => current && assignMe(current)}
             onFollowUp={() => current && snooze(current)}
             onRemoveFollowUp={current && hasFollowUp(current) ? () => removeFollowUp(current) : undefined}
+            onRemovePlan={current && dated(current) ? () => planFor(current, null, "") : undefined}
             onLeave={current && leavable(current) ? () => leave(current) : undefined}
           onOpenCurrent={() => current && void openUrl(current.item.url)}
           onBucket={setBucket}

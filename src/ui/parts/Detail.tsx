@@ -17,7 +17,7 @@ import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
 import { OrcaMark } from "./OrcaMark";
-import { KindIcon, FollowUpChip } from "./ItemMarks";
+import { KindIcon, FollowUpChip, PlanChip } from "./ItemMarks";
 import type { StatusMap } from "../../workStatus";
 import { AttributeChips } from "./AttributeChips";
 import { ItemProps } from "./ItemProps";
@@ -220,6 +220,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
           <h2 className="detail-title">{item.title}</h2>
           <div className="detail-meta">
             <KindIcon item={item} size={18} />
+            {dated && <PlanChip dated={dated} onPlan={onPlan} />}
             <FollowUpChip entry={entry} onRemove={followUpOf(entry) ? onRemoveFollowUp : undefined} />
             <AttributeChips keys={attributes} item={item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} interactive />
             <ItemProps item={item} />

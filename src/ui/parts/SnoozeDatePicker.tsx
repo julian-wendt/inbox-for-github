@@ -2,7 +2,8 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { t } from "../i18n";
 import { daysInMonth, daysOf, HOURS, MINUTES, MONTHS, yearsFrom } from "../segments";
-import { snoozeUntil } from "../snooze";
+import { localDay } from "../assignments";
+import { followUpOn } from "../snooze";
 import { SegmentField } from "./SegmentField";
 
 interface When {
@@ -37,7 +38,7 @@ function momentOf(when: When): Date | null {
 export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (until: string) => void; onClose: () => void; day?: boolean }) {
   const [openedAt] = useState(() => Date.now());
   const [when, setWhen] = useState<When>(() => {
-    const d = new Date(snoozeUntil("tomorrow"));
+    const d = new Date(followUpOn(localDay(new Date(Date.now() + 86_400_000))));
     return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hours: day ? 0 : d.getHours(), minutes: day ? 0 : d.getMinutes() };
   });
   const years = yearsFrom(new Date(openedAt).getFullYear());

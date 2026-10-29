@@ -218,9 +218,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Liste/Tabelle ein Zahnrad-Menü mit genau diesen Einträgen (Sortierung als Häkchen); unter 340 px
       zeigt das Filter-Menü nur sein Icon. Titel und Glühbirne bleiben immer, die Controls stehen
       in jeder Breite rechtsbündig; breiter gezogen kommt alles zurück. Gilt in Inbox, Geplant (Liste) und Erledigt.
-- [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes Item zeigt in der
-      Kontextzeile einen gelben Stern, ein geplantes den Tag mit Kalender-Icon („Morgen“, „Do“);
-      es bleibt in seiner Liste. Von mir erstellt zeigt den Stern beim Überfahren der Zeile.
+- [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes oder geplantes Item zeigt
+      in der Kontextzeile bzw. hinter dem Titel den Kalender mit „Heute“, „Morgen“, dem Wochentag
+      dieser Arbeitswoche („Donnerstag“) oder dem Datum („3. Nov.“); es bleibt in seiner Liste.
+      Kein Stern mehr, auch nicht beim Überfahren einer Tabellenzeile. In den Tabellen steht der
+      Tag als blaues Badge hinter dem Titel, das Eröffnungsdatum als graues; das Icon der Zeile
+      steht unter dem Pfeil der Leiste.
 - [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
       erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
       Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.
@@ -246,14 +249,37 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Kein Avatar.
 - [ ] Eigene PRs fehlen hier (sie stehen in „Von mir erstellt“), fremde zugewiesene PRs stehen oben.
 - [ ] T heftet ein Item für heute an oder nimmt es heraus. P öffnet mittig das Planmenü: T Heute,
-      M Morgen, 1–5 die übrigen Wochentage dieser Woche, W Nächsten Montag, D Datum wählen, X Plan
-      entfernen (nur wenn geplant). D öffnet den Datumsdialog ohne Uhrzeit, „Planen für“, ab morgen;
-      heute oder früher lässt den Knopf aus. Ein so gewählter Tag trägt im Menü den Haken an
-      „Datum wählen…“. Angeheftete und geplante Items bleiben in ihrer Leiste, mit Stern bzw. dem
-      Tag leise hinter dem Titel („Morgen“, „Do“); keine eigene Leiste „Heute“ oder „Geplant“ mehr.
+      N Nächster Werktag, 1–5 die übrigen Wochentage dieser Woche, W Nächste Woche (fehlt Freitag
+      bis Sonntag), D Datum wählen, X Plan entfernen (auch für ein Item in Heute). D öffnet den
+      Datumsdialog ohne Uhrzeit, „Planen für“, ab morgen; heute oder früher lässt den Knopf aus.
+      Ein so gewählter Tag trägt im Menü den Haken an „Datum wählen…“. Angeheftete und geplante
+      Items bleiben in ihrer Leiste, mit dem Tag leise hinter dem Titel; keine eigene Leiste
+      „Heute“ oder „Geplant“ mehr.
+- [ ] F bietet dieselben Tage unter denselben Tasten (N, 1–5, W, D), dazu F Ohne Datum und, wenn
+      das Item eine hat, X Wiedervorlage entfernen (auch eine ohne Datum); „Später heute“ und H
+      gibt es nicht mehr. Ein Tag kommt um die Uhrzeit aus Einstellungen › Allgemein ›
+      „Wiedervorlagen kommen um“ (09:00) zurück; eine geänderte Zeit gilt für die nächste Wahl.
+- [ ] Daten folgen der Region aus Systemeinstellungen › Sprache & Region, auch bei englischer
+      App-Sprache: mit Region Deutschland „3. Nov.“ statt „Nov 3“, Zeiten 24-stündig.
+- [ ] Einstellungen › Allgemein › „Werktage“: Mo–Fr an. Sa dazu: P und F bieten am Freitag den
+      Samstag als nächsten Werktag an, „Nächste Woche“ ist der erste Werktag der nächsten Woche.
+      Der letzte Werktag lässt sich nicht ausschalten.
+- [ ] X auf einem geplanten oder angehefteten Item nimmt den Plan weg, auf einer Wiedervorlage die
+      Wiedervorlage, sonst sagt es, dass es nichts zu entfernen gibt; mit markierten Items alles
+      davon auf einmal. Kontextmenü und ⌘K bieten „Plan entfernen“ bzw. „Wiedervorlage entfernen“.
+- [ ] Ein geplantes Item, nur erwähnt: eine neue Erwähnung bringt es in die Inbox, es bleibt in
+      Geplant. Darauf antworten nimmt es aus der Inbox, es bleibt geplant für seinen Tag (nicht
+      Erledigt). P zeigt in der Inbox oben „Plan für Donnerstag behalten“ (K): das Item verlässt
+      die Inbox, ohne Antwort. D erledigt es und nimmt den Plan weg (⌘Z bringt beides zurück).
+      Auf GitHub schließen: nach der nächsten Aktualisierung ist der Plan weg, nicht erst morgen.
+      In der App schließen und mit ⌘Z zurücknehmen: das Item ist wieder offen und geplant wie zuvor.
+- [ ] Ein neuer Kommentar ohne Erwähnung auf einem geplanten Item: keine Inbox, in Geplant (Liste)
+      ist die Zeile fett mit dem Punkt, bis du sie öffnest.
+- [ ] Im Detail steht bei einem angehefteten oder geplanten Item vor den Attribut-Chips ein Chip
+      mit blauem Kalender und dem Tag wie in der Zeile; ein Klick öffnet darunter das Planmenü.
 - [ ] Im Detail-Umschalter steht „Planen“ (blauer Kalender) zwischen Offen und Wiedervorlage; ein
       Klick öffnet darunter dieselben Wahlen wie P. Ist das Item angeheftet oder geplant, ist
-      „Planen“ gewählt statt „Offen“ und nennt den Tag („Heute“, „Morgen“, „Do“). Im Kontextmenü
+      „Planen“ gewählt statt „Offen“ und nennt den Tag („Heute“, „Morgen“, „Donnerstag“). Im Kontextmenü
       steht „Planen für“ mit Heute und den Tagen ebenso vor „Wiedervorlage“, ein eigener Eintrag
       „Heute“ fehlt. Auf einem erledigten Item sagt ein Klick, warum es nicht geht.
 - [ ] Ein Wann ersetzt das andere, und der Toast sagt es: F auf einem geplanten Item zeigt
@@ -295,8 +321,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Wiedervorlage in den Tabellen
 
-- [ ] F auf einer Zuweisung oder einem eigenen Item öffnet die Zeiten (Ohne Datum, Später heute,
-      Morgen früh, Nächste Woche, Datum wählen). Das Item bleibt in seiner Tabelle: eine Zuweisung
+- [ ] F auf einer Zuweisung oder einem eigenen Item öffnet die Zeiten (Nächster Werktag, die
+      übrigen Wochentage, Nächste Woche, Datum wählen, Ohne Datum). Das Item bleibt in seiner Tabelle: eine Zuweisung
       rückt in die Leiste „Später“ (mit den auf dem Board blockierten, eingeklappt, nicht
       mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; in „Geplant“
       steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt.

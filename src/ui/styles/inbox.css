@@ -456,21 +456,13 @@
   color: var(--st-accepted);
 }
 
-/* Today's star and a planned day, before the context text. */
+/* The day of a pinned or planned item, before the context text. */
 .row-mark {
   display: inline-flex;
   flex: none;
   gap: 3px;
   align-items: center;
   font-size: 11.5px;
-}
-
-.row-mark.today {
-  color: var(--yellow);
-}
-
-.row-mark.today svg {
-  fill: currentColor;
 }
 
 .row-mark.carried {
@@ -583,8 +575,8 @@
   gap: 14px;
   align-items: center;
   height: 40px;
-  /* The kind icon starts where the bar title does (53px); the star's center is the chevron's (35px). */
-  padding: 0 12px 0 53px;
+  /* The kind icon starts under the bar's chevron (28px); the unread dot sits in front of it. */
+  padding: 0 12px 0 28px;
   border-radius: var(--radius-m);
 }
 
@@ -641,8 +633,7 @@
   font-weight: 700;
 }
 
-/* Mail's unread dot, in the row's left padding, so read and unread rows keep their alignment;
-   in the tables it sits before the star (which starts at 24px). */
+/* Mail's unread dot, in the row's left padding, so read and unread rows keep their alignment. */
 .inbox-row .fresh-dot,
 .table-row .fresh-dot {
   position: absolute;
@@ -660,22 +651,43 @@
 }
 
 /* Quiet and absolute, so it does not read like the relative time at the end of the row. */
-.table-opened,
-.table-planned {
+.table-opened {
   flex: none;
   color: var(--text-faint);
   font-size: 11.5px;
 }
 
-/* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
+/* Badges after the title: the planned day blue, like Plan elsewhere. */
+.table-planned,
 .table-carried {
+  display: inline-flex;
   flex: none;
+  gap: 4px;
+  align-items: center;
   padding: 1px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--red) 16%, transparent);
-  color: var(--text);
   font-size: 11px;
   font-weight: 600;
+}
+
+.table-planned {
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--text);
+}
+
+.table-planned svg {
+  color: var(--st-planned);
+}
+
+/* The text, not the icon, gives the badge its baseline, so it lines up with the title and the date. */
+.table-planned span {
+  align-self: baseline;
+}
+
+/* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
+.table-carried {
+  background: color-mix(in srgb, var(--red) 16%, transparent);
+  color: var(--text);
 }
 
 /* One chip line; chips that do not fit wrap onto a second line that is clipped away. */
@@ -819,41 +831,6 @@
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
-}
-
-/* The star sits in the row's left padding; it shows on hover, and stays when pinned. */
-.star-btn {
-  position: absolute;
-  left: 24px;
-  display: grid;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-faint);
-  opacity: 0;
-}
-
-.table-row:hover .star-btn,
-.star-btn.on,
-.star-btn:focus-visible {
-  opacity: 1;
-}
-
-.star-btn:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.star-btn.on {
-  color: var(--yellow);
-}
-
-.star-btn.on svg {
-  fill: currentColor;
 }
 
 .context-menu {

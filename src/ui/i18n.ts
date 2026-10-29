@@ -20,9 +20,40 @@ export function setLang(lang: Lang): void {
   current = lang;
 }
 
-/** The current language, e.g. for `Intl` formatters. */
+/** The current language, e.g. for `Intl` formatters of texts; dates and times use `dateLocale`. */
 export function lang(): Lang {
   return current;
+}
+
+let region: string | null = null;
+
+/**
+ * The region in a macOS locale ("en_US@rg=dezzzz" → "DE", "de_AT" → "AT"): the `rg` override that
+ * System Settings › Language & Region writes, else the country; null when there is none.
+ *
+ * @example
+ *   regionOf("en_US@rg=dezzzz"); // "DE"
+ */
+export function regionOf(appleLocale: string): string | null {
+  const override = /@(?:.*;)?rg=([a-z]{2})zzzz/i.exec(appleLocale)?.[1];
+  const country = /^[a-z]{2,3}_([A-Z]{2})\b/.exec(appleLocale)?.[1];
+  return (override ?? country)?.toUpperCase() ?? null;
+}
+
+/** Sets the Mac's region for `dateLocale`, from its locale (see `regionOf`); set once at start. */
+export function setRegion(appleLocale: string): void {
+  region = regionOf(appleLocale);
+}
+
+/**
+ * The locale dates and times are formatted with: the app's language in the Mac's region, so
+ * English in Germany reads "3 Nov" in German order ("en-DE"); without a region the language.
+ *
+ * @example
+ *   new Date().toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
+ */
+export function dateLocale(): string {
+  return region ? `${current}-${region}` : current;
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { Budget } from "../../github/client";
-import { lang, t } from "../i18n";
+import { dateLocale, t } from "../i18n";
 
 /**
  * GitHub's GraphQL budget as a bar with its numbers: points left of the hourly limit, when it is
@@ -14,7 +14,7 @@ import { lang, t } from "../i18n";
 /** The meter's lines as plain text, for the ring's tooltip. */
 function usageText({ budget, lastCost }: Usage, refreshMinutes: number): string[] {
   if (!budget) return [t("usage.unknown")];
-  const time = budget.resetAt.toLocaleTimeString(lang(), { hour: "2-digit", minute: "2-digit" });
+  const time = budget.resetAt.toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" });
   const lines = [t("usage.title"), t("usage.remaining", { remaining: budget.remaining, limit: budget.limit, time })];
   if (lastCost !== null) {
     lines.push(
@@ -55,7 +55,7 @@ export function UsageRing({ usage, refreshMinutes, onClick }: { usage: Usage; re
 export function UsageMeter({ usage, refreshMinutes }: { usage: Usage; refreshMinutes: number }) {
   const { budget, lastCost } = usage;
   if (!budget) return <small>{t("usage.unknown")}</small>;
-  const time = budget.resetAt.toLocaleTimeString(lang(), { hour: "2-digit", minute: "2-digit" });
+  const time = budget.resetAt.toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" });
   return (
     <div className="usage">
       <meter min={0} max={budget.limit} low={budget.limit * 0.2} optimum={budget.limit} value={budget.remaining} />

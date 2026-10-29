@@ -1,9 +1,11 @@
+import { invoke } from "@tauri-apps/api/core";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@fontsource-variable/inter";
 import App from "./App";
 import { ErrorBoundary } from "./ui/parts/ErrorBoundary";
 import { noteInput } from "./ui/inputTrail";
+import { setRegion } from "./ui/i18n";
 import "./ui/styles/tokens.css";
 import "./ui/styles/base.css";
 
@@ -38,10 +40,15 @@ document.addEventListener(
   true,
 );
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
+// Dates follow the Mac's region, which the web view does not know; without it they follow the language.
+void invoke<string>("system_locale")
+  .then(setRegion, () => undefined)
+  .finally(() =>
+    ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+      <React.StrictMode>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </React.StrictMode>,
+    ),
+  );

@@ -1,11 +1,11 @@
-import { CalendarDays, Star } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { motion } from "motion/react";
 import { numberSpans, titleSpans } from "../textFilter";
 import { Highlight } from "./Highlight";
 import type { Classified } from "../../classify";
 import { t } from "../i18n";
 import { compactAgo, rowContext } from "../labels";
-import { carriedText, dayLong, dayShort } from "../plan";
+import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
 import { KindIcon } from "./ItemMarks";
@@ -17,10 +17,8 @@ interface Props {
   marked: boolean;
   /** Not opened since what put it here; the title prints bold. */
   unread: boolean;
-  /** Pinned for today (T): a filled star in the context line. */
-  pinned: boolean;
-  /** Planned for a later day (P): that day in the context line. */
-  plannedDay?: string;
+  /** Pinned for today (T) or planned for a day (P): the day in the context line. */
+  dated?: Dated;
   /** In Today since a day before today: carried over, marked since when. */
   carriedSince?: string;
   /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
@@ -38,7 +36,7 @@ interface Props {
   still: boolean;
 }
 
-export function InboxRow({ entry, selected, marked, unread, pinned, plannedDay, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
+export function InboxRow({ entry, selected, marked, unread, dated, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
   const { item, mention, status } = entry;
   const person = mention?.by ?? item.author;
   const ref = useScrollIntoView<HTMLLIElement>(selected);
@@ -70,22 +68,12 @@ export function InboxRow({ entry, selected, marked, unread, pinned, plannedDay, 
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
         <span className={`row-context${mention?.self ? " reminder" : ""}`}>
           <KindIcon item={item} size={13} status={status} />
-          {pinned && (
-            <span className="row-mark today" title={t("menu.today")} aria-label={t("menu.today")}>
-              <Star size={12} />
-            </span>
-          )}
           {carriedSince && (
             <span className="row-mark carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>
               {carriedText(carriedSince)}
             </span>
           )}
-          {plannedDay && (
-            <span className="row-mark" title={t("plan.on", { date: dayLong(plannedDay) })}>
-              <CalendarDays size={12} />
-              {dayShort(plannedDay)}
-            </span>
-          )}
+          {dated && <DayMark dated={dated} />}
           {/* "Assigned to you · app"; in Assigned to me the group heading names the repo already. */}
           <span>{`${rowContext(entry)} · ${item.repo.split("/")[1]}`}</span>
         </span>
@@ -95,5 +83,16 @@ export function InboxRow({ entry, selected, marked, unread, pinned, plannedDay, 
         <span>#<Highlight spans={numberSpans(item.number, query)} /></span>
       </span>
     </motion.li>
+  );
+}
+
+/** The day of a dated item in its context line: the calendar icon and "Today", "Tomorrow", the weekday or the date. */
+function DayMark({ dated }: { dated: Dated }) {
+  const { text, title } = datedText(dated);
+  return (
+    <span className="row-mark" title={title}>
+      <CalendarDays size={12} />
+      {text}
+    </span>
   );
 }

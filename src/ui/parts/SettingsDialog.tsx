@@ -14,6 +14,10 @@ import { NOTIFY_REASONS, notifies } from "../attention";
 import { t, type Lang, type MessageKey } from "../i18n";
 import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
+import { HOURS, MINUTES } from "../segments";
+import { clockOf, clockText } from "../snooze";
+import { toggleWorkday, WEEK, weekdayName } from "../plan";
+import { SegmentField } from "./SegmentField";
 import { guessWorkStatus, WORK_STATUSES, type WorkStatus } from "../../workStatus";
 import { combineAttributes, splitAttributes, type AttributeOption } from "../attributes";
 import { AttributeList } from "./AttributeList";
@@ -244,6 +248,37 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                   ))}
                 </div>
                 <small>{t("settings.languageHint")}</small>
+              </div>
+              <div className="field">
+                <span>{t("settings.workdays")}</span>
+                <div className="segmented weekdays">
+                  {WEEK.map((day) => (
+                    <button
+                      key={day}
+                      className={draft.workdays.includes(day) ? "on" : ""}
+                      aria-pressed={draft.workdays.includes(day)}
+                      onClick={() => change({ workdays: toggleWorkday(draft.workdays, day) })}
+                    >
+                      {weekdayName(day)}
+                    </button>
+                  ))}
+                </div>
+                <small>{t("settings.workdaysHint")}</small>
+              </div>
+              <div className="field">
+                <span>{t("settings.followUpTime")}</span>
+                <div className="time-field">
+                  <SegmentField
+                    label={t("settings.followUpTime")}
+                    separator=":"
+                    parts={[
+                      { label: t("snooze.hour"), value: clockOf(draft.followUpTime).hours, segment: HOURS },
+                      { label: t("snooze.minute"), value: clockOf(draft.followUpTime).minutes, segment: MINUTES },
+                    ]}
+                    onChange={(index, value) => change({ followUpTime: clockText({ ...clockOf(draft.followUpTime), [index === 0 ? "hours" : "minutes"]: value }) })}
+                  />
+                </div>
+                <small>{t("settings.followUpTimeHint")}</small>
               </div>
               <div className="field">
                 <span>{t("settings.refresh")}</span>

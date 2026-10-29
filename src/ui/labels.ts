@@ -3,7 +3,7 @@ import type { Update } from "../handoff";
 import type { Bucket, Item, Status } from "../model";
 import { lastReplyAt, sameLogin } from "../timeline";
 import { lastOthersActivity, MOVES_UP_DEFAULT, onPlate, type MovesUp } from "./assignments";
-import { lang, t, type Lang } from "./i18n";
+import { dateLocale, lang, t, type Lang } from "./i18n";
 
 /** Titles are getters, so they follow the language set at render time. */
 /**
@@ -151,7 +151,7 @@ export function compactAgo(timestamp: string, now = Date.now()): string {
 export function openedText(at: string, now = new Date()): string {
   const date = new Date(at);
   const options: Intl.DateTimeFormatOptions = date.getFullYear() === now.getFullYear() ? { day: "numeric", month: "short" } : { month: "short", year: "numeric" };
-  return date.toLocaleDateString(lang(), options);
+  return date.toLocaleDateString(dateLocale(), options);
 }
 
 /**

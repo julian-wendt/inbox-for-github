@@ -1,30 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, planChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
-const days = (now: Date) => planChoices(now).map((c) => `${c.kind}:${c.day}`);
+const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
 
-describe("planChoices", () => {
-  it("offers tomorrow, the rest of the work week and next Monday", () => {
-    expect(days(new Date(2026, 9, 27))).toEqual(["tomorrow:2026-10-28", "weekday:2026-10-29", "weekday:2026-10-30", "nextWeek:2026-11-02"]);
+describe("dayChoices", () => {
+  it("offers the next workday, the rest of the work week and next week", () => {
+    expect(days(new Date(2026, 9, 27))).toEqual(["nextWorkday:2026-10-28", "weekday:2026-10-29", "weekday:2026-10-30", "nextWeek:2026-11-02"]);
   });
 
-  it("offers only tomorrow and next Monday on a Thursday", () => {
-    expect(days(new Date(2026, 9, 29))).toEqual(["tomorrow:2026-10-30", "nextWeek:2026-11-02"]);
+  it("offers only the next workday and next week on a Thursday", () => {
+    expect(days(new Date(2026, 9, 29))).toEqual(["nextWorkday:2026-10-30", "nextWeek:2026-11-02"]);
   });
 
-  it("offers tomorrow and next Monday on a Friday, whose tomorrow is a Saturday", () => {
-    expect(days(new Date(2026, 9, 30))).toEqual(["tomorrow:2026-10-31", "nextWeek:2026-11-02"]);
+  it("offers Monday as the next workday from Friday and Saturday, without next week beside it", () => {
+    expect(days(new Date(2026, 9, 30))).toEqual(["nextWorkday:2026-11-02"]);
+    expect(days(new Date(2026, 9, 31))).toEqual(["nextWorkday:2026-11-02"]);
   });
 
-  it("offers the coming work week on a Sunday, whose next Monday is tomorrow", () => {
-    expect(days(new Date(2026, 10, 1))).toEqual(["tomorrow:2026-11-02", "weekday:2026-11-03", "weekday:2026-11-04", "weekday:2026-11-05", "weekday:2026-11-06"]);
+  it("offers the coming work week on a Sunday, whose next workday is Monday", () => {
+    expect(days(new Date(2026, 10, 1))).toEqual(["nextWorkday:2026-11-02", "weekday:2026-11-03", "weekday:2026-11-04", "weekday:2026-11-05", "weekday:2026-11-06"]);
+  });
+});
+
+describe("dayChoices with other workdays", () => {
+  it("offers Saturday when it is a workday, and next week's first workday", () => {
+    expect(days(new Date(2026, 9, 29), [2, 3, 4, 5, 6])).toEqual(["nextWorkday:2026-10-30", "weekday:2026-10-31", "nextWeek:2026-11-03"]);
+  });
+
+  it("takes the next workday from further on when the coming days are off", () => {
+    expect(days(new Date(2026, 9, 26), [4])).toEqual(["nextWorkday:2026-10-29", "nextWeek:2026-11-05"]);
+  });
+
+  it("falls back to Monday to Friday without any workday", () => {
+    expect(days(new Date(2026, 9, 27), [])).toEqual(days(new Date(2026, 9, 27)));
+  });
+});
+
+describe("toggleWorkday and weekdayName", () => {
+  it("switches a day on in week order and off, but keeps the last one", () => {
+    expect(toggleWorkday([1, 2, 3, 4, 5], 0)).toEqual([1, 2, 3, 4, 5, 0]);
+    expect(toggleWorkday([1, 2], 1)).toEqual([2]);
+    expect(toggleWorkday([2], 2)).toEqual([2]);
+  });
+
+  it("names a day of the week by its number", () => {
+    expect([1, 0].map(weekdayName)).toEqual(["Mon", "Sun"]);
   });
 });
 
 describe("choiceKey", () => {
-  it("picks tomorrow with M, next Monday with W and other weekdays by their number", () => {
-    expect(planChoices(new Date(2026, 9, 27)).map(choiceKey)).toEqual(["M", "4", "5", "W"]);
+  it("picks the next workday with N, next week with W and other weekdays by their number", () => {
+    expect(dayChoices(new Date(2026, 9, 27)).map(choiceKey)).toEqual(["N", "4", "5", "W"]);
   });
 });
 
@@ -129,6 +156,28 @@ describe("datedOf", () => {
   });
 });
 
+describe("closedPlans", () => {
+  it("names the pinned and planned items that are closed, and nothing else", () => {
+    const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }, { id: "d", day: "2026-10-30" }], {}, {});
+    expect(closedPlans(before, (id) => id === "b" || id === "d" || id === "x")).toEqual(["b", "d"]);
+    expect(closedPlans(before, () => false)).toEqual([]);
+  });
+});
+
+describe("planOf and replan", () => {
+  it("put an item's pin or plan back as it was, next to what Today holds since", () => {
+    const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-27", b: "2026-10-28" }, { a: "t1", b: "t2", c: "t3" });
+    const later = { ...unplan(before, ["a"]), planned: [{ id: "c", day: "2026-10-29" }, { id: "d", day: "2026-10-30" }] };
+    expect(replan(later, planOf(before, "a"))).toEqual({ ...later, focus: ["b", "a"], pinnedOn: { b: "2026-10-28", a: "2026-10-27" }, plannedAt: { b: "t2", c: "t3", a: "t1" } });
+    expect(replan(unplan(before, ["c"]), planOf(before, "c"))).toEqual(before);
+  });
+
+  it("give an emptied Today its day back with the pin", () => {
+    const before = state(["a"], "2026-10-28", [], { a: "2026-10-28" }, {});
+    expect(replan({ ...unplan(before, ["a"]), focusDay: null }, planOf(before, "a")).focusDay).toBe("2026-10-28");
+  });
+});
+
 describe("unplan", () => {
   it("takes the pins, plans and times of the items, and leaves the rest and the day", () => {
     const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-28", b: "2026-10-27" }, { a: "t1", b: "t2", c: "t3" });
@@ -146,5 +195,16 @@ describe("datedAt and datedText", () => {
   it("names Today or the planned day", () => {
     expect(datedText({ kind: "today", day: "2026-10-28" }, now).text).toBe("Today");
     expect(datedText({ kind: "planned", day: "2026-10-29" }, now).text).toBe("Tomorrow");
+  });
+});
+
+describe("dayText", () => {
+  it("says Today, Tomorrow, the weekday within this work week, else the date", () => {
+    const tuesday = new Date(2026, 9, 27);
+    expect(["2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-11-02", "2026-10-26"].map((day) => dayText(day, tuesday))).toEqual(["Today", "Tomorrow", "Thursday", "Friday", "Nov 2", "Oct 26"]);
+  });
+
+  it("names the coming work week's days on a Sunday, as the menus offer them", () => {
+    expect(dayText("2026-11-04", new Date(2026, 10, 1))).toBe("Wednesday");
   });
 });
