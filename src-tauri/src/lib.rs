@@ -251,6 +251,8 @@ pub fn run() {
             calendar::calendar_put,
             calendar::calendar_move,
             calendar::calendar_remove,
+            calendar::calendar_settings,
+            calendar::calendar_status,
             gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts, system_locale
         ])
         .setup(|app| {

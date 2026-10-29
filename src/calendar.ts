@@ -40,6 +40,15 @@ export const calendarAuthorized = () => invoke<boolean>("calendar_authorized");
 /** Whether the app may use the calendar, showing macOS's permission dialog the first time. */
 export const calendarAccess = () => invoke<boolean>("calendar_access");
 
+/** Where calendar access stands: granted, not asked yet, or declined (then only System Settings helps). */
+export type CalendarStatus = "granted" | "ask" | "denied";
+
+/** The calendar access as it stands; never asks. */
+export const calendarStatus = () => invoke<CalendarStatus>("calendar_status");
+
+/** Opens System Settings › Privacy & Security › Calendars. */
+export const calendarSettings = () => invoke<void>("calendar_settings");
+
 /**
  * The calendars events can go into, grouped by account and sorted by title within it.
  *

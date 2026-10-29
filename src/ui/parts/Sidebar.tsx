@@ -5,6 +5,8 @@ import { dateLocale, t } from "../i18n";
 import { ago, type VIEWS, type View } from "../labels";
 import { Avatar } from "./Avatar";
 import { ScopeNotice } from "./ScopeNotice";
+import { CalendarNotice } from "./CalendarNotice";
+import type { CalendarAccess } from "../useCalendarAccess";
 import { UsageRing } from "./UsageMeter";
 
 const ICONS: Record<View, LucideIcon> = {
@@ -32,6 +34,7 @@ interface Props {
   myName: string | null;
   myAvatar: string | null;
   missingScopes: Scope[];
+  calendarAccess: CalendarAccess;
   loading: boolean;
   fetchedAt: Date | null;
   usage: { budget: Budget | null; lastCost: number | null };
@@ -141,6 +144,7 @@ export function Sidebar(props: Props) {
       )}
 
       <ScopeNotice missing={props.missingScopes} />
+      <CalendarNotice access={props.calendarAccess} />
       <footer className="sidebar-foot">
         {me && <Avatar login={me} src={myAvatar ?? undefined} size={20} />}
         <span className="foot-text">

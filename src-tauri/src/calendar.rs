@@ -1,6 +1,7 @@
 //! The macOS calendar through EventKit: the calendars and events macOS knows, an Exchange
 //! account added under Internet Accounts included. See `docs/reference/calendar.md`.
 
+use std::process::Command;
 use std::ptr::NonNull;
 use std::sync::{mpsc, Mutex};
 
@@ -111,15 +112,41 @@ pub fn calendar_authorized() -> bool {
     unsafe { EKEventStore::authorizationStatusForEntityType(EKEntityType::Event) == EKAuthorizationStatus::FullAccess }
 }
 
+/// Where calendar access stands, without asking: `"granted"`, `"ask"` while macOS has not asked
+/// yet (as after an ad hoc rebuild, which macOS takes for a new app), or `"denied"` when the user
+/// declined or the access is restricted, which only System Settings can change.
+#[tauri::command]
+pub fn calendar_status() -> &'static str {
+    match unsafe { EKEventStore::authorizationStatusForEntityType(EKEntityType::Event) } {
+        EKAuthorizationStatus::FullAccess => "granted",
+        EKAuthorizationStatus::NotDetermined => "ask",
+        _ => "denied",
+    }
+}
+
+/// Opens System Settings › Privacy & Security › Calendars, where a declined access is allowed.
+#[tauri::command]
+pub fn calendar_settings() -> Result<(), String> {
+    Command::new("open")
+        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 /// Whether the app may read and write events, asking the user the first time.
 ///
 /// Waits for the answer to macOS's permission dialog, so it runs off the main thread. Returns
 /// false when the user declined now or earlier; the choice then lives in System Settings ›
-/// Privacy & Security › Calendars.
+/// Privacy & Security › Calendars. Resets the store also when access was there already, since
+/// one made before it was granted in System Settings lists no calendars.
 #[tauri::command(async)]
 pub fn calendar_access() -> Result<bool, String> {
     if calendar_authorized() {
-        return Ok(true);
+        return with_store(|store| {
+            unsafe { store.reset() };
+            Ok(true)
+        });
     }
     let (sender, receiver) = mpsc::channel();
     let answer = RcBlock::new(move |granted: Bool, _: *mut NSError| {
