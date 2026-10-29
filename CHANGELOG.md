@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.1...v0.4.0) (2026-10-29)
+
+
+### Features
+
+* a notice asks for calendar access again when it is missing ([#52](https://github.com/julian-wendt/inbox-for-github/issues/52)) ([88e61d2](https://github.com/julian-wendt/inbox-for-github/commit/88e61d235844e4533651a4962fa05b3024a9316e))
+* a plan holds until its day, and Follow-up shares its days ([#25](https://github.com/julian-wendt/inbox-for-github/issues/25)) ([dae2c8b](https://github.com/julian-wendt/inbox-for-github/commit/dae2c8bde1fec52e1baba57a21bba7b7ea0350c1))
+* a wider closed window loads only the days missing ([#45](https://github.com/julian-wendt/inbox-for-github/issues/45)) ([23e6b1a](https://github.com/julian-wendt/inbox-for-github/commit/23e6b1a416aef03d933554117f751816c6d69db3))
+* hints in menus and palette, P and F open below the row ([#41](https://github.com/julian-wendt/inbox-for-github/issues/41)) ([ea1dfe8](https://github.com/julian-wendt/inbox-for-github/commit/ea1dfe8963c38de804ebe871f505c9436b398309))
+* plan items into the macOS calendar with a day view ([#42](https://github.com/julian-wendt/inbox-for-github/issues/42)) ([c869dbe](https://github.com/julian-wendt/inbox-for-github/commit/c869dbe39ecba4fb0cb79871b875addc46cdcf51))
+* plans and calendar events stay in step both ways ([#44](https://github.com/julian-wendt/inbox-for-github/issues/44)) ([340e069](https://github.com/julian-wendt/inbox-for-github/commit/340e069eadf742c2a77ca1173c4ef79e953ef9f2))
+* Today takes any number of items ([#46](https://github.com/julian-wendt/inbox-for-github/issues/46)) ([709cc23](https://github.com/julian-wendt/inbox-for-github/commit/709cc2325f982d858bb76d36e343191611c3ff16))
+
+
+### Bug Fixes
+
+* a delta drops review requests that were withdrawn ([#48](https://github.com/julian-wendt/inbox-for-github/issues/48)) ([13028e5](https://github.com/julian-wendt/inbox-for-github/commit/13028e5633bd2f20817d1e30dddfa698f804d9fb))
+* a little space between inbox rows ([#40](https://github.com/julian-wendt/inbox-for-github/issues/40)) ([921f8fe](https://github.com/julian-wendt/inbox-for-github/commit/921f8fedbc7ca969f81fce5fe07286213adb617d))
+* a transferred issue moves to its new repository ([#37](https://github.com/julian-wendt/inbox-for-github/issues/37)) ([0e77373](https://github.com/julian-wendt/inbox-for-github/commit/0e77373f482a60071043fc2497079cdf00134b60))
+* About shows the commit as the build, not the version twice ([#32](https://github.com/julian-wendt/inbox-for-github/issues/32)) ([ae69281](https://github.com/julian-wendt/inbox-for-github/commit/ae6928178f9ea49275895672bcdff5e1b345cf0c))
+* About shows the copyright and the MIT license ([#34](https://github.com/julian-wendt/inbox-for-github/issues/34)) ([18b642a](https://github.com/julian-wendt/inbox-for-github/commit/18b642a42c8754ee7d08200e8acede99c4e5654e))
+* Show log file next to the log level in settings ([#26](https://github.com/julian-wendt/inbox-for-github/issues/26)) ([e9d4fb3](https://github.com/julian-wendt/inbox-for-github/commit/e9d4fb3a5ba9410a75cd54cc40084bbf23471f14))
+* the built app may ask for calendar access ([#51](https://github.com/julian-wendt/inbox-for-github/issues/51)) ([d9aa309](https://github.com/julian-wendt/inbox-for-github/commit/d9aa30945cd5fe20d825a2e1201becfbc2debfff))
+* the item pop-up closes when its item leaves the list ([#38](https://github.com/julian-wendt/inbox-for-github/issues/38)) ([ed70671](https://github.com/julian-wendt/inbox-for-github/commit/ed7067126744b50cf7cdb7833b5cf04e00571875))
+
 ## [0.3.1](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.0...v0.3.1) (2026-10-29)
 
 
