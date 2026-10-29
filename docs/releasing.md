@@ -83,8 +83,9 @@ npm run build:local -- --dry-run # only print the version
 `scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g.
 `0.3.2-alpha.2+e9d4fb3` two commits after v0.3.1 (`.dirty` with uncommitted changes), so it
 ranks above the release it follows. The version reaches Tauri as a `--config` override; no file
-changes. It quits the installed app, replaces it and starts it again; the dev window keeps
-running, and the bundle identifier and so the data stay the same.
+changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
+quits the installed app, replaces it and starts it again; the dev window keeps running, and the
+bundle identifier and so the data stay the same.
 
 Each ad hoc signature is new, so macOS may treat every build as a new app and ask for
 notification permission again. A self-signed certificate keeps the identity: in Keychain Access,

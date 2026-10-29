@@ -13,6 +13,9 @@
  * builds and keeps its permissions (see docs/releasing.md). The bundle identifier stays
  * `inbox-for-github`, so the data stays too.
  *
+ * Runs `npm ci` first when `package-lock.json` is newer than the installed packages (after a
+ * pull that changed dependencies, or without `node_modules`), so the build uses exactly the lock.
+ *
  * Quits a running `/Applications/Inbox for GitHub.app`, replaces it and starts it again. The dev
  * window is not affected. Refuses unless this is an Apple Silicon Mac and `cargo` is on the path;
  * Homebrew's rustup (`/opt/homebrew/opt/rustup/bin`) is added to the path when it is missing.
@@ -21,7 +24,7 @@
  *   npm run build:local -- --dry-run # print the version, then stop
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 
@@ -63,6 +66,12 @@ const version =
 const identity = process.env.INBOX_SIGNING_IDENTITY;
 console.log(`Version ${version}, signed ${identity ? `as "${identity}"` : "ad hoc"}.`);
 if (dryRun) process.exit(0);
+
+// npm ci empties node_modules, which would break a dev window running from this checkout
+const installedLock = "node_modules/.package-lock.json";
+if (!existsSync(installedLock) || statSync("package-lock.json").mtimeMs > statSync(installedLock).mtimeMs) {
+  show("npm", ["ci"]);
+}
 
 const config = { version, ...(identity && { bundle: { macOS: { signingIdentity: identity } } }) };
 show("npm", ["run", "tauri", "build", "--", "--bundles", "app", "--config", JSON.stringify(config), "--", "--locked"], {
