@@ -3,7 +3,7 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, withinClosedWindow, type Coverage } from "../github/delta";
+import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -422,8 +422,9 @@ export function useInbox(): Inbox {
   );
 
   /**
-   * Handles items GitHub no longer resolves: a refresh first, which finds an issue where it was
-   * transferred to and carries its state over, then what is still cached under these ids goes.
+   * Handles items GitHub no longer resolves and no cached item turned out to be their transferred
+   * copy: a refresh first, which finds an issue transferred to a place not cached yet and carries
+   * its state over, then what is still cached under these ids goes.
    * A refresh that fails or is stopped keeps them, so a later one can still pair them.
    */
   const dropGone = useCallback(
@@ -441,29 +442,49 @@ export function useInbox(): Inbox {
     [store, refresh],
   );
 
+  /**
+   * Puts items loaded by id into the cache, with everything GitHub's answer shows: an item that
+   * names `transferredFrom` replaces its cached old copy and takes its state over. For ids GitHub
+   * no longer resolves, cached issues that may be their transferred copy are loaded too (see
+   * `transferCandidates`); what still has no new place goes through `dropGone`.
+   */
+  const takeReloaded = useCallback(
+    async (token: string, ids: string[], loaded: Item[]) => {
+      const last = lastFetch.current;
+      if (!store || !last) return;
+      let fresh = loaded;
+      const missing = ids.filter((id) => !fresh.some((item) => item.id === id));
+      const candidates = transferCandidates(last.items, missing).filter((id) => !ids.includes(id));
+      if (candidates.length > 0) fresh = [...fresh, ...(await fetchItemsById(token, candidates, { me: last.viewer.login, boards: settings.loadBoards }))];
+      const moves = findTransfers(last.items, fresh);
+      if (moves.size > 0) logTransfers(last.items, fresh, moves);
+      const showMoved = moves.size > 0 ? await carryOver(moves, fresh) : null;
+      const current = lastFetch.current ?? last;
+      const next = { ...current, items: mergeReloaded(current.items, fresh, moves) };
+      lastFetch.current = next;
+      showMoved?.();
+      setItems(next.items);
+      await store.saveFetch(next);
+      const gone = missing.filter((id) => !moves.has(id));
+      if (gone.length > 0) await dropGone(gone);
+    },
+    [store, settings.loadBoards, carryOver, dropGone],
+  );
+
   const reloadItem = useCallback(
     async (id: string) => {
       const last = lastFetch.current;
       if (!store || !last) return;
       try {
-        const fresh = await fetchItem(await ghToken(), id, { me: last.viewer.login, boards: settings.loadBoards });
-        if (!fresh) {
-          await dropGone([id]);
-          return;
-        }
-        const items = last.items.map((old) =>
-          old.id === id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old,
-        );
-        const next = { ...last, items };
-        lastFetch.current = next;
-        setItems(items);
-        await store.saveFetch(next);
+        const token = await ghToken();
+        const fresh = await fetchItem(token, id, { me: last.viewer.login, boards: settings.loadBoards });
+        await takeReloaded(token, [id], fresh ? [fresh] : []);
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
         setError(String(e));
       }
     },
-    [store, settings.loadBoards, pause, dropGone],
+    [store, settings.loadBoards, pause, takeReloaded],
   );
 
   const reloadItems = useCallback(
@@ -471,25 +492,17 @@ export function useInbox(): Inbox {
       const last = lastFetch.current;
       if (!store || !last || ids.length === 0) return 0;
       try {
-        const fresh = new Map((await fetchItemsById(await ghToken(), ids, { me: last.viewer.login, boards: settings.loadBoards })).map((item) => [item.id, item]));
-        const items = last.items.map((old) => {
-          const item = fresh.get(old.id);
-          return item ? { ...item, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...item.reasons] } : old;
-        });
-        const next = { ...last, items };
-        lastFetch.current = next;
-        setItems(items);
-        await store.saveFetch(next);
-        const gone = ids.filter((id) => !fresh.has(id));
-        if (gone.length > 0) await dropGone(gone);
-        return fresh.size;
+        const token = await ghToken();
+        const fresh = await fetchItemsById(token, ids, { me: last.viewer.login, boards: settings.loadBoards });
+        await takeReloaded(token, ids, fresh);
+        return fresh.length;
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
         setError(String(e));
         return 0;
       }
     },
-    [store, settings.loadBoards, pause, dropGone],
+    [store, settings.loadBoards, pause, takeReloaded],
   );
 
   useEffect(() => {

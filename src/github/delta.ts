@@ -54,6 +54,45 @@ export function findTransfers(previous: Item[], fetched: Item[]): Map<string, st
 }
 
 /**
+ * The cached issues that may be where items GitHub no longer resolves were transferred to: same
+ * `createdAt` and title, in another repository. Loading them by id (cheap) shows whether they name
+ * the old repository in `transferredFrom`, which a cache from before transfers were read lacks.
+ *
+ * @param cached  The cached items.
+ * @param gone    Node ids GitHub answered with `NOT_FOUND`.
+ * @returns The candidates' node ids; empty when none could be one.
+ *
+ * @example
+ *   transferCandidates(items, ["I_old"]); // ["I_new"], the cached copy in octo-org/portal
+ */
+export function transferCandidates(cached: Item[], gone: string[]): string[] {
+  const old = cached.filter((item) => item.kind === "issue" && gone.includes(item.id));
+  return cached.filter((item) => item.kind === "issue" && !gone.includes(item.id) && old.some((o) => o.repo !== item.repo && o.createdAt === item.createdAt && o.title === item.title)).map((item) => item.id);
+}
+
+/**
+ * Puts items loaded by id into the cached ones: each replaces its cached version, keeping the
+ * reasons only a search knows ("review", "involved"), and the old copies of transferred issues
+ * (`moves`) go. Items not cached are not added.
+ *
+ * @param cached  The cached items.
+ * @param fresh   Items just loaded by node id (`fetchItem`, `fetchItemsById`).
+ * @param moves   Old node id → new node id, from `findTransfers`.
+ * @returns The cached items with the fresh versions swapped in.
+ *
+ * @example
+ *   mergeReloaded(items, [fresh], new Map()); // items with `fresh` in place of its old version
+ */
+export function mergeReloaded(cached: Item[], fresh: Item[], moves: ReadonlyMap<string, string> = new Map()): Item[] {
+  const byId = new Map(fresh.map((item) => [item.id, item]));
+  return cached.flatMap((old) => {
+    if (moves.has(old.id)) return [];
+    const item = byId.get(old.id);
+    return [item ? { ...item, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...item.reasons] } : old];
+  });
+}
+
+/**
  * Leaves out closed items older than `closedDays`; 0 leaves out every closed item. Open items stay.
  *
  * @example

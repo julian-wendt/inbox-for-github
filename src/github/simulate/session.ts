@@ -13,8 +13,8 @@ import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
-import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, withinClosedWindow } from "../delta";
-import { fetchItem, fetchItems } from "../fetch";
+import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withinClosedWindow } from "../delta";
+import { fetchItem, fetchItems, fetchItemsById } from "../fetch";
 import type { GitHubSimulator, Ref } from "./world";
 
 const TOKEN = "simulated-token";
@@ -90,15 +90,23 @@ export class InboxSession {
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
   }
 
-  /** ⌃R: loads one item again and keeps the reasons only a search can tell (a review request); one GitHub no longer resolves goes after a refresh, as in `useInbox`. */
+  /**
+   * ⌃R, as `useInbox.takeReloaded` does it: loads one item again, keeping the reasons only a
+   * search can tell; a transfer it shows replaces the old copy. When GitHub no longer resolves
+   * it, cached candidates for its transferred copy are loaded, and failing that a refresh runs
+   * before it goes.
+   */
   async reload(ref: Ref): Promise<void> {
-    const fresh = await fetchItem(TOKEN, ref.id, { me: this.me, boards: this.settings.loadBoards });
-    if (!fresh) {
-      await this.refresh();
-      this.items = this.items.filter((item) => item.id !== ref.id);
-      return;
-    }
-    this.items = this.items.map((old) => (old.id === ref.id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old));
+    const options = { me: this.me, boards: this.settings.loadBoards };
+    const found = await fetchItem(TOKEN, ref.id, options);
+    const candidates = found ? [] : transferCandidates(this.items, [ref.id]);
+    const fresh = [...(found ? [found] : []), ...(candidates.length > 0 ? await fetchItemsById(TOKEN, candidates, options) : [])];
+    const moves = findTransfers(this.items, fresh);
+    this.carryOver(moves);
+    this.items = mergeReloaded(this.items, fresh, moves);
+    if (found || moves.has(ref.id)) return;
+    await this.refresh();
+    this.items = this.items.filter((item) => item.id !== ref.id);
   }
 
   /** ⌘↵ in the comment box: posts, then loads just that item. */

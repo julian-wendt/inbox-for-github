@@ -88,9 +88,11 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   before it (`findTransfers`); the old copy leaves the cache, and its status, log, note, seen,
   unread mark and failed writes move to the new id (`Store.moveItems`), as do Today, Plan,
   untracked and collected notifications (`movedSettings`), before the items are shown.
-- **Single item:** `reloadItem` (⌃R) runs one `node` query. An id GitHub no longer resolves
-  (`NOT_FOUND`) runs a refresh, which finds a transfer, and then leaves the cache (`dropGone`);
-  `reloadItems` does the same for those of its ids.
+- **Single item:** `reloadItem` (⌃R) runs one `node` query, `reloadItems` (right click on a
+  view) a `nodes` query; both put the answer in through `takeReloaded`, which also takes over a
+  transfer the answer shows. For an id GitHub no longer resolves (`NOT_FOUND`), the cached issues
+  that may be its transferred copy are loaded by id (`transferCandidates`, about a point each);
+  failing that, a refresh runs, and what is still unresolved leaves the cache (`dropGone`).
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
 

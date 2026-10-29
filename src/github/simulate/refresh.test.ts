@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RateLimitError, lastBudget, pointsSpent } from "../client";
 import { FULL_EVERY_MS } from "../delta";
+import { fetchItem } from "../fetch";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
 
 // Scenarios from TESTING.md: "API-Verbrauch", "Boards", "Offline".
@@ -303,5 +304,37 @@ describe("Transferred issues", () => {
 
     await expect(app.reload(issue)).resolves.toBeUndefined();
     expect(app.items).toEqual([]);
+  });
+
+  it("takes the transfer over when the new copy is reloaded on its own", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    const cachedCopy = await fetchItem("token", moved.id, { me: "octocat" });
+    app.items = [...app.items, { ...cachedCopy!, transferredFrom: undefined }];
+
+    await app.reload(moved);
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
+
+  it("finds the new copy among the cached items when the old one is reloaded, also when it was cached before transfers were read", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.done(issue);
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    const cachedCopy = await fetchItem("token", moved.id, { me: "octocat" });
+    app.items = [...app.items, { ...cachedCopy!, transferredFrom: undefined }];
+    world.advance(10 * MINUTE);
+
+    await app.reload(issue);
+
+    expect(app.items.map((i) => [i.id, i.transferredFrom])).toEqual([[moved.id, "octo-org/docs"]]);
+    expect(app.statuses.get(moved.id)?.status).toBe("done");
   });
 });

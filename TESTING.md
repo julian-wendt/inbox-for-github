@@ -66,7 +66,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Repository und der neuen Nummer, mit Status, Notiz, Plan und Verlauf. Im Verlauf steht
       „… hat es aus <altes Repo> hierher verschoben“.
 - [ ] Dasselbe, aber vor dem nächsten Delta ⌃R auf der alten Zeile: keine Fehlermeldung, die
-      Zeile wechselt zum neuen Repository.
+      Zeile wechselt zum neuen Repository. Ebenso ⌃R auf der neuen Zeile: die alte verschwindet,
+      Status und Plan gehen mit.
 
 ## Boards
 
