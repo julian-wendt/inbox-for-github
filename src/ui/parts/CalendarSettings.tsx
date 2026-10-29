@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 import { calendarAccess, calendarAuthorized, writableCalendars, type Calendar } from "../../calendar";
 import type { Settings } from "../../store";
@@ -50,7 +50,7 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
   const chosen = calendars?.find((c) => c.id === settings.calendarId);
   const option = (calendar: Calendar | undefined) => (
     <>
-      <span className="option-dot" style={{ "--option": calendar?.color ?? "transparent" } as CSSProperties} />
+      {calendar ? <span className="option-dot" style={{ "--option": calendar.color ?? "transparent" } as CSSProperties} /> : <X size={10} strokeWidth={2.5} className="calendar-none" />}
       <strong>{calendar ? calendar.title : t("settings.calendarOff")}</strong>
       {calendar && <span className="org-select-summary">{calendar.account}</span>}
     </>

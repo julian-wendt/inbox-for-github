@@ -685,6 +685,13 @@
   background: var(--hover);
 }
 
+/* In the dot's place; the 1px either side keeps the names in line with the 8px dots. */
+.calendar-none {
+  flex: none;
+  margin: 0 -1px;
+  color: var(--text-muted);
+}
+
 .calendar-select strong {
   font-weight: 500;
 }
