@@ -24,9 +24,12 @@ living in the plan (`planned`, `focus`); the time lives only in the calendar.
   every five minutes the linked events are read back. The calendar wins: an event on another
   day replans the item (today or earlier brings it into Today), a deleted one removes the plan
   and the link, and the item is back in the inbox.
-- Reading back is skipped without a chosen calendar, without access (every event would look
-  deleted) and while one of the app's own writes runs (`calendarWriting`), so a half-done move
-  is not taken for a change in the calendar.
+- Reading back is skipped without a chosen calendar, without access, while the chosen calendar
+  is not listed (an account switched off in Internet Accounts), as every event would look
+  deleted then, and while one of the app's own writes runs (`calendarWriting`), so a half-done
+  move is not taken for a change in the calendar. An event counts as deleted only when it is
+  missing on two reads in a row.
+- Without a chosen calendar the app neither moves nor deletes events; the links stay.
 
 ## Verified behavior (2026-10-29, macOS 27.2, an Exchange account in Internet Accounts)
 
@@ -57,6 +60,9 @@ var calendars = await invoke("calendar_list");
 
 ## Not verified
 
+- Whether `eventIdentifier` changes when the event is moved to another calendar; Apple's
+  documentation says it most likely does. The app would then take the event for deleted and
+  remove the plan.
 - Whether macOS asks for calendar access again after an update: the permission is tied to the
   code signature, and every ad hoc build gets a new one (see `docs/releasing.md`).
 - When `EKEventStoreChangedNotification` arrives after a change in Outlook, and whether it arrives
