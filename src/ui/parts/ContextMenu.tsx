@@ -29,11 +29,12 @@ export interface MenuEntry {
  * @param entries   The menu, top to bottom.
  * @param onClose   Called when the menu should go away, also after an entry ran.
  * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`).
+ * @param fit       Grows the menu so every hint stays on one line, for the menus a key opens.
  *
  * @example
  *   <ContextMenu x={e.clientX} y={e.clientY} entries={[{ label: "Done", keys: "D", onSelect: done }]} onClose={close} />
  */
-export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean }) {
+export function ContextMenu({ x, y, entries, onClose, centered = false, fit = false }: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean; fit?: boolean }) {
   const [active, setActive] = useState(0);
   const [sub, setSub] = useState<number | null>(null);
   const [subActive, setSubActive] = useState(0);
@@ -109,7 +110,7 @@ export function ContextMenu({ x, y, entries, onClose, centered = false }: { x: n
   }, []);
 
   return (
-    <div ref={root} className="context-menu" role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={root} className={`context-menu${fit ? " fit" : ""}`} role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
       {entries.map((entry, i) => (
         <div key={entry.label} className="menu-slot">
           {entry.divided && <hr />}

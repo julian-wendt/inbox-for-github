@@ -13,7 +13,7 @@ import { covers, setCovered } from "./rules/directOnly";
 import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
 import { OrcaMark } from "./ui/parts/OrcaMark";
 import { repoList } from "./ui/repoList";
-import { paneCenter } from "./ui/paneCenter";
+import { keyMenuAt, paneCenter } from "./ui/paneCenter";
 import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
@@ -468,9 +468,9 @@ export default function App() {
       ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
     ];
   };
-  /** P on an item: the plan choices open in the middle of the pane, like the follow-up ones, or below the detail's Plan button. */
+  /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries(c), ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : keyMenuAt(c.item.id)) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -488,7 +488,7 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; fit?: boolean } | null>(null);
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
@@ -617,7 +617,7 @@ export default function App() {
       y: e.clientY,
     });
   };
-  const openBulkTimes = () => setMenu({ entries: bulkTimes(), ...paneCenter(), centered: true });
+  const openBulkTimes = () => setMenu({ entries: bulkTimes(), fit: true, ...paneCenter(), centered: true });
   /**
    * A status chosen for an item. "Done" means more where it has more to end: an update is
    * ticked off with a fresh snapshot; an assignment of the table becomes
@@ -678,10 +678,10 @@ export default function App() {
     { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
     ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeFollowUp(c) }] : []),
   ];
-  /** S on an item: the follow-up choices open in the middle of the detail, also to move the date. */
+  /** S on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {
     if (c.item.closed) return actions.apply(c, "snoozed");
-    setSnoozeMenu({ entry: c, ...paneCenter(), centered: true });
+    setSnoozeMenu({ entry: c, ...keyMenuAt(c.item.id) });
   };
   /** Right click: the marked items' menu on a marked row, else the row's own (which clears the marks). */
   const openMenu = (entry: Classified, e: React.MouseEvent) => {
@@ -1227,9 +1227,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} entries={menu.entries} onClose={() => setMenu(null)} />}
+      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} fit={menu.fit} entries={menu.entries} onClose={() => setMenu(null)} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} fit entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
       )}
       {pickingDate && (
         <SnoozeDatePicker

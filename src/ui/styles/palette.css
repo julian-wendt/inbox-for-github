@@ -1,5 +1,5 @@
 .dialog.palette {
-  width: min(660px, calc(100vw - 32px));
+  width: min(760px, calc(100vw - 32px));
   overflow: hidden;
 }
 
@@ -80,8 +80,11 @@
 
 /* Text, so --text-muted, as in the menus. */
 .palette-hint {
+  overflow: hidden;
   color: var(--text-muted);
   font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .palette-title {
