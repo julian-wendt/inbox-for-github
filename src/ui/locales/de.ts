@@ -188,6 +188,8 @@ export const de: Messages = {
   "activity.linkedSelf": "Du hast #{number} verknüpft",
   "activity.duplicate": "{name} hat es als Duplikat von #{number} markiert",
   "activity.duplicateSelf": "Du hast es als Duplikat von #{number} markiert",
+  "activity.transferred": "{name} hat es aus {repo} hierher verschoben",
+  "activity.transferredSelf": "Du hast es aus {repo} hierher verschoben",
   "activity.replied": "{name} hat in {count} Threads geantwortet",
   "activity.repliedOne": "{name} hat in einem Thread geantwortet",
   "activity.repliedSelf": "Du hast in {count} Threads geantwortet",

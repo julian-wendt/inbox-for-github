@@ -14,7 +14,7 @@ export interface ShownActivity {
  * Picks the timeline events worth a line between the posts and groups consecutive commits.
  *
  * Kept: assignments and review requests (made or withdrawn) that concern the viewer (a team
- * request counts), reviews without text by people (not bots), state changes, links, dismissals and
+ * request counts), reviews without text by people (not bots), state changes, links, transfers, dismissals and
  * commits. A run of commits, or of force pushes by one person, with no other event or post in
  * between becomes one entry dated at its last; a run of commits keeps its authors.
  *

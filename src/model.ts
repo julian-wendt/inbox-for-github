@@ -113,7 +113,9 @@ export type Activity =
   /** Someone dismissed the review of `reviewer`. */
   | { kind: "dismissed"; at: string; actor: string; reviewer: string; url?: string }
   /** A pull request linked to the issue, or the item the issue was marked a duplicate of. */
-  | { kind: "linked" | "duplicate"; at: string; actor: string; number: number; url: string };
+  | { kind: "linked" | "duplicate"; at: string; actor: string; number: number; url: string }
+  /** The issue was moved here from the repository `from` (`owner/name`). */
+  | { kind: "transferred"; at: string; actor: string; from: string };
 
 export interface Item {
   id: string;

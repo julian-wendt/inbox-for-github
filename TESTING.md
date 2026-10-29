@@ -61,7 +61,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Ein auf GitHub geändertes Item (z. B. neuer Kommentar) taucht nach dem nächsten Delta auf.
 - [ ] Ein Test-Issue mit Status (z. B. Erledigt), Notiz und Plan in ein anderes beobachtetes
       Repository übertragen: nach dem nächsten Delta steht es nur noch einmal da, unter dem neuen
-      Repository und der neuen Nummer, mit Status, Notiz, Plan und Verlauf.
+      Repository und der neuen Nummer, mit Status, Notiz, Plan und Verlauf. Im Verlauf steht
+      „… hat es aus <altes Repo> hierher verschoben“.
 - [ ] Dasselbe, aber vor dem nächsten Delta ⌃R auf der alten Zeile: keine Fehlermeldung, die
       Zeile wechselt zum neuen Repository.
 

@@ -284,6 +284,11 @@ describe("toItem", () => {
     expect("transferredFrom" in toItem(moved())).toBe(false);
   });
 
+  it("shows a transfer in the timeline, with who moved it and from where", () => {
+    const raw = { ...rawPr(), __typename: "Issue" as const, assignments: { nodes: [{ __typename: "TransferredEvent", createdAt: "2026-10-03T00:00:00Z", actor: { login: "alice" }, fromRepository: { nameWithOwner: "octo-org/docs" } }] } };
+    expect(toItem(raw).activities).toEqual([{ kind: "transferred", at: "2026-10-03T00:00:00Z", actor: "alice", from: "octo-org/docs" }]);
+  });
+
   it("leaves issues without review data unchanged", () => {
     const item = toItem({ ...rawPr(), __typename: "Issue" });
     expect(item.comments).toEqual([{ author: "carol", body: "Nice", createdAt: "2026-10-02T00:00:00Z" }]);

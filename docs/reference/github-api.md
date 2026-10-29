@@ -73,6 +73,8 @@ Checked against a real transfer:
   `TransferredEvent` with `fromRepository { nameWithOwner }` and no reference to the old node id
   (introspection 2026-10-29: `actor`, `createdAt`, `fromRepository`, `id`, `issue`).
 - Its `updatedAt` moves to the time of the transfer, so the next delta finds it.
+- The app reads the event's `actor` too, for the timeline line "moved this here from …"; the
+  search page stays at 19 points for 50 items and 7 for 20 (dry run 2026-10-29).
 - Only issues can be transferred; pull requests have no such event.
 
 ## Rate limits and retries

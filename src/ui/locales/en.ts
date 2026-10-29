@@ -186,6 +186,8 @@ export const en = {
   "activity.linkedSelf": "You linked #{number}",
   "activity.duplicate": "{name} marked this as a duplicate of #{number}",
   "activity.duplicateSelf": "You marked this as a duplicate of #{number}",
+  "activity.transferred": "{name} moved this here from {repo}",
+  "activity.transferredSelf": "You moved this here from {repo}",
   "activity.replied": "{name} replied in {count} threads",
   "activity.repliedOne": "{name} replied in a thread",
   "activity.repliedSelf": "You replied in {count} threads",
