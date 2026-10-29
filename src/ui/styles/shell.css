@@ -672,12 +672,7 @@
   background: var(--hover);
 }
 
-/* Sized like the time and segmented fields next to it, not like the organization picker. */
-.calendar-select {
-  justify-self: start;
-  min-width: 260px;
-}
-
+/* As tall as the time and segmented fields next to it, not like the organization picker. */
 .calendar-select .org-select-button {
   gap: 8px;
   height: 30px;
