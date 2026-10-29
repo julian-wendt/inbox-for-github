@@ -14,13 +14,14 @@
  * `inbox-for-github`, so the data stays too.
  *
  * Quits a running `/Applications/Inbox for GitHub.app`, replaces it and starts it again. The dev
- * window is not affected. Refuses unless this is an Apple Silicon Mac and `cargo` is on the path.
+ * window is not affected. Refuses unless this is an Apple Silicon Mac and `cargo` is on the path;
+ * Homebrew's rustup (`/opt/homebrew/opt/rustup/bin`) is added to the path when it is missing.
  *
  *   npm run build:local              # build, install, start
  *   npm run build:local -- --dry-run # print the version, then stop
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 
@@ -34,13 +35,21 @@ const fail = (message) => {
   console.error(`build:local: ${message}`);
   process.exit(1);
 };
+const onPath = (cmd) => {
+  try {
+    run(cmd, ["--version"]);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 if (process.platform !== "darwin" || process.arch !== "arm64") fail("needs an Apple Silicon Mac.");
-try {
-  run("cargo", ["--version"]);
-} catch {
-  fail("cargo is not on the path. With Homebrew's rustup: export PATH=/opt/homebrew/opt/rustup/bin:$PATH");
+const homebrewRustup = "/opt/homebrew/opt/rustup/bin";
+if (!onPath("cargo") && existsSync(homebrewRustup)) {
+  process.env.PATH = `${homebrewRustup}:${process.env.PATH}`;
 }
+if (!onPath("cargo")) fail("cargo is not on the path. Install Rust with rustup (see docs/releasing.md).");
 
 const { version: released } = JSON.parse(readFileSync("package.json", "utf8"));
 const tag = run("git", ["describe", "--tags", "--abbrev=0", "--match", "v*"]);
