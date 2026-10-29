@@ -295,11 +295,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       „#12 → Wiedervorlage Mo., 09:00 · Plan für Do entfernt“ (aus Heute: „· aus Heute genommen“),
       P oder T auf einer Wiedervorlage „#12 → Do · Wiedervorlage für Mo., 09:00 entfernt“. ⌘Z
       nimmt beides zusammen zurück. Ohne vorheriges Wann bleibt der Toast wie bisher.
-- [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; höchstens drei, ältester Plan zuerst); ein
+- [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; alle, ältester Plan zuerst); ein
       Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
 - [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
-      (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; es zählt gegen die drei, Geplantes
-      rückt nur in den freien Platz nach. D, P oder T nehmen den Chip weg.
+      (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; Geplantes reiht sich dahinter ein.
+      D, P oder T nehmen den Chip weg.
+- [ ] T nimmt auch ein viertes und fünftes Item in Heute auf, ohne Meldung.
 - [ ] „Neu“ steht an Zuweisungen, die du seit der Zuweisung nicht geöffnet hast; nach dem Öffnen
       verschwindet es. Selbst zugewiesene sind nie neu.
 - [ ] Der erste Start nach dem Update lädt einmal vollständig (Issue-Typen), danach wieder Deltas.
