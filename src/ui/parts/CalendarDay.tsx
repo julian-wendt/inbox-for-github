@@ -22,8 +22,8 @@ interface Props {
   minutes: number;
   /** The "workdays" setting, for ← and →. */
   workdays: readonly number[];
-  /** The item's linked event: the view opens on its time and does not show it twice. */
-  eventId?: string;
+  /** The item's event, if it has one: the block starts on its time, the event is not shown twice, and saving updates it. */
+  linked: CalendarEvent | null;
   /** Saves the event; the dialog closes when it resolves and shows the error when it rejects. */
   onSave: (day: string, start: number, end: number) => Promise<void>;
   onClose: () => void;
@@ -34,16 +34,17 @@ const clock = (minutes: number) => new Date(2026, 0, 1, 0, minutes).toLocaleTime
 /**
  * A day of the macOS calendar with the new event as a block to place: the day's events from all
  * calendars around it, the block dragged to a free time and its lower edge dragged for its length,
- * in quarter hours. It opens on the first free time of the day (see `firstFree`).
+ * in quarter hours. The block starts on the linked event's time, else on the first free time of
+ * the day (see `firstFree`).
  *
  * Keys: ↑ ↓ move by a quarter hour, ⇧↑ ⇧↓ change the length, ← → go to the previous or next
  * workday (not before today), Enter saves, Escape or a click outside cancels. A click on the grid
  * moves the block there.
  *
  * @example
- *   <CalendarDay title={item.title} day={plannedDay} minutes={settings.calendarMinutes} workdays={settings.workdays} onSave={save} onClose={close} />
+ *   <CalendarDay title={item.title} day={localDay()} minutes={settings.calendarMinutes} workdays={settings.workdays} linked={null} onSave={save} onClose={close} />
  */
-export function CalendarDay({ title, day: initialDay, minutes, workdays, eventId, onSave, onClose }: Props) {
+export function CalendarDay({ title, day: initialDay, minutes, workdays, linked, onSave, onClose }: Props) {
   const [day, setDay] = useState(initialDay);
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [colors, setColors] = useState<Record<string, string>>({});
@@ -73,10 +74,9 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, eventId
     };
   }, [day]);
 
-  const others = events?.filter((e) => e.id !== eventId) ?? [];
-  const linked = events?.find((e) => e.id === eventId);
+  const others = events?.filter((e) => e.id !== linked?.id) ?? [];
   // Until the viewer moves it, the block waits for the day's events, so it can start on a free time.
-  const slot = chosen ?? (events && ((linked && spansOf(day, [linked])[0]) || firstFree(day, others, minutes)));
+  const slot = chosen ?? (events && ((linked && day === initialDay && spansOf(day, [linked])[0]) || firstFree(day, others, minutes)));
   useLayoutEffect(() => {
     if (!slot || !scroller.current || scrolledFor.current === day) return;
     scrolledFor.current = day;
@@ -150,7 +150,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, eventId
       <motion.div
         className="dialog calendar-day"
         role="dialog"
-        aria-label={t("calendarDay.title")}
+        aria-label={t(linked ? "calendarDay.titleChange" : "calendarDay.title")}
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.16 }}
@@ -209,7 +209,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, eventId
             {t("snooze.cancel")}
           </button>
           <button type="button" className="btn success" disabled={!slot || saving} onClick={() => void save()}>
-            {t("calendarDay.save")}
+            {t(linked ? "calendarDay.update" : "calendarDay.save")}
           </button>
         </div>
       </motion.div>

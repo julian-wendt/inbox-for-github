@@ -18,7 +18,7 @@ import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
 import { CalendarDay } from "./ui/parts/CalendarDay";
-import { putEvent } from "./calendar";
+import { findEvents, putEvent, type CalendarEvent } from "./calendar";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
@@ -468,19 +468,20 @@ export default function App() {
       ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
       ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
-      ...(inbox.settings.calendarId ? [{ label: t("calendarDay.menu"), keys: "C", divided: true, onSelect: () => setCalendarFor(c) }] : []),
+      ...(inbox.settings.calendarId ? [{ label: t(inbox.settings.calendarEvents[c.item.id] ? "calendarDay.menuChange" : "calendarDay.menu"), keys: "C", divided: true, onSelect: () => void openCalendar(c) }] : []),
     ];
   };
-  /** The day the calendar view opens on: the item's plan, today when it is pinned, else the next workday. */
-  const calendarDayOf = (c: Classified) => {
-    const when = dated(c);
-    return when?.kind === "planned" ? when.day : when?.kind === "today" ? localDay() : dayChoices(new Date(), inbox.settings.workdays)[0].day;
+  /** Opens the calendar day view on the item's event when it still exists, else on today. */
+  const openCalendar = async (c: Classified) => {
+    const id = inbox.settings.calendarEvents[c.item.id];
+    const [linked] = id ? await findEvents([id]) : [];
+    setCalendarFor({ c, linked: linked ?? null });
   };
   /** Puts the item into the chosen calendar, or moves its event there, and plans it for that day. */
-  const addToCalendar = async (c: Classified, day: string, start: number, end: number) => {
-    const draft = { calendarId: inbox.settings.calendarId, title: `${c.item.title} (${c.item.repo}#${c.item.number})`, url: c.item.url, start, end };
-    const linked = inbox.settings.calendarEvents[c.item.id];
-    const saved = (linked && (await putEvent({ ...draft, id: linked }))) || (await putEvent(draft));
+  const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number) => {
+    const notes = `${c.item.repo}#${c.item.number}\n${c.item.url}\n\n${t("calendarDay.createdWith")}`;
+    const draft = { calendarId: inbox.settings.calendarId, title: c.item.title, url: c.item.url, notes, start, end };
+    const saved = (linked && (await putEvent({ ...draft, id: linked.id }))) || (await putEvent(draft));
     if (!saved) throw new Error(t("calendarDay.failed"));
     void inbox.updateSettings((s) => ({ ...s, calendarEvents: { ...s.calendarEvents, [c.item.id]: saved.id } }));
     const when = dated(c);
@@ -510,7 +511,7 @@ export default function App() {
   };
   const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean } | null>(null);
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean } | null>(null);
-  const [calendarFor, setCalendarFor] = useState<Classified | null>(null);
+  const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
   const bulk = (text: string, steps: { run: () => void; undo: () => void }[]) => {
@@ -1253,12 +1254,12 @@ export default function App() {
       )}
       {calendarFor && (
         <CalendarDay
-          title={calendarFor.item.title}
-          day={calendarDayOf(calendarFor)}
+          title={calendarFor.c.item.title}
+          day={calendarFor.linked ? localDay(new Date(calendarFor.linked.start)) : localDay()}
           minutes={inbox.settings.calendarMinutes}
           workdays={inbox.settings.workdays}
-          eventId={inbox.settings.calendarEvents[calendarFor.item.id]}
-          onSave={(day, start, end) => addToCalendar(calendarFor, day, start, end)}
+          linked={calendarFor.linked}
+          onSave={(day, start, end) => addToCalendar(calendarFor.c, calendarFor.linked, day, start, end)}
           onClose={() => setCalendarFor(null)}
         />
       )}

@@ -63,6 +63,7 @@ pub struct Draft {
     calendar_id: String,
     title: String,
     url: String,
+    notes: String,
     start: f64,
     end: f64,
 }
@@ -171,7 +172,7 @@ pub fn calendar_find(ids: Vec<String>) -> Result<Vec<Event>, String> {
 
 /// Creates the event, or updates the one `draft.id` names, and returns it as saved.
 ///
-/// An update changes title, link and times but keeps the calendar the event is in now. Returns
+/// An update changes title, link, notes and times but keeps the calendar the event is in now. Returns
 /// `None` when `draft.id` names an event that no longer exists, so a deleted event is never
 /// brought back.
 #[tauri::command(async)]
@@ -191,6 +192,7 @@ pub fn calendar_put(draft: Draft) -> Result<Option<Event>, String> {
         };
         event.setTitle(Some(&NSString::from_str(&draft.title)));
         event.setURL(NSURL::URLWithString(&NSString::from_str(&draft.url)).as_deref());
+        event.setNotes(Some(&NSString::from_str(&draft.notes)));
         event.setStartDate(Some(&date(draft.start)));
         event.setEndDate(Some(&date(draft.end)));
         store.saveEvent_span_commit_error(&event, EKSpan::ThisEvent, true).map_err(failed)?;

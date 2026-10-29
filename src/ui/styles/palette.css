@@ -339,6 +339,10 @@
   cursor: ns-resize;
 }
 
+.calendar-day .dialog-actions .btn {
+  white-space: nowrap;
+}
+
 .calendar-day-hint {
   margin-right: auto;
   color: var(--text-faint);

@@ -29,6 +29,7 @@ export interface EventDraft {
   calendarId: string;
   title: string;
   url: string;
+  notes: string;
   start: number;
   end: number;
 }
@@ -56,12 +57,15 @@ export const calendars = () => invoke<Calendar[]>("calendar_list");
 /** The events of all calendars that overlap `from` to `to`, in milliseconds since 1970. */
 export const eventsBetween = (from: number, to: number) => invoke<CalendarEvent[]>("calendar_events", { from, to });
 
+/** The events with these identifiers that still exist; a deleted one is missing. */
+export const findEvents = (ids: string[]) => invoke<CalendarEvent[]>("calendar_find", { ids });
+
 /**
  * Creates the event, or updates the one `draft.id` names, and returns it as saved; null when that
  * event was deleted meanwhile, which is never brought back.
  *
  * @example
- *   const saved = await putEvent({ calendarId, title: "Fix the login (octo-org/app#12)", url, start, end });
+ *   const saved = await putEvent({ calendarId, title: "Fix the login", url, notes: "octo-org/app#12", start, end });
  */
 export const putEvent = (draft: EventDraft) => invoke<CalendarEvent | null>("calendar_put", { draft });
 
