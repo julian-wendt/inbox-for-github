@@ -64,9 +64,10 @@ const PR_FIELDS = `
 `;
 
 const ISSUE_FIELDS = `
-  assignments: timelineItems(itemTypes: [ASSIGNED_EVENT, UNASSIGNED_EVENT, CLOSED_EVENT, REOPENED_EVENT, CONNECTED_EVENT, MARKED_AS_DUPLICATE_EVENT], last: 20) {
+  assignments: timelineItems(itemTypes: [ASSIGNED_EVENT, UNASSIGNED_EVENT, CLOSED_EVENT, REOPENED_EVENT, CONNECTED_EVENT, MARKED_AS_DUPLICATE_EVENT, TRANSFERRED_EVENT], last: 20) {
     nodes {
       __typename ${ASSIGNED} ${STATE_EVENTS}
+      ... on TransferredEvent { createdAt fromRepository { nameWithOwner } }
       ... on ConnectedEvent { ${ACTOR} subject { ... on PullRequest { number url } } source { ... on PullRequest { number url } } }
       ... on MarkedAsDuplicateEvent { ${ACTOR} canonical { ... on Issue { number url } ... on PullRequest { number url } } }
     }
@@ -165,6 +166,7 @@ export interface RawEvent {
   subject?: { number?: number; url?: string } | null;
   source?: { number?: number; url?: string } | null;
   canonical?: { number?: number; url?: string } | null;
+  fromRepository?: { nameWithOwner: string } | null;
 }
 
 interface SearchResult {
@@ -466,10 +468,17 @@ export function toItem(raw: RawItem): Item {
     pull: raw.__typename === "PullRequest" ? toPull(raw) : null,
     linkedPrs: (raw.closedByPullRequestsReferences?.nodes ?? []).map((pr) => ({ number: pr.number, url: pr.url, draft: pr.isDraft, author: pr.author?.login ?? "ghost" })),
     issueType: raw.issueType ?? null,
+    ...transferOf(raw),
     closed: raw.closed && raw.closedAt ? { state: raw.merged ? "merged" : "closed", at: raw.closedAt } : null,
     boards: [],
     reasons: [],
   };
+}
+
+/** The repository the issue was last moved from, as `transferredFrom`; nothing for an issue never moved. */
+function transferOf(raw: RawItem): Pick<Item, "transferredFrom"> {
+  const from = (raw.assignments?.nodes ?? []).filter((e) => e.__typename === "TransferredEvent").at(-1)?.fromRepository?.nameWithOwner;
+  return from ? { transferredFrom: from } : {};
 }
 
 function toComment(raw: RawComment, where?: string): Comment {

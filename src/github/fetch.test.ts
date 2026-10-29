@@ -277,6 +277,13 @@ describe("toItem", () => {
     expect(toItem(rawPr()).issueType).toBeNull();
   });
 
+  it("keeps the repository an issue was last transferred from, and nothing for one never moved", () => {
+    const moved = (...from: string[]) => ({ ...rawPr(), __typename: "Issue" as const, assignments: { nodes: from.map((repo) => ({ __typename: "TransferredEvent", createdAt: "2026-10-03T00:00:00Z", fromRepository: { nameWithOwner: repo } })) } });
+    expect(toItem(moved("octo-org/docs", "octo-org/portal")).transferredFrom).toBe("octo-org/portal");
+    expect(toItem(moved()).transferredFrom).toBeUndefined();
+    expect("transferredFrom" in toItem(moved())).toBe(false);
+  });
+
   it("leaves issues without review data unchanged", () => {
     const item = toItem({ ...rawPr(), __typename: "Issue" });
     expect(item.comments).toEqual([{ author: "carol", body: "Nice", createdAt: "2026-10-02T00:00:00Z" }]);

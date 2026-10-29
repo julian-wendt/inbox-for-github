@@ -52,3 +52,21 @@ describe("avatarUrl", () => {
     expect(avatarUrl("lena-f")).not.toBe(avatarUrl("sam-r"));
   });
 });
+
+describe("transfer", () => {
+  it("gives the issue a new id and number in the target repository, keeps its history, and drops the old id", () => {
+    const world = new GitHubSimulator({ now: new Date("2026-10-25T12:00:00Z") });
+    const issue = world.issue({ repo: "octo-org/docs", title: "Broken link", ago: 2 * HOUR });
+    world.comment(issue, "bob", "Still broken");
+    world.advance(HOUR);
+
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+
+    const raw = world.raw(moved);
+    expect(moved.id).not.toBe(issue.id);
+    expect(world.entries.has(issue.id)).toBe(false);
+    expect(raw).toMatchObject({ number: 1, title: "Broken link", createdAt: "2026-10-25T10:00:00Z", updatedAt: "2026-10-25T13:00:00Z", repository: { nameWithOwner: "octo-org/portal" }, url: "https://github.com/octo-org/portal/issues/1" });
+    expect(raw.comments.nodes.map((c) => c.body)).toEqual(["Still broken"]);
+    expect(raw.assignments?.nodes.at(-1)).toMatchObject({ __typename: "TransferredEvent", fromRepository: { nameWithOwner: "octo-org/docs" } });
+  });
+});

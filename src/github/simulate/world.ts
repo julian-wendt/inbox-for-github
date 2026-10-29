@@ -329,6 +329,28 @@ export class GitHubSimulator {
     entry.boards = [...entry.boards.filter((b) => b.project?.title !== project), { project: { id: `PVT_${project}`, title: project }, fieldValues: { nodes: values } }];
   }
 
+  /**
+   * Moves an issue to another repository as GitHub does: a new node id and number there, the
+   * same `createdAt`, title and posts, a `TransferredEvent`, and `updatedAt` at the transfer.
+   * The old id no longer resolves.
+   *
+   * @returns The issue at its new place.
+   */
+  transfer(ref: Ref, actor: string, repo: string): Ref {
+    const old = this.entry(ref);
+    const from = old.raw.repository.nameWithOwner;
+    const moved = this.open("issue", { repo });
+    const entry = this.entry(moved);
+    const { id, number, url } = entry.raw;
+    entry.raw = { ...structuredClone(old.raw), id, number, url, repository: { nameWithOwner: repo } };
+    entry.requested = new Set(old.requested);
+    entry.boards = structuredClone(old.boards);
+    this.entries.delete(ref.id);
+    this.event(entry.raw, { __typename: "TransferredEvent", actor: this.author(actor), fromRepository: { nameWithOwner: from } });
+    this.touch(entry.raw);
+    return moved;
+  }
+
   rename(ref: Ref, title: string): void {
     const raw = this.raw(ref);
     raw.title = title;

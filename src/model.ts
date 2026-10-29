@@ -143,6 +143,8 @@ export interface Item {
   linkedPrs: LinkedPr[];
   /** Issues only: the issue type, null without one; filled with null for caches from before it was loaded. */
   issueType: IssueType | null;
+  /** Issues only: the repository it was moved from, `owner/name`, when it was transferred; GitHub gives it a new node id there. */
+  transferredFrom?: string;
   /** Set once the item is closed or merged on GitHub; null while open. */
   closed: Closed | null;
   /** Assignments, review requests, reviews without text and commits, oldest first. */
