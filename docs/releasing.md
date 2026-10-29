@@ -26,18 +26,18 @@ passed, since a published tag cannot be taken back.
    notes, the zip is attached and the release published. A failed build leaves the version bump on
    `main` without a tag; the next push to `main`, usually the fix, runs the build again.
 
-**Fallback, for a draft without its download** (the publish job failed after tagging): build and
-attach it on the Mac, with the same remaps as CI:
+**Fallback, for a draft without its download** (the publish job failed after tagging): neither a
+re-run nor the next push repairs it, since "Check the release" then finds no newly created
+release and `pending` finds the tag. Attach the zip the build kept as the artifact `app`:
 
 ```sh
-export RUSTFLAGS="--remap-path-prefix=$HOME=/build --remap-path-prefix=$PWD=/src"
-npm run release:check     # the checks only
-npm run release:publish   # build the tag, zip, upload, publish the draft
+gh run download <run id> -n app                      # the failed run of "Release"
+gh release upload v<version> Inbox-for-GitHub-<version>.zip
+gh release edit v<version> --draft=false
 ```
 
-The script takes the newest release, refuses if it has a download already or if `package.json`
-at its tag has another version, and builds the tag in a temporary worktree, so your checkout stays
-as it is. Without a draft, the newest release is an older published one, so do not run it then.
+The artifact is kept for three days. After that, re-run the build job of that run for a fresh
+one; its publish job fails at the same check again, which leaves the draft as it is.
 
 Apple Silicon only, signed ad hoc but not notarized (first start of a download: System Settings ›
 Privacy & Security › "Open Anyway"). Release PRs may change the version
