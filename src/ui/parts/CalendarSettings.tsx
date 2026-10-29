@@ -48,11 +48,11 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
 
   const ask = async () => setAccess((await calendarAccess()) ? "granted" : "denied");
   const chosen = calendars?.find((c) => c.id === settings.calendarId);
-  const option = (calendar: Calendar | undefined) => (
+  const option = (calendar: Calendar) => (
     <>
-      {calendar ? <span className="option-dot" style={{ "--option": calendar.color ?? "transparent" } as CSSProperties} /> : <X size={10} strokeWidth={2.5} className="calendar-none" />}
-      <strong>{calendar ? calendar.title : t("settings.calendarOff")}</strong>
-      {calendar && <span className="org-select-summary">{calendar.account}</span>}
+      <span className="option-dot" style={{ "--option": calendar.color ?? "transparent" } as CSSProperties} />
+      <strong>{calendar.title}</strong>
+      <span className="calendar-account">({calendar.account})</span>
     </>
   );
   const pick = (id: string) => {
@@ -73,16 +73,21 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
         ) : (
           <div className="org-select calendar-select">
             <button className="org-select-button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
-              {option(chosen)}
+              {chosen ? option(chosen) : <span className="calendar-placeholder">{t("settings.calendarNone")}</span>}
               <ChevronDown size={15} className="org-select-chevron" />
             </button>
+            {settings.calendarId && (
+              <button className="icon-btn calendar-clear" onClick={() => pick("")} title={t("settings.calendarClear")} aria-label={t("settings.calendarClear")}>
+                <X size={13} />
+              </button>
+            )}
             {open && (
               <>
                 <div className="popover-backdrop" onMouseDown={() => setOpen(false)} />
                 <ul className="org-select-menu" role="listbox">
-                  {[undefined, ...(calendars ?? [])].map((calendar) => (
-                    <li key={calendar?.id ?? ""} role="option" aria-selected={(calendar?.id ?? "") === settings.calendarId}>
-                      <button className={(calendar?.id ?? "") === settings.calendarId ? "on" : ""} onClick={() => pick(calendar?.id ?? "")}>
+                  {(calendars ?? []).map((calendar) => (
+                    <li key={calendar.id} role="option" aria-selected={calendar.id === settings.calendarId}>
+                      <button className={calendar.id === settings.calendarId ? "on" : ""} onClick={() => pick(calendar.id)}>
                         {option(calendar)}
                       </button>
                     </li>

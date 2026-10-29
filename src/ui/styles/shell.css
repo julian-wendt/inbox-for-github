@@ -685,15 +685,33 @@
   background: var(--hover);
 }
 
-/* In the dot's place; the 1px either side keeps the names in line with the 8px dots. */
-.calendar-none {
-  flex: none;
-  margin: 0 -1px;
+.calendar-placeholder,
+.calendar-account {
+  overflow: hidden;
   color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Over the field, left of the chevron; a button inside the field's button would not be valid HTML. */
+.calendar-clear {
+  position: absolute;
+  top: 4px;
+  right: 32px;
+  width: 22px;
+  height: 22px;
+}
+
+.calendar-select .org-select-button:has(+ .calendar-clear) {
+  padding-right: 60px;
 }
 
 .calendar-select strong {
   font-weight: 500;
+}
+
+.calendar-select .org-select-chevron {
+  margin-left: auto;
 }
 
 .calendar-select .org-select-menu button {
