@@ -78,7 +78,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 ## Refreshes
 
 - **Full fetch** at start, when the organizations change, at least every `FULL_EVERY_MS`
-  (1 hour).
+  (1 hour), and on ⇧⌘R (`refresh(true)`).
 - **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;

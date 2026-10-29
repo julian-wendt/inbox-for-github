@@ -289,8 +289,8 @@ export const de: Messages = {
   "help.basics.why": "Die Glühbirne oben in der Detailansicht erklärt, warum ein Item in seinem Bereich ist und was es weiterbewegt.",
   "help.basics.filter": "Ein Klick auf ein Repository in der Sidebar zeigt nur dessen Items; ist eines gewählt, fügt ein Klick auf weitere sie hinzu, und der Radiergummi neben „Repositories“ zeigt wieder alle. Der Schalter über der Liste grenzt auf Issues oder Pull Requests ein, das Suchfeld (⌘F) auf Titel und Nummern.",
   "help.basics.attention": "Das rote Badge am App-Icon zählt die ungelesenen Items in deiner Inbox, über alle Repositories, die die App lädt (einstellbar unter Einstellungen → Repositories), ohne nicht verfolgte. Die Zahlen an den Ansichten zählen alle Items genauso: Was du in der Sidebar oder im Kopf einer Ansicht auswählst (Repositories, Issues/Pull Requests, Erwähnungen/Reviews, Sprint), grenzt nur die Liste und die Zahl in ihrem Kopf ein. Jedes Item, das neu in die Inbox kommt, meldet sich außerdem mit einer Benachrichtigung; eins, das nur zurückkommt, weil seine Wiedervorlage fällig ist oder du es wieder geöffnet hast, kehrt still zurück. Badge und Benachrichtigungen schaltest du unter Einstellungen → Mitteilungen ab.",
-  "help.basics.refresh": "Neue Aktivität lädt alle {count} Min. und jederzeit mit ⌘R; ⌃R aktualisiert das ausgewählte Item. Das Intervall stellst du unter Einstellungen → Allgemein ein.",
-  "help.basics.refreshOff": "Die automatische Aktualisierung ist aus; ⌘R lädt neue Aktivität, ⌃R das ausgewählte Item. Einschalten unter Einstellungen → Allgemein.",
+  "help.basics.refresh": "Neue Aktivität lädt alle {count} Min. und jederzeit mit ⌘R; ⌃R aktualisiert das ausgewählte Item. ⇧⌘R lädt alles vollständig neu, auch was die schnelle Aktualisierung übersieht, etwa Board-Wechsel (vollständig geladen wird ohnehin stündlich). Das Intervall stellst du unter Einstellungen → Allgemein ein.",
+  "help.basics.refreshOff": "Die automatische Aktualisierung ist aus; ⌘R lädt neue Aktivität, ⌃R das ausgewählte Item, ⇧⌘R alles vollständig. Einschalten unter Einstellungen → Allgemein.",
 
   "settings.notifications": "Mitteilungen",
   "settings.notificationsHint": "Eine macOS-Mitteilung für jedes Item, das neu in deiner Inbox landet. Mehr als drei auf einmal kommen als eine Sammelmitteilung; ein Klick öffnet das Item.",
@@ -562,6 +562,7 @@ export const de: Messages = {
   "settings.untrackedSince": "nicht verfolgt {ago}",
   "action.refreshItem": "Dieses Item aktualisieren",
   "action.refreshAll": "Alles aktualisieren",
+  "action.refreshFull": "Alles vollständig neu laden",
   "closed.onGitHub": "Auf GitHub geschlossen",
   "merged.onGitHub": "Auf GitHub gemergt",
   "closed.statusHint": "Auf GitHub geschlossen, deshalb bleibt es in Erledigt; öffne es auf GitHub oder über das Kommentarfeld wieder, um das zu ändern.",

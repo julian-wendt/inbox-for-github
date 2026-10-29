@@ -287,8 +287,8 @@ export const en = {
   "help.basics.why": "The light bulb at the top of the detail view explains why an item is in its view and what moves it on.",
   "help.basics.filter": "Click a repository in the sidebar to show only its items; once one is picked, click others to add them, and the eraser next to \"Repositories\" shows all again. The switch above the list narrows to issues or pull requests, and the search field (⌘F) to titles and numbers.",
   "help.basics.attention": "The red badge on the app icon counts the unread items in your inbox, across all repositories the app loads (set under Settings → Repositories), except untracked ones. The numbers next to the views count every item the same way: what you pick in the sidebar or a view's header (repositories, Issues/Pull Requests, Mentions/Reviews, sprint) only narrows the list and the number in its header. Each item that newly enters the inbox also sends a notification; one that only comes back, because its follow-up date came or you reopened it, returns quietly. Badge and notifications can be switched off under Settings → Notifications.",
-  "help.basics.refresh": "New activity loads every {count} min, and with ⌘R at any time; ⌃R refreshes the selected item. Change the interval under Settings → General.",
-  "help.basics.refreshOff": "Automatic refresh is off; ⌘R loads new activity, ⌃R the selected item. Turn it on under Settings → General.",
+  "help.basics.refresh": "New activity loads every {count} min, and with ⌘R at any time; ⌃R refreshes the selected item. ⇧⌘R reloads everything in full, also what a quick refresh misses, such as board moves (a full reload runs every hour anyway). Change the interval under Settings → General.",
+  "help.basics.refreshOff": "Automatic refresh is off; ⌘R loads new activity, ⌃R the selected item, ⇧⌘R everything in full. Turn it on under Settings → General.",
 
   "settings.notifications": "Notifications",
   "settings.notificationsHint": "A macOS notification for each item that newly lands in your inbox. More than three at once arrive as one summary; a click opens the item.",
@@ -560,6 +560,7 @@ export const en = {
   "settings.untrackedSince": "untracked {ago}",
   "action.refreshItem": "Refresh this item",
   "action.refreshAll": "Refresh everything",
+  "action.refreshFull": "Reload everything in full",
   "closed.onGitHub": "Closed on GitHub",
   "merged.onGitHub": "Merged on GitHub",
   "closed.statusHint": "Closed on GitHub, so it stays in Done; reopen it on GitHub or with the comment box to change that.",

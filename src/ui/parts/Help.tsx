@@ -53,6 +53,7 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
       [["⌘", "K"], "keys.palette"],
       [["⌘", "F"], "keys.search"],
       [["⌘", "R"], "action.refreshAll"],
+      [["⇧", "⌘", "R"], "action.refreshFull"],
       [["⌘", ","], "action.settings"],
       [["?"], "keys.help"],
     ],

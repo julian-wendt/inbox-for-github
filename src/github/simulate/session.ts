@@ -69,11 +69,11 @@ export class InboxSession {
     return this.world.now.getTime();
   }
 
-  /** A refresh: a delta when the last full fetch is younger than an hour, else a full fetch. @returns Which, and the points it cost. */
-  async refresh(): Promise<{ kind: "full" | "delta"; cost: number }> {
+  /** ⌘R: a delta when the last full fetch is younger than an hour, else a full fetch; ⇧⌘R (`full`) always the latter. @returns Which, and the points it cost. */
+  async refresh(full = false): Promise<{ kind: "full" | "delta"; cost: number }> {
     const { orgs, closedDays, loadBoards, maxItems } = this.settings;
     const key = JSON.stringify([orgs, this.me]);
-    const delta = !!this.last && canDelta({ fullAt: this.last.fullAt, scope: this.last.key }, key, this.nowMs);
+    const delta = !full && !!this.last && canDelta({ fullAt: this.last.fullAt, scope: this.last.key }, key, this.nowMs);
     const before = this.world.requests.length;
     const fetched = await fetchItems(TOKEN, orgs, {
       limit: maxItems,

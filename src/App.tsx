@@ -958,6 +958,7 @@ export default function App() {
       // The selected item alone, as #17 decided; with nothing selected, everything, as before.
       "ctrl+r": withCurrent(reloadCurrent),
       "mod+r": () => void inbox.refresh(),
+      "mod+shift+r": () => void inbox.refresh(true),
       "mod+,": () => setDialog("settings"),
       "mod+k": () => setDialog("palette"),
       "mod+f": () => {
@@ -1261,6 +1262,7 @@ export default function App() {
           onBucket={setBucket}
           onJump={jumpTo}
           onRefresh={() => void inbox.refresh()}
+          onRefreshFull={() => void inbox.refresh(true)}
           onSettings={() => setDialog("settings")}
           onToggleTheme={toggleTheme}
           history={actions.history}

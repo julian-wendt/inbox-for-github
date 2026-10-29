@@ -46,6 +46,19 @@ describe("API usage", () => {
     expect((await app.refresh()).kind).toBe("full");
   });
 
+  it("fetches in full on demand, which catches a board move a delta misses", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat"] });
+    world.setBoard(issue, { status: "Backlog" });
+    await app.refresh();
+
+    world.advance(10 * MINUTE);
+    world.setBoard(issue, { status: "In progress" });
+
+    expect((await app.refresh(true)).kind).toBe("full");
+    expect(app.entry(issue).item.boards[0].status).toBe("In progress");
+  });
+
   it("fetches in full when the organizations change", async () => {
     const { world, app } = sim;
     world.issue({ assignees: ["octocat"] });

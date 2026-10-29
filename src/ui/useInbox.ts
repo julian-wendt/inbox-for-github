@@ -39,8 +39,12 @@ export interface Inbox {
   fetchedAt: Date | null;
   settings: Settings;
   classified: Classified[];
-  /** Resolves to true once the items are fetched and shown; false when stopped, failed or not run. */
-  refresh: () => Promise<boolean>;
+  /**
+   * Loads what changed (a delta within an hour of the last full fetch), or with `full` everything,
+   * which also catches what a delta misses. Resolves to true once the items are shown; false when
+   * stopped, failed or not run.
+   */
+  refresh: (full?: boolean) => Promise<boolean>;
   /** Stops a running refresh; what was shown before stays. */
   stopRefresh: () => void;
   /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox; one GitHub no longer resolves leaves the cache (see `dropGone`). */
@@ -266,7 +270,7 @@ export function useInbox(): Inbox {
     })().catch((e) => setError(String(e)));
   }, []);
 
-  const refresh = useCallback(async (): Promise<boolean> => {
+  const refresh = useCallback(async (full = false): Promise<boolean> => {
     if (!store || settings.orgs.length === 0) return false;
     running.current?.abort();
     const controller = new AbortController();
@@ -291,7 +295,7 @@ export function useInbox(): Inbox {
       const key = JSON.stringify([settings.orgs, viewer.login]);
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
-      const delta = !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const delta = !full && !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
       const coverage: Coverage = delta ? { ...had.coverage, boards: want.boards } : want;
       const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards, signal };
