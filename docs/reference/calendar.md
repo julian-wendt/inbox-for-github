@@ -1,8 +1,9 @@
 # Calendar
 
-Plans can go into a calendar of the macOS calendar store through EventKit, which reaches an
-Outlook (Exchange) account only when it is added under System Settings › Internet Accounts; the
-new Outlook for Mac keeps its own store, which EventKit does not see.
+Plans can go into any writable calendar of the macOS calendar store through EventKit: local
+calendars and those of every account under System Settings › Internet Accounts (iCloud, Google,
+Exchange, CalDAV). Only Exchange was tried so far. An Outlook account is reached only when it is
+added there as well; the new Outlook for Mac keeps its own store, which EventKit does not see.
 
 Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_list`,
 `calendar_events`, `calendar_find`, `calendar_put`, `calendar_remove`, and the app event

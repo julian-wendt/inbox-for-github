@@ -210,7 +210,7 @@ pub fn calendar_remove(id: String) -> Result<(), String> {
 }
 
 /// Sends `CHANGED_EVENT` to the web view whenever the calendar store changes, an edit in
-/// Calendar or Outlook and a sync from the server included. Call once, at setup.
+/// Calendar.app or another client and a sync from the server included. Call once, at setup.
 pub fn watch(app: tauri::AppHandle) {
     // EventKit posts the notification only while a store exists.
     let _ = with_store(|_| Ok(()));

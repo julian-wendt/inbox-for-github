@@ -614,7 +614,7 @@ export const de: Messages = {
   "settings.section.general": "Allgemein",
   "settings.section.notify": "Mitteilungen",
   "settings.section.calendar": "Kalender",
-  "settings.intro.calendar": "Geplante Items können in einen Kalender dieses Macs, auch in ein Outlook-Konto unter Systemeinstellungen › Internetaccounts.",
+  "settings.intro.calendar": "Geplante Items können in jeden beschreibbaren Kalender dieses Macs: einen lokalen oder einen aus einem Konto unter Systemeinstellungen › Internetaccounts, etwa iCloud, Google oder Exchange.",
   "settings.calendar": "Kalender für Pläne",
   "settings.calendarNone": "Kein Kalender gewählt",
   "settings.calendarClear": "Auswahl aufheben",

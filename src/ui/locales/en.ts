@@ -612,7 +612,7 @@ export const en = {
   "settings.section.general": "General",
   "settings.section.notify": "Notifications",
   "settings.section.calendar": "Calendar",
-  "settings.intro.calendar": "Planned items can go into a calendar of this Mac, an Outlook account added under System Settings › Internet Accounts included.",
+  "settings.intro.calendar": "Planned items can go into any writable calendar of this Mac: a local one or one of an account under System Settings › Internet Accounts, such as iCloud, Google or Exchange.",
   "settings.calendar": "Calendar for plans",
   "settings.calendarNone": "No calendar selected",
   "settings.calendarClear": "Clear",
