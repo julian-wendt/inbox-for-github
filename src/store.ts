@@ -181,6 +181,8 @@ export interface Settings {
   pinnedOn: Record<string, string>;
   /** Per pinned or planned item, when it was last pinned or planned (ISO 8601); only an ask since then shows it in the inbox (see `classify`). */
   plannedAt: Record<string, string>;
+  /** The local time ("09:00", 24-hour) a follow-up for a day comes back at (see `snoozeUntil`). */
+  followUpTime: string;
   /** The attributes of the Assigned to me table in the viewer's order, with their switches; null until changed (see `resolveAttributes`). */
   tableAttributes: AttributeSetting[] | null;
   /** Per table, its own attribute switches from its header menu; attributes without one follow `tableAttributes`. */
@@ -213,7 +215,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: true, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, statusMap: {}, plateOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: true, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", statusMap: {}, plateOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

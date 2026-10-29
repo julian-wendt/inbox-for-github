@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reminderText, snoozeUntil, untilShort } from "./snooze";
+import { clockOf, clockText, reminderText, snoozeUntil, untilShort } from "./snooze";
 import { setLang } from "./i18n";
 
 describe("snoozeUntil", () => {
@@ -14,6 +14,19 @@ describe("snoozeUntil", () => {
 
   it("takes next week's Monday even on a Monday", () => {
     expect(snoozeUntil("nextWeek", new Date(2026, 9, 26, 8))).toBe(new Date(2026, 10, 2, 9).toISOString());
+  });
+
+  it("comes back at the time the setting names", () => {
+    expect(snoozeUntil("tomorrow", now, "17:30")).toBe(new Date(2026, 9, 24, 17, 30).toISOString());
+  });
+});
+
+describe("clockOf and clockText", () => {
+  it("read and write a 24-hour time, and fall back to 09:00 for one that does not parse", () => {
+    expect(clockOf("7:05")).toEqual({ hours: 7, minutes: 5 });
+    expect(clockText(clockOf("7:05"))).toBe("07:05");
+    expect(clockOf("25:00")).toEqual({ hours: 9, minutes: 0 });
+    expect(clockOf("")).toEqual({ hours: 9, minutes: 0 });
   });
 });
 

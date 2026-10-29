@@ -14,6 +14,9 @@ import { NOTIFY_REASONS, notifies } from "../attention";
 import { t, type Lang, type MessageKey } from "../i18n";
 import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
+import { HOURS, MINUTES } from "../segments";
+import { clockOf, clockText } from "../snooze";
+import { SegmentField } from "./SegmentField";
 import { guessWorkStatus, WORK_STATUSES, type WorkStatus } from "../../workStatus";
 import { combineAttributes, splitAttributes, type AttributeOption } from "../attributes";
 import { AttributeList } from "./AttributeList";
@@ -244,6 +247,19 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                   ))}
                 </div>
                 <small>{t("settings.languageHint")}</small>
+              </div>
+              <div className="field">
+                <span>{t("settings.followUpTime")}</span>
+                <SegmentField
+                  label={t("settings.followUpTime")}
+                  separator=":"
+                  parts={[
+                    { label: t("snooze.hour"), value: clockOf(draft.followUpTime).hours, segment: HOURS },
+                    { label: t("snooze.minute"), value: clockOf(draft.followUpTime).minutes, segment: MINUTES },
+                  ]}
+                  onChange={(index, value) => change({ followUpTime: clockText({ ...clockOf(draft.followUpTime), [index === 0 ? "hours" : "minutes"]: value }) })}
+                />
+                <small>{t("settings.followUpTimeHint")}</small>
               </div>
               <div className="field">
                 <span>{t("settings.refresh")}</span>

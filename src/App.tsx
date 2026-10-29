@@ -545,8 +545,8 @@ export default function App() {
   const bulkTimes = (): MenuEntry[] => [
     { label: t("snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
     { label: t("snooze.later"), keys: "H", onSelect: () => bulkLater(snoozeUntil("later")) },
-    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => bulkLater(snoozeUntil("tomorrow")) },
-    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => bulkLater(snoozeUntil("nextWeek")) },
+    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => bulkLater(snoozeUntil("tomorrow", new Date(), inbox.settings.followUpTime)) },
+    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => bulkLater(snoozeUntil("nextWeek", new Date(), inbox.settings.followUpTime)) },
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: bulkLater }) },
   ];
   /** The context menu while several items are marked: what applies to all of them. */
@@ -649,8 +649,8 @@ export default function App() {
   const snoozeEntries = (c: Classified): MenuEntry[] => [
     { label: t("snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
     { label: t("snooze.later"), keys: "H", onSelect: () => followUp(c, snoozeUntil("later")) },
-    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => followUp(c, snoozeUntil("tomorrow")) },
-    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => followUp(c, snoozeUntil("nextWeek")) },
+    { label: t("snooze.tomorrow"), keys: "M", onSelect: () => followUp(c, snoozeUntil("tomorrow", new Date(), inbox.settings.followUpTime)) },
+    { label: t("snooze.nextWeek"), keys: "W", onSelect: () => followUp(c, snoozeUntil("nextWeek", new Date(), inbox.settings.followUpTime)) },
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
   ];
   /** S on an item: the follow-up choices open in the middle of the detail, also to move the date. */

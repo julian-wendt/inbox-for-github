@@ -592,6 +592,8 @@ export const de: Messages = {
   "settings.closeHint": "Schließen (Esc)",
   "settings.section.general": "Allgemein",
   "settings.section.notify": "Mitteilungen",
+  "settings.followUpTime": "Wiedervorlagen kommen um",
+  "settings.followUpTimeHint": "Wann eine Wiedervorlage für einen Tag (nächster Werktag, ein Wochentag, nächste Woche) das Item zurück in den Eingang bringt. Ein gewähltes Datum fragt nach seiner eigenen Uhrzeit.",
   "settings.refresh": "Automatisch aktualisieren",
   "settings.refresh.off": "Aus",
   "settings.refresh.minutes": "{count} Min.",
