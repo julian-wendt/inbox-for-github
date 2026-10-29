@@ -659,7 +659,14 @@ export function useInbox(): Inbox {
     [store],
   );
 
-  const updateSettings = useCallback((change: (current: Settings) => Settings) => saveSettings(change(latestSettings.current)), [saveSettings]);
+  const updateSettings = useCallback(
+    (change: (current: Settings) => Settings) => {
+      // Set at once, so a second update in the same tick builds on this one instead of the last render.
+      latestSettings.current = change(latestSettings.current);
+      return saveSettings(latestSettings.current);
+    },
+    [saveSettings],
+  );
 
   return {
     ready: store !== null,

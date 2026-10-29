@@ -1,0 +1,244 @@
+import { listen } from "@tauri-apps/api/event";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { CALENDAR_CHANGED, calendars, eventsBetween, type CalendarEvent } from "../../calendar";
+import { localDay } from "../assignments";
+import { firstFree, midnight, momentOf, placeSpans, snap, spansOf, STEP, stepWorkday, type Span } from "../calendarSlot";
+import { dateLocale, t } from "../i18n";
+import { dayLong } from "../plan";
+
+/** Height of one hour in the grid, in pixels. */
+const HOUR = 44;
+const PX = HOUR / 60;
+const DAY = 24 * 60;
+
+interface Props {
+  /** The item's title: what the title field starts with for a new event, and what an emptied field falls back to. */
+  title: string;
+  /** The day the view opens on, a local date ("2026-10-29"). */
+  day: string;
+  /** The length a new event starts with, in minutes (the "calendarMinutes" setting). */
+  minutes: number;
+  /** The "workdays" setting, for ← and →. */
+  workdays: readonly number[];
+  /** The item's event, if it has one: the block starts on its time of day, the event is not shown twice, and saving moves it. */
+  linked: CalendarEvent | null;
+  /** Plans the item for the shown day without an event; offered only while the item has none. */
+  onPlanOnly: (day: string) => void;
+  /** Saves the event; the dialog closes when it resolves and shows the error when it rejects. */
+  onSave: (day: string, start: number, end: number, title: string) => Promise<void>;
+  onClose: () => void;
+}
+
+const clock = (minutes: number) => new Date(2026, 0, 1, 0, minutes).toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" });
+
+/**
+ * A day of the macOS calendar with the new event as a block to place: the day's events from all
+ * calendars around it, the block dragged to a free time and its lower edge dragged for its length,
+ * in quarter hours. The block starts on the linked event's time of day, also on another day, else
+ * on the first free time of the day (see `firstFree`). "Plan only" plans the day without an event.
+ *
+ * The title field starts with the linked event's title, else the item's; emptied, it falls back
+ * to the item's. Keys: ↑ ↓ move by a quarter hour, ⇧↑ ⇧↓ change the length, ← → go to the previous or next
+ * workday (not before today), Enter saves, Escape or a click outside cancels. A click on the grid
+ * moves the block there. While the title field has focus, only Escape and Enter act on the dialog.
+ *
+ * @example
+ *   <CalendarDay title={item.title} day={localDay()} minutes={settings.calendarMinutes} workdays={settings.workdays} linked={null} onSave={save} onClose={close} />
+ */
+export function CalendarDay({ title, day: initialDay, minutes, workdays, linked, onPlanOnly, onSave, onClose }: Props) {
+  const [day, setDay] = useState(initialDay);
+  const [events, setEvents] = useState<CalendarEvent[] | null>(null);
+  const [colors, setColors] = useState<Record<string, string>>({});
+  const [chosen, setChosen] = useState<Span | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState(linked?.title ?? title);
+  const grid = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ mode: "move" | "resize"; offset: number } | null>(null);
+  const scrolledFor = useRef<string | null>(null);
+  const today = localDay();
+
+  useEffect(() => {
+    void calendars().then((all) => setColors(Object.fromEntries(all.map((c) => [c.id, c.color ?? "var(--text-faint)"]))));
+  }, []);
+  useEffect(() => {
+    let current = true;
+    const load = () =>
+      eventsBetween(midnight(day).getTime(), momentOf(day, DAY))
+        .then((found) => current && setEvents(found))
+        .catch((e: unknown) => current && setError(String(e)));
+    void load();
+    const stop = listen(CALENDAR_CHANGED, () => void load());
+    return () => {
+      current = false;
+      void stop.then((unlisten) => unlisten());
+    };
+  }, [day]);
+
+  const others = events?.filter((e) => e.id !== linked?.id) ?? [];
+  // Until the viewer moves it, the block waits for the day's events, so it can start on a free time.
+  const slot = chosen ?? (events && ((linked && spansOf(localDay(new Date(linked.start)), [linked])[0]) || firstFree(day, others, minutes)));
+  useLayoutEffect(() => {
+    if (!slot || !scroller.current || scrolledFor.current === day) return;
+    scrolledFor.current = day;
+    scroller.current.scrollTop = Math.max(0, slot.start * PX - 2 * HOUR);
+  }, [slot, day]);
+
+  const moveTo = (start: number) => {
+    if (!slot) return;
+    const from = Math.min(Math.max(0, start), DAY - (slot.end - slot.start));
+    setChosen({ start: from, end: from + slot.end - slot.start });
+  };
+  const resizeTo = (end: number) => slot && setChosen({ ...slot, end: Math.min(DAY, Math.max(slot.start + STEP, end)) });
+  const goTo = (direction: 1 | -1) => {
+    const next = stepWorkday(day, direction, workdays);
+    if (next < today) return;
+    setDay(next);
+    setEvents(null);
+  };
+  const save = async () => {
+    if (!slot || saving) return;
+    setSaving(true);
+    try {
+      await onSave(day, momentOf(day, slot.start), momentOf(day, slot.end), name.trim() || title);
+      onClose();
+    } catch (e) {
+      setError(String(e));
+      setSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    // Captured and stopped, so the list behind does not also move its selection.
+    const keys = (e: KeyboardEvent) => {
+      // In the title field the arrows move the caret; only Escape and Enter act on the dialog.
+      const typing = e.target instanceof HTMLInputElement;
+      const handled = ["Escape", "Enter", ...(typing ? [] : ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])].includes(e.key);
+      if (!handled) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === "Escape") onClose();
+      else if (e.key === "Enter") void save();
+      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") goTo(e.key === "ArrowLeft" ? -1 : 1);
+      else if (slot) {
+        const by = e.key === "ArrowUp" ? -STEP : STEP;
+        if (e.shiftKey) resizeTo(slot.end + by);
+        else moveTo(slot.start + by);
+      }
+    };
+    window.addEventListener("keydown", keys, true);
+    return () => window.removeEventListener("keydown", keys, true);
+  });
+
+  const minuteAt = (e: PointerEvent) => (e.clientY - (grid.current?.getBoundingClientRect().top ?? 0)) / PX;
+  const grab = (mode: "move" | "resize", e: PointerEvent) => {
+    if (!slot) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { mode, offset: minuteAt(e) - slot.start };
+  };
+  const pull = (e: PointerEvent) => {
+    if (!drag.current) return;
+    if (drag.current.mode === "move") moveTo(snap(minuteAt(e) - drag.current.offset));
+    else resizeTo(snap(minuteAt(e)));
+  };
+  const drop = () => (drag.current = null);
+
+  const placed = placeSpans(others.flatMap((event) => spansOf(day, [event]).map((span) => ({ item: event, span }))));
+  const allDay = others.filter((e) => e.allDay);
+  const length = slot ? slot.end - slot.start : minutes;
+
+  return (
+    <div className="overlay" onMouseDown={onClose}>
+      <motion.div
+        className="dialog calendar-day"
+        role="dialog"
+        aria-label={t(linked ? "calendarDay.titleChange" : "calendarDay.title")}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.16 }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="calendar-day-head">
+          <button className="icon-btn" onClick={() => goTo(-1)} disabled={stepWorkday(day, -1, workdays) < today} title={t("calendarDay.previous")} aria-label={t("calendarDay.previous")}>
+            <ChevronLeft size={16} />
+          </button>
+          <h2>{dayLong(day)}</h2>
+          <button className="icon-btn" onClick={() => goTo(1)} title={t("calendarDay.next")} aria-label={t("calendarDay.next")}>
+            <ChevronRight size={16} />
+          </button>
+        </div>
+        <input
+          className="repo-search calendar-title"
+          value={name}
+          placeholder={title}
+          spellCheck={false}
+          aria-label={t("calendarDay.eventTitle")}
+          onChange={(e) => setName(e.target.value)}
+        />
+        {allDay.length > 0 && (
+          <div className="calendar-all-day">
+            {allDay.map((e) => (
+              <span key={e.id} className="calendar-event all-day" style={{ "--event": colors[e.calendarId] } as CSSProperties}>
+                {e.title}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="calendar-scroller" ref={scroller}>
+          <div className="calendar-grid" ref={grid} style={{ height: DAY * PX }} onPointerDown={(e) => slot && moveTo(snap(minuteAt(e) - length / 2))} onPointerMove={pull} onPointerUp={drop}>
+            {Array.from({ length: 24 }, (_, h) => (
+              <div key={h} className="calendar-hour" style={{ top: h * HOUR }}>
+                <span>{h > 0 && clock(h * 60)}</span>
+              </div>
+            ))}
+            {placed.map(({ item, span, column, columns }) => (
+              <div
+                key={item.id}
+                className={`calendar-event${item.busy ? "" : " free"}`}
+                title={`${clock(span.start)}–${clock(span.end)} ${item.title}`}
+                style={{ "--event": colors[item.calendarId], top: span.start * PX, height: (span.end - span.start) * PX, left: `calc(var(--gutter-x) + (100% - var(--gutter-x) - 8px) * ${column / columns})`, width: `calc((100% - var(--gutter-x) - 8px) / ${columns} - 2px)` } as CSSProperties}
+              >
+                {item.title}
+              </div>
+            ))}
+            {slot && (
+              <div className="calendar-slot" style={{ top: slot.start * PX, height: length * PX }} onPointerDown={(e) => grab("move", e)} onPointerMove={pull} onPointerUp={drop}>
+                <span className="calendar-slot-time">
+                  {clock(slot.start)}–{clock(slot.end)}
+                </span>
+                <span className="calendar-slot-title">{name.trim() || title}</span>
+                <span className="calendar-slot-handle" onPointerDown={(e) => grab("resize", e)} onPointerMove={pull} onPointerUp={drop} aria-hidden />
+              </div>
+            )}
+          </div>
+        </div>
+        {error && <small className="settings-warning">{error}</small>}
+        <div className="dialog-actions">
+          <small className="calendar-day-hint">{t("calendarDay.hint")}</small>
+          <button type="button" className="btn" onClick={onClose}>
+            {t("snooze.cancel")}
+          </button>
+          {!linked && (
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                onPlanOnly(day);
+                onClose();
+              }}
+            >
+              {t("calendarDay.planOnly")}
+            </button>
+          )}
+          <button type="button" className="btn success" disabled={!slot || saving} onClick={() => void save()}>
+            {t(linked ? "calendarDay.update" : "calendarDay.save")}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

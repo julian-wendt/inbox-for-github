@@ -672,6 +672,56 @@
   background: var(--hover);
 }
 
+/* As tall as the time and segmented fields next to it, not like the organization picker. */
+.calendar-select .org-select-button {
+  gap: 8px;
+  height: 30px;
+  border-color: transparent;
+  background: var(--control-fill);
+}
+
+.calendar-select .org-select-button:hover,
+.calendar-select .org-select-button:has(+ .calendar-clear:hover) {
+  border-color: transparent;
+  /* --hover over the fill, as a segmented button over its track; --hover alone would lighten it. */
+  background: linear-gradient(var(--hover), var(--hover)), var(--control-fill);
+}
+
+.calendar-placeholder,
+.calendar-account {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Over the field, left of the chevron; a button inside the field's button would not be valid HTML. */
+.calendar-clear {
+  position: absolute;
+  top: 50%;
+  right: 33px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+}
+
+.calendar-select .org-select-button:has(+ .calendar-clear) .calendar-account {
+  margin-right: 46px;
+}
+
+.calendar-select strong {
+  font-weight: 500;
+}
+
+.calendar-select .org-select-chevron {
+  margin-left: auto;
+}
+
+.calendar-select .org-select-menu button {
+  gap: 8px;
+  height: 30px;
+}
+
 .repo-filter-bar {
   display: flex;
   flex-wrap: wrap;

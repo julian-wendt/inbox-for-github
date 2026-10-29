@@ -230,3 +230,145 @@
   outline: none;
   background: var(--segment-fill);
 }
+
+.dialog.calendar-day {
+  --gutter-x: 52px;
+  display: grid;
+  gap: 12px;
+  width: min(520px, calc(100vw - 32px));
+  padding: 18px 20px;
+}
+
+.calendar-day-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.calendar-day-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  text-align: center;
+}
+
+.calendar-title {
+  flex: none;
+  width: 100%;
+  height: 30px;
+}
+
+.calendar-all-day {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-left: var(--gutter-x);
+}
+
+.calendar-scroller {
+  height: min(440px, 52vh);
+  overflow-y: auto;
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+}
+
+.calendar-grid {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.calendar-hour {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1px solid var(--divider);
+}
+
+.calendar-hour span {
+  position: absolute;
+  top: -8px;
+  width: calc(var(--gutter-x) - 8px);
+  padding-right: 8px;
+  background: var(--panel);
+  color: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* A tint of the calendar's color behind --text-content keeps the text's contrast; the edge carries the color. */
+.calendar-event {
+  position: absolute;
+  overflow: hidden;
+  padding: 2px 6px;
+  border-left: 3px solid var(--event, var(--text-faint));
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--event, var(--text-faint)) 16%, var(--panel));
+  color: var(--text-content);
+  font-size: 11.5px;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+.calendar-event.all-day {
+  position: static;
+  padding: 1px 6px;
+}
+
+/* Events marked free leave the time open, so they stay lighter. */
+.calendar-event.free {
+  background: color-mix(in srgb, var(--event, var(--text-faint)) 6%, var(--panel));
+}
+
+.calendar-slot {
+  position: absolute;
+  right: 8px;
+  left: var(--gutter-x);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  background: var(--accent);
+  box-shadow: var(--shadow-pop);
+  color: var(--on-accent);
+  font-size: 12px;
+  line-height: 1.35;
+  cursor: grab;
+}
+
+.calendar-slot:active {
+  cursor: grabbing;
+}
+
+.calendar-slot-time {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-slot-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-slot-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.calendar-day .dialog-actions .btn {
+  white-space: nowrap;
+}
+
+.calendar-day-hint {
+  margin-right: auto;
+  color: var(--text-faint);
+  font-size: 12px;
+}

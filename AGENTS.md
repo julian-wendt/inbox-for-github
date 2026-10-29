@@ -70,6 +70,7 @@ handover what to look at there: the user checks every change in the running app.
 | touching a GraphQL query, its cost or rate limits | [`github-api.md`](docs/reference/github-api.md) |
 | running the app locally, restarting it, reading the local DB | [`local-development.md`](docs/reference/local-development.md) |
 | touching "Open in Orca" or the Orca CLI calls | [`orca.md`](docs/reference/orca.md) |
+| touching the macOS calendar or EventKit | [`calendar.md`](docs/reference/calendar.md) |
 | writing or commenting code | [`code-style.md`](docs/conventions/code-style.md) |
 | changing UI, colors, texts or keyboard shortcuts | [`ui.md`](docs/conventions/ui.md) |
 | adding or changing a setting | [`settings.md`](docs/conventions/settings.md) |
