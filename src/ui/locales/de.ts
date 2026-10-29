@@ -299,7 +299,7 @@ export const de: Messages = {
   "help.sync.full": "Vollständig neu laden",
   "help.sync.full.text": "Beim Start, wenn sich die Organisationen ändern, stündlich und mit ⇧⌘R. Führt jede Suche bis zum Item-Limit aus, mit Boards; einige Hundert Punkte. Übersieht nichts innerhalb des Limits.",
   "help.sync.delta": "Schnell aktualisieren",
-  "help.sync.delta.text": "Mit ⌘R und automatisch, innerhalb einer Stunde nach dem letzten vollständigen Laden. Lädt nur, was sich seit der letzten Aktualisierung geändert hat, eine Seite à 20 je Suche; etwa 15 bis 30 Punkte. Übersieht, was die Änderungszeit eines Items nicht bewegt: Board-Wechsel, zurückgezogene Review-Anfragen, Items, die aus einer Suche fallen.",
+  "help.sync.delta.text": "Mit ⌘R und automatisch, innerhalb einer Stunde nach dem letzten vollständigen Laden. Lädt nur, was sich seit der letzten Aktualisierung geändert hat, eine Seite à 20 je Suche; etwa 15 bis 30 Punkte. Übersieht, was die Änderungszeit eines Items nicht bewegt, etwa Board-Wechsel, und Items, die aus einer Suche fallen; zurückgezogene Review-Anfragen sieht sie.",
   "help.sync.item": "Ein Item",
   "help.sync.item.text": "⌃R auf dem ausgewählten Item. Lädt es mit seinen Boards; 1 bis 2 Punkte. Übernimmt alles, was GitHub dazu zeigt, auch eine Übertragung in ein anderes Repository. Ob du um ein Review gebeten wurdest, weiß nur eine Suche, das bleibt deshalb wie es war.",
   "help.sync.view": "Eine Ansicht",

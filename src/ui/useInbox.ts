@@ -3,9 +3,9 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withinClosedWindow, type Coverage } from "../github/delta";
+import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
-import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
+import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
@@ -304,18 +304,22 @@ export function useInbox(): Inbox {
       // Boards switched on come for every item at once through `withBoards` below, not twice.
       const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards && (!delta || had.coverage.boards), signal };
       // The added days first, so the delta's newer copy of an item in both wins the merge.
-      const fetched = delta
-        ? (await Promise.all([
-            widen ? fetchItems(token, settings.orgs, { ...options, closedBefore: new Date(Date.now() - had.coverage.closedDays * 86_400_000) }) : [],
-            fetchItems(token, settings.orgs, { ...options, since: new Date(last.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
-          ])).flat()
-        : await fetchItems(token, settings.orgs, options);
+      const [fetched, requested] = delta
+        ? await Promise.all([
+            Promise.all([
+              widen ? fetchItems(token, settings.orgs, { ...options, closedBefore: new Date(Date.now() - had.coverage.closedDays * 86_400_000) }) : [],
+              fetchItems(token, settings.orgs, { ...options, since: new Date(last.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
+            ]).then((parts) => parts.flat()),
+            fetchReviewIds(token, settings.orgs, viewer.login, signal),
+          ])
+        : [await fetchItems(token, settings.orgs, options), null];
       signal.throwIfAborted();
       const avatar = (await embedAvatar(viewer.avatarUrl, 40)) ?? lastAvatar.current ?? undefined;
       // Onto the items as they are now, so a change made while the refresh ran (e.g. assigning) stays.
       const before = lastFetch.current?.items ?? [];
       const moves = findTransfers(before, fetched);
       let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
+      if (requested) items = withdrawReviews(items, requested);
       if (delta) logMerge(before, fetched, items);
       if (moves.size > 0) logTransfers(before, fetched, moves);
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
@@ -338,6 +342,8 @@ export function useInbox(): Inbox {
       return true;
     } catch (e) {
       if (signal.aborted) return false;
+      // Stops the searches still running beside the one that failed.
+      controller.abort();
       log.debug("refresh failed", { error: String(e), ms: Date.now() - startedAt });
       if (e instanceof RateLimitError) pause(e.until);
       setError(String(e));

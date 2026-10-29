@@ -80,7 +80,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Full fetch** at start, when the organizations change, at least every `FULL_EVERY_MS`
   (1 hour), and on ⇧⌘R (`refresh(true)`).
 - **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
-  `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`.
+  `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`. Next to them, the ids
+  of all open review requests (`fetchReviewIds`, 1 point): a cached item whose request is gone
+  loses the reason "review" and, left without a reason, the cache (`withdrawReviews`).
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
   `encodeScope`). Narrowing a setting filters locally. A longer closed window runs a delta plus
   the closed searches over the added days only (`widensClosed`, `closedBefore`); switching boards
