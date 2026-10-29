@@ -346,7 +346,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
             <CalendarDays size={12} strokeWidth={2.2} aria-hidden />
-            {datedText(dated).text}
+            <span>{datedText(dated).text}</span>
           </span>
         )}
         {showOpened && (

@@ -679,6 +679,11 @@
   color: var(--st-planned);
 }
 
+/* The text, not the icon, gives the badge its baseline, so it lines up with the title and the date. */
+.table-planned span {
+  align-self: baseline;
+}
+
 /* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
 .table-carried {
   background: color-mix(in srgb, var(--red) 16%, transparent);
