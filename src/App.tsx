@@ -465,7 +465,7 @@ export default function App() {
       { label: t("menu.today"), hint: t("hint.menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
       ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
-      ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
+      { label: t("plan.remove"), keys: "X", divided: true, disabled: !when, onSelect: () => planFor(c, null, "") },
     ];
   };
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
@@ -569,7 +569,7 @@ export default function App() {
     ...dayEntries((day) => bulkLater(followUpOn(day, inbox.settings.followUpTime))),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: bulkLater }) },
     { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", onSelect: () => bulk(plural("marks.toastOne", "marks.toast", open.length, { status: t("status.snoozed") }), [...open.map((c) => statusStep(c, "snoozed")), ...unplanStep(open)]) },
-    ...(marked.some(hasFollowUp) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeMarkedFollowUps() }] : []),
+    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !marked.some(hasFollowUp), onSelect: () => removeMarkedFollowUps() },
   ];
   /** The context menu while several items are marked: what applies to all of them. */
   const bulkEntries = (): MenuEntry[] => [
@@ -676,7 +676,7 @@ export default function App() {
     ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime)), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined),
     { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
     { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-    ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", divided: true, onSelect: () => removeFollowUp(c) }] : []),
+    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
   ];
   /** S on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {

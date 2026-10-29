@@ -876,6 +876,10 @@
   text-align: left;
 }
 
+.menu-row:disabled {
+  opacity: 0.5;
+}
+
 .menu-row.active {
   background: var(--selected);
 }

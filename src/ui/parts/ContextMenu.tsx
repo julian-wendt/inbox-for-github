@@ -18,6 +18,8 @@ export interface MenuEntry {
   divided?: boolean;
   /** The menu stays open after the entry ran, for switches the viewer flips several of. */
   keepOpen?: boolean;
+  /** Shown greyed and skipped, for an entry that always has its place but nothing to do now. */
+  disabled?: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ export function ContextMenu({ x, y, entries, onClose, centered = false, fit = fa
   }, [x, y, centered]);
 
   const run = (entry: MenuEntry) => {
+    if (entry.disabled) return;
     noteInput("menu");
     if (!entry.keepOpen) onClose();
     entry.onSelect?.();
@@ -70,8 +73,8 @@ export function ContextMenu({ x, y, entries, onClose, centered = false, fit = fa
       const index = sub === null ? active : subActive;
       const move = sub === null ? setActive : setSubActive;
       if (e.key === "Escape") return onClose();
-      if (e.key === "ArrowDown") return move((index + 1) % list.length);
-      if (e.key === "ArrowUp") return move((index - 1 + list.length) % list.length);
+      if (e.key === "ArrowDown") return move(step(list, index, 1));
+      if (e.key === "ArrowUp") return move(step(list, index, -1));
       if (e.key === "ArrowLeft" && sub !== null) return setSub(null);
       if (e.key === "Enter" || e.key === "ArrowRight" || e.key === " ") {
         const entry = list[index];
@@ -165,6 +168,15 @@ function swallowClick(press: PointerEvent) {
   window.setTimeout(done, 600);
 }
 
+/** The next entry from `index` in direction `by` that is not disabled, wrapping around. */
+function step(list: MenuEntry[], index: number, by: 1 | -1): number {
+  for (let n = 1; n <= list.length; n++) {
+    const next = (((index + by * n) % list.length) + list.length) % list.length;
+    if (!list[next].disabled) return next;
+  }
+  return index;
+}
+
 /** Rows of a menu share a column for check marks and icons once any of them has one, so labels align. */
 function hasSlot(entries: MenuEntry[]): boolean {
   return entries.some((e) => e.checked !== undefined || e.icon !== undefined);
@@ -178,7 +190,8 @@ function MenuRow(props: { entry: MenuEntry; slot: boolean; active: boolean; open
       aria-haspopup={entry.items ? "menu" : undefined}
       aria-expanded={entry.items ? open : undefined}
       className={`menu-row${active || open ? " active" : ""}`}
-      onPointerEnter={props.onHover}
+      disabled={entry.disabled}
+      onPointerEnter={entry.disabled ? undefined : props.onHover}
       onClick={props.onSelect}
     >
       {slot && <span className="menu-icon">{entry.checked ? <Check size={14} /> : entry.icon}</span>}
