@@ -548,6 +548,14 @@
   gap: 8px;
 }
 
+/* The log's level and the way to it in one row. */
+.logging-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
 .field textarea {
   padding: 8px 10px;
   border: 1px solid var(--border);
