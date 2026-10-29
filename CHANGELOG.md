@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.2.0...v0.3.0) (2026-10-29)
+
+
+### Features
+
+* a planned inbox item leaves the inbox until its day ([bd42aa3](https://github.com/julian-wendt/inbox-for-github/commit/bd42aa32c9190b776f5f90a1185d5127d656e403))
+* follow-ups wait in an inbox bar; the due state goes ([2c50cc3](https://github.com/julian-wendt/inbox-for-github/commit/2c50cc33b7ef3497add6f2424dc3c664b0cacd6b))
+* Open in Orca for every repo, cloning it when needed ([f9d3c17](https://github.com/julian-wendt/inbox-for-github/commit/f9d3c17daf1cdbae8fbc6bc0f2673e4e5b9399dc))
+* plan assigned items for tomorrow or later this week ([1752cc7](https://github.com/julian-wendt/inbox-for-github/commit/1752cc7e8a9349856335ef0fce1244201886d30d))
+* Plan beside Follow-up, with a date picker and status icons ([95a89ca](https://github.com/julian-wendt/inbox-for-github/commit/95a89ca1670b3cd37aea52cf78c3e4ec4958a13a))
+* Planned view replaces Follow-ups, with Today and plans ([cdcd216](https://github.com/julian-wendt/inbox-for-github/commit/cdcd216808a528c6b1eefb43a704ae4d42876738))
+* the Today and planned bars leave Assigned to me ([71f0c35](https://github.com/julian-wendt/inbox-for-github/commit/71f0c35a350cf114463d7da9cbd08f44be46a30d))
+
+
+### Bug Fixes
+
+* release script checks for cargo before it builds ([c387213](https://github.com/julian-wendt/inbox-for-github/commit/c38721391b1426dc9bbaffb5605e6699a4caa367))
+* the inbox switch orders Reviews before Other ([12aaf1e](https://github.com/julian-wendt/inbox-for-github/commit/12aaf1ea7dc7ad29fbf4e5b6a1dccafbb43236ed))
+* the shortcut keys in Help end before the scrollbar ([062b2e5](https://github.com/julian-wendt/inbox-for-github/commit/062b2e56d4a250c15aec21c75e7a53167bf12791))
+* UI adjustments for follow-ups, sidebar, activity, Orca, toasts ([d0ce609](https://github.com/julian-wendt/inbox-for-github/commit/d0ce6093f37e8c590b9705d782c11272dd6e4b9d))
+
 ## [0.2.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.1.0...v0.2.0) (2026-10-27)
 
 
