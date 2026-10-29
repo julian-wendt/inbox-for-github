@@ -85,9 +85,11 @@ show("npm", ["run", "tauri", "build", "--", "--bundles", "app", "--config", JSON
 const built = resolve(process.env.CARGO_TARGET_DIR ?? "src-tauri/target", "release/bundle/macos", appName);
 
 // Install
+// Anchored to the whole command line: a shell or grep that merely mentions the path must not count
+const executable = `^${installed.replaceAll(".", "\\.")}/Contents/MacOS/inbox-for-github$`;
 const running = () => {
   try {
-    return run("pgrep", ["-f", `${installed}/Contents/MacOS/`]) !== "";
+    return run("pgrep", ["-f", executable]) !== "";
   } catch {
     return false;
   }
