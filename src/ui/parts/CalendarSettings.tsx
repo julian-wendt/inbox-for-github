@@ -71,7 +71,7 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
             </button>
           </div>
         ) : (
-          <div className="org-select">
+          <div className="org-select calendar-select">
             <button className="org-select-button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
               {option(chosen)}
               <ChevronDown size={15} className="org-select-chevron" />

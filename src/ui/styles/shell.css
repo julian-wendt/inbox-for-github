@@ -672,6 +672,33 @@
   background: var(--hover);
 }
 
+/* Sized like the time and segmented fields next to it, not like the organization picker. */
+.calendar-select {
+  justify-self: start;
+  min-width: 260px;
+}
+
+.calendar-select .org-select-button {
+  gap: 8px;
+  height: 30px;
+  border-color: transparent;
+  background: var(--control-fill);
+}
+
+.calendar-select .org-select-button:hover {
+  border-color: transparent;
+  background: var(--hover);
+}
+
+.calendar-select strong {
+  font-weight: 500;
+}
+
+.calendar-select .org-select-menu button {
+  gap: 8px;
+  height: 30px;
+}
+
 .repo-filter-bar {
   display: flex;
   flex-wrap: wrap;
