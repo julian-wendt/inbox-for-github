@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import { ruleSwitches } from "../rules";
 import { toBoards } from "./boards";
-import { reasonsOf, toItem, type RawItem } from "./fetch";
+import { reasonsOf, searchStates, toItem, type RawItem } from "./fetch";
 
 function rawPr(overrides: Partial<RawItem> = {}): RawItem {
   return {
@@ -343,5 +343,19 @@ describe("toBoards", () => {
       },
       { id: "PVT_2", title: "Roadmap", status: null, sprint: null, fields: [] },
     ]);
+  });
+});
+
+describe("searchStates", () => {
+  const now = new Date("2026-10-29T12:00:00Z");
+
+  it("searches open items and the closed window", () => {
+    expect(searchStates(now, 0)).toEqual(["is:open"]);
+    expect(searchStates(now, 7)).toEqual(["is:open", "is:closed closed:>=2026-10-22"]);
+  });
+
+  it("searches only the added closed days with closedBefore", () => {
+    expect(searchStates(now, 30, new Date("2026-10-22T12:00:00Z"))).toEqual(["is:closed closed:2026-09-29..2026-10-22"]);
+    expect(searchStates(now, 0, now)).toEqual([]);
   });
 });

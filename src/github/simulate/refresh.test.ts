@@ -21,7 +21,7 @@ describe("API usage", () => {
 
     expect(first.kind).toBe("full");
     expect(quiet.kind).toBe("delta");
-    expect(quiet.cost).toBe(28);
+    expect(quiet.cost).toBe(29); // four delta pages of 7, one page of review ids
     expect(first.cost).toBeGreaterThan(quiet.cost);
     expect(pointsSpent() - spent).toBeGreaterThan(first.cost + quiet.cost);
   });
@@ -100,7 +100,7 @@ describe("API usage", () => {
     expect(app.entry(issue).item.comments).toHaveLength(1);
   });
 
-  it("does not see a board move or a withdrawn review request in a delta, only in the hourly full fetch", async () => {
+  it("sees a withdrawn review request in a delta, a board move only in the hourly full fetch", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     world.setBoard(issue, { status: "Backlog" });
@@ -115,12 +115,11 @@ describe("API usage", () => {
     world.withdrawReviewRequest(pr, "alice", "octocat");
     await app.refresh();
     expect(app.entry(issue).item.boards[0].status).toBe("Backlog");
-    expect(app.entry(pr).asks).toContain("review");
+    expect(app.items.map((i) => i.id)).not.toContain(pr.id);
 
     world.advance(HOUR);
     await app.refresh();
     expect(app.entry(issue).item.boards[0].status).toBe("In progress");
-    expect(app.items.map((i) => i.id)).not.toContain(pr.id);
   });
 
   it("drops closed items from a delta once they are older than the window", async () => {

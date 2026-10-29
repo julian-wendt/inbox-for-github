@@ -297,7 +297,7 @@ export const en = {
   "help.sync.full": "Full reload",
   "help.sync.full.text": "At start, when the organizations change, every hour and with ⇧⌘R. Runs every search up to the item limit, with boards; a few hundred points. Misses nothing within the limit.",
   "help.sync.delta": "Quick refresh",
-  "help.sync.delta.text": "With ⌘R and automatically, within an hour of the last full reload. Loads only what changed since the last refresh, one page of 20 per search; about 15 to 30 points. Misses what leaves an item's change time alone: board moves, withdrawn review requests, items that drop out of a search.",
+  "help.sync.delta.text": "With ⌘R and automatically, within an hour of the last full reload. Loads only what changed since the last refresh, one page of 20 per search; about 15 to 30 points. Misses what leaves an item's change time alone, such as board moves, and items that drop out of a search; withdrawn review requests it does see.",
   "help.sync.item": "One item",
   "help.sync.item.text": "⌃R on the selected item. Loads it with its boards; 1 to 2 points. Takes over everything GitHub shows for it, also a move to another repository. Whether you were asked for a review only a search knows, so that stays as it was.",
   "help.sync.view": "One view",

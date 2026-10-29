@@ -28,6 +28,7 @@ const OPERATIONS: Operation[] = [
     }),
   },
   { name: "repos", matches: /\brepositoryOwner\(/, answer: (w, v) => repos(w, String(v.org)) },
+  { name: "reviewIds", matches: /\bsearch\(type: ISSUE, query: \$q, first: 100/, answer: (w, v) => ({ ...search(w, { ...v, first: 100 }), cost: 1 }) },
   { name: "search", matches: /\bsearch\(type: ISSUE/, answer: search },
   {
     name: "node",
