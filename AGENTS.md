@@ -46,6 +46,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 npm run tauri dev                    # dev window (restart it after new settings keys, hooks or store changes)
 VITE_DEMO=1 npm run tauri dev        # the same on a simulated GitHub with made-up data, for screenshots
 npm run tauri build -- --bundles app -- --locked # src-tauri/target/release/bundle/macos/Inbox for GitHub.app
+npm run build:local                  # the checkout as a prerelease, installed in /Applications
 npm run typecheck                    # tsc --noEmit
 npm run lint                         # ESLint
 npm test                             # Vitest

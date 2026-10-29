@@ -73,6 +73,25 @@ not notarized: a build of your own opens directly. Copy it to `/Applications` to
 
 Before a build, go through [`TESTING.md`](../TESTING.md) for what the change touched.
 
+### A prerelease of the checkout
+
+```sh
+npm run build:local              # build, replace /Applications/Inbox for GitHub.app, start it
+npm run build:local -- --dry-run # only print the version
+```
+
+`scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g.
+`0.3.2-alpha.2+e9d4fb3` two commits after v0.3.1 (`.dirty` with uncommitted changes), so it
+ranks above the release it follows. The version reaches Tauri as a `--config` override; no file
+changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
+quits the installed app, replaces it and starts it again; the dev window keeps running, and the
+bundle identifier and so the data stay the same.
+
+Each ad hoc signature is new, so macOS may treat every build as a new app and ask for
+notification permission again. A self-signed certificate keeps the identity: in Keychain Access,
+Certificate Assistant › Create a Certificate…, identity type "Self-Signed Root", certificate type
+"Code Signing", then `export INBOX_SIGNING_IDENTITY="<its name>"` before the build.
+
 **`stripping debug info with rust-objcopy failed: signal: 6`** (verified 2026-10-27, Rust 1.99.1
 on aarch64): since Rust 1.98 `rust-objcopy` loads `libLLVM.dylib` through `@loader_path/../lib`,
 where the `rustc` component does not ship it ([rust-lang/rust#164063](https://github.com/rust-lang/rust/issues/164063)).
