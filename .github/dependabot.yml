@@ -21,6 +21,13 @@ updates:
         patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
       lint:
         patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint"]
+    ignore:
+      # TypeScript 7 waits until typescript-eslint accepts it as a peer.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # The Node types follow .node-version; their major moves with it, by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: cargo
     directory: /src-tauri
