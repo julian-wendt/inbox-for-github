@@ -575,8 +575,8 @@
   gap: 14px;
   align-items: center;
   height: 40px;
-  /* The kind icon starts where the bar title does (53px). */
-  padding: 0 12px 0 53px;
+  /* The kind icon starts under the bar's chevron (28px); the unread dot sits in front of it. */
+  padding: 0 12px 0 28px;
   border-radius: var(--radius-m);
 }
 
@@ -650,26 +650,39 @@
   font-weight: 700;
 }
 
-/* Quiet and absolute, so it does not read like the relative time at the end of the row. */
+/* Badges after the title: the opening date quiet and absolute, so it does not read like the
+   relative time at the end of the row; the planned day blue, like Plan elsewhere. */
 .table-opened,
-.table-planned {
+.table-planned,
+.table-carried {
   display: inline-flex;
   flex: none;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
-  color: var(--text-faint);
-  font-size: 11.5px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.table-opened {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text-muted);
+}
+
+.table-planned {
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--text);
+}
+
+.table-planned svg {
+  color: var(--st-planned);
 }
 
 /* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
 .table-carried {
-  flex: none;
-  padding: 1px 8px;
-  border-radius: 999px;
   background: color-mix(in srgb, var(--red) 16%, transparent);
   color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
 }
 
 /* One chip line; chips that do not fit wrap onto a second line that is clipped away. */

@@ -294,7 +294,7 @@ interface RowProps {
   marked: boolean;
   onMark: (range: boolean) => void;
   showOpened: boolean;
-  /** Pinned for today or planned for a day: the day after the title. */
+  /** Pinned for today or planned for a day: the day as a blue badge after the title. */
   dated?: Dated;
   /** The day the item came into Today when that was before today: it carries over, marked. */
   carriedSince?: string;
@@ -345,7 +345,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         )}
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
-            <CalendarDays size={12} />
+            <CalendarDays size={12} strokeWidth={2.2} aria-hidden />
             {datedText(dated).text}
           </span>
         )}

@@ -221,7 +221,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes oder geplantes Item zeigt
       in der Kontextzeile bzw. hinter dem Titel den Kalender mit „Heute“, „Morgen“, dem Wochentag
       dieser Arbeitswoche („Donnerstag“) oder dem Datum („3. Nov.“); es bleibt in seiner Liste.
-      Kein Stern mehr, auch nicht beim Überfahren einer Tabellenzeile.
+      Kein Stern mehr, auch nicht beim Überfahren einer Tabellenzeile. In den Tabellen steht der
+      Tag als blaues Badge hinter dem Titel, das Eröffnungsdatum als graues; das Icon der Zeile
+      steht unter dem Pfeil der Leiste.
 - [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
       erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
       Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.
