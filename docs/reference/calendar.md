@@ -5,10 +5,16 @@ calendars and those of every account under System Settings › Internet Accounts
 Exchange, CalDAV). Only Exchange was tried so far. An Outlook account is reached only when it is
 added there as well; the new Outlook for Mac keeps its own store, which EventKit does not see.
 
-Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_list`,
-`calendar_events`, `calendar_find`, `calendar_put`, `calendar_move`, `calendar_remove`, and the
-app event `calendar-changed`), bindings from `objc2-event-kit` 0.3.2; `src/calendar.ts`, the day
-view `src/ui/parts/CalendarDay.tsx` and the sync `src/ui/useCalendarSync.ts`.
+Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_status`,
+`calendar_settings`, `calendar_list`, `calendar_events`, `calendar_find`, `calendar_put`,
+`calendar_move`, `calendar_remove`, and the app event `calendar-changed`), bindings from
+`objc2-event-kit` 0.3.2; `src/calendar.ts`, the day view `src/ui/parts/CalendarDay.tsx`, the sync
+`src/ui/useCalendarSync.ts` and the access notice `src/ui/useCalendarAccess.ts`.
+
+**Lost access:** while a calendar is chosen and access is missing, a notice at the foot of the
+sidebar says so (`CalendarNotice`). Its button shows macOS's dialog while macOS has not asked
+yet, as after an ad hoc rebuild, or opens Privacy & Security › Calendars once access was
+declined. The status is read again whenever the window gets the focus.
 
 ## How plans and events stay in step
 
