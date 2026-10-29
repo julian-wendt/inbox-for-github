@@ -236,4 +236,34 @@ describe("Transferred issues", () => {
 
     expect(app.items.map((i) => [i.id, i.repo])).toEqual([[moved.id, "octo-org/portal"]]);
   });
+
+  it("keeps the viewer's status and its history across the transfer", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs" });
+    world.comment(issue, "alice", "@octocat could you check the link?");
+    await app.refresh();
+    app.done(issue);
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    await app.refresh();
+
+    expect(app.viewOf(moved)).toBe("done");
+    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.log.get(moved.id)?.map((c) => c.status)).toEqual(["done"]);
+  });
+
+  it("finds the transfer in a full fetch as well", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+
+    world.advance(FULL_EVERY_MS + MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    expect((await app.refresh()).kind).toBe("full");
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
 });

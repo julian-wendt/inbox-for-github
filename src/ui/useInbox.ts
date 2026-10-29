@@ -15,6 +15,7 @@ import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
+import { movedSettings } from "../transfer";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -201,6 +202,35 @@ export function useInbox(): Inbox {
     wanted.current = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: settings.maxItems };
   }, [settings.closedDays, settings.loadBoards, settings.maxItems]);
 
+  const latestSettings = useRef(settings);
+  useEffect(() => {
+    latestSettings.current = settings;
+  }, [settings]);
+
+  /**
+   * Carries the local state of transferred issues to their new ids, in the store first; the
+   * returned function then sets the state, so the caller can show it together with the items.
+   */
+  const carryOver = useCallback(
+    async (moves: ReadonlyMap<string, string>, items: Item[]) => {
+      if (!store) return () => undefined;
+      await store.moveItems(moves);
+      const moved = movedSettings(latestSettings.current, moves, items);
+      if (moved !== latestSettings.current) await store.saveSettings(moved);
+      const [nextStatuses, nextLog, nextSeen, nextMarks, nextNotes, nextFailures] = await Promise.all([store.statuses(), store.statusLog(), store.seen(), store.unreadMarks(), store.notes(), store.writeFailures()]);
+      return () => {
+        setSettings(moved);
+        setStatuses(nextStatuses);
+        setStatusLog(nextLog);
+        setSeen(nextSeen);
+        setUnreadMarks(nextMarks);
+        setNotes(nextNotes);
+        setWriteFailures(nextFailures);
+      };
+    },
+    [store],
+  );
+
   const apply = (fetch: CachedFetch) => {
     const { viewer, items, fetchedAt } = fetch;
     lastFetch.current = fetch;
@@ -276,6 +306,7 @@ export function useInbox(): Inbox {
       let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
       if (delta) logMerge(before, fetched, items);
       if (moves.size > 0) logTransfers(before, fetched, moves);
+      const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
       const fetchedAt = new Date();
       const result: CachedFetch = {
@@ -285,6 +316,7 @@ export function useInbox(): Inbox {
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
       };
+      showMoved?.();
       apply(result);
       await store.saveFetch(result);
       noteBudget(lastBudget());
@@ -302,7 +334,7 @@ export function useInbox(): Inbox {
         setLoading(false);
       }
     }
-  }, [store, settings.orgs, noteBudget, pause]);
+  }, [store, settings.orgs, noteBudget, pause, carryOver]);
 
   const latestMarks = useRef(unreadMarks);
   useEffect(() => {
@@ -583,10 +615,6 @@ export function useInbox(): Inbox {
     [store],
   );
 
-  const latestSettings = useRef(settings);
-  useEffect(() => {
-    latestSettings.current = settings;
-  }, [settings]);
   const updateSettings = useCallback((change: (current: Settings) => Settings) => saveSettings(change(latestSettings.current)), [saveSettings]);
 
   return {

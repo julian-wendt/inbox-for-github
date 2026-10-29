@@ -9,6 +9,7 @@ import { sameLogin } from "../../timeline";
 import { onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
+import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
@@ -83,6 +84,7 @@ export class InboxSession {
       ...(delta && { since: new Date(this.last!.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
     });
     const moves = findTransfers(this.items, fetched);
+    this.carryOver(moves);
     this.items = (delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched).filter((item) => !moves.has(item.id));
     this.last = { fetchedAt: this.world.now, fullAt: delta ? this.last!.fullAt : this.world.now, key };
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
@@ -266,6 +268,17 @@ export class InboxSession {
 
   private replace(next: Item): void {
     this.items = this.items.map((i) => (i.id === next.id ? next : i));
+  }
+
+  /** What `Store.moveItems` does for transferred issues, on the session's maps. */
+  private carryOver(moves: ReadonlyMap<string, string>): void {
+    const refill = <T>(map: Map<string, T>, next: Map<string, T>) => {
+      map.clear();
+      for (const [id, value] of next) map.set(id, value);
+    };
+    refill(this.statuses, movedKeys(this.statuses, moves));
+    refill(this.log, movedLists(this.log, moves));
+    refill(this.writeFailures, movedLists(this.writeFailures, moves));
   }
 
   private fail(ref: Ref, kind: "assign" | "unassign", error: string): void {
