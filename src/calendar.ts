@@ -69,5 +69,8 @@ export const findEvents = (ids: string[]) => invoke<CalendarEvent[]>("calendar_f
  */
 export const putEvent = (draft: EventDraft) => invoke<CalendarEvent | null>("calendar_put", { draft });
 
+/** Deletes the event; one already gone counts as deleted. */
+export const removeEvent = (id: string) => invoke<void>("calendar_remove", { id });
+
 /** The app event sent whenever anything in the calendar store changed. */
 export const CALENDAR_CHANGED = "calendar-changed";

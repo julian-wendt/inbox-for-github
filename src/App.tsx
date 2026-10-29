@@ -18,7 +18,7 @@ import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
 import { CalendarDay } from "./ui/parts/CalendarDay";
-import { findEvents, putEvent, type CalendarEvent } from "./calendar";
+import { findEvents, putEvent, removeEvent, type CalendarEvent } from "./calendar";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
@@ -440,10 +440,11 @@ export default function App() {
       pinnedOn: without(inbox.settings.pinnedOn, c.item.id),
       plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
     };
-    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : [])];
+    const events = day ? [] : eventEnds([c]);
+    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : events)];
     for (const s of steps) s.run();
     actions.announce(
-      day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t("plan.removed", { number: c.item.number }),
+      day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
       () => steps.forEach((s) => s.undo()),
       () => steps.forEach((s) => s.run()),
     );
@@ -456,39 +457,81 @@ export default function App() {
     const previous = todayOf(inbox.settings);
     bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep(previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: new Date().toISOString() } })]);
   };
-  /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and, with a plan, its removal (X). */
+  /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and its removal (X). With a calendar, a day opens the day view on it, and "Today at a time" (A) joins. */
   const planEntries = (c: Classified): MenuEntry[] => {
     const day = inbox.settings.planned.find((p) => p.id === c.item.id)?.day;
     const when = dated(c);
     const kept = when && c.bucket === "inbox" ? datedText(when).text : null;
     const keepLabel = when?.kind === "today" ? t("plan.keepToday") : t("plan.keep", { day: kept ?? "" });
+    const calendar = !!inbox.settings.calendarId;
+    const pick = (d: string) => (calendar ? void openCalendar(c, d) : planFor(c, d, dayText(d)));
     return [
       ...(kept ? [{ label: keepLabel, hint: t("hint.plan.keep"), keys: "K", onSelect: () => keepPlan(c, when?.kind === "today" ? null : kept) }] : []),
       { label: t("menu.today"), hint: t("hint.menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
-      ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
-      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
+      ...(calendar ? [{ label: t("plan.todayAt"), hint: t("hint.plan.todayAt"), keys: "A", onSelect: () => pick(localDay()) }] : []),
+      ...dayEntries((d) => pick(d), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
+      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => pick(localDay(new Date(at))) }) },
       { label: t("plan.remove"), keys: "X", divided: true, disabled: !when, onSelect: () => planFor(c, null, "") },
-      ...(inbox.settings.calendarId ? [{ label: t(inbox.settings.calendarEvents[c.item.id] ? "calendarDay.menuChange" : "calendarDay.menu"), keys: "C", divided: true, onSelect: () => void openCalendar(c) }] : []),
     ];
   };
-  /** Opens the calendar day view on the item's event when it still exists, else on today. */
-  const openCalendar = async (c: Classified) => {
+  /** Opens the calendar day view on `day`, else on the item's event's day, else on today; with the item's event when it still exists. */
+  const openCalendar = async (c: Classified, day?: string) => {
     const id = inbox.settings.calendarEvents[c.item.id];
     const [linked] = id ? await findEvents([id]) : [];
-    setCalendarFor({ c, linked: linked ?? null });
+    setCalendarFor({ c, linked: linked ?? null, day: day ?? (linked ? localDay(new Date(linked.start)) : localDay()) });
   };
-  /** Puts the item into the chosen calendar, or moves its event there, and plans it for that day. */
-  const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number, title: string) => {
-    const notes = `${c.item.repo}#${c.item.number}\n${c.item.url}\n\n${t("calendarDay.createdWith")}`;
-    const draft = { calendarId: inbox.settings.calendarId, title, url: c.item.url, notes, start, end };
-    const saved = (linked && (await putEvent({ ...draft, id: linked.id }))) || (await putEvent(draft));
-    if (!saved) throw new Error(t("calendarDay.failed"));
-    void inbox.updateSettings((s) => ({ ...s, calendarEvents: { ...s.calendarEvents, [c.item.id]: saved.id } }));
+  /** Plans the item for `day` without a time: today as a Today pin, another day as a plan; nothing when it already is. */
+  const planOnDay = (c: Classified, day: string) => {
     const when = dated(c);
     if (day === localDay()) {
       if (when?.kind !== "today") toggleFocus(c);
     } else if (when?.kind !== "planned" || when.day !== day) planFor(c, day, dayText(day));
   };
+  /** What a new event for the item says in its notes: its reference and link. */
+  const eventDraft = (c: Classified, calendarId: string, title: string, start: number, end: number) => ({
+    calendarId,
+    title,
+    url: c.item.url,
+    notes: `${c.item.repo}#${c.item.number}\n${c.item.url}\n\n${t("calendarDay.createdWith")}`,
+    start,
+    end,
+  });
+  /** Links the item to its event, or unlinks it with null. */
+  const linkEvent = (c: Classified, id: string | null) =>
+    void inbox.updateSettings((s) => ({ ...s, calendarEvents: id ? { ...s.calendarEvents, [c.item.id]: id } : without(s.calendarEvents, c.item.id) }));
+  /** Puts the item into the chosen calendar, or moves its event there, and plans it for that day. */
+  const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number, title: string) => {
+    const draft = eventDraft(c, inbox.settings.calendarId, title, start, end);
+    const saved = (linked && (await putEvent({ ...draft, id: linked.id }))) || (await putEvent(draft));
+    if (!saved) throw new Error(t("calendarDay.failed"));
+    linkEvent(c, saved.id);
+    planOnDay(c, day);
+  };
+  /**
+   * Deletes the events of the items that have one, as one step each; undo puts a new event at
+   * the same time with the same title and links it, since a deleted event cannot come back.
+   */
+  const eventEnds = (cs: Classified[]) =>
+    cs.flatMap((c) => {
+      let id = inbox.settings.calendarEvents[c.item.id];
+      if (!id) return [];
+      let removed: Promise<CalendarEvent | undefined> = Promise.resolve(undefined);
+      return [
+        {
+          run: () => {
+            linkEvent(c, null);
+            removed = findEvents([id]).then(async ([event]) => (event && (await removeEvent(event.id)), event));
+          },
+          undo: () =>
+            void removed.then(async (event) => {
+              const saved = event && (await putEvent(eventDraft(c, event.calendarId, event.title, event.start, event.end)));
+              if (!saved) return;
+              id = saved.id;
+              linkEvent(c, id);
+            }),
+        },
+      ];
+    });
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
     pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : keyMenuAt(c.item.id)) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
@@ -511,7 +554,7 @@ export default function App() {
   };
   const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
-  const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null } | null>(null);
+  const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
   const bulk = (text: string, steps: { run: () => void; undo: () => void }[]) => {
@@ -577,7 +620,7 @@ export default function App() {
     const count = waiting.length + unplanned.length;
     const text =
       unplanned.length === 0 ? plural("marks.reminderRemovedOne", "marks.reminderRemoved", count) : waiting.length === 0 ? plural("marks.plansRemovedOne", "marks.plansRemoved", count) : t("marks.whenRemoved", { count });
-    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned)]);
+    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned), ...eventEnds(unplanned)]);
   };
   /** Takes the plan or Today pin off the items that have one, as one step for all of them; none when none has. */
   const unplanStep = (cs: Classified[]) => {
@@ -1258,11 +1301,12 @@ export default function App() {
       {calendarFor && (
         <CalendarDay
           title={calendarFor.c.item.title}
-          day={calendarFor.linked ? localDay(new Date(calendarFor.linked.start)) : localDay()}
+          day={calendarFor.day}
           minutes={inbox.settings.calendarMinutes}
           workdays={inbox.settings.workdays}
           linked={calendarFor.linked}
           onSave={(day, start, end, title) => addToCalendar(calendarFor.c, calendarFor.linked, day, start, end, title)}
+          onPlanOnly={(day) => planOnDay(calendarFor.c, day)}
           onClose={() => setCalendarFor(null)}
         />
       )}
