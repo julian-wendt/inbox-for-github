@@ -548,6 +548,29 @@
   gap: 8px;
 }
 
+/* The log's level and the way to it in one row; the button set apart by a line, as it acts instead of choosing. */
+.logging-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.logging-row .btn {
+  position: relative;
+  margin-left: 1px;
+}
+
+.logging-row .btn::before {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: -9px;
+  width: 1px;
+  background: var(--border-strong);
+  content: "";
+}
+
 .field textarea {
   padding: 8px 10px;
   border: 1px solid var(--border);

@@ -1,4 +1,4 @@
-import { Bell, BellOff, Building2, CircleUserRound, FolderGit2, ListChecks, Palette, RotateCcw, Settings2, SquareKanban, X, type LucideIcon } from "lucide-react";
+import { Bell, BellOff, Building2, CircleUserRound, FolderGit2, FolderOpen, ListChecks, Palette, RotateCcw, Settings2, SquareKanban, X, type LucideIcon } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -334,15 +334,16 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </div>
               <div className="field">
                 <span>{t("settings.logging")}</span>
-                <div className="segmented">
-                  {LOG_LEVELS.map((level) => (
-                    <button key={level} className={draft.logging === level ? "on" : ""} onClick={() => change({ logging: level })}>
-                      {t(`settings.logging.${level}`)}
-                    </button>
-                  ))}
-                </div>
-                <div className="reset-row">
+                <div className="logging-row">
+                  <div className="segmented">
+                    {LOG_LEVELS.map((level) => (
+                      <button key={level} className={draft.logging === level ? "on" : ""} onClick={() => change({ logging: level })}>
+                        {t(`settings.logging.${level}`)}
+                      </button>
+                    ))}
+                  </div>
                   <button className="btn" onClick={() => void revealLog()}>
+                    <FolderOpen size={14} aria-hidden />
                     {t("settings.logShow")}
                   </button>
                 </div>
