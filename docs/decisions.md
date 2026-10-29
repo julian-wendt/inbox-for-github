@@ -4,6 +4,14 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-10-29
 
+- **A transferred issue is recognized by repository, creation time and title.** GitHub gives
+  it a new node id and keeps no link to the old one, but keeps `createdAt` and the title, and
+  names the old repository in a `TransferredEvent`. The match also needs exactly one candidate,
+  and the old copy must be missing from the fetch, so a copy that still resolves is never taken
+  over. Checking that the old id no longer resolves would cost a request per transfer for a case
+  the other conditions already rule out. Not covered: a title changed between the transfer and
+  the next fetch, and an issue moved twice in that time; their old copy goes at the next full
+  fetch, without its local state.
 - **A plan holds until its day.** Answering an ask that brought a planned item into the inbox
   only answers the ask: the item stays in Planned instead of counting as done, so a reply
   cannot cost the plan. D ends the plan along with the status, and closing on GitHub drops it at

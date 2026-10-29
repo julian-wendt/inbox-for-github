@@ -59,6 +59,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       sind Deltas, etwa 30 Punkte. Zahlen notieren.
 - [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
 - [ ] Ein auf GitHub geändertes Item (z. B. neuer Kommentar) taucht nach dem nächsten Delta auf.
+- [ ] Ein Test-Issue mit Status (z. B. Erledigt), Notiz und Plan in ein anderes beobachtetes
+      Repository übertragen: nach dem nächsten Delta steht es nur noch einmal da, unter dem neuen
+      Repository und der neuen Nummer, mit Status, Notiz, Plan und Verlauf.
+- [ ] Dasselbe, aber vor dem nächsten Delta ⌃R auf der alten Zeile: keine Fehlermeldung, die
+      Zeile wechselt zum neuen Repository.
 
 ## Boards
 

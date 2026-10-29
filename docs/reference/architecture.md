@@ -83,7 +83,14 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
   `encodeScope`). Narrowing a setting filters locally; widening it past the coverage fetches.
-- **Single item:** `reloadItem` (⌃R) runs one `node` query.
+- **Transfers:** an issue moved to another repository comes back under a new node id. Every
+  fetch, full or delta, compares the issues that name `transferredFrom` with the items cached
+  before it (`findTransfers`); the old copy leaves the cache, and its status, log, note, seen,
+  unread mark and failed writes move to the new id (`Store.moveItems`), as do Today, Plan,
+  untracked and collected notifications (`movedSettings`), before the items are shown.
+- **Single item:** `reloadItem` (⌃R) runs one `node` query. An id GitHub no longer resolves
+  (`NOT_FOUND`) runs a refresh, which finds a transfer, and then leaves the cache (`dropGone`);
+  `reloadItems` does the same for those of its ids.
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
 
