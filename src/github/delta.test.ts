@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../model";
-import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, transferCandidates, widensClosed } from "./delta";
+import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withdrawReviews } from "./delta";
 
 const item = (id: string, overrides: Partial<Item> = {}) => ({ id, title: id, closed: null, ...overrides }) as Item;
 const now = Date.parse("2026-10-23T12:00:00Z");
@@ -20,6 +20,24 @@ describe("mergeDelta", () => {
     const fresh = item("fresh", { closed: { state: "merged", at: "2026-10-22T00:00:00Z" } });
     expect(mergeDelta([old, fresh], [], 7, now).map((i) => i.id)).toEqual(["fresh"]);
     expect(mergeDelta([fresh], [], 0, now)).toEqual([]);
+  });
+});
+
+describe("withdrawReviews", () => {
+  it("drops the review reason the search no longer has, and items left without a reason", () => {
+    const both = item("both", { reasons: ["review", "involved"] });
+    const only = item("only", { reasons: ["review"] });
+    const still = item("still", { reasons: ["review"] });
+    const closed = item("closed", { reasons: ["review"], closed: { state: "merged", at: "2026-10-22T00:00:00Z" } });
+    const other = item("other", { reasons: ["involved"] });
+    const after = withdrawReviews([both, only, still, closed, other], new Set(["still"]));
+    expect(after.map((i) => [i.id, i.reasons])).toEqual([
+      ["both", ["involved"]],
+      ["still", ["review"]],
+      ["closed", ["review"]],
+      ["other", ["involved"]],
+    ]);
+    expect(after[3]).toBe(other);
   });
 });
 

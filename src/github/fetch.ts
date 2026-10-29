@@ -327,7 +327,7 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  */
 export async function fetchItems(token: string, orgs: string[], { limit = 200, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore }: FetchOptions = {}): Promise<Item[]> {
   if (orgs.length === 0) return [];
-  const scope = orgs.map((login) => (sameLogin(login, me) ? `user:${login}` : `org:${login}`)).join(" ");
+  const scope = scopeOf(orgs, me);
   const byId = new Map<string, Item>();
   const updated = since ? ` updated:>=${since.toISOString().slice(0, 19)}Z` : "";
   const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ state, reason })));
@@ -346,6 +346,50 @@ export async function fetchItems(token: string, orgs: string[], { limit = 200, c
     for (const item of byId.values()) item.boards = found.get(item.id) ?? [];
   }
   return [...byId.values()];
+}
+
+/** The search qualifiers for the watched owners: `user:` for the viewer's own login, else `org:`. */
+function scopeOf(orgs: string[], me: string): string {
+  return orgs.map((login) => (sameLogin(login, me) ? `user:${login}` : `org:${login}`)).join(" ");
+}
+
+const REVIEW_IDS_QUERY = `
+query ($q: String!, $after: String) {
+  search(type: ISSUE, query: $q, first: 100, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    nodes { ... on PullRequest { id } }
+  }
+}`;
+
+interface IdsResult {
+  search: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: ({ id?: string } | null)[] };
+}
+
+/**
+ * The node ids of every open pull request that requests the viewer's review now, whether it
+ * changed or not: a delta diffs them against the cache, since a withdrawn request drops an item
+ * out of the review search without the delta seeing it (see `withdrawReviews`). Only ids, so a
+ * page of 100 costs one point.
+ *
+ * @param token  GitHub token with `repo` and `read:org` scope.
+ * @param orgs   Owner logins, as for `fetchItems`; an empty list returns an empty set.
+ * @param me     The viewer's login, which stands for their personal repositories in `orgs`.
+ * @returns The ids, at most 1000 (where GitHub's search stops).
+ *
+ * @example
+ *   await fetchReviewIds(token, ["octo-org"], "octocat"); // Set { "PR_kwDO…" }
+ */
+export async function fetchReviewIds(token: string, orgs: string[], me: string, signal?: AbortSignal): Promise<Set<string>> {
+  const ids = new Set<string>();
+  if (orgs.length === 0) return ids;
+  let after: string | null = null;
+  for (let page = 0; page < 10; page++) {
+    const data: IdsResult = await graphql<IdsResult>(token, REVIEW_IDS_QUERY, { q: `is:open ${QUALIFIERS.review} ${scopeOf(orgs, me)}`, after }, signal);
+    for (const node of data.search.nodes) if (node?.id) ids.add(node.id);
+    if (!data.search.pageInfo.hasNextPage) break;
+    after = data.search.pageInfo.endCursor;
+  }
+  return ids;
 }
 
 const NODE_QUERY = `

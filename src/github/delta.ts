@@ -11,8 +11,8 @@ export const DELTA_OVERLAP_MS = 5 * 60_000;
  * version (with the reasons the delta found), new ones are added, and the rest stays as it was.
  * Closed items drop out once they are older than `closedDays`, as a full fetch would leave them out.
  *
- * Items that stopped matching every search without changing (rare, e.g. a review request
- * withdrawn) stay until the next full fetch; see `FULL_EVERY_MS`.
+ * Items that stopped matching every search without changing stay until the next full fetch
+ * (see `FULL_EVERY_MS`), except for withdrawn review requests (see `withdrawReviews`).
  *
  * @param previous    The items shown before the delta.
  * @param changed     Items updated since the last fetch.
@@ -27,6 +27,26 @@ export function mergeDelta(previous: Item[], changed: Item[], closedDays: number
   const byId = new Map(previous.map((item) => [item.id, item]));
   for (const item of changed) byId.set(item.id, item);
   return withinClosedWindow([...byId.values()], closedDays, now);
+}
+
+/**
+ * Takes back the review requests GitHub no longer has: an open item with the reason "review"
+ * whose id is not among `requested` loses that reason, and one left without any reason leaves,
+ * as a full fetch would no longer find it. Closed items keep theirs; the search is for open ones.
+ *
+ * @param items      The items after the delta's merge.
+ * @param requested  The ids of all open pull requests requesting the viewer's review (`fetchReviewIds`).
+ * @returns The items, unchanged where nothing was withdrawn.
+ *
+ * @example
+ *   withdrawReviews(items, new Set()); // every open review request gone, items found only by it dropped
+ */
+export function withdrawReviews(items: Item[], requested: ReadonlySet<string>): Item[] {
+  return items.flatMap((item) => {
+    if (item.closed || !item.reasons.includes("review") || requested.has(item.id)) return [item];
+    const reasons = item.reasons.filter((r) => r !== "review");
+    return reasons.length > 0 ? [{ ...item, reasons }] : [];
+  });
 }
 
 /**
