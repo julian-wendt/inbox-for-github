@@ -181,7 +181,7 @@ export interface Settings {
   pinnedOn: Record<string, string>;
   /** Per pinned or planned item, when it was last pinned or planned (ISO 8601); only an ask since then shows it in the inbox (see `classify`). */
   plannedAt: Record<string, string>;
-  /** The local time ("09:00", 24-hour) a follow-up for a day comes back at (see `snoozeUntil`). */
+  /** The local time ("09:00", 24-hour) a follow-up for a day comes back at (see `followUpOn`). */
   followUpTime: string;
   /** The attributes of the Assigned to me table in the viewer's order, with their switches; null until changed (see `resolveAttributes`). */
   tableAttributes: AttributeSetting[] | null;

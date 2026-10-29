@@ -42,8 +42,10 @@ interface Props {
   onAssignMe: () => void;
   /** Opens the follow-up choices for the current item. */
   onFollowUp: () => void;
-  /** Takes the follow-up date off the current item; offered while it waits for one. */
+  /** Takes the follow-up off the current item; offered while it waits for one. */
   onRemoveFollowUp?: () => void;
+  /** Takes the plan or Today pin off the current item; offered while it has one. */
+  onRemovePlan?: () => void;
   /** "Remove me as assignee" (⌃U), offered while the viewer is assigned. */
   onLeave?: () => void;
   onBucket: (bucket: View) => void;
@@ -94,6 +96,11 @@ export function CommandPalette(props: Props) {
                 {props.onRemoveFollowUp && (
                   <Item onSelect={run(props.onRemoveFollowUp)} keys="X">
                     {t("reminder.remove")}
+                  </Item>
+                )}
+                {props.onRemovePlan && (
+                  <Item onSelect={run(props.onRemovePlan)} keys="X">
+                    {t("plan.remove")}
                   </Item>
                 )}
                 {statusesFor(props.current).map((s) => (

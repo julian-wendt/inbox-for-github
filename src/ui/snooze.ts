@@ -1,21 +1,18 @@
 import { lang } from "./i18n";
 
-export type SnoozeChoice = "none" | "later" | "tomorrow" | "nextWeek" | "pick";
-
 /**
- * When each quick snooze choice ends, in local time: later today is three hours on, tomorrow
- * morning and next Monday are at `time`. "none" snoozes without a date, "pick" asks for one.
+ * When a follow-up for a day comes back: that local day at `time`, as ISO 8601.
  *
+ * @param day   A local date ("2026-10-30"), as `dayChoices` gives it.
  * @param time  The "followUpTime" setting ("09:00").
  *
  * @example
- *   snoozeUntil("tomorrow", new Date(2026, 9, 23, 15)); // 24 Oct 2026, 09:00 local, as ISO
+ *   followUpOn("2026-10-30", "09:00"); // 30 Oct 2026, 09:00 local, as ISO
  */
-export function snoozeUntil(choice: Exclude<SnoozeChoice, "none" | "pick">, now = new Date(), time = "09:00"): string {
-  if (choice === "later") return new Date(now.getTime() + 3 * 3_600_000).toISOString();
-  const days = choice === "tomorrow" ? 1 : ((8 - now.getDay()) % 7) || 7;
+export function followUpOn(day: string, time = "09:00"): string {
+  const [y, m, d] = day.split("-").map(Number);
   const { hours, minutes } = clockOf(time);
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hours, minutes).toISOString();
+  return new Date(y, m - 1, d, hours, minutes).toISOString();
 }
 
 /**

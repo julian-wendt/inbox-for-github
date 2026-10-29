@@ -1,6 +1,6 @@
 import type { StatusChange, StoredStatus } from "../model";
 import { localDay } from "../ui/assignments";
-import { snoozeUntil } from "../ui/snooze";
+import { followUpOn } from "../ui/snooze";
 import { DEMO_VIEWER, type DemoRefs } from "./world";
 import type { MemorySeed } from "./memoryStore";
 
@@ -37,8 +37,8 @@ export function demoSeed(refs: DemoRefs, now = Date.now()): MemorySeed {
   const statuses = new Map<string, StoredStatus>([
     [id("tooltip"), waiting(4 * DAY, iso(-HOUR))],
     [id("signature"), waiting(DAY, iso(5 * DAY))],
-    [id("ownKeys"), waiting(DAY, snoozeUntil("tomorrow", new Date(now)))],
-    [id("negativeBalances"), waiting(DAY, snoozeUntil("tomorrow", new Date(now)))],
+    [id("ownKeys"), waiting(DAY, followUpOn(localDay(new Date(now + DAY))))],
+    [id("negativeBalances"), waiting(DAY, followUpOn(localDay(new Date(now + DAY))))],
     [id("frameBudget"), waiting(2 * DAY)],
     [id("rateHeaders"), waiting(DAY, morning(6))],
     [id("rounding"), { status: "done", changedAt: iso(-2 * DAY), handoff: { boards: { PVT_Roadmap: "In progress" }, prs: [] } }],

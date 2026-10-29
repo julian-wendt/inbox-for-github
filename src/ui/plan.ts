@@ -8,28 +8,32 @@ export interface Planned {
   day: string;
 }
 
-/** A day the plan menu offers: tomorrow, a remaining weekday of this week, or next Monday. */
-export interface PlanChoice {
+/** A day the Plan and Follow-up menus offer: the next workday, a remaining weekday of this work week, or next week's Monday. */
+export interface DayChoice {
   day: string;
-  kind: "tomorrow" | "weekday" | "nextWeek";
+  kind: "nextWorkday" | "weekday" | "nextWeek";
 }
 
 /**
- * The days an item can be planned for, in order: tomorrow, the weekdays after it that are still
- * in this work week, and next Monday unless that is tomorrow.
+ * The days an item can be planned or followed up for, in order: the next workday (Monday to
+ * Friday after today), the weekdays after it that are still in this work week (on a Sunday the
+ * coming one), and next week's Monday unless that is the next workday. Plan and Follow-up both
+ * offer these, so their menus cannot drift apart.
  *
  * @example
- *   planChoices(new Date(2026, 9, 27)).map((c) => c.kind); // Tuesday: ["tomorrow", "weekday", "weekday", "nextWeek"]
+ *   dayChoices(new Date(2026, 9, 27)).map((c) => c.kind); // Tuesday: ["nextWorkday", "weekday", "weekday", "nextWeek"]
  */
-export function planChoices(now = new Date()): PlanChoice[] {
+export function dayChoices(now = new Date()): DayChoice[] {
   const at = (n: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
-  const choices: PlanChoice[] = [{ day: localDay(at(1)), kind: "tomorrow" }];
-  for (let n = 2; n <= 5; n++) {
-    const weekday = at(n).getDay();
-    if (weekday >= 1 && weekday <= 5 && weekday > now.getDay()) choices.push({ day: localDay(at(n)), kind: "weekday" });
+  const workday = (n: number) => at(n).getDay() >= 1 && at(n).getDay() <= 5;
+  let next = 1;
+  while (!workday(next)) next++;
+  const choices: DayChoice[] = [{ day: localDay(at(next)), kind: "nextWorkday" }];
+  for (let n = next + 1; n <= next + 4; n++) {
+    if (workday(n) && at(n).getDay() > now.getDay()) choices.push({ day: localDay(at(n)), kind: "weekday" });
   }
   const toMonday = ((8 - now.getDay()) % 7) || 7;
-  if (toMonday > 1) choices.push({ day: localDay(at(toMonday)), kind: "nextWeek" });
+  if (toMonday !== next) choices.push({ day: localDay(at(toMonday)), kind: "nextWeek" });
   return choices;
 }
 
@@ -123,26 +127,26 @@ function dateOf(day: string): Date {
 }
 
 /**
- * A plan choice as the menu names it: "Tomorrow", the weekday ("Thursday"), or "Next Monday".
+ * A day choice as the menus name it: "Next workday", the weekday ("Thursday"), or "Next week".
  *
  * @example
  *   choiceText({ day: "2026-10-29", kind: "weekday" }); // "Thursday" (English)
  */
-export function choiceText(choice: PlanChoice): string {
-  if (choice.kind === "tomorrow") return t("plan.tomorrow");
+export function choiceText(choice: DayChoice): string {
+  if (choice.kind === "nextWorkday") return t("plan.nextWorkday");
   if (choice.kind === "nextWeek") return t("plan.nextWeek");
   return dateOf(choice.day).toLocaleDateString(lang(), { weekday: "long" });
 }
 
 /**
- * The key that picks a plan choice in the plan menu (P): M for tomorrow, W for next Monday, and
- * the weekday's number (Monday 1 to Friday 5) for the others.
+ * The key that picks a day choice in the Plan (P) and Follow-up (F) menus: N for the next
+ * workday, W for next week, and the weekday's number (Monday 1 to Friday 5) for the others.
  *
  * @example
  *   choiceKey({ day: "2026-10-29", kind: "weekday" }); // "4"
  */
-export function choiceKey(choice: PlanChoice): string {
-  if (choice.kind === "tomorrow") return "M";
+export function choiceKey(choice: DayChoice): string {
+  if (choice.kind === "nextWorkday") return "N";
   if (choice.kind === "nextWeek") return "W";
   return String(dateOf(choice.day).getDay());
 }

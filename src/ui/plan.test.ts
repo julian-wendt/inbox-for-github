@@ -1,30 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, planChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, datedAt, datedOf, datedText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
-const days = (now: Date) => planChoices(now).map((c) => `${c.kind}:${c.day}`);
+const days = (now: Date) => dayChoices(now).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
 
-describe("planChoices", () => {
-  it("offers tomorrow, the rest of the work week and next Monday", () => {
-    expect(days(new Date(2026, 9, 27))).toEqual(["tomorrow:2026-10-28", "weekday:2026-10-29", "weekday:2026-10-30", "nextWeek:2026-11-02"]);
+describe("dayChoices", () => {
+  it("offers the next workday, the rest of the work week and next week", () => {
+    expect(days(new Date(2026, 9, 27))).toEqual(["nextWorkday:2026-10-28", "weekday:2026-10-29", "weekday:2026-10-30", "nextWeek:2026-11-02"]);
   });
 
-  it("offers only tomorrow and next Monday on a Thursday", () => {
-    expect(days(new Date(2026, 9, 29))).toEqual(["tomorrow:2026-10-30", "nextWeek:2026-11-02"]);
+  it("offers only the next workday and next week on a Thursday", () => {
+    expect(days(new Date(2026, 9, 29))).toEqual(["nextWorkday:2026-10-30", "nextWeek:2026-11-02"]);
   });
 
-  it("offers tomorrow and next Monday on a Friday, whose tomorrow is a Saturday", () => {
-    expect(days(new Date(2026, 9, 30))).toEqual(["tomorrow:2026-10-31", "nextWeek:2026-11-02"]);
+  it("offers Monday as the next workday from Friday and Saturday, without next week beside it", () => {
+    expect(days(new Date(2026, 9, 30))).toEqual(["nextWorkday:2026-11-02"]);
+    expect(days(new Date(2026, 9, 31))).toEqual(["nextWorkday:2026-11-02"]);
   });
 
-  it("offers the coming work week on a Sunday, whose next Monday is tomorrow", () => {
-    expect(days(new Date(2026, 10, 1))).toEqual(["tomorrow:2026-11-02", "weekday:2026-11-03", "weekday:2026-11-04", "weekday:2026-11-05", "weekday:2026-11-06"]);
+  it("offers the coming work week on a Sunday, whose next workday is Monday", () => {
+    expect(days(new Date(2026, 10, 1))).toEqual(["nextWorkday:2026-11-02", "weekday:2026-11-03", "weekday:2026-11-04", "weekday:2026-11-05", "weekday:2026-11-06"]);
   });
 });
 
 describe("choiceKey", () => {
-  it("picks tomorrow with M, next Monday with W and other weekdays by their number", () => {
-    expect(planChoices(new Date(2026, 9, 27)).map(choiceKey)).toEqual(["M", "4", "5", "W"]);
+  it("picks the next workday with N, next week with W and other weekdays by their number", () => {
+    expect(dayChoices(new Date(2026, 9, 27)).map(choiceKey)).toEqual(["N", "4", "5", "W"]);
   });
 });
 
