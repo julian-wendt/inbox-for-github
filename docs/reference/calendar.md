@@ -44,6 +44,9 @@ living in the plan (`planned`, `focus`); the time lives only in the calendar.
   Security › Calendars; the unhardened dev binary works anyway. Re-signing an installed build
   with it (`codesign --force --sign - --options runtime --entitlements …`) and
   `tccutil reset Calendar inbox-for-github` brought the prompt back.
+- An ad hoc rebuild loses the access: after `build:local` replaced 0.3.2-alpha.18 with
+  alpha.20, macOS treated it as a new app and access had to be granted again. The permission is
+  tied to the code signature, and every ad hoc build gets a new one (see `docs/releasing.md`).
 - A store created before access was granted lists no calendars until `reset`, so
   `calendar_access` resets it after the answer.
 - An event created through EventKit in the Exchange calendar appears in Outlook after the sync.
@@ -70,7 +73,5 @@ var calendars = await invoke("calendar_list");
 - Whether `eventIdentifier` changes when the event is moved to another calendar; Apple's
   documentation says it most likely does. The app would then take the event for deleted and
   remove the plan.
-- Whether macOS asks for calendar access again after an update: the permission is tied to the
-  code signature, and every ad hoc build gets a new one (see `docs/releasing.md`).
 - When `EKEventStoreChangedNotification` arrives after a change in Outlook, and whether it arrives
   while the window is hidden.
