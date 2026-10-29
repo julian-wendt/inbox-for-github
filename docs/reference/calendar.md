@@ -6,8 +6,27 @@ Exchange, CalDAV). Only Exchange was tried so far. An Outlook account is reached
 added there as well; the new Outlook for Mac keeps its own store, which EventKit does not see.
 
 Code: `src-tauri/src/calendar.rs` (commands `calendar_access`, `calendar_list`,
-`calendar_events`, `calendar_find`, `calendar_put`, `calendar_remove`, and the app event
-`calendar-changed`), bindings from `objc2-event-kit` 0.3.2.
+`calendar_events`, `calendar_find`, `calendar_put`, `calendar_move`, `calendar_remove`, and the
+app event `calendar-changed`), bindings from `objc2-event-kit` 0.3.2; `src/calendar.ts`, the day
+view `src/ui/parts/CalendarDay.tsx` and the sync `src/ui/useCalendarSync.ts`.
+
+## How plans and events stay in step
+
+The setting `calendarEvents` links an item id to the `eventIdentifier` of its event. The day keeps
+living in the plan (`planned`, `focus`); the time lives only in the calendar.
+
+- **App to calendar** (`App.tsx`): planning another day or pinning to Today moves the event to
+  that day at the same time (`calendar_move`, which keeps title and notes edited in the
+  calendar). Removing the plan, D, a follow-up or closing the item deletes it. Undo moves it
+  back, or creates a new event at the old time, as a deleted one cannot come back. A link whose
+  item has neither pin nor plan any more is deleted along with its event.
+- **Calendar to app** (`followCalendar`): at start, on `calendar-changed`, on window focus and
+  every five minutes the linked events are read back. The calendar wins: an event on another
+  day replans the item (today or earlier brings it into Today), a deleted one removes the plan
+  and the link, and the item is back in the inbox.
+- Reading back is skipped without a chosen calendar, without access (every event would look
+  deleted) and while one of the app's own writes runs (`calendarWriting`), so a half-done move
+  is not taken for a change in the calendar.
 
 ## Verified behavior (2026-10-29, macOS 27.2, an Exchange account in Internet Accounts)
 

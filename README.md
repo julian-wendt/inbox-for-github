@@ -21,6 +21,10 @@ there is something to ship, not on a schedule.
 - **Your own status** per item: open, today (T), planned for a day (P), follow-up (F) or done (D),
   with undo (⌘Z), plus a private note. Statuses, notes and their history live only on your Mac
   and are never sent to GitHub.
+- **Plans in your calendar**, optional: with a calendar chosen in Settings, planning a day opens
+  that day of the macOS calendar to place the item between your other events. Moving or deleting
+  the event in the calendar moves or removes the plan. The item's title, day, link and reference
+  then reach the calendar's server (iCloud, Google, Exchange).
 - **Reply from the app:** a comment box modeled on GitHub's, with Markdown toolbar and preview,
   plus close (as completed or not planned), reopen, and assigning or removing yourself (⌃A).
   Reviews, approvals and inline comments stay in GitHub's own UI.

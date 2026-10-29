@@ -398,6 +398,24 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       14 und springt weiter, „7“ allein auch. Der 31.01. wird beim Wechsel auf Februar zum 28.02.
       Enter bestätigt, Esc schließt nur den Dialog (Auswahl und Pop-up bleiben), ↑/↓ bewegt dabei nicht die Auswahl in der Liste. Der aktive Teil hat eine mittelgraue Fläche, ohne Linie. Eine Zeit in der Vergangenheit lässt den Knopf aus.
 
+## Kalender
+
+- [ ] Einstellungen › Kalender: „Zugriff erlauben“ fragt macOS einmal; danach die beschreibbaren
+      Kalender mit Farbpunkt und Konto, × leert die Wahl. Ohne gewählten Kalender plant P wie
+      bisher.
+- [ ] Mit Kalender: P → N, W, ein Wochentag, D oder A (Heute zu einer Uhrzeit) öffnet die
+      Tagesansicht auf dem Tag, der Block steht auf der ersten freien Zeit. Ziehen, unterer Rand für
+      die Länge, ↑/↓ und ⇧↑/⇧↓, ←/→ für den Werktag. Das Titelfeld trägt den Item-Titel.
+      „Eintragen“ legt den Termin an und plant das Item; „Nur planen“ plant ohne Termin. T bleibt
+      der schnelle Pin ohne Uhrzeit.
+- [ ] Ein Item mit Termin: P → anderer Tag öffnet die Tagesansicht mit derselben Uhrzeit,
+      „Ändern“ verschiebt den Termin. T holt es in Heute und den Termin auf heute.
+- [ ] X, D und F löschen den Termin, ⌘Z legt ihn zur alten Zeit neu an. Schließen auf GitHub
+      löscht ihn auch.
+- [ ] Im Kalender (z. B. Outlook) den Termin auf einen anderen Tag ziehen: nach dem Sync plant die
+      App das Item um, mit Hinweis. Den Termin löschen: der Plan geht, das Item steht wieder in der
+      Inbox.
+
 ## Wiedervorlage fällig
 
 - [ ] Ein Inbox-Item mit beantworteter Erwähnung mit F → D auf eine Zeit in zwei Minuten legen: es
