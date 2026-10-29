@@ -1,5 +1,5 @@
 import type { Classified } from "../classify";
-import { FOCUS_MAX, localDay } from "./assignments";
+import { localDay } from "./assignments";
 import { dateLocale, t } from "./i18n";
 
 /** An item the viewer plans for a later day; `day` is a local date ("2026-10-28"). */
@@ -93,12 +93,11 @@ export function todayOf(settings: Today): Today {
 
 /**
  * The state of "Today" once a new day has begun: what was pinned and is still open stays, carried
- * over, and the items planned for today or earlier move in behind it, oldest plan first, as far
- * as `FOCUS_MAX` allows. Those that do not fit stay planned. Pins and plans of items that are
- * loaded but cannot be pinned any more (closed, done) are dropped. `pinnedOn`
- * keeps the day each pin came into Today; a pin recorded before that existed counts from the day
- * Today was last set. `plannedAt` keeps only the items still pinned or planned; a plan that moves
- * into Today keeps its time. Returns null while nothing is to be done: Today is from this day, or
+ * over, and the items planned for today or earlier move in behind it, oldest plan first. Pins
+ * and plans of items that are loaded but cannot be pinned any more (closed, done) are dropped.
+ * `pinnedOn` keeps the day each pin came into Today; a pin recorded before that existed counts
+ * from the day Today was last set. `plannedAt` keeps only the items still pinned or planned; a
+ * plan that moves into Today keeps its time. Returns null while nothing is to be done: Today is from this day, or
  * it is empty, no plan is due and none is dropped.
  *
  * @param state      The settings `focus`, `focusDay`, `planned`, `pinnedOn` and `plannedAt`.
@@ -117,8 +116,7 @@ export function rollOver(state: Today, today: string, pinnable: (id: string) => 
   const kept = state.planned.filter((p) => keep(p.id));
   const due = kept
     .filter((p) => p.day <= today && pinnable(p.id) && !carried.includes(p.id))
-    .sort((a, b) => a.day.localeCompare(b.day))
-    .slice(0, Math.max(0, FOCUS_MAX - carried.length));
+    .sort((a, b) => a.day.localeCompare(b.day));
   const focus = [...carried, ...due.map((p) => p.id)];
   if (focus.length === 0 && state.focus.length === 0 && kept.length === state.planned.length) return null;
   const moved = new Set(due.map((p) => p.id));
@@ -130,8 +128,8 @@ export function rollOver(state: Today, today: string, pinnable: (id: string) => 
 
 /**
  * "Today" after the item's calendar event turned up on `day`: on today or earlier the item comes
- * into Today, as far as `FOCUS_MAX` allows (else it stays planned for that day, due); on a later
- * day it is planned for it. Null when the item already is where the event says.
+ * into Today, on a later day it is planned for it. Null when the item already is where the
+ * event says.
  *
  * @example
  *   followEvent({ focus: [], focusDay: null, planned: [{ id: "I_1", day: "2026-10-30" }], pinnedOn: {}, plannedAt: {} }, "I_1", "2026-11-02", "2026-10-29");
@@ -141,7 +139,6 @@ export function followEvent(state: Today, id: string, day: string, today: string
   const plan = state.planned.find((p) => p.id === id)?.day;
   if (day <= today) {
     if (state.focus.includes(id)) return null;
-    if (state.focus.length >= FOCUS_MAX) return plan === day ? null : { ...state, planned: setPlan(state.planned, id, day) };
     return { ...state, focus: [...state.focus, id], focusDay: state.focusDay ?? today, planned: setPlan(state.planned, id, null), pinnedOn: { ...state.pinnedOn, [id]: today } };
   }
   if (plan === day) return null;
@@ -213,7 +210,7 @@ export function choiceKey(choice: DayChoice): string {
 /**
  * A day as the rows, the tables and the detail's plan chip name it: "Today", "Tomorrow", the
  * weekday within this work week (on a Sunday the coming one, as `dayChoices` counts it), else day
- * and month (also for a day already passed, whose item found Today full).
+ * and month (also for a day already passed, whose item was not loaded that morning).
  *
  * @example
  *   dayText("2026-10-29", new Date(2026, 9, 27)); // "Thursday" (English)

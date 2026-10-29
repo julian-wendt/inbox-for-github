@@ -45,7 +45,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -404,7 +404,6 @@ export default function App() {
   const toggleFocus = (c: Classified, extra: Step[] = []) => {
     const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
     const on = focus.includes(c.item.id);
-    if (!on && focus.length >= FOCUS_MAX) return actions.notify(t("focus.full"));
     const previous = todayOf(inbox.settings);
     const next: Today = {
       focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id],
