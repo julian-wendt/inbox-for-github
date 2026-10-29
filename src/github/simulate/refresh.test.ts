@@ -266,4 +266,29 @@ describe("Transferred issues", () => {
     expect(app.items.map((i) => i.id)).toEqual([moved.id]);
     expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
   });
+
+  it("finds the issue at its new place when the old one is reloaded, and keeps its status", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    await app.refresh();
+    app.snooze(issue);
+
+    world.advance(10 * MINUTE);
+    const moved = world.transfer(issue, "alice", "octo-org/portal");
+    await app.reload(issue);
+
+    expect(app.items.map((i) => i.id)).toEqual([moved.id]);
+    expect(app.statuses.get(moved.id)?.status).toBe("snoozed");
+  });
+
+  it("drops a reloaded item GitHub no longer resolves instead of failing", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat"] });
+    await app.refresh();
+
+    world.entries.delete(issue.id);
+
+    await expect(app.reload(issue)).resolves.toBeUndefined();
+    expect(app.items).toEqual([]);
+  });
 });

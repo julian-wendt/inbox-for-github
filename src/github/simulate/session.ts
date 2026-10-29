@@ -90,10 +90,14 @@ export class InboxSession {
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
   }
 
-  /** ⌃R: loads one item again and keeps the reasons only a search can tell (a review request). */
+  /** ⌃R: loads one item again and keeps the reasons only a search can tell (a review request); one GitHub no longer resolves goes after a refresh, as in `useInbox`. */
   async reload(ref: Ref): Promise<void> {
     const fresh = await fetchItem(TOKEN, ref.id, { me: this.me, boards: this.settings.loadBoards });
-    if (!fresh) return;
+    if (!fresh) {
+      await this.refresh();
+      this.items = this.items.filter((item) => item.id !== ref.id);
+      return;
+    }
     this.items = this.items.map((old) => (old.id === ref.id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old));
   }
 

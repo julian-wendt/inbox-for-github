@@ -42,9 +42,9 @@ export interface Inbox {
   refresh: () => Promise<void>;
   /** Stops a running refresh; what was shown before stays. */
   stopRefresh: () => void;
-  /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox. */
+  /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox; one GitHub no longer resolves leaves the cache (see `dropGone`). */
   reloadItem: (id: string) => Promise<void>;
-  /** Reloads many items in few requests; resolves to how many came back. */
+  /** Reloads many items in few requests; resolves to how many came back. Those GitHub no longer resolves leave the cache, like in `reloadItem`. */
   reloadItems: (ids: string[]) => Promise<number>;
   /** Changes one item locally and in the cache, e.g. right after a write to GitHub. */
   updateItem: (id: string, change: (item: Item) => Item) => void;
@@ -415,13 +415,35 @@ export function useInbox(): Inbox {
     [store],
   );
 
+  /**
+   * Handles items GitHub no longer resolves: a refresh first, which finds an issue where it was
+   * transferred to and carries its state over, then what is still cached under these ids goes.
+   */
+  const dropGone = useCallback(
+    async (ids: string[]) => {
+      log.debug("items gone", { ids: ids.join(",") });
+      await refresh();
+      const last = lastFetch.current;
+      const gone = new Set(ids);
+      if (!store || !last?.items.some((item) => gone.has(item.id))) return;
+      const next = { ...last, items: last.items.filter((item) => !gone.has(item.id)) };
+      lastFetch.current = next;
+      setItems(next.items);
+      await store.saveFetch(next);
+    },
+    [store, refresh],
+  );
+
   const reloadItem = useCallback(
     async (id: string) => {
       const last = lastFetch.current;
       if (!store || !last) return;
       try {
         const fresh = await fetchItem(await ghToken(), id, { me: last.viewer.login, boards: settings.loadBoards });
-        if (!fresh) return;
+        if (!fresh) {
+          await dropGone([id]);
+          return;
+        }
         const items = last.items.map((old) =>
           old.id === id ? { ...fresh, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...fresh.reasons] } : old,
         );
@@ -434,7 +456,7 @@ export function useInbox(): Inbox {
         setError(String(e));
       }
     },
-    [store, settings.loadBoards, pause],
+    [store, settings.loadBoards, pause, dropGone],
   );
 
   const reloadItems = useCallback(
@@ -451,6 +473,8 @@ export function useInbox(): Inbox {
         lastFetch.current = next;
         setItems(items);
         await store.saveFetch(next);
+        const gone = ids.filter((id) => !fresh.has(id));
+        if (gone.length > 0) await dropGone(gone);
         return fresh.size;
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
@@ -458,7 +482,7 @@ export function useInbox(): Inbox {
         return 0;
       }
     },
-    [store, settings.loadBoards, pause],
+    [store, settings.loadBoards, pause, dropGone],
   );
 
   useEffect(() => {

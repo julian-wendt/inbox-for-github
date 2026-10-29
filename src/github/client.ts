@@ -59,6 +59,8 @@ function refusedUntil(response: Response, messages: string[], now = Date.now()):
  * @param query  The GraphQL document.
  * @param variables  Values for the document's variables.
  * @param signal     Aborts the request, e.g. when the viewer stops a refresh.
+ * @param options.allowNotFound  Returns `data` when every error is GitHub's `NOT_FOUND`, which
+ *                   answers a node id that no longer resolves with `null` in its place.
  * @returns The `data` member of the response.
  * Every response updates `lastBudget()` from its rate-limit headers.
  *
@@ -73,6 +75,7 @@ export async function graphql<T>(
   query: string,
   variables: Record<string, unknown> = {},
   signal?: AbortSignal,
+  { allowNotFound = false }: { allowNotFound?: boolean } = {},
 ): Promise<T> {
   const started = Date.now();
   const report = (outcome: Record<string, unknown>) => logRequest(query, variables, started, outcome);
@@ -94,7 +97,7 @@ export async function graphql<T>(
     throw until ? new RateLimitError(until) : new Error(`GitHub API ${response.status}: ${text}`);
   }
   const payload = (await response.json()) as { data?: T; errors?: { message: string; type?: string }[] };
-  if (payload.errors?.length) {
+  if (payload.errors?.length && !(allowNotFound && payload.errors.every((e) => e.type === "NOT_FOUND"))) {
     const messages = payload.errors.map((e) => (e.type === "RATE_LIMITED" ? `rate limit: ${e.message}` : e.message));
     const until = refusedUntil(response, messages);
     report({ status: response.status, ...rate, errors: messages.length, refused: until?.toISOString() });

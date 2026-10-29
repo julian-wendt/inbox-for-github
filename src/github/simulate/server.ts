@@ -5,7 +5,8 @@ const GRAPHQL = "https://api.github.com/graphql";
 const ROOT = "https://api.github.com/";
 
 type Variables = Record<string, unknown>;
-type Answer = { data: unknown; cost: number };
+type GraphQLError = { type?: string; message: string };
+type Answer = { data: unknown; cost: number; errors?: GraphQLError[] };
 
 /** One GraphQL operation: how to recognize it in the query text, and what the world answers. */
 interface Operation {
@@ -31,12 +32,12 @@ const OPERATIONS: Operation[] = [
   {
     name: "node",
     matches: /\bnode\(id: \$id\)/,
-    answer: (w, v) => ({ data: { node: w.entries.has(String(v.id)) ? clone(w.raw(w.refOf(String(v.id)))) : null }, cost: 1 }),
+    answer: (w, v) => ({ data: { node: w.entries.has(String(v.id)) ? clone(w.raw(w.refOf(String(v.id)))) : null }, cost: 1, errors: notFound(w, [String(v.id)]) }),
   },
   {
     name: "nodes",
     matches: /\bnodes\(ids: \$ids\)\s*\{\s*__typename/,
-    answer: (w, v) => ({ data: { nodes: (v.ids as string[]).map((id) => (w.entries.has(id) ? clone(w.raw(w.refOf(id))) : null)) }, cost: 1 }),
+    answer: (w, v) => ({ data: { nodes: (v.ids as string[]).map((id) => (w.entries.has(id) ? clone(w.raw(w.refOf(id))) : null)) }, cost: 1, errors: notFound(w, v.ids as string[]) }),
   },
   { name: "boards", matches: /\bnodes\(ids: \$ids\)/, answer: boards },
   { name: "addComment", matches: /\baddComment\(input:/, answer: (w, v) => ({ data: { addComment: { commentEdge: { node: { url: addComment(w, v) } } } }, cost: 1 }) },
@@ -47,6 +48,12 @@ const OPERATIONS: Operation[] = [
   { name: "reopenIssue", matches: /\breopenIssue\(input:/, answer: (w, v) => state(w, v, "reopenIssue", () => w.reopen(w.refOf(String(v.id)), w.viewer)) },
   { name: "reopenPullRequest", matches: /\breopenPullRequest\(input:/, answer: (w, v) => state(w, v, "reopenPullRequest", () => w.reopen(w.refOf(String(v.id)), w.viewer)) },
 ];
+
+/** GitHub's answer for ids that do not resolve, e.g. of a transferred issue: one `NOT_FOUND` error each, beside `null` data. */
+function notFound(world: GitHubSimulator, ids: string[]): GraphQLError[] | undefined {
+  const missing = ids.filter((id) => !world.entries.has(id));
+  return missing.length > 0 ? missing.map((id) => ({ type: "NOT_FOUND", message: `Could not resolve to a node with the global id of '${id}'` })) : undefined;
+}
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -171,10 +178,10 @@ function graphql(world: GitHubSimulator, body: string): Response {
   }
   try {
     if (!op) throw new Error("The simulated GitHub does not know this query; teach it to src/github/simulate/server.ts");
-    const { data, cost } = op.answer(world, variables);
+    const { data, cost, errors } = op.answer(world, variables);
     if (cost > 1) charge(world, cost - 1);
     world.requests.push({ op: name, cost });
-    return json({ data }, { status: 200, headers: headers(world, cost) });
+    return json({ data, ...(errors && { errors }) }, { status: 200, headers: headers(world, cost) });
   } catch (e) {
     world.requests.push({ op: name, cost: 1 });
     return json({ errors: [{ message: e instanceof Error ? e.message : String(e) }] }, { status: 200, headers: headers(world, 1) });

@@ -350,13 +350,14 @@ query ($id: ID!) {
  * @param id     The item's node id.
  * @param options.me      The viewer's login, for the reasons.
  * @param options.boards  Load board status and sprint as well.
- * @returns The item, or null when it no longer exists or is out of reach.
+ * @returns The item, or null when it no longer exists or is out of reach, e.g. transferred to
+ *          another repository under a new id.
  *
  * @example
  *   const fresh = await fetchItem(token, item.id, { me: "octocat", boards: true });
  */
 export async function fetchItem(token: string, id: string, { me = "", boards = true }: Pick<FetchOptions, "me" | "boards"> = {}): Promise<Item | null> {
-  const data = await graphql<{ node: RawItem | null }>(token, NODE_QUERY, { id });
+  const data = await graphql<{ node: RawItem | null }>(token, NODE_QUERY, { id }, undefined, { allowNotFound: true });
   if (!data.node?.id) return null;
   const item = toItem(data.node);
   item.reasons = reasonsOf(item, me);
@@ -394,7 +395,7 @@ export const REFRESH_CHUNK = 50;
 export async function fetchItemsById(token: string, ids: string[], { me = "", boards = true, signal }: Pick<FetchOptions, "me" | "boards" | "signal"> = {}): Promise<Item[]> {
   const items: Item[] = [];
   for (let from = 0; from < ids.length; from += REFRESH_CHUNK) {
-    const data = await graphql<{ nodes: (RawItem | null)[] }>(token, NODES_QUERY, { ids: ids.slice(from, from + REFRESH_CHUNK) }, signal);
+    const data = await graphql<{ nodes: (RawItem | null)[] }>(token, NODES_QUERY, { ids: ids.slice(from, from + REFRESH_CHUNK) }, signal, { allowNotFound: true });
     for (const node of data.nodes) {
       if (!node?.id) continue;
       const item = toItem(node);
