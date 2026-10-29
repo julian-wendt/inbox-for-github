@@ -697,13 +697,13 @@
 .calendar-clear {
   position: absolute;
   top: 4px;
-  right: 32px;
+  right: 33px;
   width: 22px;
   height: 22px;
 }
 
-.calendar-select .org-select-button:has(+ .calendar-clear) {
-  padding-right: 60px;
+.calendar-select .org-select-button:has(+ .calendar-clear) .calendar-account {
+  margin-right: 46px;
 }
 
 .calendar-select strong {
