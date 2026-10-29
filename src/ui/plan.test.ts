@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, closedPlans, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
 const days = (now: Date) => dayChoices(now).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -127,6 +127,14 @@ describe("datedOf", () => {
   it("lets T and P take a follow-up, which they end", () => {
     expect(isPinnable(open("a", "snoozed"))).toBe(true);
     expect(isPinnable(open("a", "done"))).toBe(false);
+  });
+});
+
+describe("closedPlans", () => {
+  it("names the pinned and planned items that are closed, and nothing else", () => {
+    const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }, { id: "d", day: "2026-10-30" }], {}, {});
+    expect(closedPlans(before, (id) => id === "b" || id === "d" || id === "x")).toEqual(["b", "d"]);
+    expect(closedPlans(before, () => false)).toEqual([]);
   });
 });
 

@@ -192,6 +192,19 @@ export function unplan(state: Today, ids: readonly string[]): Today {
   return { focus: state.focus.filter((id) => !gone(id)), focusDay: state.focusDay, planned: state.planned.filter((p) => !gone(p.id)), pinnedOn: keep(state.pinnedOn), plannedAt: keep(state.plannedAt) };
 }
 
+/**
+ * The items pinned for today or planned for a day that are closed on GitHub, whose pin or plan
+ * goes at once (with `unplan`) rather than at the next `rollOver`.
+ *
+ * @param closed  Whether a loaded item is closed or merged.
+ *
+ * @example
+ *   closedPlans({ focus: ["I_1"], planned: [{ id: "I_2", day: "2026-10-30" }], … }, (id) => id === "I_2"); // ["I_2"]
+ */
+export function closedPlans(state: Pick<Today, "focus" | "planned">, closed: (id: string) => boolean): string[] {
+  return [...state.focus, ...state.planned.map((p) => p.id)].filter(closed);
+}
+
 /** Why an item is in Planned: pinned for today or planned for a day. */
 export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string };
 
