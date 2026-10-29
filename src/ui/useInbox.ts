@@ -15,7 +15,7 @@ import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
-import { movedSettings } from "../transfer";
+import { movedKeys, movedLists, movedSettings } from "../transfer";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -39,7 +39,8 @@ export interface Inbox {
   fetchedAt: Date | null;
   settings: Settings;
   classified: Classified[];
-  refresh: () => Promise<void>;
+  /** Resolves to true once the items are fetched and shown; false when stopped, failed or not run. */
+  refresh: () => Promise<boolean>;
   /** Stops a running refresh; what was shown before stays. */
   stopRefresh: () => void;
   /** Reloads one item after the viewer changed it (comment, close, reopen), not the whole inbox; one GitHub no longer resolves leaves the cache (see `dropGone`). */
@@ -208,8 +209,8 @@ export function useInbox(): Inbox {
   }, [settings]);
 
   /**
-   * Carries the local state of transferred issues to their new ids, in the store first; the
-   * returned function then sets the state, so the caller can show it together with the items.
+   * Carries the local state of transferred issues to their new ids, in the store; the returned
+   * function moves the state, built on what it holds then, for the caller to run with the items.
    */
   const carryOver = useCallback(
     async (moves: ReadonlyMap<string, string>, items: Item[]) => {
@@ -217,15 +218,14 @@ export function useInbox(): Inbox {
       await store.moveItems(moves);
       const moved = movedSettings(latestSettings.current, moves, items);
       if (moved !== latestSettings.current) await store.saveSettings(moved);
-      const [nextStatuses, nextLog, nextSeen, nextMarks, nextNotes, nextFailures] = await Promise.all([store.statuses(), store.statusLog(), store.seen(), store.unreadMarks(), store.notes(), store.writeFailures()]);
       return () => {
-        setSettings(moved);
-        setStatuses(nextStatuses);
-        setStatusLog(nextLog);
-        setSeen(nextSeen);
-        setUnreadMarks(nextMarks);
-        setNotes(nextNotes);
-        setWriteFailures(nextFailures);
+        setSettings((current) => movedSettings(current, moves, items));
+        setStatuses((current) => movedKeys(current, moves));
+        setStatusLog((current) => movedLists(current, moves));
+        setSeen((current) => movedKeys(current, moves));
+        setUnreadMarks((current) => movedKeys(current, moves));
+        setNotes((current) => movedKeys(current, moves));
+        setWriteFailures((current) => movedLists(current, moves));
       };
     },
     [store],
@@ -266,8 +266,8 @@ export function useInbox(): Inbox {
     })().catch((e) => setError(String(e)));
   }, []);
 
-  const refresh = useCallback(async () => {
-    if (!store || settings.orgs.length === 0) return;
+  const refresh = useCallback(async (): Promise<boolean> => {
+    if (!store || settings.orgs.length === 0) return false;
     running.current?.abort();
     const controller = new AbortController();
     running.current = controller;
@@ -306,7 +306,6 @@ export function useInbox(): Inbox {
       let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
       if (delta) logMerge(before, fetched, items);
       if (moves.size > 0) logTransfers(before, fetched, moves);
-      const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
       const fetchedAt = new Date();
       const result: CachedFetch = {
@@ -316,6 +315,7 @@ export function useInbox(): Inbox {
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
       };
+      const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
       showMoved?.();
       apply(result);
       await store.saveFetch(result);
@@ -323,11 +323,13 @@ export function useInbox(): Inbox {
       setUsage({ budget: lastBudget(), lastCost: pointsSpent() - mark });
       log.debug("refresh", { kind: delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining });
       log.debug("cache saved", { items: items.length });
+      return true;
     } catch (e) {
-      if (signal.aborted) return;
+      if (signal.aborted) return false;
       log.debug("refresh failed", { error: String(e), ms: Date.now() - startedAt });
       if (e instanceof RateLimitError) pause(e.until);
       setError(String(e));
+      return false;
     } finally {
       if (running.current === controller) {
         running.current = null;
@@ -418,11 +420,12 @@ export function useInbox(): Inbox {
   /**
    * Handles items GitHub no longer resolves: a refresh first, which finds an issue where it was
    * transferred to and carries its state over, then what is still cached under these ids goes.
+   * A refresh that fails or is stopped keeps them, so a later one can still pair them.
    */
   const dropGone = useCallback(
     async (ids: string[]) => {
       log.debug("items gone", { ids: ids.join(",") });
-      await refresh();
+      if (!(await refresh())) return;
       const last = lastFetch.current;
       const gone = new Set(ids);
       if (!store || !last?.items.some((item) => gone.has(item.id))) return;
