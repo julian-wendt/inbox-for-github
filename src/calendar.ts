@@ -67,10 +67,22 @@ export const findEvents = (ids: string[]) => invoke<CalendarEvent[]>("calendar_f
  * @example
  *   const saved = await putEvent({ calendarId, title: "Fix the login", url, notes: "octo-org/app#12", start, end });
  */
-export const putEvent = (draft: EventDraft) => invoke<CalendarEvent | null>("calendar_put", { draft });
+export const putEvent = (draft: EventDraft) => writing(invoke<CalendarEvent | null>("calendar_put", { draft }));
+
+/** Moves the event to `start`–`end` and keeps its title and notes; null when it is gone. */
+export const moveEvent = (id: string, start: number, end: number) => writing(invoke<CalendarEvent | null>("calendar_move", { id, start, end }));
 
 /** Deletes the event; one already gone counts as deleted. */
-export const removeEvent = (id: string) => invoke<void>("calendar_remove", { id });
+export const removeEvent = (id: string) => writing(invoke<void>("calendar_remove", { id }));
+
+let writes = 0;
+/** Counts the call as a write while it runs, for `calendarWriting`; also for a read that leads to a write. */
+export function writing<T>(call: Promise<T>): Promise<T> {
+  writes++;
+  return call.finally(() => writes--);
+}
+/** Whether a write of the app's own is under way: the calendar is then not read back, as it is half changed. */
+export const calendarWriting = () => writes > 0;
 
 /** The app event sent whenever anything in the calendar store changed. */
 export const CALENDAR_CHANGED = "calendar-changed";

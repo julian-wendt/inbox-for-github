@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstFree, momentOf, placeSpans, snap, spansOf, stepWorkday, type DayEvent } from "./calendarSlot";
+import { firstFree, momentOf, onDay, placeSpans, snap, spansOf, stepWorkday, type DayEvent } from "./calendarSlot";
 
 const DAY = "2026-10-29";
 const at = (h: number, m = 0) => new Date(2026, 9, 29, h, m).getTime();
@@ -82,6 +82,16 @@ describe("snap and momentOf", () => {
 
   it("counts wall-clock minutes", () => {
     expect(momentOf(DAY, 9 * 60 + 30)).toBe(at(9, 30));
+  });
+});
+
+describe("onDay", () => {
+  it("keeps the time of day and the length", () => {
+    expect(onDay({ start: at(9, 30), end: at(10, 45) }, "2026-11-02")).toEqual({ start: new Date(2026, 10, 2, 9, 30).getTime(), end: new Date(2026, 10, 2, 10, 45).getTime() });
+  });
+
+  it("keeps the wall-clock time across a change of daylight saving time", () => {
+    expect(new Date(onDay({ start: new Date(2026, 9, 23, 9).getTime(), end: new Date(2026, 9, 23, 10).getTime() }, "2026-10-26").start).getHours()).toBe(9);
   });
 });
 

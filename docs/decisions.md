@@ -4,6 +4,15 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-10-29
 
+- **Plans can go into the macOS calendar, and the calendar wins.** EventKit reaches every
+  calendar of the Mac (iCloud, Google, Exchange) without an account login of the app's own, so
+  it beats a direct Outlook or Google API. Only plans get an event, not follow-ups: a plan is
+  when you do the work, a follow-up is when you check on others. The time lives only in the
+  calendar, the day in the plan; moving the event moves the plan, deleting it removes the plan,
+  since what the calendar shows is what the viewer sees and edits. This is the one place where
+  local data leaves the Mac: the item's title, day, link and reference go to the calendar's
+  server, and only after the viewer chose a calendar. See
+  [`calendar.md`](reference/calendar.md).
 - **A transferred issue is recognized by repository, creation time and title.** GitHub gives
   it a new node id and keeps no link to the old one, but keeps `createdAt` and the title, and
   names the old repository in a `TransferredEvent`. The match also needs exactly one candidate,

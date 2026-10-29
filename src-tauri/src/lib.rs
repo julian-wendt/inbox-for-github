@@ -249,6 +249,7 @@ pub fn run() {
             calendar::calendar_find,
             calendar::calendar_list,
             calendar::calendar_put,
+            calendar::calendar_move,
             calendar::calendar_remove,
             gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts, system_locale
         ])

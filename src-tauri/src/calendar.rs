@@ -200,6 +200,21 @@ pub fn calendar_put(draft: Draft) -> Result<Option<Event>, String> {
     })
 }
 
+/// Moves the event to `start`–`end` (milliseconds since 1970) and leaves everything else as it
+/// is, notes edited in the calendar included; `None` when the event is gone.
+#[tauri::command(async)]
+pub fn calendar_move(id: String, start: f64, end: f64) -> Result<Option<Event>, String> {
+    with_store(|store| unsafe {
+        let Some(event) = store.eventWithIdentifier(&NSString::from_str(&id)) else {
+            return Ok(None);
+        };
+        event.setStartDate(Some(&date(start)));
+        event.setEndDate(Some(&date(end)));
+        store.saveEvent_span_commit_error(&event, EKSpan::ThisEvent, true).map_err(failed)?;
+        Ok(event_of(&event))
+    })
+}
+
 /// Deletes the event; an event that is already gone counts as deleted.
 #[tauri::command(async)]
 pub fn calendar_remove(id: String) -> Result<(), String> {

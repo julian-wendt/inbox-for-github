@@ -57,7 +57,7 @@ export function movedLists<T>(map: ReadonlyMap<string, T[]>, moves: ReadonlyMap<
  *   movedSettings(settings, new Map([["I_old", "I_new"]]), fetched).focus; // ["I_new"] where it was ["I_old"]
  */
 export function movedSettings(settings: Settings, moves: ReadonlyMap<string, string>, items: Item[]): Settings {
-  const named = [...settings.focus, ...settings.planned.map((p) => p.id), ...Object.keys(settings.pinnedOn), ...Object.keys(settings.plannedAt), ...settings.untracked.map((u) => u.id), ...settings.notifyCollected];
+  const named = [...settings.focus, ...settings.planned.map((p) => p.id), ...Object.keys(settings.pinnedOn), ...Object.keys(settings.plannedAt), ...settings.untracked.map((u) => u.id), ...settings.notifyCollected, ...Object.keys(settings.calendarEvents)];
   if (!named.some((id) => moves.has(id))) return settings;
   const to = (id: string) => moves.get(id) ?? id;
   const ids = (list: string[]) => [...new Set(list.map(to))];
@@ -70,6 +70,7 @@ export function movedSettings(settings: Settings, moves: ReadonlyMap<string, str
     planned: firstPerId(settings.planned.map((p) => ({ ...p, id: to(p.id) }))),
     pinnedOn: record(settings.pinnedOn),
     plannedAt: record(settings.plannedAt),
+    calendarEvents: record(settings.calendarEvents),
     untracked: firstPerId(
       settings.untracked.map((u) => {
         const item = byId.get(to(u.id));
