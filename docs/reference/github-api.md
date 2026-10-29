@@ -16,6 +16,7 @@ numbers below go stale when fields are added.
 |---|---|---|
 | Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29) |
 | Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29) |
+| Open review requests, ids only | `REVIEW_IDS_QUERY` (`fetchReviewIds`, every delta), page of 100 | 1 point (dry run and `x-ratelimit-used`, 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
 | Many items by node id | `NODES_QUERY` (`fetchItemsById`, right click on a view), `REFRESH_CHUNK = 50` | 19 points for 50, 37 for 100, 9 for 25, 4 for 10 (measured 2026-10-26 with `rateLimit(dryRun: true)`); a single `node` costs 1, so from about three items the bulk request is cheaper |
 | Boards for 50 items | `src/github/boards.ts`, `BATCH = 50` | ~6 points |
@@ -24,7 +25,11 @@ numbers below go stale when fields are added.
 
 A full fetch pages through every search up to the item limit (default 200 per search; two
 qualifiers, for open and, with a closed window, closed items), a few hundred points. A delta
-runs the same searches with one page of 20 each, about 7 points per search.
+runs the same searches with one page of 20 each, about 7 points per search, plus one point for
+the ids of the open review requests. Widening the
+closed window adds the two closed searches over the added days only, paged like a full fetch:
+the same `QUERY` with another search string, so ~19 points per page of 50, at most 8 pages
+(about 150 points) at the default limit and usually one or two per search.
 
 ## Verified behavior (2026-10-23)
 
@@ -34,6 +39,9 @@ Each was checked against the live API during development.
   all watched owners (`fetchItems`).
 - Long search queries work; queries over 1000 characters were accepted.
 - `updated:>=` accepts a full datetime (`2026-10-23T10:00:00Z`), not only a date; deltas rely on it.
+- `closed:A..B` includes both days: the counts for `closed:2026-09-01..2026-10-21` and
+  `closed:>=2026-10-22` added up to the one for `closed:>=2026-09-01` (checked 2026-10-29). A
+  wider closed window searches only the added days this way (`searchStates`).
 - The `x-ratelimit-*` and `X-OAuth-Scopes` response headers are readable from the webview
   (exposed via CORS); the budget reading in `graphql` (`lastBudget`) and `tokenScopes` in
   `src/github/client.ts` use them.
@@ -60,6 +68,23 @@ Each was checked against the live API during development.
   `last: 20` on issues). Commits have their own (`commitItems`, `last: 20`), since `last` counts
   across all types and a long run of commits would otherwise push review requests out; it costs
   one point per search page of 50 and none on a delta page (dry run 2026-10-25).
+
+## What moves `updatedAt` (2026-10-29)
+
+Read from timestamps only, no writes: for each item, the time of its latest event of a type
+against its `updatedAt`, over 959 pull requests in large public repositories and the items of
+one account. An event that moves `updatedAt` can never be later than it.
+
+- **Do not move it:** a board status change (`ProjectV2ItemStatusChangedEvent`, 15 items whose
+  `updatedAt` was earlier than the change) and a cross-reference from elsewhere
+  (`CrossReferencedEvent`, 68 such items).
+- **Likely move it:** a withdrawn review request (`ReviewRequestRemovedEvent`), an unassignment
+  and a label added or removed: never later than `updatedAt` (57, 71 and over 400 items), some
+  exactly on it. Not proven without a controlled write.
+- Either way a withdrawn request drops the item out of the review search, so a delta does not
+  see it through `updated:>=` unless the item still involves the viewer. Every delta therefore
+  reads the ids of all open review requests (`fetchReviewIds`) and takes back the reason
+  "review" where an id is gone (`withdrawReviews`).
 
 ## Transferred issues (2026-10-29)
 
@@ -107,6 +132,7 @@ of the item and its boards took two to three seconds.
 
 ## Known gaps
 
-- Deltas miss changes that do not touch `updatedAt`, such as a board status change or, likely, a
-  withdrawn review request; the hourly full fetch catches them. Resolving a review thread
+- Deltas miss changes that do not touch `updatedAt`, such as a board status change, and items
+  that drop out of the involved search; the hourly full fetch catches them. Withdrawn review
+  requests are the exception (see above). Resolving a review thread
   likely does not touch it either (not verified).

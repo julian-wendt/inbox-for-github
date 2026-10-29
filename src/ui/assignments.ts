@@ -68,9 +68,6 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
 /** The bars in display order. */
 export const PLATE_GROUPS: PlateGroup[] = ["review", "progress", "todo", "later", "finished"];
 
-/** At most this many items can be marked "today". */
-export const FOCUS_MAX = 3;
-
 /**
  * What counts as activity besides posts and reviews by others (the "movesUp" setting). The
  * viewer's own activity never counts.

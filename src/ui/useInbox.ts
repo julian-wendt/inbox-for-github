@@ -3,9 +3,9 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withinClosedWindow, type Coverage } from "../github/delta";
+import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
-import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchViewer } from "../github/fetch";
+import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
@@ -101,7 +101,8 @@ export interface Inbox {
  * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within an hour of a
  * full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
  * the closed window, the item limit or switching boards off filters the cached items instead of
- * refetching; widening them past what the cache covers fetches (switching boards on loads only them). When GitHub's hourly
+ * refetching. A longer closed window loads only the added days, switching boards on only the
+ * boards; a higher item limit fetches in full. When GitHub's hourly
  * GraphQL budget runs low, automatic refreshes wait for its reset (`pausedUntil`); ⌘R still works.
  *
  * @returns The current state and the actions the UI may call.
@@ -295,19 +296,30 @@ export function useInbox(): Inbox {
       const key = JSON.stringify([settings.orgs, viewer.login]);
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
-      const delta = !full && !!last && had?.key === key && covers(had.coverage, want) && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const same = !full && !!last && had?.key === key && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const widen = same && widensClosed(had.coverage, want);
+      const delta = (same && covers(had.coverage, want)) || widen;
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
-      const coverage: Coverage = delta ? { ...had.coverage, boards: want.boards } : want;
-      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards, signal };
-      const fetched = delta
-        ? await fetchItems(token, settings.orgs, { ...options, since: new Date(last.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE })
-        : await fetchItems(token, settings.orgs, options);
+      const coverage: Coverage = delta ? { ...had.coverage, closedDays: Math.max(had.coverage.closedDays, want.closedDays), boards: want.boards } : want;
+      // Boards switched on come for every item at once through `withBoards` below, not twice.
+      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards && (!delta || had.coverage.boards), signal };
+      // The added days first, so the delta's newer copy of an item in both wins the merge.
+      const [fetched, requested] = delta
+        ? await Promise.all([
+            Promise.all([
+              widen ? fetchItems(token, settings.orgs, { ...options, closedBefore: new Date(Date.now() - had.coverage.closedDays * 86_400_000) }) : [],
+              fetchItems(token, settings.orgs, { ...options, since: new Date(last.fetchedAt.getTime() - DELTA_OVERLAP_MS), pageSize: DELTA_PAGE_SIZE }),
+            ]).then((parts) => parts.flat()),
+            fetchReviewIds(token, settings.orgs, viewer.login, signal),
+          ])
+        : [await fetchItems(token, settings.orgs, options), null];
       signal.throwIfAborted();
       const avatar = (await embedAvatar(viewer.avatarUrl, 40)) ?? lastAvatar.current ?? undefined;
       // Onto the items as they are now, so a change made while the refresh ran (e.g. assigning) stays.
       const before = lastFetch.current?.items ?? [];
       const moves = findTransfers(before, fetched);
       let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
+      if (requested) items = withdrawReviews(items, requested);
       if (delta) logMerge(before, fetched, items);
       if (moves.size > 0) logTransfers(before, fetched, moves);
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);
@@ -325,11 +337,13 @@ export function useInbox(): Inbox {
       await store.saveFetch(result);
       noteBudget(lastBudget());
       setUsage({ budget: lastBudget(), lastCost: pointsSpent() - mark });
-      log.debug("refresh", { kind: delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining });
+      log.debug("refresh", { kind: widen ? "widen" : delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining });
       log.debug("cache saved", { items: items.length });
       return true;
     } catch (e) {
       if (signal.aborted) return false;
+      // Stops the searches still running beside the one that failed.
+      controller.abort();
       log.debug("refresh failed", { error: String(e), ms: Date.now() - startedAt });
       if (e instanceof RateLimitError) pause(e.until);
       setError(String(e));

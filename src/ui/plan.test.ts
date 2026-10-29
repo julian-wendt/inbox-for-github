@@ -87,17 +87,17 @@ describe("rollOver", () => {
     expect(rollOver(state(["closed"], "2026-10-26", [], { closed: "2026-10-26" }), "2026-10-27", () => false, always)).toEqual({ focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {} });
   });
 
-  it("takes the oldest plans first and leaves what does not fit planned", () => {
+  it("moves every due plan in, oldest first, however many", () => {
     const planned = ["d", "c", "b", "a"].map((id, i) => ({ id, day: `2026-10-2${4 + i}` }));
     const next = rollOver(state([], null, planned), "2026-10-27", always)!;
-    expect(next.focus).toEqual(["d", "c", "b"]);
-    expect(next.planned).toEqual([{ id: "a", day: "2026-10-27" }]);
+    expect(next.focus).toEqual(["d", "c", "b", "a"]);
+    expect(next.planned).toEqual([]);
   });
 
-  it("fills only the room the carried pins leave", () => {
-    const next = rollOver(state(["x", "y"], "2026-10-26", [{ id: "b", day: "2026-10-27" }, { id: "c", day: "2026-10-27" }], { x: "2026-10-26", y: "2026-10-26" }), "2026-10-27", always)!;
-    expect(next.focus).toEqual(["x", "y", "b"]);
-    expect(next.planned).toEqual([{ id: "c", day: "2026-10-27" }]);
+  it("puts the due plans behind the carried pins", () => {
+    const next = rollOver(state(["x", "y", "z"], "2026-10-26", [{ id: "b", day: "2026-10-27" }, { id: "c", day: "2026-10-27" }], { x: "2026-10-26", y: "2026-10-26", z: "2026-10-26" }), "2026-10-27", always)!;
+    expect(next.focus).toEqual(["x", "y", "z", "b", "c"]);
+    expect(next.planned).toEqual([]);
   });
 
   it("drops plans of loaded items that cannot be pinned any more, and keeps those not loaded yet", () => {
@@ -199,9 +199,9 @@ describe("followEvent", () => {
     });
   });
 
-  it("keeps a full Today and plans the item for the day instead", () => {
-    const full = state({ focus: ["A", "B", "C"], focusDay: "2026-10-29" });
-    expect(followEvent(full, "I_1", "2026-10-29", "2026-10-29")?.planned).toEqual([{ id: "I_1", day: "2026-10-29" }]);
+  it("adds the item to Today however many are in it", () => {
+    const busy = state({ focus: ["A", "B", "C"], focusDay: "2026-10-29" });
+    expect(followEvent(busy, "I_1", "2026-10-29", "2026-10-29")?.focus).toEqual(["A", "B", "C", "I_1"]);
   });
 
   it("changes nothing when the item already is where its event is", () => {

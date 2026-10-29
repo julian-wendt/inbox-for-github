@@ -58,8 +58,15 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Erster Abruf nach dem Start ist vollständig und teurer; die nächsten (⌘R oder automatisch)
       sind Deltas, etwa 30 Punkte. Zahlen notieren.
 - [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
+- [ ] Eine Review-Anfrage wird auf GitHub zurückgezogen: nach dem nächsten ⌘R (Delta) ist der PR
+      aus der Inbox verschwunden, wenn er dich sonst nicht betrifft; sonst steht er ohne Review-Bitte da.
 - [ ] ⇧⌘R (auch in der Palette und in der Hilfe) lädt sofort vollständig: ein Board-Wechsel
       seit dem letzten Abruf ist danach zu sehen, der Ring zeigt die höheren Kosten.
+- [ ] „Geschlossene und gemergte Items“ kürzer oder aus: keine neuen Punkte, ältere geschlossene
+      verschwinden sofort. Wieder länger bis zum vorigen Wert: ebenfalls kostenlos. Länger als
+      je geladen (etwa 7 → 30 Tage): der Ring zeigt nur die Kosten der zusätzlichen Tage plus ein
+      Delta, nicht die eines vollständigen Abrufs; die älteren geschlossenen erscheinen.
+- [ ] „Höchstens geladene Items“ höher: vollständiger Abruf.
 - [ ] Ein auf GitHub geändertes Item (z. B. neuer Kommentar) taucht nach dem nächsten Delta auf.
 - [ ] Ein Test-Issue mit Status (z. B. Erledigt), Notiz und Plan in ein anderes beobachtetes
       Repository übertragen: nach dem nächsten Delta steht es nur noch einmal da, unter dem neuen
@@ -295,11 +302,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       „#12 → Wiedervorlage Mo., 09:00 · Plan für Do entfernt“ (aus Heute: „· aus Heute genommen“),
       P oder T auf einer Wiedervorlage „#12 → Do · Wiedervorlage für Mo., 09:00 entfernt“. ⌘Z
       nimmt beides zusammen zurück. Ohne vorheriges Wann bleibt der Toast wie bisher.
-- [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; höchstens drei, ältester Plan zuerst); ein
+- [ ] Am geplanten Tag stehen sie morgens in Heute (Ansicht „Geplant“; alle, ältester Plan zuerst); ein
       Plan für ein geschlossenes oder abgegebenes Item verschwindet. ⌘Z nimmt Planen zurück.
 - [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
-      (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; es zählt gegen die drei, Geplantes
-      rückt nur in den freien Platz nach. D, P oder T nehmen den Chip weg.
+      (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; Geplantes reiht sich dahinter ein.
+      D, P oder T nehmen den Chip weg.
+- [ ] T nimmt auch ein viertes und fünftes Item in Heute auf, ohne Meldung.
 - [ ] „Neu“ steht an Zuweisungen, die du seit der Zuweisung nicht geöffnet hast; nach dem Öffnen
       verschwindet es. Selbst zugewiesene sind nie neu.
 - [ ] Der erste Start nach dem Update lädt einmal vollständig (Issue-Typen), danach wieder Deltas.
