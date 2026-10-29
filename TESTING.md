@@ -259,6 +259,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Item eine hat, X Wiedervorlage entfernen (auch eine ohne Datum); „Später heute“ und H
       gibt es nicht mehr. Ein Tag kommt um die Uhrzeit aus Einstellungen › Allgemein ›
       „Wiedervorlagen kommen um“ (09:00) zurück; eine geänderte Zeit gilt für die nächste Wahl.
+- [ ] Einstellungen › Allgemein › „Werktage“: Mo–Fr an. Sa dazu: P und F bieten am Freitag den
+      Samstag als nächsten Werktag an, „Nächste Woche“ ist der erste Werktag der nächsten Woche.
+      Der letzte Werktag lässt sich nicht ausschalten.
 - [ ] X auf einem geplanten oder angehefteten Item nimmt den Plan weg, auf einer Wiedervorlage die
       Wiedervorlage, sonst sagt es, dass es nichts zu entfernen gibt; mit markierten Items alles
       davon auf einmal. Kontextmenü und ⌘K bieten „Plan entfernen“ bzw. „Wiedervorlage entfernen“.

@@ -16,6 +16,7 @@ import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
 import { HOURS, MINUTES } from "../segments";
 import { clockOf, clockText } from "../snooze";
+import { toggleWorkday, WEEK, weekdayName } from "../plan";
 import { SegmentField } from "./SegmentField";
 import { guessWorkStatus, WORK_STATUSES, type WorkStatus } from "../../workStatus";
 import { combineAttributes, splitAttributes, type AttributeOption } from "../attributes";
@@ -247,6 +248,22 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                   ))}
                 </div>
                 <small>{t("settings.languageHint")}</small>
+              </div>
+              <div className="field">
+                <span>{t("settings.workdays")}</span>
+                <div className="segmented">
+                  {WEEK.map((day) => (
+                    <button
+                      key={day}
+                      className={draft.workdays.includes(day) ? "on" : ""}
+                      aria-pressed={draft.workdays.includes(day)}
+                      onClick={() => change({ workdays: toggleWorkday(draft.workdays, day) })}
+                    >
+                      {weekdayName(day)}
+                    </button>
+                  ))}
+                </div>
+                <small>{t("settings.workdaysHint")}</small>
               </div>
               <div className="field">
                 <span>{t("settings.followUpTime")}</span>

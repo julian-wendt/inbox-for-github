@@ -592,6 +592,8 @@ export const en = {
   "settings.section.notify": "Notifications",
   "settings.followUpTime": "Follow-ups come back at",
   "settings.followUpTimeHint": "When a follow-up for a day (next workday, a weekday, next week) brings the item back to the inbox. A picked date asks for its own time.",
+  "settings.workdays": "Workdays",
+  "settings.workdaysHint": "The days Plan and Follow-up offer: the next workday, the rest of the work week and next week count only these. At least one stays on.",
   "settings.refresh": "Refresh automatically",
   "settings.refresh.off": "Off",
   "settings.refresh.minutes": "{count} min",

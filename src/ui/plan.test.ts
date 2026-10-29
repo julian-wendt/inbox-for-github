@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, rollOver, setPlan, unplan } from "./plan";
 
-const days = (now: Date) => dayChoices(now).map((c) => `${c.kind}:${c.day}`);
+const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
 
 describe("dayChoices", () => {
@@ -20,6 +20,32 @@ describe("dayChoices", () => {
 
   it("offers the coming work week on a Sunday, whose next workday is Monday", () => {
     expect(days(new Date(2026, 10, 1))).toEqual(["nextWorkday:2026-11-02", "weekday:2026-11-03", "weekday:2026-11-04", "weekday:2026-11-05", "weekday:2026-11-06"]);
+  });
+});
+
+describe("dayChoices with other workdays", () => {
+  it("offers Saturday when it is a workday, and next week's first workday", () => {
+    expect(days(new Date(2026, 9, 29), [2, 3, 4, 5, 6])).toEqual(["nextWorkday:2026-10-30", "weekday:2026-10-31", "nextWeek:2026-11-03"]);
+  });
+
+  it("takes the next workday from further on when the coming days are off", () => {
+    expect(days(new Date(2026, 9, 26), [4])).toEqual(["nextWorkday:2026-10-29", "nextWeek:2026-11-05"]);
+  });
+
+  it("falls back to Monday to Friday without any workday", () => {
+    expect(days(new Date(2026, 9, 27), [])).toEqual(days(new Date(2026, 9, 27)));
+  });
+});
+
+describe("toggleWorkday and weekdayName", () => {
+  it("switches a day on in week order and off, but keeps the last one", () => {
+    expect(toggleWorkday([1, 2, 3, 4, 5], 0)).toEqual([1, 2, 3, 4, 5, 0]);
+    expect(toggleWorkday([1, 2], 1)).toEqual([2]);
+    expect(toggleWorkday([2], 2)).toEqual([2]);
+  });
+
+  it("names a day of the week by its number", () => {
+    expect([1, 0].map(weekdayName)).toEqual(["Mon", "Sun"]);
   });
 });
 

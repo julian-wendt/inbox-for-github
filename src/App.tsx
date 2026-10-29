@@ -448,7 +448,7 @@ export default function App() {
   };
   /** The days Plan and Follow-up both offer, under the same keys; `chosen` is checked, `pick` gets the day and its name. */
   const dayEntries = (pick: (day: string, text: string) => void, chosen?: string): MenuEntry[] =>
-    dayChoices().map((choice) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === chosen, onSelect: () => pick(choice.day, choiceText(choice)) }));
+    dayChoices(new Date(), inbox.settings.workdays).map((choice) => ({ label: choiceText(choice), keys: choiceKey(choice), checked: choice.day === chosen, onSelect: () => pick(choice.day, choiceText(choice)) }));
   /** Keeps a plan through a new ask: the ask counts as seen, as when planned again, and the item leaves the inbox. */
   const keepPlan = (c: Classified, day: string | null) => {
     const previous = todayOf(inbox.settings);
@@ -464,7 +464,7 @@ export default function App() {
       ...(kept ? [{ label: keepLabel, keys: "K", onSelect: () => keepPlan(c, when?.kind === "today" ? null : kept) }] : []),
       { label: t("menu.today"), keys: "T", checked: inbox.settings.focus.includes(c.item.id), divided: !!kept, onSelect: () => toggleFocus(c) },
       ...dayEntries((d, text) => planFor(c, d, text), day).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
-      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices().some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
+      { label: t("snooze.pick"), keys: "D", divided: true, checked: !!day && !dayChoices(new Date(), inbox.settings.workdays).some((choice) => choice.day === day), onSelect: () => setPickingDate({ day: true, pick: (at) => planFor(c, localDay(new Date(at)), dayText(localDay(new Date(at)))) }) },
       ...(when ? [{ label: t("plan.remove"), keys: "X", onSelect: () => planFor(c, null, "") }] : []),
     ];
   };

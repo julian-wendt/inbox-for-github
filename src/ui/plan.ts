@@ -14,26 +14,53 @@ export interface DayChoice {
   kind: "nextWorkday" | "weekday" | "nextWeek";
 }
 
+/** The days of the week from Monday, as `Date.getDay` numbers them, for the "workdays" setting. */
+export const WEEK: readonly number[] = [1, 2, 3, 4, 5, 6, 0];
+
 /**
- * The days an item can be planned or followed up for, in order: the next workday (Monday to
- * Friday after today), the weekdays after it that are still in this work week (on a Sunday the
- * coming one), and next week's Monday unless that is the next workday. Plan and Follow-up both
- * offer these, so their menus cannot drift apart.
+ * The "workdays" setting with `day` switched on or off; the last workday stays, so the menus
+ * always have a next workday.
+ *
+ * @example
+ *   toggleWorkday([1, 2, 3, 4, 5], 6); // [1, 2, 3, 4, 5, 6]
+ */
+export function toggleWorkday(workdays: readonly number[], day: number): number[] {
+  if (!workdays.includes(day)) return WEEK.filter((d) => d === day || workdays.includes(d));
+  return workdays.length > 1 ? workdays.filter((d) => d !== day) : [...workdays];
+}
+
+/** A weekday's short name in the app's language ("Mon"), from its `Date.getDay` number. */
+export function weekdayName(day: number): string {
+  return new Date(2026, 10, 1 + day).toLocaleDateString(lang(), { weekday: "short" });
+}
+
+/** The workdays unless the "workdays" setting says otherwise: Monday to Friday, as `Date.getDay` numbers them (Sunday 0). */
+export const WORKDAYS: readonly number[] = [1, 2, 3, 4, 5];
+
+/**
+ * The days an item can be planned or followed up for, in order: the next workday after today,
+ * the workdays after it that are still in this work week (on a Sunday the coming one), and the
+ * first workday of next week unless that is the next workday. Plan and Follow-up both offer
+ * these, so their menus cannot drift apart.
+ *
+ * @param workdays  The "workdays" setting, as `Date.getDay` numbers; empty counts as `WORKDAYS`.
  *
  * @example
  *   dayChoices(new Date(2026, 9, 27)).map((c) => c.kind); // Tuesday: ["nextWorkday", "weekday", "weekday", "nextWeek"]
  */
-export function dayChoices(now = new Date()): DayChoice[] {
+export function dayChoices(now = new Date(), workdays: readonly number[] = WORKDAYS): DayChoice[] {
+  const days = workdays.length > 0 ? workdays : WORKDAYS;
   const at = (n: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + n);
-  const workday = (n: number) => at(n).getDay() >= 1 && at(n).getDay() <= 5;
+  const workday = (n: number) => days.includes(at(n).getDay());
   let next = 1;
   while (!workday(next)) next++;
   const choices: DayChoice[] = [{ day: localDay(at(next)), kind: "nextWorkday" }];
-  for (let n = next + 1; n <= next + 4; n++) {
+  for (let n = next + 1; n <= 6; n++) {
     if (workday(n) && at(n).getDay() > now.getDay()) choices.push({ day: localDay(at(n)), kind: "weekday" });
   }
-  const toMonday = ((8 - now.getDay()) % 7) || 7;
-  if (toMonday !== next) choices.push({ day: localDay(at(toMonday)), kind: "nextWeek" });
+  let nextWeek = ((8 - now.getDay()) % 7) || 7;
+  while (!workday(nextWeek)) nextWeek++;
+  if (!choices.some((c) => c.day === localDay(at(nextWeek)))) choices.push({ day: localDay(at(nextWeek)), kind: "nextWeek" });
   return choices;
 }
 
@@ -140,7 +167,7 @@ export function choiceText(choice: DayChoice): string {
 
 /**
  * The key that picks a day choice in the Plan (P) and Follow-up (F) menus: N for the next
- * workday, W for next week, and the weekday's number (Monday 1 to Friday 5) for the others.
+ * workday, W for next week, and the weekday's number (Monday 1 to Sunday 7) for the others.
  *
  * @example
  *   choiceKey({ day: "2026-10-29", kind: "weekday" }); // "4"
@@ -148,7 +175,7 @@ export function choiceText(choice: DayChoice): string {
 export function choiceKey(choice: DayChoice): string {
   if (choice.kind === "nextWorkday") return "N";
   if (choice.kind === "nextWeek") return "W";
-  return String(dateOf(choice.day).getDay());
+  return String(dateOf(choice.day).getDay() || 7);
 }
 
 /**
