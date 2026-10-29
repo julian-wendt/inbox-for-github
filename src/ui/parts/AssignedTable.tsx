@@ -4,7 +4,7 @@ import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
 import { assignedAt, hasNewActivity, isNewAssignment, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
-import { lang, t, type MessageKey } from "../i18n";
+import { dateLocale, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
 import type { SprintFilter } from "../sprints";
@@ -309,7 +309,7 @@ interface RowProps {
 function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, dated, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
-  const full =(at: string) => new Date(at).toLocaleString(lang(), { dateStyle: "medium", timeStyle: "short" });
+  const full =(at: string) => new Date(at).toLocaleString(dateLocale(), { dateStyle: "medium", timeStyle: "short" });
   const opened = t("table.openedOn", { date: full(item.createdAt) });
   const assignment = assigned ? assignedAt(item, me) : null;
   const assignedTitle = assignment && (assignment.by ? t("table.assignedBy", { name: assignment.by, date: full(assignment.at) }) : t("table.assignedOn", { date: full(assignment.at) }));

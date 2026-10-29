@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import type { Budget, Scope } from "../../github/client";
 import { CalendarDays, CircleCheck, CircleHelp, Eraser, Inbox, RefreshCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
-import { lang, t } from "../i18n";
+import { dateLocale, t } from "../i18n";
 import { ago, type VIEWS, type View } from "../labels";
 import { Avatar } from "./Avatar";
 import { ScopeNotice } from "./ScopeNotice";
@@ -149,7 +149,7 @@ export function Sidebar(props: Props) {
             <small>{t("sidebar.refreshing")}</small>
           ) : pausedUntil ? (
             <small className="offline" title={t("sidebar.pausedHint")}>
-              {t("sidebar.paused", { time: pausedUntil.toLocaleTimeString(lang(), { hour: "2-digit", minute: "2-digit" }) })}
+              {t("sidebar.paused", { time: pausedUntil.toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit" }) })}
             </small>
           ) : error && since ? (
             <small className="offline" title={error}>

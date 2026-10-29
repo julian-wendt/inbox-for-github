@@ -1,6 +1,6 @@
 import { Plus, X } from "lucide-react";
 import { formatTime, nextRange, nextTime, timeParts, type Delivery, type DeliveryMode } from "../delivery";
-import { lang, t } from "../i18n";
+import { dateLocale, t } from "../i18n";
 import { HOURS, MINUTES } from "../segments";
 import { SegmentField } from "./SegmentField";
 
@@ -13,7 +13,7 @@ const MAX_ENTRIES = 6;
 
 /** 2026-10-25 is a Sunday, so adding `day` lands on that weekday. */
 function weekdayName(day: number): string {
-  return new Date(2026, 9, 25 + day).toLocaleDateString(lang(), { weekday: "short" });
+  return new Date(2026, 9, 25 + day).toLocaleDateString(dateLocale(), { weekday: "short" });
 }
 
 function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (time: string) => void }) {

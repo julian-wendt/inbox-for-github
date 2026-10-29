@@ -1,4 +1,4 @@
-import { lang } from "./i18n";
+import { dateLocale } from "./i18n";
 
 /**
  * When a follow-up for a day comes back: that local day at `time`, as ISO 8601.
@@ -47,7 +47,7 @@ export function clockText({ hours, minutes }: { hours: number; minutes: number }
 export function untilText(until: string, now = new Date()): string {
   const at = new Date(until);
   const soon = at.getTime() - now.getTime() < 6 * 86_400_000;
-  return at.toLocaleString(lang(), { ...(soon ? { weekday: "short" } : { day: "numeric", month: "short" }), hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  return at.toLocaleString(dateLocale(), { ...(soon ? { weekday: "short" } : { day: "numeric", month: "short" }), hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }
 
 /**
@@ -59,9 +59,9 @@ export function untilText(until: string, now = new Date()): string {
  */
 export function untilShort(until: string, now = new Date()): string {
   const at = new Date(until);
-  if (at.toDateString() === now.toDateString()) return at.toLocaleTimeString(lang(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-  if (at.getTime() - now.getTime() < 6 * 86_400_000) return at.toLocaleDateString(lang(), { weekday: "short" });
-  return at.toLocaleDateString(lang(), { day: "numeric", month: "short" });
+  if (at.toDateString() === now.toDateString()) return at.toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  if (at.getTime() - now.getTime() < 6 * 86_400_000) return at.toLocaleDateString(dateLocale(), { weekday: "short" });
+  return at.toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
 }
 
 /**
@@ -71,5 +71,5 @@ export function untilShort(until: string, now = new Date()): string {
  *   reminderText("2026-10-26T08:00:00Z"); // "Mon, 26 Oct, 09:00" (in Berlin, English)
  */
 export function reminderText(at: string): string {
-  return new Date(at).toLocaleString(lang(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  return new Date(at).toLocaleString(dateLocale(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }

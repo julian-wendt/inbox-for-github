@@ -1,6 +1,6 @@
 import type { Classified } from "../classify";
 import { FOCUS_MAX, localDay } from "./assignments";
-import { lang, t } from "./i18n";
+import { dateLocale, t } from "./i18n";
 
 /** An item the viewer plans for a later day; `day` is a local date ("2026-10-28"). */
 export interface Planned {
@@ -31,7 +31,7 @@ export function toggleWorkday(workdays: readonly number[], day: number): number[
 
 /** A weekday's short name in the app's language ("Mon"), from its `Date.getDay` number. */
 export function weekdayName(day: number): string {
-  return new Date(2026, 10, 1 + day).toLocaleDateString(lang(), { weekday: "short" });
+  return new Date(2026, 10, 1 + day).toLocaleDateString(dateLocale(), { weekday: "short" });
 }
 
 /** The workdays unless the "workdays" setting says otherwise: Monday to Friday, as `Date.getDay` numbers them (Sunday 0). */
@@ -144,7 +144,7 @@ export function carriedText(day: string, now = new Date()): string {
   const ago = Math.round((dateOf(localDay(now)).getTime() - dateOf(day).getTime()) / 86_400_000);
   if (ago <= 1) return t("focus.sinceYesterday");
   const date = dateOf(day);
-  return t("focus.since", { day: ago < 7 ? date.toLocaleDateString(lang(), { weekday: "short" }) : date.toLocaleDateString(lang(), { day: "numeric", month: "short" }) });
+  return t("focus.since", { day: ago < 7 ? date.toLocaleDateString(dateLocale(), { weekday: "short" }) : date.toLocaleDateString(dateLocale(), { day: "numeric", month: "short" }) });
 }
 
 /** A local date ("2026-10-28") as a Date at local midnight. */
@@ -162,7 +162,7 @@ function dateOf(day: string): Date {
 export function choiceText(choice: DayChoice): string {
   if (choice.kind === "nextWorkday") return t("plan.nextWorkday");
   if (choice.kind === "nextWeek") return t("plan.nextWeek");
-  return dateOf(choice.day).toLocaleDateString(lang(), { weekday: "long" });
+  return dateOf(choice.day).toLocaleDateString(dateLocale(), { weekday: "long" });
 }
 
 /**
@@ -191,13 +191,13 @@ export function dayText(day: string, now = new Date()): string {
   const ahead = Math.round((dateOf(day).getTime() - dateOf(localDay(now)).getTime()) / 86_400_000);
   if (ahead === 0) return t("plate.focus");
   if (ahead === 1) return t("plan.tomorrow");
-  if (ahead > 1 && ahead < 7 && dateOf(day).getDay() > now.getDay()) return dateOf(day).toLocaleDateString(lang(), { weekday: "long" });
-  return dateOf(day).toLocaleDateString(lang(), { day: "numeric", month: "short" });
+  if (ahead > 1 && ahead < 7 && dateOf(day).getDay() > now.getDay()) return dateOf(day).toLocaleDateString(dateLocale(), { weekday: "long" });
+  return dateOf(day).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
 }
 
 /** A planned day in full, for a tooltip: "Thursday, 29 October 2026". */
 export function dayLong(day: string): string {
-  return dateOf(day).toLocaleDateString(lang(), { dateStyle: "full" });
+  return dateOf(day).toLocaleDateString(dateLocale(), { dateStyle: "full" });
 }
 
 /** Whether T and P take the item: open on GitHub and not done here; a follow-up ends when they do. */

@@ -259,6 +259,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Item eine hat, X Wiedervorlage entfernen (auch eine ohne Datum); „Später heute“ und H
       gibt es nicht mehr. Ein Tag kommt um die Uhrzeit aus Einstellungen › Allgemein ›
       „Wiedervorlagen kommen um“ (09:00) zurück; eine geänderte Zeit gilt für die nächste Wahl.
+- [ ] Daten folgen der Region aus Systemeinstellungen › Sprache & Region, auch bei englischer
+      App-Sprache: mit Region Deutschland „3. Nov.“ statt „Nov 3“, Zeiten 24-stündig.
 - [ ] Einstellungen › Allgemein › „Werktage“: Mo–Fr an. Sa dazu: P und F bieten am Freitag den
       Samstag als nächsten Werktag an, „Nächste Woche“ ist der erste Werktag der nächsten Woche.
       Der letzte Werktag lässt sich nicht ausschalten.

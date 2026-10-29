@@ -112,6 +112,14 @@ fn origin_url(config: &str) -> Option<String> {
     None
 }
 
+/// The Mac's locale with its region (`defaults read -g AppleLocale`, e.g. "en_US@rg=dezzzz"); the
+/// web view knows only the language, so dates would ignore System Settings › Language & Region.
+#[tauri::command]
+fn system_locale() -> Result<String, String> {
+    let output = Command::new("defaults").args(["read", "-g", "AppleLocale"]).output().map_err(|e| e.to_string())?;
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
 /// Brings Orca's window to the front after a worktree or terminal was chosen there.
 #[tauri::command]
 fn orca_activate() -> Result<(), String> {
@@ -232,7 +240,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts])
+        .invoke_handler(tauri::generate_handler![gh_token, log_write, log_reveal, orca, orca_activate, repo_checkouts, system_locale])
         .setup(|app| {
             // The web view picks the item; the window must come forward first, also when hidden.
             let handle = app.handle().clone();

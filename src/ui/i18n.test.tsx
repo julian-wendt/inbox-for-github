@@ -1,7 +1,7 @@
 import { isValidElement } from "react";
 import { describe, expect, it } from "vitest";
 import { RULES } from "../rules";
-import { setLang, t, tRich } from "./i18n";
+import { dateLocale, regionOf, setLang, setRegion, t, tRich } from "./i18n";
 import { en } from "./locales/en";
 
 describe("t", () => {
@@ -32,5 +32,21 @@ describe("rule texts", () => {
       expect(Object.keys(en)).toContain(`rule.${rule.id}.title`);
       expect(Object.keys(en)).toContain(`rule.${rule.id}.description`);
     }
+  });
+});
+
+describe("regionOf and dateLocale", () => {
+  it("reads the region override, else the country, from a macOS locale", () => {
+    expect(regionOf("en_US@rg=dezzzz")).toBe("DE");
+    expect(regionOf("de_AT")).toBe("AT");
+    expect(regionOf("en")).toBeNull();
+  });
+
+  it("formats dates in the app's language and the Mac's region", () => {
+    setLang("en");
+    setRegion("en_US@rg=dezzzz");
+    expect(dateLocale()).toBe("en-DE");
+    setRegion("");
+    expect(dateLocale()).toBe("en");
   });
 });
