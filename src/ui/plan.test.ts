@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, followEvent, rollOver, setPlan, unplan, type Today } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -207,6 +207,12 @@ describe("followEvent", () => {
   it("changes nothing when the item already is where its event is", () => {
     expect(followEvent(state(), "I_1", "2026-10-30", "2026-10-29")).toBeNull();
     expect(followEvent(state({ focus: ["I_1"], planned: [] }), "I_1", "2026-10-28", "2026-10-29")).toBeNull();
+  });
+});
+
+describe("orphanLinks", () => {
+  it("lists the links of items that are neither pinned nor planned", () => {
+    expect(orphanLinks({ focus: ["I_1"], planned: [{ id: "I_2", day: "2026-10-30" }], calendarEvents: { I_1: "E1", I_2: "E2", I_3: "E3" } })).toEqual([["I_3", "E3"]]);
   });
 });
 

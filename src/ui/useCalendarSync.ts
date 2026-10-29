@@ -1,6 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { CALENDAR_CHANGED, calendarAuthorized, calendarWriting, findEvents, type CalendarEvent } from "../calendar";
+import { CALENDAR_CHANGED, calendarAuthorized, calendars, calendarWriting, findEvents, type CalendarEvent } from "../calendar";
 import type { Settings } from "../store";
 import { localDay } from "./assignments";
 import { t } from "./i18n";
@@ -62,7 +62,9 @@ function toastOf({ gone, moved }: Followed, numberOf: (id: string) => number | u
  * Reads the linked calendar events back and lets the plans follow them (see `followCalendar`):
  * at start, whenever the calendar store changes (also by a sync from the server), when the window
  * gets the focus and every few minutes. Skips while no calendar is chosen, without calendar
- * access, which would make every event look deleted, and while a write of the app's own runs.
+ * access or while the chosen calendar is not listed (an account switched off), which would make
+ * every event look deleted, and while a write of the app's own runs. An event counts as deleted
+ * only when it is missing on two reads in a row.
  *
  * @param ready     Whether the settings are loaded.
  * @param numberOf  The item's number for the toast, undefined while it is not loaded.
@@ -80,18 +82,24 @@ export function useCalendarSync(ready: boolean, settings: Settings, update: (cha
     if (!ready) return;
     let running = false;
     let again = false;
+    let missing = new Set<string>();
     const once = async () => {
       const { calendarId, calendarEvents } = latest.current.settings;
       const ids = Object.values(calendarEvents);
       if (!calendarId || ids.length === 0 || calendarWriting() || !(await calendarAuthorized())) return;
-      const asked = new Set(ids);
+      if (!(await calendars()).some((c) => c.id === calendarId)) return;
       const found = new Map((await findEvents(ids)).map((e) => [e.id, e]));
       if (calendarWriting()) return;
+      const gone = ids.filter((id) => !found.has(id));
+      const asked = new Set([...found.keys(), ...gone.filter((id) => missing.has(id))]);
+      missing = new Set(gone);
       const today = localDay();
-      const followed = followCalendar(latest.current.settings, asked, found, today);
-      if (followed.gone.length + followed.moved.length === 0) return;
-      await latest.current.update((current) => followCalendar(current, asked, found, today).settings);
-      latest.current.notify(toastOf(followed, latest.current.numberOf));
+      const preview = followCalendar(latest.current.settings, asked, found, today);
+      if (preview.gone.length + preview.moved.length === 0) return;
+      let followed: Followed | null = null;
+      await latest.current.update((current) => (followed = followCalendar(current, asked, found, today)).settings);
+      const result = followed as Followed | null;
+      if (result && result.gone.length + result.moved.length > 0) latest.current.notify(toastOf(result, latest.current.numberOf));
     };
     const sync = async () => {
       if (running) return void (again = true);

@@ -32,6 +32,12 @@ describe("movedSettings", () => {
     expect(moved).toMatchObject({ focus: ["I_new", "I_x"], pinnedOn: { I_new: "2026-10-29" }, planned: [{ id: "I_new", day: "2026-10-30" }], plannedAt: { I_new: "2026-10-28T09:00:00Z" }, notifyCollected: ["I_new"] });
   });
 
+  it("keeps the link to the calendar event, so the event is not taken for left over", () => {
+    const settings = { ...DEFAULT_SETTINGS, planned: [{ id: "I_old", day: "2026-10-30" }], calendarEvents: { I_old: "E1" } };
+
+    expect(movedSettings(settings, moves, [item]).calendarEvents).toEqual({ I_new: "E1" });
+  });
+
   it("keeps an untracked issue untracked and lists it under its new repository", () => {
     const settings = { ...DEFAULT_SETTINGS, untracked: [{ id: "I_old", repo: "octo-org/docs", number: 42, title: "Broken link", url: "https://github.com/octo-org/docs/issues/42", at: "2026-10-20T10:00:00Z" }] };
 

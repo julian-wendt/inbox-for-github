@@ -46,7 +46,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, FOCUS_MAX, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -77,6 +77,9 @@ const isBar = (id: string) => id.startsWith("bar:");
 
 /** An item counts as seen once it has been open this long with the window in front, so skimming with the arrow keys or looking away does not. */
 const SEEN_AFTER_MS = 2500;
+
+/** A change with its undo, as the toasts take them. */
+type Step = { run: () => void; undo: () => void };
 
 export default function App() {
   const inbox = useInbox();
@@ -398,7 +401,7 @@ export default function App() {
   const withCurrent = (fn: (c: Classified) => void) => () => target && fn(target);
 
   const pinnable = isPinnable;
-  const toggleFocus = (c: Classified) => {
+  const toggleFocus = (c: Classified, extra: Step[] = []) => {
     const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
     const on = focus.includes(c.item.id);
     if (!on && focus.length >= FOCUS_MAX) return actions.notify(t("focus.full"));
@@ -410,7 +413,7 @@ export default function App() {
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
       plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() },
     };
-    const steps = [todayStep(previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())])];
+    const steps = [todayStep(previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -433,7 +436,7 @@ export default function App() {
   const replacing = (toast: string, replaced: string | null) => (replaced ? t("replaced.toast", { toast, replaced }) : toast);
 
   /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today and ends its follow-up. */
-  const planFor = (c: Classified, day: string | null, text: string) => {
+  const planFor = (c: Classified, day: string | null, text: string, extra: Step[] = []) => {
     const previous = todayOf(inbox.settings);
     const next: Today = {
       focus: inbox.settings.focus.filter((id) => id !== c.item.id),
@@ -443,7 +446,7 @@ export default function App() {
       plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
     };
     const events = day ? eventMoves(c, day) : eventEnds([c]);
-    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : events)];
+    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : []), ...events, ...extra];
     for (const s of steps) s.run();
     actions.announce(
       day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
@@ -482,12 +485,13 @@ export default function App() {
     const [linked] = id ? await findEvents([id]) : [];
     setCalendarFor({ c, linked: linked ?? null, day: day ?? (linked ? localDay(new Date(linked.start)) : localDay()) });
   };
-  /** Plans the item for `day` without a time: today as a Today pin, another day as a plan; nothing when it already is. */
-  const planOnDay = (c: Classified, day: string) => {
+  /** Plans the item for `day` without a time: today as a Today pin, another day as a plan, with `extra` in the same undo; when it already is, `extra` just runs. */
+  const planOnDay = (c: Classified, day: string, extra: Step[] = []) => {
     const when = dated(c);
-    if (day === localDay()) {
-      if (when?.kind !== "today") toggleFocus(c);
-    } else if (when?.kind !== "planned" || when.day !== day) planFor(c, day, dayText(day));
+    if (day === localDay() ? when?.kind !== "today" : when?.kind !== "planned" || when.day !== day) {
+      if (day === localDay()) toggleFocus(c, extra);
+      else planFor(c, day, dayText(day), extra);
+    } else extra.forEach((s) => s.run());
   };
   /** What a new event for the item says in its notes: its reference and link. */
   const eventDraft = (c: Classified, calendarId: string, title: string, start: number, end: number) => ({
@@ -501,31 +505,54 @@ export default function App() {
   /** Links the item to its event, or unlinks it with null. */
   const linkEvent = (c: Classified, id: string | null) =>
     void inbox.updateSettings((s) => ({ ...s, calendarEvents: id ? { ...s.calendarEvents, [c.item.id]: id } : without(s.calendarEvents, c.item.id) }));
-  /** Puts the item into the chosen calendar, or moves its event there, and plans it for that day. */
+  /**
+   * Puts the item into the chosen calendar, or changes its event, and plans it for that day. The
+   * plan comes before the link, so no render shows a link without a plan. Undo deletes a new
+   * event, or moves a changed one back; redo creates or moves it again.
+   */
   const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number, title: string) => {
     const draft = eventDraft(c, inbox.settings.calendarId, title, start, end);
-    const saved = (linked && (await putEvent({ ...draft, id: linked.id }))) || (await putEvent(draft));
+    const changed = linked && (await putEvent({ ...draft, id: linked.id }));
+    const saved = changed || (await putEvent(draft));
     if (!saved) throw new Error(t("calendarDay.failed"));
-    linkEvent(c, saved.id);
-    planOnDay(c, day);
+    let id = saved.id;
+    let first = true;
+    const made: Step =
+      linked && changed
+        ? { run: () => void (first ? (first = false) : moveEvent(id, start, end)), undo: () => void moveEvent(id, linked.start, linked.end) }
+        : {
+            run: () => {
+              if (first) {
+                first = false;
+                return linkEvent(c, id);
+              }
+              void putEvent(draft).then((again) => again && ((id = again.id), linkEvent(c, id)));
+            },
+            undo: () => {
+              linkEvent(c, null);
+              void removeEvent(id).catch(() => undefined);
+            },
+          };
+    planOnDay(c, day, [made]);
   };
   /** Moves the item's event to `day` at the same time of day, as a step; none without an event. Undo moves it back. */
-  const eventMoves = (c: Classified, day: string) => {
+  const eventMoves = (c: Classified, day: string): Step[] => {
     const id = inbox.settings.calendarEvents[c.item.id];
-    if (!id) return [];
+    if (!id || !inbox.settings.calendarId) return [];
     let before: CalendarEvent | undefined;
+    let moved: Promise<unknown> = Promise.resolve();
     return [
       {
         run: () =>
-          void writing(
+          void (moved = writing(
             findEvents([id]).then(([event]) => {
               if (!event || localDay(new Date(event.start)) === day) return;
               before = event;
               const to = onDay(event, day);
               return moveEvent(id, to.start, to.end);
             }),
-          ),
-        undo: () => void (before && moveEvent(id, before.start, before.end)),
+          ).catch(() => undefined)),
+        undo: () => void writing(moved.then(() => before && moveEvent(id, before.start, before.end))).catch(() => undefined),
       },
     ];
   };
@@ -533,16 +560,16 @@ export default function App() {
    * Deletes the events of the items that have one, as one step each; undo puts a new event at
    * the same time with the same title and links it, since a deleted event cannot come back.
    */
-  const eventEnds = (cs: Classified[]) =>
+  const eventEnds = (cs: Classified[]): Step[] =>
     cs.flatMap((c) => {
       let id = inbox.settings.calendarEvents[c.item.id];
-      if (!id) return [];
+      if (!id || !inbox.settings.calendarId) return [];
       let removed: Promise<CalendarEvent | undefined> = Promise.resolve(undefined);
       return [
         {
           run: () => {
             linkEvent(c, null);
-            removed = findEvents([id]).then(async ([event]) => (event && (await removeEvent(event.id)), event));
+            removed = writing(findEvents([id]).then(async ([event]) => (event && (await removeEvent(event.id)), event))).catch(() => undefined);
           },
           undo: () =>
             void removed.then(async (event) => {
@@ -997,14 +1024,15 @@ export default function App() {
 
   useCalendarSync(ready, settings, changeSettings, actions.notify, (id) => classified.find((c) => c.item.id === id)?.item.number);
 
-  // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too.
+  // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too; judged on the latest settings, not this render's.
   useEffect(() => {
-    if (!ready) return;
-    const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
-    const orphans = Object.entries(settings.calendarEvents).filter(([id]) => !dated.has(id));
-    if (orphans.length === 0) return;
-    for (const [, event] of orphans) void removeEvent(event);
-    void changeSettings((s) => ({ ...s, calendarEvents: Object.fromEntries(Object.entries(s.calendarEvents).filter(([id]) => !orphans.some(([gone]) => gone === id))) }));
+    if (!ready || !settings.calendarId || orphanLinks(settings).length === 0) return;
+    let orphans: [string, string][] = [];
+    void changeSettings((s) => {
+      orphans = orphanLinks(s);
+      return orphans.length === 0 ? s : { ...s, calendarEvents: Object.fromEntries(Object.entries(s.calendarEvents).filter(([id]) => !orphans.some(([gone]) => gone === id))) };
+    });
+    for (const [, event] of orphans) void removeEvent(event).catch(() => undefined);
   }, [ready, settings, changeSettings]);
 
   // The pop-up belongs to its item: when the item leaves the list, it closes instead of showing the next one.

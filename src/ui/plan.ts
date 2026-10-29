@@ -148,6 +148,18 @@ export function followEvent(state: Today, id: string, day: string, today: string
   return { ...state, focus: state.focus.filter((f) => f !== id), planned: setPlan(state.planned, id, day), pinnedOn: without(state.pinnedOn, id) };
 }
 
+/**
+ * The calendar links whose item has neither a Today pin nor a plan any more, as item id and event
+ * identifier: their events are left over.
+ *
+ * @example
+ *   orphanLinks({ focus: [], planned: [], calendarEvents: { I_1: "E1" } }); // [["I_1", "E1"]]
+ */
+export function orphanLinks(settings: Pick<Today, "focus" | "planned"> & { calendarEvents: Record<string, string> }): [string, string][] {
+  const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
+  return Object.entries(settings.calendarEvents).filter(([id]) => !dated.has(id));
+}
+
 /** The record without `id`, for taking an item out of `pinnedOn`. */
 export function without(pinnedOn: Record<string, string>, id: string): Record<string, string> {
   return Object.fromEntries(Object.entries(pinnedOn).filter(([key]) => key !== id));
