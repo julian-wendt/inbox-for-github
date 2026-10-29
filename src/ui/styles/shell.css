@@ -680,11 +680,9 @@
   background: var(--control-fill);
 }
 
-/* As `.chip-btn`: --hover is fainter than the field's own fill. */
-.calendar-select .org-select-button:hover,
-.calendar-select .org-select-button[aria-expanded="true"] {
+.calendar-select .org-select-button:hover {
   border-color: transparent;
-  background: color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--hover);
 }
 
 .calendar-placeholder,
