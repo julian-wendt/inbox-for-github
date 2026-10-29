@@ -9,8 +9,8 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   release only after that, then the app is attached and the release published. A published tag
   is permanent, so a failed build must not leave one behind. A local build is no release: it
   embeds the builder's home directory through the Cargo registry's paths, which is why 0.1.0 and
-  0.2.0 carry no download. The release PR comes in with "Bypass rules", since it starts no checks;
-  the build job runs them instead. See [`releasing.md`](releasing.md).
+  0.2.0 carry no download. The build job runs typecheck, lint and tests again on the merged commit,
+  so nothing is tagged that was not checked as it is. See [`releasing.md`](releasing.md).
 
 ## 2026-10-28
 
