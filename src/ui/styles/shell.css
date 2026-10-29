@@ -680,7 +680,8 @@
   background: var(--control-fill);
 }
 
-.calendar-select .org-select-button:hover {
+.calendar-select .org-select-button:hover,
+.calendar-select .org-select-button:has(+ .calendar-clear:hover) {
   border-color: transparent;
   background: var(--hover);
 }
