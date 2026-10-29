@@ -488,8 +488,8 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; fit?: boolean } | null>(null);
-  const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
   const bulk = (text: string, steps: { run: () => void; undo: () => void }[]) => {
@@ -1227,9 +1227,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} fit={menu.fit} entries={menu.entries} onClose={() => setMenu(null)} />}
+      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menu.entries} onClose={() => setMenu(null)} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} fit entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
       )}
       {pickingDate && (
         <SnoozeDatePicker

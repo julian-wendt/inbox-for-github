@@ -31,12 +31,14 @@ export interface MenuEntry {
  * @param entries   The menu, top to bottom.
  * @param onClose   Called when the menu should go away, also after an entry ran.
  * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`).
+ * @param centerX   Centers the menu on x only, below y (see `keyMenuAt`); implied by `centered`.
  * @param fit       Grows the menu so every hint stays on one line, for the menus a key opens.
  *
  * @example
  *   <ContextMenu x={e.clientX} y={e.clientY} entries={[{ label: "Done", keys: "D", onSelect: done }]} onClose={close} />
  */
-export function ContextMenu({ x, y, entries, onClose, centered = false, fit = false }: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean; fit?: boolean }) {
+export function ContextMenu(props: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean; centerX?: boolean; fit?: boolean }) {
+  const { x, y, entries, onClose, centered = false, centerX = centered, fit = false } = props;
   const [active, setActive] = useState(0);
   const [sub, setSub] = useState<number | null>(null);
   const [subActive, setSubActive] = useState(0);
@@ -46,10 +48,10 @@ export function ContextMenu({ x, y, entries, onClose, centered = false, fit = fa
   useLayoutEffect(() => {
     const box = root.current?.getBoundingClientRect();
     if (!box) return;
-    const left = centered ? x - box.width / 2 : x;
+    const left = centerX ? x - box.width / 2 : x;
     const top = centered ? y - box.height / 2 : y;
     setPos({ x: Math.max(8, Math.min(left, window.innerWidth - box.width - 8)), y: Math.max(8, Math.min(top, window.innerHeight - box.height - 8)) });
-  }, [x, y, centered]);
+  }, [x, y, centered, centerX]);
 
   const run = (entry: MenuEntry) => {
     if (entry.disabled) return;
