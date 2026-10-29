@@ -20,8 +20,8 @@ passed, since a published tag cannot be taken back.
    `.release-please-manifest.json` has no tag yet: Node from `.node-version`, Rust from
    `rust-toolchain.toml`, the checks, then `tauri build --locked` with `--remap-path-prefix`, so
    no path of the runner ends up in the binary. It checks that the bundle carries the version, is
-   arm64, and that neither the binary nor `dist/` holds a `/Users/` or `/home/` path, and keeps the
-   zip as an artifact.
+   arm64, has a complete signature, and that neither the binary nor `dist/` holds a `/Users/` or
+   `/home/` path, and keeps the zip as an artifact.
 4. **Only a green build tags.** release-please then creates the tag and a draft release with the
    notes, the zip is attached and the release published. A failed build leaves the version bump on
    `main` without a tag; the next push to `main`, usually the fix, runs the build again.
@@ -39,8 +39,8 @@ The script takes the newest release, refuses if it has a download already or if 
 at its tag has another version, and builds the tag in a temporary worktree, so your checkout stays
 as it is. Without a draft, the newest release is an older published one, so do not run it then.
 
-Apple Silicon only, unsigned (first start of a download: System Settings › Privacy & Security ›
-"Open Anyway"). Release PRs may change the version
+Apple Silicon only, signed ad hoc but not notarized (first start of a download: System Settings ›
+Privacy & Security › "Open Anyway"). Release PRs may change the version
 fields in the two lockfiles; other lockfile changes still need approval.
 
 `release-please-config.json` has the settings; `.release-please-manifest.json` holds the last released
@@ -53,6 +53,13 @@ updater parses with a tagging parser that wraps every string in an object with i
 `@.name.value=='inbox-for-github'`. `Cargo.toml` (`$.package.version`) works as is. Check on each
 release PR that `src-tauri/Cargo.lock` is among the changed files.
 
+**The bundle is signed ad hoc as a whole** (`bundle.macOS.signingIdentity: "-"` in
+`tauri.conf.json`; verified 2026-10-29 with 0.3.0, macOS on Apple Silicon). Without it only the
+binary carries the linker's ad hoc signature, which binds neither `Info.plist` nor the resources:
+`codesign --verify --deep --strict` reports "code has no resources but signature indicates they
+must be present", and a downloaded copy opens as "damaged" with no way past it. Signed as a whole,
+Gatekeeper only rejects it as not notarized, and "Open Anyway" works.
+
 ## Building the app
 
 ```sh
@@ -61,8 +68,8 @@ npm ci                                           # installs exactly package-lock
 npm run tauri build -- --bundles app -- --locked # --locked: Cargo fails instead of changing Cargo.lock
 ```
 
-The result is `src-tauri/target/release/bundle/macos/Inbox for GitHub.app`. It is unsigned:
-a build of your own opens directly. Copy it to `/Applications` to install.
+The result is `src-tauri/target/release/bundle/macos/Inbox for GitHub.app`, signed ad hoc and
+not notarized: a build of your own opens directly. Copy it to `/Applications` to install.
 
 Before a build, go through [`TESTING.md`](../TESTING.md) for what the change touched.
 
