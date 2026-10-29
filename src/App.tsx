@@ -478,9 +478,9 @@ export default function App() {
     setCalendarFor({ c, linked: linked ?? null });
   };
   /** Puts the item into the chosen calendar, or moves its event there, and plans it for that day. */
-  const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number) => {
+  const addToCalendar = async (c: Classified, linked: CalendarEvent | null, day: string, start: number, end: number, title: string) => {
     const notes = `${c.item.repo}#${c.item.number}\n${c.item.url}\n\n${t("calendarDay.createdWith")}`;
-    const draft = { calendarId: inbox.settings.calendarId, title: c.item.title, url: c.item.url, notes, start, end };
+    const draft = { calendarId: inbox.settings.calendarId, title, url: c.item.url, notes, start, end };
     const saved = (linked && (await putEvent({ ...draft, id: linked.id }))) || (await putEvent(draft));
     if (!saved) throw new Error(t("calendarDay.failed"));
     void inbox.updateSettings((s) => ({ ...s, calendarEvents: { ...s.calendarEvents, [c.item.id]: saved.id } }));
@@ -1259,7 +1259,7 @@ export default function App() {
           minutes={inbox.settings.calendarMinutes}
           workdays={inbox.settings.workdays}
           linked={calendarFor.linked}
-          onSave={(day, start, end) => addToCalendar(calendarFor.c, calendarFor.linked, day, start, end)}
+          onSave={(day, start, end, title) => addToCalendar(calendarFor.c, calendarFor.linked, day, start, end, title)}
           onClose={() => setCalendarFor(null)}
         />
       )}

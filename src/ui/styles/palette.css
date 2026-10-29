@@ -234,6 +234,12 @@
   text-align: center;
 }
 
+.calendar-title {
+  flex: none;
+  width: 100%;
+  height: 30px;
+}
+
 .calendar-all-day {
   display: flex;
   flex-wrap: wrap;

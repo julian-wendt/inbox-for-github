@@ -622,6 +622,7 @@ export const de: Messages = {
   "calendarDay.menuChange": "Im Kalender ändern…",
   "calendarDay.titleChange": "Im Kalender ändern",
   "calendarDay.createdWith": "Erstellt mit Inbox for GitHub",
+  "calendarDay.eventTitle": "Titel des Termins",
   "calendarDay.hint": "Ziehen zum Verschieben, Unterkante für die Länge",
   "settings.section.notify": "Mitteilungen",
   "settings.section.calendar": "Kalender",

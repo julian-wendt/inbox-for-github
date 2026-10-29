@@ -620,6 +620,7 @@ export const en = {
   "calendarDay.menuChange": "Change in calendar…",
   "calendarDay.titleChange": "Change in calendar",
   "calendarDay.createdWith": "Created with Inbox for GitHub",
+  "calendarDay.eventTitle": "Event title",
   "calendarDay.hint": "Drag to move, drag the lower edge for the length",
   "settings.section.notify": "Notifications",
   "settings.section.calendar": "Calendar",

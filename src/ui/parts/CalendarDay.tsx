@@ -14,7 +14,7 @@ const PX = HOUR / 60;
 const DAY = 24 * 60;
 
 interface Props {
-  /** The new event's title, shown on its block. */
+  /** The item's title: what the title field starts with for a new event, and what an emptied field falls back to. */
   title: string;
   /** The day the view opens on, a local date ("2026-10-29"). */
   day: string;
@@ -25,7 +25,7 @@ interface Props {
   /** The item's event, if it has one: the block starts on its time, the event is not shown twice, and saving updates it. */
   linked: CalendarEvent | null;
   /** Saves the event; the dialog closes when it resolves and shows the error when it rejects. */
-  onSave: (day: string, start: number, end: number) => Promise<void>;
+  onSave: (day: string, start: number, end: number, title: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -37,9 +37,10 @@ const clock = (minutes: number) => new Date(2026, 0, 1, 0, minutes).toLocaleTime
  * in quarter hours. The block starts on the linked event's time, else on the first free time of
  * the day (see `firstFree`).
  *
- * Keys: ↑ ↓ move by a quarter hour, ⇧↑ ⇧↓ change the length, ← → go to the previous or next
+ * The title field starts with the linked event's title, else the item's; emptied, it falls back
+ * to the item's. Keys: ↑ ↓ move by a quarter hour, ⇧↑ ⇧↓ change the length, ← → go to the previous or next
  * workday (not before today), Enter saves, Escape or a click outside cancels. A click on the grid
- * moves the block there.
+ * moves the block there. While the title field has focus, only Escape and Enter act on the dialog.
  *
  * @example
  *   <CalendarDay title={item.title} day={localDay()} minutes={settings.calendarMinutes} workdays={settings.workdays} linked={null} onSave={save} onClose={close} />
@@ -51,6 +52,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
   const [chosen, setChosen] = useState<Span | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [name, setName] = useState(linked?.title ?? title);
   const grid = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const drag = useRef<{ mode: "move" | "resize"; offset: number } | null>(null);
@@ -99,7 +101,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
     if (!slot || saving) return;
     setSaving(true);
     try {
-      await onSave(day, momentOf(day, slot.start), momentOf(day, slot.end));
+      await onSave(day, momentOf(day, slot.start), momentOf(day, slot.end), name.trim() || title);
       onClose();
     } catch (e) {
       setError(String(e));
@@ -110,7 +112,9 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
   useEffect(() => {
     // Captured and stopped, so the list behind does not also move its selection.
     const keys = (e: KeyboardEvent) => {
-      const handled = ["Escape", "Enter", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key);
+      // In the title field the arrows move the caret; only Escape and Enter act on the dialog.
+      const typing = e.target instanceof HTMLInputElement;
+      const handled = ["Escape", "Enter", ...(typing ? [] : ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])].includes(e.key);
       if (!handled) return;
       e.preventDefault();
       e.stopPropagation();
@@ -165,6 +169,14 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
             <ChevronRight size={16} />
           </button>
         </div>
+        <input
+          className="repo-search calendar-title"
+          value={name}
+          placeholder={title}
+          spellCheck={false}
+          aria-label={t("calendarDay.eventTitle")}
+          onChange={(e) => setName(e.target.value)}
+        />
         {allDay.length > 0 && (
           <div className="calendar-all-day">
             {allDay.map((e) => (
@@ -196,7 +208,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
                 <span className="calendar-slot-time">
                   {clock(slot.start)}–{clock(slot.end)}
                 </span>
-                <span className="calendar-slot-title">{title}</span>
+                <span className="calendar-slot-title">{name.trim() || title}</span>
                 <span className="calendar-slot-handle" onPointerDown={(e) => grab("resize", e)} onPointerMove={pull} onPointerUp={drop} aria-hidden />
               </div>
             )}
