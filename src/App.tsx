@@ -908,7 +908,9 @@ export default function App() {
     void changeSettings((s) => ({ ...s, ...unplan(todayOf(s), closedPlans(s, (id) => closed.has(id))) }));
   }, [settings, classified, changeSettings]);
 
-  const showPopup = popup && table && current !== null;
+  // The pop-up belongs to its item: when the item leaves the list, it closes instead of showing the next one.
+  if (popup && selection.replaced) setPopup(false);
+  const showPopup = popup && table && current !== null && !selection.replaced;
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
   const openedId = current?.item.id;
   const openedUpdatedAt = current?.item.updatedAt;
