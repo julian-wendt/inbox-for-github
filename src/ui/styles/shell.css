@@ -696,8 +696,9 @@
 /* Over the field, left of the chevron; a button inside the field's button would not be valid HTML. */
 .calendar-clear {
   position: absolute;
-  top: 4px;
+  top: 50%;
   right: 33px;
+  transform: translateY(-50%);
   width: 22px;
   height: 22px;
 }
