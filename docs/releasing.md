@@ -80,10 +80,10 @@ npm run build:local              # build, replace /Applications/Inbox for GitHub
 npm run build:local -- --dry-run # only print the version
 ```
 
-`scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g.
-`0.3.2-alpha.2+e9d4fb3` two commits after v0.3.1 (`.dirty` with uncommitted changes), so it
-ranks above the release it follows. The version reaches Tauri as a `--config` override; no file
-changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
+`scripts/build-local.mjs` builds the checkout as the next patch's alpha, e.g. `0.3.2-alpha.2`
+two commits after v0.3.1, so it ranks above the release it follows. The short commit (`.dirty`
+with uncommitted changes) is the bundle version; About shows "Version 0.3.2-alpha.2 (e9d4fb3)".
+Both reach Tauri as `--config` overrides; no file changes. It runs `npm ci` first when `package-lock.json` is newer than `node_modules`, then
 quits the installed app, replaces it and starts it again; the dev window keeps running, and the
 bundle identifier and so the data stay the same.
 
