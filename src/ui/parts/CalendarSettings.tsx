@@ -3,9 +3,6 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { calendarAccess, calendarAuthorized, writableCalendars, type Calendar } from "../../calendar";
 import type { Settings } from "../../store";
 import { t } from "../i18n";
-import { HOURS, MINUTES } from "../segments";
-import { clockOf, clockText } from "../snooze";
-import { SegmentField } from "./SegmentField";
 
 /** Lengths of a new calendar event to choose from, in minutes. */
 const LENGTHS = [30, 60, 90, 120];
@@ -14,7 +11,7 @@ type Access = "unknown" | "denied" | "granted";
 
 /**
  * The Calendar section of the settings: access to the macOS calendar, the calendar planned items
- * go into, and where and how long a new event starts out. Asks macOS for access only on the
+ * go into, and how long a new event starts out. Asks macOS for access only on the
  * button, never on its own.
  *
  * @param settings  The draft settings of the dialog.
@@ -100,21 +97,6 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
         {access === "denied" && <small className="settings-warning">{t("settings.calendarDenied")}</small>}
         {settings.calendarId && calendars && !chosen && <small className="settings-warning">{t("settings.calendarMissing")}</small>}
         <small>{t("settings.calendarHint")}</small>
-      </div>
-      <div className="field">
-        <span>{t("settings.calendarTime")}</span>
-        <div className="time-field">
-          <SegmentField
-            label={t("settings.calendarTime")}
-            separator=":"
-            parts={[
-              { label: t("snooze.hour"), value: clockOf(settings.calendarTime).hours, segment: HOURS },
-              { label: t("snooze.minute"), value: clockOf(settings.calendarTime).minutes, segment: MINUTES },
-            ]}
-            onChange={(index, value) => change({ calendarTime: clockText({ ...clockOf(settings.calendarTime), [index === 0 ? "hours" : "minutes"]: value }) })}
-          />
-        </div>
-        <small>{t("settings.calendarTimeHint")}</small>
       </div>
       <div className="field">
         <span>{t("settings.calendarMinutes")}</span>
