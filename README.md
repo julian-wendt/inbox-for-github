@@ -63,8 +63,8 @@ stored in the app's local database under
 repository. The token is read from `gh` on every refresh and never stored.
 
 A build of your own opens directly. A downloaded build is unsigned, so macOS blocks its first
-start: open System Settings › Privacy & Security and choose "Open Anyway". Releases carry no
-download yet; building them in CI is planned (#12).
+start: open System Settings › Privacy & Security and choose "Open Anyway". Releases built in CI
+carry the app as a zip for Apple Silicon; 0.1.0 and 0.2.0 are source only.
 
 ## Layout
 
