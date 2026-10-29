@@ -78,8 +78,9 @@
   min-width: 0;
 }
 
+/* Text, so --text-muted, as in the menus. */
 .palette-hint {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 12px;
 }
 

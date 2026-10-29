@@ -895,8 +895,9 @@
   gap: 1px;
 }
 
+/* Text, so --text-muted: --text-faint is below 4.5:1 on the selected row in dark. */
 .menu-hint {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.35;
 }
