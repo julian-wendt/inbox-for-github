@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.0...v0.3.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* sign the whole bundle ad hoc, so downloads open ([#23](https://github.com/julian-wendt/inbox-for-github/issues/23)) ([fcd8f45](https://github.com/julian-wendt/inbox-for-github/commit/fcd8f455d647d98efda0292b3111b7eddffdbfb3))
+
 ## [0.3.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.2.0...v0.3.0) (2026-10-29)
 
 
