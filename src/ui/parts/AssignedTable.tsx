@@ -347,7 +347,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         )}
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
-            <PlanIcon dated={dated} size={14} strokeWidth={2.2} />
+            <PlanIcon dated={dated} size={14} strokeWidth={1.75} />
             <span>{datedText(dated).text}</span>
           </span>
         )}

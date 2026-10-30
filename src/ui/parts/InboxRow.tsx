@@ -98,7 +98,7 @@ function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <PlanIcon dated={dated} size={14} />
+      <PlanIcon dated={dated} size={14} strokeWidth={1.75} />
       {text}
     </span>
   );

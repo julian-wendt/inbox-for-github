@@ -76,7 +76,7 @@ const WHEN_ICONS = { plan: CalendarDays, event: CalendarCheck, followUp: RotateC
 export function WhenIcon({ when }: { when: RowWhen }) {
   if (!when.icon) return null;
   const Icon = WHEN_ICONS[when.icon];
-  return <Icon size={13} strokeWidth={2.2} aria-hidden />;
+  return <Icon size={13} strokeWidth={1.75} aria-hidden />;
 }
 
 /**
@@ -94,7 +94,7 @@ export function PlanChip({ dated, onPlan }: { dated: Dated; onPlan: (at: DOMRect
   const { text, title } = datedText(dated);
   return (
     <button className="chip chip-link plan-chip" title={`${title} (P)`} onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}>
-      <PlanIcon dated={dated} size={15} strokeWidth={2.2} />
+      <PlanIcon dated={dated} size={15} strokeWidth={1.75} />
       {dated.event?.start === undefined ? text : `${text} ${startText(dated.event.start)}`}
     </button>
   );
