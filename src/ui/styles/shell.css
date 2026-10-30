@@ -267,6 +267,21 @@
   font-weight: 600;
 }
 
+/* Something that does not work until acted on; at 8% the yellow icon keeps 3:1 and --text-muted 6.4:1 (light) and 5.1:1 (dark). */
+.scope-notice.warn {
+  margin-bottom: 12px;
+  border-color: var(--yellow);
+  background: color-mix(in srgb, var(--yellow) 8%, var(--surface));
+}
+
+.scope-notice.warn strong svg {
+  color: var(--yellow);
+}
+
+.scope-notice.warn .btn {
+  justify-content: center;
+}
+
 .scope-notice ul {
   display: grid;
   gap: 2px;
