@@ -567,6 +567,7 @@ export const de: Messages = {
   "plan.added": "#{number} → {day}",
   "plan.removed": "#{number} nicht mehr geplant",
   "plan.on": "Geplant für {date}",
+  "plan.inCalendar": "Im Kalender",
   "plan.pickTitle": "Planen für",
   "plan.confirm": "Planen",
   "menu.copyLink": "Link kopieren",

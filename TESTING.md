@@ -423,6 +423,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       der schnelle Pin ohne Uhrzeit.
 - [ ] Ein Item mit Termin: P → anderer Tag öffnet die Tagesansicht mit derselben Uhrzeit,
       „Ändern“ verschiebt den Termin. T holt es in Heute und den Termin auf heute.
+- [ ] Ein Item mit Termin trägt den Kalender mit Haken statt des leeren Kalenders: in der
+      Kontextzeile, in der Tabelle, im Plan-Chip und im Plan-Knopf der Detailansicht; der Tooltip
+      endet auf „· Im Kalender“. Nur der Plan-Chip zeigt die Uhrzeit („Donnerstag 14:00“), kurz
+      nach „Eintragen“ und nach einem Verschieben im Kalender auch die neue. Ein Ganztagstermin
+      zeigt keine Uhrzeit, ein Plan ohne Termin den leeren Kalender.
 - [ ] X, D und F löschen den Termin, ⌘Z legt ihn zur alten Zeit neu an. Schließen auf GitHub
       löscht ihn auch.
 - [ ] Im Kalender (z. B. Outlook) den Termin auf einen anderen Tag ziehen: nach dem Sync plant die

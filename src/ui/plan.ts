@@ -293,8 +293,11 @@ export function replan(state: Today, part: Today): Today {
   };
 }
 
-/** Why an item is in Planned: pinned for today or planned for a day. */
-export type Dated = { kind: "today"; day: string } | { kind: "planned"; day: string };
+/**
+ * Why an item is in Planned: pinned for today or planned for a day. `event` is set while the plan
+ * has a linked calendar event, with its start in milliseconds once the calendar was read back.
+ */
+export type Dated = ({ kind: "today"; day: string } | { kind: "planned"; day: string }) & { event?: { start?: number } };
 
 /**
  * Why an item shows in the Planned view, or null: pinned for today or planned for a later day,
@@ -311,6 +314,22 @@ export function datedOf(entry: Pick<Classified, "status" | "item">, focus: reado
   return plan ? { kind: "planned", day: plan.day } : null;
 }
 
+/**
+ * The dated item with its calendar event, if it has one: `event` is the linked event identifier
+ * (`settings.calendarEvents`), `starts` the starts the calendar gave back, by identifier.
+ *
+ * @example
+ *   withEvent({ kind: "planned", day: "2026-10-29" }, "E1", new Map([["E1", start]])); // { …, event: { start } }
+ */
+export function withEvent(dated: Dated | null, event: string | undefined, starts: ReadonlyMap<string, number>): Dated | null {
+  return dated && event ? { ...dated, event: { start: starts.get(event) } } : dated;
+}
+
+/** A plan's event start as the time of day, 24-hour like the rest of the app ("14:00"). */
+export function startText(start: number): string {
+  return new Date(start).toLocaleTimeString(dateLocale(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}
+
 /** The moment a dated item stands for: its day as an ISO time at local midnight. */
 export function datedAt(dated: Dated): string {
   return dateOf(dated.day).toISOString();
@@ -318,12 +337,14 @@ export function datedAt(dated: Dated): string {
 
 /**
  * How a dated item names its day, in its row's mark, at the end of a Planned row and on the
- * detail's plan chip, with the tooltip: "Today" or the planned day (see `dayText`).
+ * detail's plan chip, with the tooltip: "Today" or the planned day (see `dayText`), and
+ * "In the calendar" in the tooltip while it has an event.
  *
  * @example
  *   datedText({ kind: "planned", day: "2026-10-29" }, new Date(2026, 9, 28)); // { text: "Tomorrow", title: "Planned for Thursday, 29 October 2026" }
  */
 export function datedText(dated: Dated, now = new Date()): { text: string; title: string } {
-  if (dated.kind === "today") return { text: t("plate.focus"), title: dayLong(dated.day) };
-  return { text: dayText(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) };
+  const inCalendar = dated.event ? ` · ${t("plan.inCalendar")}` : "";
+  if (dated.kind === "today") return { text: t("plate.focus"), title: dayLong(dated.day) + inCalendar };
+  return { text: dayText(dated.day, now), title: t("plan.on", { date: dayLong(dated.day) }) + inCalendar };
 }

@@ -47,7 +47,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
-import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
@@ -78,6 +78,9 @@ const isBar = (id: string) => id.startsWith("bar:");
 
 /** An item counts as seen once it has been open this long with the window in front, so skimming with the arrow keys or looking away does not. */
 const SEEN_AFTER_MS = 2500;
+
+/** No calendar links while no calendar is chosen; one object, so `dated` keeps its identity. */
+const NO_LINKS: Record<string, string> = {};
 
 /** A change with its undo, as the toasts take them. */
 type Step = { run: () => void; undo: () => void };
@@ -211,7 +214,9 @@ export default function App() {
   const plans = inbox.settings.planned;
   // The local date, set with the rollover check rather than read during render; the rows' marks and Today's date follow it.
   const [today, setToday] = useState(localDay);
-  const dated = useCallback((c: Classified) => datedOf(c, focus, plans, today), [focus, plans, today]);
+  const starts = useCalendarSync(inbox.ready, inbox.settings, inbox.updateSettings, actions.notify, (id) => inbox.classified.find((c) => c.item.id === id)?.item.number);
+  const links = inbox.settings.calendarId ? inbox.settings.calendarEvents : NO_LINKS;
+  const dated = useCallback((c: Classified) => withEvent(datedOf(c, focus, plans, today), links[c.item.id], starts), [focus, plans, today, links, starts]);
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
   // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
   const unreadPlannedIds = useMemo(
@@ -1022,7 +1027,6 @@ export default function App() {
     void changeSettings((s) => ({ ...s, ...unplan(todayOf(s), closedPlans(s, (id) => closed.has(id))) }));
   }, [settings, classified, changeSettings]);
 
-  useCalendarSync(ready, settings, changeSettings, actions.notify, (id) => classified.find((c) => c.item.id === id)?.item.number);
   const calendarAccess = useCalendarAccess(settings.calendarId);
 
   // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too; judged on the latest settings, not this render's.

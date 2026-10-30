@@ -1,10 +1,10 @@
-import { CalendarDays, CircleDot, GitPullRequest, X } from "lucide-react";
+import { CalendarCheck, CalendarDays, CircleDot, GitPullRequest, X, type LucideProps } from "lucide-react";
 import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
 import { followUpOf } from "../followUp";
-import { datedText, type Dated } from "../plan";
+import { datedText, startText, type Dated } from "../plan";
 import { reminderText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
 
@@ -54,9 +54,22 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
 }
 
 /**
- * The detail's chip for an item pinned for today or planned for a day: the calendar icon and
+ * A plan's icon: the calendar with a check while the plan has an event in the calendar, else the
+ * plain calendar, also without a plan. Takes lucide's props for size, stroke and color.
+ *
+ * @example
+ *   <PlanIcon dated={{ kind: "planned", day: "2026-10-29", event: {} }} size={12} /> // CalendarCheck
+ */
+export function PlanIcon({ dated, ...props }: { dated: Dated | null } & LucideProps) {
+  const Icon = dated?.event ? CalendarCheck : CalendarDays;
+  return <Icon aria-hidden {...props} />;
+}
+
+/**
+ * The detail's chip for an item pinned for today or planned for a day: the plan's icon and
  * "Today", "Tomorrow", the weekday within this work week or the date (see `datedText`), the same
- * text as the row's mark. A click opens the plan choices below it.
+ * text as the row's mark, followed by the event's start time once the calendar gave it back
+ * ("Thursday 14:00"). A click opens the plan choices below it.
  *
  * @param onPlan  Gets the chip's box, to open the plan menu under it.
  *
@@ -67,8 +80,8 @@ export function PlanChip({ dated, onPlan }: { dated: Dated; onPlan: (at: DOMRect
   const { text, title } = datedText(dated);
   return (
     <button className="chip chip-link plan-chip" title={`${title} (P)`} onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}>
-      <CalendarDays size={13} strokeWidth={2.2} aria-hidden />
-      {text}
+      <PlanIcon dated={dated} size={13} strokeWidth={2.2} />
+      {dated.event?.start === undefined ? text : `${text} ${startText(dated.event.start)}`}
     </button>
   );
 }

@@ -1,4 +1,3 @@
-import { CalendarDays } from "lucide-react";
 import { motion } from "motion/react";
 import { numberSpans, titleSpans } from "../textFilter";
 import { Highlight } from "./Highlight";
@@ -8,7 +7,7 @@ import { compactAgo, rowContext } from "../labels";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
-import { KindIcon } from "./ItemMarks";
+import { KindIcon, PlanIcon } from "./ItemMarks";
 
 interface Props {
   entry: Classified;
@@ -86,12 +85,12 @@ export function InboxRow({ entry, selected, marked, unread, dated, carriedSince,
   );
 }
 
-/** The day of a dated item in its context line: the calendar icon and "Today", "Tomorrow", the weekday or the date. */
+/** The day of a dated item in its context line: the plan's icon and "Today", "Tomorrow", the weekday or the date. */
 function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <CalendarDays size={12} />
+      <PlanIcon dated={dated} size={12} />
       {text}
     </span>
   );
