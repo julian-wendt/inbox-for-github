@@ -342,7 +342,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       übrigen Wochentage, Nächste Woche, Datum wählen, Ohne Datum). Das Item bleibt in seiner Tabelle: eine Zuweisung
       rückt in die Leiste „Später“ (mit den auf dem Board blockierten, eingeklappt, nicht
       mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; in „Geplant“
-      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt.
+      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt, hinter
+      einem Kreispfeil (↻); das Alter einer Zeile ohne Wiedervorlage bleibt ohne Icon.
       O holt es zurück, F bietet erneut die Zeiten; ⌘Z nimmt es zurück.
 - [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Arbeitsleiste, ohne
       Mitteilung und ohne Chip; im Protokoll steht „Wiedervorlage fällig“. War darin eine Erwähnung
@@ -393,7 +394,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Pull Requests, kein Reviews/Sonstige.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
-- [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum. Übertragenes
+- [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum.
+      Vor dem Tag steht der Kalender, mit Haken bei einem Termin; „Heute“ trägt nur mit Termin ein
+      Icon. So auch in der Tabellen-Darstellung. Übertragenes
       aus Heute trägt „Seit gestern“ in Rot in der Kontextzeile.
 - [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
       oder Mir zugewiesen steht, zählt dort weiter.

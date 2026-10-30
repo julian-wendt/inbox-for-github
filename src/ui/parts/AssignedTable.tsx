@@ -19,11 +19,11 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { followUpWhen } from "../followUp";
+import { rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { KindIcon, PlanIcon } from "./ItemMarks";
+import { KindIcon, PlanIcon, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -141,7 +141,7 @@ export function AssignedTable(props: Props) {
         showOpened={props.showOpened}
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
-        when={props.mode === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
+        when={rowWhen(entry, dated, props.mode === "planned")}
         assigned={assigned}
         onMenu={(e) => props.onMenu(entry, e)}
         onOpen={() => {
@@ -301,7 +301,7 @@ interface RowProps {
   /** A row of Assigned to me, timed by the assignment; otherwise the row is timed by the opening. */
   assigned: boolean;
   /** Shown at the end instead of the time: in Planned, the day or the return time. */
-  when?: { text: string; title: string };
+  when?: RowWhen;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
@@ -360,6 +360,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         <AttributeChips keys={attributes} item={entry.item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} />
       </span>
       <time className="table-update" title={when?.title ?? assignedTitle ?? opened}>
+        {when && <WhenIcon when={when} />}
         {when?.text ?? compactAgo(assignment?.at ?? item.createdAt)}
       </time>
     </div>

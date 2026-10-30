@@ -1,9 +1,9 @@
-import { CalendarCheck, CalendarDays, CircleDot, GitPullRequest, X, type LucideProps } from "lucide-react";
+import { CalendarCheck, CalendarDays, CircleDot, GitPullRequest, RotateCw, X, type LucideProps } from "lucide-react";
 import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
-import { followUpOf } from "../followUp";
+import { followUpOf, type RowWhen } from "../followUp";
 import { datedText, startText, type Dated } from "../plan";
 import { reminderText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
@@ -63,6 +63,20 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
 export function PlanIcon({ dated, ...props }: { dated: Dated | null } & LucideProps) {
   const Icon = dated?.event ? CalendarCheck : CalendarDays;
   return <Icon aria-hidden {...props} />;
+}
+
+const WHEN_ICONS = { plan: CalendarDays, event: CalendarCheck, followUp: RotateCw };
+
+/**
+ * The icon before a row's trailing "when" (see `rowWhen`), in the text's color; nothing without one.
+ *
+ * @example
+ *   <WhenIcon when={{ text: "Mon", title: "…", icon: "followUp" }} /> // RotateCw
+ */
+export function WhenIcon({ when }: { when: RowWhen }) {
+  if (!when.icon) return null;
+  const Icon = WHEN_ICONS[when.icon];
+  return <Icon size={11} strokeWidth={2.2} aria-hidden />;
 }
 
 /**
