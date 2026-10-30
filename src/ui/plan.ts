@@ -224,6 +224,19 @@ export function dayText(day: string, now = new Date()): string {
   return dateOf(day).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" });
 }
 
+/**
+ * Every text the detail's Plan button can show (see `dayText`): "Plan", Today, Tomorrow, the
+ * weekdays and a date in each month, so the button can reserve the widest of them.
+ *
+ * @example
+ *   planTexts(); // ["Plan", "Today", "Tomorrow", "Sunday", …, "28 Jan", …]
+ */
+export function planTexts(): string[] {
+  const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2026, 10, 1 + i).toLocaleDateString(dateLocale(), { weekday: "long" }));
+  const dates = Array.from({ length: 12 }, (_, month) => new Date(2026, month, 28).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" }));
+  return [t("detail.plan"), t("plate.focus"), t("plan.tomorrow"), ...weekdays, ...dates];
+}
+
 /** A planned day in full, for a tooltip: "Thursday, 29 October 2026". */
 export function dayLong(day: string): string {
   return dateOf(day).toLocaleDateString(dateLocale(), { dateStyle: "full" });

@@ -298,6 +298,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       „Planen“ gewählt statt „Offen“ und nennt den Tag („Heute“, „Morgen“, „Donnerstag“). Im Kontextmenü
       steht „Planen für“ mit Heute und den Tagen ebenso vor „Wiedervorlage“, ein eigener Eintrag
       „Heute“ fehlt. Auf einem erledigten Item sagt ein Klick, warum es nicht geht.
+- [ ] Der Detail-Umschalter springt nicht: zwischen Items ohne Plan, mit „Heute“, „Donnerstag“ oder
+      einem Datum und beim Wechsel zwischen Offen, Wiedervorlage und Erledigt bleibt er gleich breit.
 - [ ] Ein Wann ersetzt das andere, und der Toast sagt es: F auf einem geplanten Item zeigt
       „#12 → Wiedervorlage Mo., 09:00 · Plan für Do entfernt“ (aus Heute: „· aus Heute genommen“),
       P oder T auf einer Wiedervorlage „#12 → Do · Wiedervorlage für Mo., 09:00 entfernt“. ⌘Z
