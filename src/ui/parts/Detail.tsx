@@ -170,7 +170,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     title={`${plan?.title ?? t("detail.plan")} (P)`}
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
-                    <PlanIcon dated={dated} size={15} strokeWidth={1.75} color="var(--st-planned)" />
+                    <PlanIcon dated={dated} size={13} strokeWidth={1.75} color="var(--st-planned)" />
                     <SteadyLabel text={plan?.text ?? t("detail.plan")} reserve={planTexts()} />
                     <ChevronDown size={12} className="segment-more" />
                   </button>
