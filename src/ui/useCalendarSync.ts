@@ -9,6 +9,9 @@ import { dayText, followEvent, todayOf, unplan, without } from "./plan";
 /** How often the calendar is read back while nothing else asks for it, in milliseconds. */
 const EVERY = 5 * 60_000;
 
+/** How soon a read skipped for a write of the app's own is tried again, in milliseconds. */
+const RETRY = 1_000;
+
 /** What reading back the calendar changes: the new settings and the items whose plan went or moved. */
 interface Followed {
   settings: Settings;
@@ -65,7 +68,7 @@ function toastOf({ gone, moved }: Followed, numberOf: (id: string) => number | u
  * access or while the chosen calendar is not listed (an account switched off), which would make
  * every event look deleted, and while a write of the app's own runs. An event counts as deleted
  * only when it is missing on two reads in a row. Also reads when the set of linked events changes,
- * so a new event's start shows soon.
+ * and a second after a read skipped for the app's own write, so a new or changed start shows soon.
  *
  * @param ready     Whether the settings are loaded.
  * @param numberOf  The item's number for the toast, undefined while it is not loaded.
@@ -83,20 +86,24 @@ export function useCalendarSync(ready: boolean, settings: Settings, update: (cha
   const [starts, setStarts] = useState<ReadonlyMap<string, number>>(new Map());
   const read = useRef<() => void>(() => undefined);
   const linked = Object.values(settings.calendarEvents).sort().join();
-  useEffect(() => read.current(), [linked]);
+  useEffect(() => {
+    read.current();
+  }, [linked]);
 
   useEffect(() => {
     if (!ready) return;
     let running = false;
     let again = false;
     let missing = new Set<string>();
+    let retry = 0;
     const once = async () => {
       const { calendarId, calendarEvents } = latest.current.settings;
       const ids = Object.values(calendarEvents);
-      if (!calendarId || ids.length === 0 || calendarWriting() || !(await calendarAuthorized())) return;
+      if (calendarWriting()) return void (retry = window.setTimeout(run, RETRY));
+      if (!calendarId || ids.length === 0 || !(await calendarAuthorized())) return;
       if (!(await calendars()).some((c) => c.id === calendarId)) return;
       const found = new Map((await findEvents(ids)).map((e) => [e.id, e]));
-      if (calendarWriting()) return;
+      if (calendarWriting()) return void (retry = window.setTimeout(run, RETRY));
       const timed = new Map([...found.values()].filter((e) => !e.allDay).map((e) => [e.id, e.start]));
       setStarts((current) => (sameStarts(current, timed) ? current : timed));
       const gone = ids.filter((id) => !found.has(id));
@@ -133,6 +140,7 @@ export function useCalendarSync(ready: boolean, settings: Settings, update: (cha
       void stop.then((unlisten) => unlisten());
       window.removeEventListener("focus", run);
       window.clearInterval(timer);
+      window.clearTimeout(retry);
       read.current = () => undefined;
     };
   }, [ready]);
