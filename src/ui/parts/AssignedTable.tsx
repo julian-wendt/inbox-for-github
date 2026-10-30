@@ -19,7 +19,7 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { rowWhen, type RowWhen } from "../followUp";
+import { followUpWhen, rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
@@ -122,6 +122,8 @@ export function AssignedTable(props: Props) {
   const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf } = props;
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
+  // One width for the whole end column, so the attribute chips end at the same place on every row.
+  const whenColumn = props.mode === "planned" ? " when-days" : groups.some((g) => g.entries.some((e) => followUpWhen(e))) ? " when-times" : "";
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -184,7 +186,7 @@ export function AssignedTable(props: Props) {
     ...props.sprints.map((name, i) => ({ label: name, checked: props.sprint === `sprint:${name}`, divided: i === 0, onSelect: () => props.onSprint(`sprint:${name}`) })),
   ];
   return (
-    <section className="assigned" ref={section}>
+    <section className={`assigned${whenColumn}`} ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{props.title}</h1>
         <MarkedChip count={props.marks.size} onClear={props.onClearMarks} />
