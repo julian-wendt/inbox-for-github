@@ -2,6 +2,12 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-10-30
+
+- **Keys act on the selection, not on the row under the mouse, by default.** A resting pointer
+  sends D or X to a row the viewer did not mean, and the toggle that stops it is easy to miss.
+  `hoverActs` stays as a setting, now off for new installs; a stored value is kept.
+
 ## 2026-10-29
 
 - **Plans can go into the macOS calendar, and the calendar wins.** EventKit reaches every
