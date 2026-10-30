@@ -87,7 +87,7 @@ describe("explain", () => {
 });
 
 describe("explain, where the inbox and a stored status meet", () => {
-  const waiting: StoredStatus = { status: "snoozed", changedAt: at(4), until: "2026-10-30T09:00:00Z" };
+  const waiting: StoredStatus = { status: "snoozed", changedAt: at(4), until: new Date(Date.now() + 7 * 86_400_000).toISOString() };
 
   it("names the ask of an item in the inbox, not the follow-up that waits in place, and then adds that", () => {
     const mentioned = item({ author: ME, comments: [comment("bob", "@me look", 6)] });
