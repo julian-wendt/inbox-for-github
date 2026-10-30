@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw, CalendarDays } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
@@ -19,11 +19,11 @@ import { useSearchDock } from "../useSearchDock";
 import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { followUpWhen } from "../followUp";
+import { followUpWhen, rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../usePlannedLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { KindIcon } from "./ItemMarks";
+import { KindIcon, PlanIcon, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -122,6 +122,8 @@ export function AssignedTable(props: Props) {
   const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf } = props;
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
+  // One width for the whole end column, so the attribute chips end at the same place on every row.
+  const whenColumn = props.mode === "planned" ? " when-days" : groups.some((g) => g.entries.some((e) => followUpWhen(e))) ? " when-times" : "";
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -141,7 +143,7 @@ export function AssignedTable(props: Props) {
         showOpened={props.showOpened}
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
-        when={props.mode === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
+        when={rowWhen(entry, dated, props.mode === "planned")}
         assigned={assigned}
         onMenu={(e) => props.onMenu(entry, e)}
         onOpen={() => {
@@ -184,7 +186,7 @@ export function AssignedTable(props: Props) {
     ...props.sprints.map((name, i) => ({ label: name, checked: props.sprint === `sprint:${name}`, divided: i === 0, onSelect: () => props.onSprint(`sprint:${name}`) })),
   ];
   return (
-    <section className="assigned" ref={section}>
+    <section className={`assigned${whenColumn}`} ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{props.title}</h1>
         <MarkedChip count={props.marks.size} onClear={props.onClearMarks} />
@@ -301,7 +303,7 @@ interface RowProps {
   /** A row of Assigned to me, timed by the assignment; otherwise the row is timed by the opening. */
   assigned: boolean;
   /** Shown at the end instead of the time: in Planned, the day or the return time. */
-  when?: { text: string; title: string };
+  when?: RowWhen;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
@@ -345,7 +347,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         )}
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
-            <CalendarDays size={12} strokeWidth={2.2} aria-hidden />
+            <PlanIcon dated={dated} size={13} strokeWidth={1.75} />
             <span>{datedText(dated).text}</span>
           </span>
         )}
@@ -360,6 +362,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         <AttributeChips keys={attributes} item={entry.item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} />
       </span>
       <time className="table-update" title={when?.title ?? assignedTitle ?? opened}>
+        {when && <WhenIcon when={when} />}
         {when?.text ?? compactAgo(assignment?.at ?? item.createdAt)}
       </time>
     </div>

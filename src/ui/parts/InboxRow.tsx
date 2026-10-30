@@ -1,4 +1,3 @@
-import { CalendarDays } from "lucide-react";
 import { motion } from "motion/react";
 import { numberSpans, titleSpans } from "../textFilter";
 import { Highlight } from "./Highlight";
@@ -8,7 +7,8 @@ import { compactAgo, rowContext } from "../labels";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
-import { KindIcon } from "./ItemMarks";
+import { KindIcon, PlanIcon, WhenIcon } from "./ItemMarks";
+import type { RowWhen } from "../followUp";
 
 interface Props {
   entry: Classified;
@@ -22,7 +22,7 @@ interface Props {
   /** In Today since a day before today: carried over, marked since when. */
   carriedSince?: string;
   /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
-  when?: { text: string; title: string };
+  when?: RowWhen;
   onMark: (range: boolean) => void;
   avatar: boolean;
   onSelect: () => void;
@@ -79,19 +79,26 @@ export function InboxRow({ entry, selected, marked, unread, dated, carriedSince,
         </span>
       </span>
       <span className="row-end">
-        {when ? <time title={when.title}>{when.text}</time> : <time>{compactAgo(time)}</time>}
+        {when ? (
+          <time className="row-when" title={when.title}>
+            <WhenIcon when={when} />
+            {when.text}
+          </time>
+        ) : (
+          <time>{compactAgo(time)}</time>
+        )}
         <span>#<Highlight spans={numberSpans(item.number, query)} /></span>
       </span>
     </motion.li>
   );
 }
 
-/** The day of a dated item in its context line: the calendar icon and "Today", "Tomorrow", the weekday or the date. */
+/** The day of a dated item in its context line: the plan's icon and "Today", "Tomorrow", the weekday or the date. */
 function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <CalendarDays size={12} />
+      <PlanIcon dated={dated} size={14} strokeWidth={1.75} />
       {text}
     </span>
   );

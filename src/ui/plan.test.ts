@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, isPinnable, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, withEvent, isPinnable, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -233,6 +233,25 @@ describe("datedAt and datedText", () => {
   it("names Today or the planned day", () => {
     expect(datedText({ kind: "today", day: "2026-10-28" }, now).text).toBe("Today");
     expect(datedText({ kind: "planned", day: "2026-10-29" }, now).text).toBe("Tomorrow");
+  });
+
+  it("adds In the calendar to the tooltip of a plan with an event", () => {
+    expect(datedText({ kind: "planned", day: "2026-10-29", event: {} }, now).title).toMatch(/ · In the calendar$/);
+    expect(datedText({ kind: "planned", day: "2026-10-29" }, now).title).not.toMatch(/calendar/);
+  });
+});
+
+describe("withEvent", () => {
+  const plan = { kind: "planned", day: "2026-10-29" } as const;
+
+  it("adds the event with its start once the calendar gave one back", () => {
+    expect(withEvent(plan, "E1", new Map([["E1", 1000]]))).toEqual({ ...plan, event: { start: 1000 } });
+    expect(withEvent(plan, "E1", new Map())).toEqual({ ...plan, event: { start: undefined } });
+  });
+
+  it("leaves a plan without a link, and no plan, as they are", () => {
+    expect(withEvent(plan, undefined, new Map([["E1", 1000]]))).toBe(plan);
+    expect(withEvent(null, "E1", new Map())).toBeNull();
   });
 });
 

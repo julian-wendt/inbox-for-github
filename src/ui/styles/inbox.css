@@ -349,6 +349,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A plan's day or a follow-up's time, after its icon (see `WhenIcon`). */
+.row-when {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
 .inbox-empty {
   display: grid;
   flex: 1;
@@ -790,12 +797,25 @@
 
 /* The avatar joins the chips; the time stands apart in its own right-aligned column. */
 .table-update {
+  display: inline-flex;
   flex: none;
+  gap: 3px;
+  align-items: center;
+  justify-content: flex-end;
   width: 36px;
-  text-align: right;
+  white-space: nowrap;
   color: var(--text-faint);
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Room for the icon and a weekday ("Donnerstag") in Planned, or a follow-up's time elsewhere. */
+.when-days .table-update {
+  width: 84px;
+}
+
+.when-times .table-update {
+  width: 54px;
 }
 
 /* The detail as a pop-up above the table */

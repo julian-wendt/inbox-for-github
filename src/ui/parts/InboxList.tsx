@@ -6,8 +6,8 @@ import type { Reopen } from "../../model";
 import { t } from "../i18n";
 import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
-import { followUpWhen } from "../followUp";
-import { datedText, type Dated } from "../plan";
+import { rowWhen } from "../followUp";
+import type { Dated } from "../plan";
 import { WAITING_GROUP } from "../timeGroups";
 import type { Layout } from "../usePlannedLayout";
 import type { SortOrder } from "../useSortOrders";
@@ -223,7 +223,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       unread={(bucket === "inbox" || bucket === "planned") && unread.has(entry.item.id)}
                       dated={bucket === "planned" ? undefined : (dated ?? undefined)}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
-                      when={bucket === "planned" && dated ? datedText(dated) : followUpWhen(entry)}
+                      when={rowWhen(entry, dated, bucket === "planned")}
                       onMark={(range) => onMark(entry.item.id, range)}
                       avatar={avatars}
                       onSelect={() => onSelect(entry.item.id)}

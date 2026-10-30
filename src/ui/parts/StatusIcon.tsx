@@ -1,11 +1,11 @@
-import { Circle, CircleCheck, Clock, type LucideIcon } from "lucide-react";
+import { Circle, CircleCheck, RotateCw, type LucideIcon } from "lucide-react";
 import type { Status } from "../../model";
 
-const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: Clock, done: CircleCheck };
+const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: RotateCw, done: CircleCheck };
 
 /**
- * A status as an icon in its color: a gray ring for open, a purple clock for a follow-up, a green
- * check for done. Shape and color both tell the states apart, so neither alone carries it.
+ * A status as an icon in its color: a gray ring for open, a purple circular arrow for a follow-up
+ * (it comes back), a green check for done. Shape and color both tell the states apart, so neither alone carries it.
  *
  * @example
  *   <StatusIcon status="snoozed" size={13} />
