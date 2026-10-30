@@ -689,7 +689,7 @@ export default function App() {
   const bulkEntries = (): MenuEntry[] => [
     { label: t("status.done"), hint: statusHint("done"), keys: "D", icon: <StatusIcon status="done" size={14} />, onSelect: () => bulkStatus("done") },
     { label: t("status.open"), hint: statusHint("open"), keys: "O", icon: <StatusIcon status="open" size={14} />, onSelect: () => bulkStatus("open") },
-    { label: t("status.snoozed"), hint: statusHint("snoozed"), keys: "F", icon: <Bell size={14} />, items: bulkTimes() },
+    { label: t("status.snoozed"), hint: statusHint("snoozed"), keys: "F", icon: <StatusIcon status="snoozed" size={14} />, items: bulkTimes() },
     ...(open.some(assignable) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => (assignAll(open), clearMarks()) }] : []),
     ...(open.some(leavable) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => (leaveAll(open), clearMarks()) }] : []),
     ...(marked.some(hasFollowUp) || marked.some((c) => dated(c) !== null) ? [{ label: t(!marked.some((c) => dated(c) !== null) ? "reminder.remove" : !marked.some(hasFollowUp) ? "plan.remove" : "marks.removeWhen"), keys: "X", icon: <X size={14} />, onSelect: () => removeMarkedFollowUps(true) }] : []),
