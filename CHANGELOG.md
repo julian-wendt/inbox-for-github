@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.4.0...v0.5.0) (2026-10-30)
+
+
+### Features
+
+* add icons for plans, calendar events and follow-ups ([#55](https://github.com/julian-wendt/inbox-for-github/issues/55)) ([21e54fa](https://github.com/julian-wendt/inbox-for-github/commit/21e54faa02f1befa3dc62aa36e6ec06094ba4a8d))
+
+
+### Bug Fixes
+
+* keep a new calendar event linked to its item ([#56](https://github.com/julian-wendt/inbox-for-github/issues/56)) ([13d89ac](https://github.com/julian-wendt/inbox-for-github/commit/13d89ac94096b349827949f28d598f51b27cee15))
+* make the missing calendar access notice stand out ([#60](https://github.com/julian-wendt/inbox-for-github/issues/60)) ([1b1e3b2](https://github.com/julian-wendt/inbox-for-github/commit/1b1e3b28025f6d182877661fe6bc716e9a6778a1))
+* stop keys from acting on the hovered row by default ([#62](https://github.com/julian-wendt/inbox-for-github/issues/62)) ([348a72f](https://github.com/julian-wendt/inbox-for-github/commit/348a72f270b7d1f936313d6bd4291c1888ab9e9a))
+
 ## [0.4.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.1...v0.4.0) (2026-10-29)
 
 
