@@ -1,5 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, ChevronDown, ChevronRight, Link, RefreshCw, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
 import type { Reopen, Status, StatusChange, WriteFailure } from "../../model";
@@ -10,14 +10,14 @@ import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
-import { datedText, type Dated } from "../plan";
+import { datedText, planTexts, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
 import { OrcaMark } from "./OrcaMark";
-import { KindIcon, FollowUpChip, PlanChip } from "./ItemMarks";
+import { KindIcon, FollowUpChip, PlanChip, PlanIcon } from "./ItemMarks";
 import type { StatusMap } from "../../workStatus";
 import { AttributeChips } from "./AttributeChips";
 import { ItemProps } from "./ItemProps";
@@ -170,7 +170,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     title={`${plan?.title ?? t("detail.plan")} (P)`}
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
-                    <CalendarDays size={13} strokeWidth={2.2} color="var(--st-planned)" aria-hidden /> {plan?.text ?? t("detail.plan")}
+                    <PlanIcon dated={dated} size={13} strokeWidth={1.75} color="var(--st-planned)" />
+                    <SteadyLabel text={plan?.text ?? t("detail.plan")} reserve={planTexts()} />
                     <ChevronDown size={12} className="segment-more" />
                   </button>
                 ),
@@ -182,7 +183,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   title={`${s.title} (${s.key})`}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
-                  <StatusIcon status={s.id} size={13} /> {s.title}
+                  <StatusIcon status={s.id} size={13} />
+                  <SteadyLabel text={s.title} reserve={[s.title]} />
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
                 </button>,
               ])}
@@ -275,6 +277,26 @@ interface PostProps {
 }
 
 /** One post; comments by bots can fold to their first line, since they are mostly reports. */
+/**
+ * A segment's label that keeps one width: as wide as the widest of `reserve` set in bold, the
+ * weight of the chosen segment, so the switch does not jump when the choice or the plan changes.
+ *
+ * @example
+ *   <SteadyLabel text="Thursday" reserve={planTexts()} />
+ */
+function SteadyLabel({ text, reserve }: { text: string; reserve: string[] }) {
+  return (
+    <span className="steady-label">
+      <span>{text}</span>
+      {reserve.map((r) => (
+        <span key={r} aria-hidden>
+          {r}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef }: PostProps) {
   const note = review && reviewNote(review);
   const bot = isBot(post.author);

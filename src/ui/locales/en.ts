@@ -565,6 +565,7 @@ export const en = {
   "plan.added": "#{number} → {day}",
   "plan.removed": "#{number} no longer planned",
   "plan.on": "Planned for {date}",
+  "plan.inCalendar": "In the calendar",
   "plan.pickTitle": "Plan for",
   "plan.confirm": "Plan",
   "menu.copyLink": "Copy link",

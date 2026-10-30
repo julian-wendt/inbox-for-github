@@ -112,8 +112,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Status und Protokoll
 
-- [ ] Die Status tragen Icons statt farbiger Ringe: Offen ein grauer Ring, Wiedervorlage eine gelbe
-      Uhr, Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
+- [ ] Die Status tragen Icons statt farbiger Ringe: Offen ein grauer Ring, Wiedervorlage ein lila Kreispfeil
+      (↻), Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
       in Hell und Dunkel gut erkennbar.
 - [ ] Item mit F auf Wiedervorlage legen, mit D erledigen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten, sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
 - [ ] D auf einem erledigten Item ändert nichts; F auf einem in Wiedervorlage öffnet die Zeiten,
@@ -298,6 +298,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       „Planen“ gewählt statt „Offen“ und nennt den Tag („Heute“, „Morgen“, „Donnerstag“). Im Kontextmenü
       steht „Planen für“ mit Heute und den Tagen ebenso vor „Wiedervorlage“, ein eigener Eintrag
       „Heute“ fehlt. Auf einem erledigten Item sagt ein Klick, warum es nicht geht.
+- [ ] Der Detail-Umschalter springt nicht: zwischen Items ohne Plan, mit „Heute“, „Donnerstag“ oder
+      einem Datum und beim Wechsel zwischen Offen, Wiedervorlage und Erledigt bleibt er gleich breit.
 - [ ] Ein Wann ersetzt das andere, und der Toast sagt es: F auf einem geplanten Item zeigt
       „#12 → Wiedervorlage Mo., 09:00 · Plan für Do entfernt“ (aus Heute: „· aus Heute genommen“),
       P oder T auf einer Wiedervorlage „#12 → Do · Wiedervorlage für Mo., 09:00 entfernt“. ⌘Z
@@ -342,7 +344,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       übrigen Wochentage, Nächste Woche, Datum wählen, Ohne Datum). Das Item bleibt in seiner Tabelle: eine Zuweisung
       rückt in die Leiste „Später“ (mit den auf dem Board blockierten, eingeklappt, nicht
       mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; in „Geplant“
-      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt.
+      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt, hinter
+      einem Kreispfeil (↻); das Alter einer Zeile ohne Wiedervorlage bleibt ohne Icon.
       O holt es zurück, F bietet erneut die Zeiten; ⌘Z nimmt es zurück.
 - [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Arbeitsleiste, ohne
       Mitteilung und ohne Chip; im Protokoll steht „Wiedervorlage fällig“. War darin eine Erwähnung
@@ -393,7 +396,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Pull Requests, kein Reviews/Sonstige.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
-- [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum. Übertragenes
+- [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum.
+      Vor dem Tag steht der Kalender, mit Haken bei einem Termin; „Heute“ trägt nur mit Termin ein
+      Icon. So auch in der Tabellen-Darstellung; dort enden die Chips der Attribute auf jeder Zeile an
+      derselben Stelle, auch neben „Donnerstag“ oder einer Wiedervorlage. Übertragenes
       aus Heute trägt „Seit gestern“ in Rot in der Kontextzeile.
 - [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
       oder Mir zugewiesen steht, zählt dort weiter.
@@ -423,6 +429,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       der schnelle Pin ohne Uhrzeit.
 - [ ] Ein Item mit Termin: P → anderer Tag öffnet die Tagesansicht mit derselben Uhrzeit,
       „Ändern“ verschiebt den Termin. T holt es in Heute und den Termin auf heute.
+- [ ] Ein Item mit Termin trägt den Kalender mit Haken statt des leeren Kalenders: in der
+      Kontextzeile, in der Tabelle, im Plan-Chip und im Plan-Knopf der Detailansicht; der Tooltip
+      endet auf „· Im Kalender“. Nur der Plan-Chip zeigt die Uhrzeit („Donnerstag 14:00“), kurz
+      nach „Eintragen“, nach „Ändern“ auf eine andere Zeit und nach einem Verschieben im
+      Kalender auch die neue. Ein Ganztagstermin zeigt keine Uhrzeit, ein Plan ohne Termin den
+      leeren Kalender.
 - [ ] X, D und F löschen den Termin, ⌘Z legt ihn zur alten Zeit neu an. Schließen auf GitHub
       löscht ihn auch.
 - [ ] Im Kalender (z. B. Outlook) den Termin auf einen anderen Tag ziehen: nach dem Sync plant die

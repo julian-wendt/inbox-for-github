@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpOf, followUpWhen } from "./followUp";
+import { followUpOf, followUpWhen, rowWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -37,5 +37,28 @@ describe("followUpWhen", () => {
     expect(followUpWhen({ status: "snoozed", until }, at)?.text).toMatch(/15:00/);
     expect(followUpWhen({ status: "snoozed" }, at)).toBeUndefined();
     expect(followUpWhen({ status: "open", until }, at)).toBeUndefined();
+  });
+});
+
+describe("rowWhen", () => {
+  const at = new Date(2026, 9, 20, 9);
+  const until = new Date(2026, 9, 20, 15).toISOString();
+  const plan = { kind: "planned", day: "2026-10-22" } as const;
+
+  it("gives a plan in Planned its icon, with a check while it has an event", () => {
+    expect(rowWhen({ status: "open" }, plan, true, at)?.icon).toBe("plan");
+    expect(rowWhen({ status: "open" }, { ...plan, event: {} }, true, at)?.icon).toBe("event");
+  });
+
+  it("leaves a pin for today without an icon unless it has an event", () => {
+    expect(rowWhen({ status: "open" }, { kind: "today", day: "2026-10-20" }, true, at)).toMatchObject({ text: "Today", icon: undefined });
+    expect(rowWhen({ status: "open" }, { kind: "today", day: "2026-10-20", event: {} }, true, at)?.icon).toBe("event");
+  });
+
+  it("marks a follow-up's time, and leaves a plain age to the row", () => {
+    const followUp = rowWhen({ status: "snoozed", until }, plan, false, at);
+    expect(followUp?.text).toMatch(/15:00/);
+    expect(followUp?.icon).toBe("followUp");
+    expect(rowWhen({ status: "open" }, plan, false, at)).toBeUndefined();
   });
 });
