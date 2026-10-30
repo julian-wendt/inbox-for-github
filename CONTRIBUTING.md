@@ -23,11 +23,16 @@ query, read [`docs/reference/github-api.md`](docs/reference/github-api.md).
 
 ## Pull requests
 
-PRs are squash-merged, so the PR title becomes the commit title on `main`.
+PRs are squash-merged, so the PR title becomes the commit title on `main`, and release-please
+copies it into the release notes under "Features" or "Bug Fixes".
 
 - The title MUST be a conventional message of at most 72 characters **including** the ` (#nn)`
   the squash merge appends, i.e. at most 66 for a two-digit PR number; GitHub cuts longer
   commit titles with "…" and moves the rest into the description. It SHOULD NOT name the issue.
+- The title MUST be in the imperative, start in lowercase and end without a period, as in the
+  Angular convention that Conventional Commits comes from, and SHOULD say what changes for the
+  user: `feat: add icons for plans, calendar events and follow-ups`,
+  `fix: keep a new calendar event linked to its item`; not "added …" or "the plan now …".
 - The description MUST follow this layout:
   - an opening paragraph without a heading: what the PR does and why
   - `## Related Issues`: one line per issue, or N/A. An issue the PR finishes gets any of
