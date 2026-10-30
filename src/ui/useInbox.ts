@@ -85,6 +85,7 @@ export interface Inbox {
   /** Failed writes to GitHub per item id, oldest first, for the timeline. */
   writeFailures: Map<string, WriteFailure[]>;
   logWriteFailure: (nodeId: string, kind: WriteFailure["kind"], error: string) => Promise<void>;
+  /** Saves the settings; saves run one after another, and the state takes only the newest. */
   saveSettings: (settings: Settings) => Promise<void>;
   /** Saves a change built on the settings at the moment it runs; for callbacks that run later. */
   updateSettings: (change: (current: Settings) => Settings) => Promise<void>;
@@ -664,11 +665,16 @@ export function useInbox(): Inbox {
     }
   }, [classified]);
 
+  // The SQL plugin's pool runs writes on several connections, so two saves at once could land out of order.
+  const settingsWrites = useRef<Promise<void>>(Promise.resolve());
   const saveSettings = useCallback(
     async (next: Settings) => {
       if (!store) return;
-      await store.saveSettings(next);
-      setSettings(next);
+      latestSettings.current = next;
+      const write = settingsWrites.current.then(() => store.saveSettings(next));
+      settingsWrites.current = write.catch(() => undefined);
+      await write;
+      if (latestSettings.current === next) setSettings(next);
     },
     [store],
   );
