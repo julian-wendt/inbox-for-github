@@ -798,7 +798,7 @@ export const en = {
   "inbox.filter.review": "Reviews",
   "table.groupBy.type": "Type",
   "table.pr": "Pull requests",
-  "table.noType": "Without type",
+  "table.noType": "No type",
   "attr.type": "Issue type",
   "table.unassigned": "Not assigned",
   "table.openedOn": "Opened on {date}",

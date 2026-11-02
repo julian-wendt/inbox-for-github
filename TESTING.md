@@ -268,8 +268,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Mir zugewiesen
 
 - [ ] Umschalter „Typ · Status“ (kein „Zeit“ und „Repo“ mehr; eine gespeicherte Wahl davon zeigt
-      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Ohne Typ, Blockiert (auf dem Board blockiert), Wiedervorlage, ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Ohne Typ“
-      grau, „Fertig“ grün. Jede Status-Leiste hat eine leise Beschreibung hinter der Zahl.
+      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Kein Typ, Blockiert (auf dem Board blockiert), Wiedervorlage, ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Kein Typ“
+      und „Fertig“ ohne Punkt. Die Typ-Leisten lassen sich ziehen, Blockiert, Wiedervorlage und Fertig nicht. Jede Status-Leiste hat eine leise Beschreibung hinter der Zahl.
 - [ ] In jeder Typ-Leiste zuerst Review, dann In Arbeit, Backlog, Erledigt; darin nach dem
       Zeitpunkt der Zuweisung (Sortierknopf dreht das).
 - [ ] Rechts in der Zeile, wann du zugewiesen wurdest („3D“), Tooltip „bob hat dich am …

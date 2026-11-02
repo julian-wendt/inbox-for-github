@@ -800,7 +800,7 @@ export const de: Messages = {
   "inbox.filter.review": "Reviews",
   "table.groupBy.type": "Typ",
   "table.pr": "Pull Requests",
-  "table.noType": "Ohne Typ",
+  "table.noType": "Kein Typ",
   "attr.type": "Issue-Typ",
   "table.unassigned": "Nicht zugewiesen",
   "table.openedOn": "Eröffnet am {date}",
