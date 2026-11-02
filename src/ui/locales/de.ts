@@ -823,7 +823,7 @@ export const de: Messages = {
   "table.progressHint": "In Arbeit – laut Board, oder ein Draft-Pull-Request ist verknüpft.",
   "table.todoHint": "Noch nicht begonnen – kein weiterer Board-Status und kein verknüpfter Pull Request.",
   "table.blockedHint": "Auf dem Board blockiert – es wartet erst auf etwas anderes.",
-  "table.laterHint": "Von dir auf Wiedervorlage – mit Datum kommt es dann zurück.",
+  "table.laterHint": "Von dir auf Wiedervorlage – zurück zu seinem Datum, ohne Datum, wenn du es zurückholst (O).",
   "table.prHint": "Dir von anderen zugewiesen – deine eigenen stehen in „Von mir erstellt“.",
   "table.unassignedHint": "Niemand dran – kein Zuständiger, oder ein fertiger Pull Request ohne Reviewer.",
   "table.takenHint": "Jemand ist dran – zugewiesen, oder Reviewer angefragt.",

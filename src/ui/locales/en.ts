@@ -821,7 +821,7 @@ export const en = {
   "table.progressHint": "Being worked on — on the board, or a draft pull request is linked.",
   "table.todoHint": "Not started yet — no board status further along and no linked pull request.",
   "table.blockedHint": "Blocked on the board — it waits for something else first.",
-  "table.laterHint": "Set to follow up by you — with a date it comes back then.",
+  "table.laterHint": "Set to follow up by you — back at its date, or without one when you take it back (O).",
   "table.prHint": "Assigned to you by others — your own are in Created by me.",
   "table.unassignedHint": "Nobody on it — no assignee, or a ready pull request without reviewers.",
   "table.takenHint": "Someone took it on — assigned, or reviewers asked.",
