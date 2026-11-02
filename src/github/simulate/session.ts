@@ -10,7 +10,7 @@ import { onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
-import { followUpOf } from "../../ui/followUp";
+import { followUpOf, isWaiting } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withdrawReviews, withinClosedWindow } from "../delta";
@@ -265,6 +265,7 @@ export class InboxSession {
       assigned: ids((c) => onPlate(c, this.me)),
       authored: ids((c) => isOwnOpen(c, this.me)),
       planned: ids((c) => datedOf(c, [], []) !== null),
+      snoozed: ids(isWaiting),
       done: ids((c) => c.bucket === "done"),
     };
   }

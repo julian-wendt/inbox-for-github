@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 import type { Budget, Scope } from "../../github/client";
-import { CalendarDays, CircleCheck, CircleHelp, Eraser, Inbox, RefreshCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
+import { CalendarDays, CircleCheck, CircleHelp, Eraser, Inbox, RefreshCw, RotateCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
 import { dateLocale, t } from "../i18n";
 import { ago, type VIEWS, type View } from "../labels";
 import { Avatar } from "./Avatar";
@@ -14,6 +14,7 @@ const ICONS: Record<View, LucideIcon> = {
   assigned: UserCheck,
   authored: SquarePen,
   planned: CalendarDays,
+  snoozed: RotateCw,
   done: CircleCheck,
 };
 

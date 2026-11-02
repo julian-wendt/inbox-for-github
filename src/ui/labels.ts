@@ -7,17 +7,17 @@ import { dateLocale, lang, t, type Lang } from "./i18n";
 
 /** Titles are getters, so they follow the language set at render time. */
 /**
- * A sidebar view: a bucket, except "involved" and "snoozed". What the viewer merely takes part in
- * (commented, edited, or answered long ago) shows nowhere until a mention, review request or
- * assignment; follow-ups that left the inbox wait in the bar at its bottom.
+ * A sidebar view: a bucket, except "involved". What the viewer merely takes part in (commented,
+ * edited, or answered long ago) shows nowhere until a mention, review request or assignment.
+ * "snoozed" is the Follow-up view, which lists every follow-up that waits, whatever its bucket.
  */
-export type View = Exclude<Bucket, "involved" | "snoozed">;
+export type View = Exclude<Bucket, "involved">;
 
 /**
- * The sidebar views on keys 1–5, in the order of a day's work: what asks for the viewer, what
- * they planned, their assignments, what they opened, and last what is finished.
+ * The sidebar views on keys 1–6, in the order of a day's work: what asks for the viewer, what
+ * they planned, what they wait on, their assignments, what they opened, and last what is finished.
  */
-export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "assigned", "authored", "done"] as const).map((id) => ({
+export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "snoozed", "assigned", "authored", "done"] as const).map((id) => ({
   id,
   get title() {
     return t(`bucket.${id}`);
@@ -33,7 +33,6 @@ export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned
  */
 export function viewOf(entry: Classified, me: string): View | null {
   if (entry.bucket === "involved") return null;
-  if (entry.bucket === "snoozed") return "inbox";
   if (entry.bucket === "assigned" && !onPlate(entry, me)) return sameLogin(entry.item.author, me) ? "authored" : null;
   return entry.bucket;
 }

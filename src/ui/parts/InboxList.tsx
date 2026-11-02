@@ -8,7 +8,6 @@ import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
 import { rowWhen } from "../followUp";
 import type { Dated } from "../plan";
-import { WAITING_GROUP } from "../timeGroups";
 import type { Layout } from "../usePlannedLayout";
 import type { SortOrder } from "../useSortOrders";
 import { BucketInfo } from "./BucketInfo";
@@ -92,8 +91,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
 
   const anyOpen = (timeGroups ?? []).some((g) => g.group && !folded(g.group));
   const groups = timeGroups ?? [{ group: "", heading: "", entries }];
-  // Nothing needs the viewer while only the waiting bar holds rows; it still shows, below the empty mark.
-  const idle = groups.every((g) => g.group === WAITING_GROUP || g.entries.length === 0);
+  const idle = groups.every((g) => g.entries.length === 0);
   const anyRows = groups.some((g) => g.entries.length > 0);
 
   const { body, shown, moving } = useSearchDock(search !== null);
@@ -101,13 +99,14 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
   // In a narrow column the segmented filter gives way to a menu naming the choice, and the other
   // controls to a gear menu; the bulb stays on its own.
   const asking = ASK_VIEWS.includes(bucket);
+  const byReturn = bucket === "planned" || bucket === "snoozed";
   const filterEntries: MenuEntry[] = asking
     ? ASK_FILTERS.map((f) => ({ label: f === "all" ? t(`inbox.filter.${f}`) : `${t(`inbox.filter.${f}`)} · ${askCounts[f]}`, checked: ask === f, onSelect: () => onAsk(f) }))
     : KINDS.map((k) => ({ label: k.title, checked: kind === k.id, onSelect: () => onKind(k.id) }));
   const filterLabel = asking ? t(`inbox.filter.${ask}`) : KINDS.find((k) => k.id === kind)!.title;
   const orders = [
-    { order: "newest", label: t(bucket === "planned" ? "sort.menu.soonest" : "sort.menu.newest") },
-    { order: "oldest", label: t(bucket === "planned" ? "sort.menu.latest" : "sort.menu.oldest") },
+    { order: "newest", label: t(byReturn ? "sort.menu.soonest" : "sort.menu.newest") },
+    { order: "oldest", label: t(byReturn ? "sort.menu.latest" : "sort.menu.oldest") },
   ] as const;
   const moreEntries: MenuEntry[] = [
     ...orders.map((o) => ({
@@ -161,7 +160,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
           </button>
         )}
-        <SortButton order={sort} onFlip={onSort} by={bucket === "planned" ? "return" : undefined} />
+        <SortButton order={sort} onFlip={onSort} by={byReturn ? "return" : undefined} />
         </span>
         <span className="header-compact">
           <HeaderMenu icon={<Settings size={13} />} title={t("list.options")} entries={moreEntries} />
@@ -175,7 +174,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             <span className={`inbox-empty-mark${loading ? " loading" : ""}`}>
               {loading ? <LoaderCircle size={20} className="spin" /> : "✓"}
             </span>
-            <p>{loading ? t("list.loading") : t(bucket === "planned" ? "list.empty.planned" : bucket === "done" ? "list.empty.done" : "list.empty.inbox")}</p>
+            <p>{loading ? t("list.loading") : t(`list.empty.${bucket}`)}</p>
             {!loading && <Elsewhere counts={counts} current={bucket} onJump={onJump} />}
           </div>
         )}

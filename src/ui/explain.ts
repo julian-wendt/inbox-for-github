@@ -131,7 +131,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
-        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.later", { rule: t(`reopen.${reopenOn}`) })],
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.update"), t("help.inbox.reopened")],
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back"), t("help.assigned.dated")] };
@@ -142,6 +142,8 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
         lead: t("help.planned.lead"),
         points: [t("help.planned.today"), t("help.planned.plan")],
       };
+    case "snoozed":
+      return { lead: t("help.snoozed.lead"), points: [t("help.snoozed.back", { rule: t(`reopen.${reopenOn}`) }), t("help.snoozed.tables")] };
     case "done":
       return {
         lead: t("help.done.lead"),

@@ -293,7 +293,7 @@ describe("My part done", () => {
 });
 
 describe("Snoozing on the plate", () => {
-  it("keeps a snoozed assignment on the plate, not under Snoozed, and back at work at its date", async () => {
+  it("keeps a snoozed assignment on the plate and in Follow-up, and back at work at its date", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     await app.refresh();
@@ -301,8 +301,10 @@ describe("Snoozing on the plate", () => {
     app.snooze(issue, new Date(world.now.getTime() + 2 * MINUTE).toISOString());
 
     expect(app.onPlate(issue)).toBe(true);
+    expect(app.views().snoozed).toContain(issue.id);
     expect(app.views().planned).not.toContain(issue.id);
     world.advance(3 * MINUTE);
+    expect(app.views().snoozed).not.toContain(issue.id);
     expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
     expect(app.statuses.get(issue.id)).toMatchObject({ status: "open" });
     expect(app.onPlate(issue)).toBe(true);
@@ -496,8 +498,9 @@ describe("Follow-ups", () => {
     await app.refresh();
 
     app.snooze(issue, inAnHour(world));
-    expect(app.viewOf(issue)).toBe("inbox");
+    expect(app.viewOf(issue)).toBe("snoozed");
     expect(app.views().inbox).not.toContain(issue.id);
+    expect(app.views().snoozed).toContain(issue.id);
 
     world.advance(2 * HOUR);
     expect(app.viewOf(issue)).toBe("inbox");

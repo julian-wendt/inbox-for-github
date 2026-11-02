@@ -22,6 +22,7 @@ import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEve
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
+import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
@@ -52,7 +53,7 @@ import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { usePlannedLayout } from "./ui/usePlannedLayout";
-import { groupBySnoozeEnd, groupByTime, WAITING_GROUP, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
+import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -143,7 +144,7 @@ export default function App() {
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["blocked", "later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`, "blocked"]);
+  const bars = useCollapsed("assigned-collapsed", ["blocked", "later", "finished"], ["blocked"]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
@@ -204,6 +205,7 @@ export default function App() {
     if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.statusMap, [], me).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
     if (view === "authored") return groupAuthored(inbox.classified, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
     if (view === "planned") return inbox.classified.filter((c) => dated(c) !== null);
+    if (view === "snoozed") return inbox.classified.filter(isWaiting);
     return inbox.classified.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
@@ -233,29 +235,29 @@ export default function App() {
     (): { group: TableGroup; entries: Classified[] }[] => bySprint(plannedGroups.map((g) => ({ group: `day:${g.group}` as TableGroup, entries: g.entries })), sprints.planned, plannedSprints),
     [plannedGroups, bySprint, sprints.planned, plannedSprints],
   );
+  // Follow-up lists what waits, by the day it comes back, soonest first, those without a date last.
+  const followUpAll = useMemo(() => scoped.filter(isWaiting), [scoped]);
+  const followUpGroups = useMemo(
+    () => (bucket === "snoozed" ? groupBySnoozeEnd(followUpAll.filter((c) => matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "", sort.of("snoozed") === "oldest") : []),
+    [bucket, followUpAll, query, sort],
+  );
+  const byReturnGroups = bucket === "snoozed" ? followUpGroups : plannedGroups;
   const listed = useMemo(
     () =>
       table
         ? []
-        : bucket === "planned"
-          ? plannedGroups.flatMap((g) => g.entries)
+        : bucket === "planned" || bucket === "snoozed"
+          ? byReturnGroups.flatMap((g) => g.entries)
           : oriented(sortByRecency((asking ? askBase.filter((c) => matchesAsk(c, ask, me)) : scoped.filter((c) => c.bucket === bucket)).filter((c) => matchesText(c.item, query)), rowTime), sort.of(bucket)),
-    [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, plannedGroups],
-  );
-  // The follow-ups that left the inbox wait in a bar at its bottom, soonest first, those without a date last.
-  const waiting = useMemo(
-    () => (bucket === "inbox" ? groupBySnoozeEnd(scoped.filter((c) => c.bucket === "snoozed" && matchesAsk(c, ask, me) && matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "").flatMap((g) => g.entries) : []),
-    [bucket, scoped, ask, me, query],
+    [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, byReturnGroups],
   );
   const timeGroups = useMemo(() => {
     if (table) return undefined;
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
-    if (bucket === "planned") return plannedGroups.map((g) => ({ ...g, heading: heading(g.group) }));
-    const bar = waiting.length > 0 ? [{ group: WAITING_GROUP, heading: t("table.later"), entries: waiting }] : [];
-    if (inbox.settings.groupByTime) return [...groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
-    // Without time groups the rows stand under no bar ("") and only the waiting ones under theirs.
-    return bar.length > 0 ? [{ group: "", heading: "", entries: listed }, ...bar] : undefined;
-  }, [bucket, table, listed, plannedGroups, waiting, inbox.settings.groupByTime, sort, rowTime]);
+    if (bucket === "planned" || bucket === "snoozed") return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
+    if (inbox.settings.groupByTime) return groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) }));
+    return undefined;
+  }, [bucket, table, listed, byReturnGroups, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Done stays open in the inbox.
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : authored;

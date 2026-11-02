@@ -17,6 +17,18 @@ export function followUpOf(entry: Pick<Classified, "status" | "until">): { at: s
 }
 
 /**
+ * Whether the item belongs in the Follow-up view: stored as a follow-up whose date, if it has
+ * one, has not passed, whichever list it otherwise sits in. One that a mention since brought into
+ * the inbox still counts, as it still waits.
+ *
+ * @example
+ *   isWaiting(entry); // true for an assignment set to follow up next Monday
+ */
+export function isWaiting(entry: Pick<Classified, "status" | "item">): boolean {
+  return entry.status === "snoozed" && !entry.item.closed;
+}
+
+/**
  * What the row of a follow-up with a date shows at its end instead of its age: when it comes
  * back (see `untilShort`), with the full time as tooltip. Nothing without a date.
  *

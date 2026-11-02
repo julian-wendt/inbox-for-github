@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpOf, followUpWhen, rowWhen } from "./followUp";
+import { followUpOf, followUpWhen, isWaiting, rowWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -11,6 +11,22 @@ const item: Item = {
 const now = Date.parse("2026-10-20T00:00:00Z");
 const ahead = "2026-10-27T09:00:00Z";
 const waiting = (until?: string): StoredStatus => ({ status: "snoozed", changedAt: "2026-10-05T00:00:00Z", ...(until && { until }) });
+
+describe("isWaiting", () => {
+  const of = (it: Partial<Item>, stored?: StoredStatus) => isWaiting(classify({ ...item, ...it }, "me", stored, ruleSwitches(), "mention", now));
+
+  it("takes every follow-up that waits, whichever list it comes from", () => {
+    expect(of({ author: "alice", reasons: ["mentioned"] }, waiting(ahead))).toBe(true);
+    expect(of({ author: "alice", reasons: ["assigned"] }, waiting())).toBe(true);
+    expect(of({}, waiting(ahead))).toBe(true);
+  });
+
+  it("leaves out one whose date passed, a closed item and an item without a follow-up", () => {
+    expect(of({}, waiting("2026-10-10T09:00:00Z"))).toBe(false);
+    expect(of({ closed: { state: "closed", at: "2026-10-12T00:00:00Z" } }, waiting(ahead))).toBe(false);
+    expect(of({})).toBe(false);
+  });
+});
 
 describe("followUpOf", () => {
   it("is the date of an item that waits for one", () => {
