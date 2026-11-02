@@ -13,6 +13,9 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   finishing anything, so an assignment keeps your part and an own item stays open. Each has its
   switch in Settings → Rules; feedback on own items can be narrowed to requested changes. Bots do
   not count. Supersedes "Reviews on them show there, not in the inbox" below.
+- **Merge conflicts do not ask.** A conflict on an own pull request surfaces anyway the next time
+  you work on it or try to merge it, so the inbox does not repeat it, although `pull.conflicts`
+  is already fetched.
 - **A full fetch every 15 minutes, not every hour.** Deltas see only what moves `updatedAt`, and
   assignments, board moves and cross-references do not; with an hourly full fetch they lagged up
   to an hour. A full fetch of about 200 items costs about 120 points, so four an hour plus a delta
