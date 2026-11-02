@@ -47,7 +47,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, isTypeGroup, localDay, moveBar, moveTypeBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -163,8 +163,16 @@ export default function App() {
     // What waits and what is finished but open stay at the bottom, in every grouping.
     const parked = byStatus.filter((g) => !isActiveBar(g.group));
     const working = plateNewest.filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
-    return [...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? ""), ...parked];
-  }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.me]);
+    return [...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? "", inbox.settings.typeOrder), ...parked];
+  }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.settings.typeOrder, inbox.me]);
+  /** Drag and drop of a bar in Assigned to me: the status bars by status, the type bars by type. */
+  const moveTableBar = (bar: TableGroup, target: TableGroup) => {
+    const { settings } = inbox;
+    if (settings.tableGrouping === "status") return void inbox.saveSettings({ ...settings, plateOrder: moveBar(settings.plateOrder, bar as PlateGroup, target as PlateGroup) });
+    if (!isTypeGroup(bar) || !isTypeGroup(target)) return;
+    const shown = plate.map((g) => g.group).filter(isTypeGroup);
+    void inbox.saveSettings({ ...settings, typeOrder: moveTypeBar(shown, settings.typeOrder, bar, target) });
+  };
   const [popup, setPopup] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const hoverActs = inbox.settings.hoverActs;
@@ -1250,7 +1258,7 @@ export default function App() {
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
-          onMove={(bar, target) => void inbox.saveSettings({ ...inbox.settings, plateOrder: moveBar(inbox.settings.plateOrder, bar as PlateGroup, target as PlateGroup) })}
+          onMove={moveTableBar}
           seen={inbox.seen}
           unreadMarks={inbox.unreadMarks}
           me={inbox.me ?? ""}

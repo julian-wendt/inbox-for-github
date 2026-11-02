@@ -50,7 +50,7 @@ function typeRank(group: TypeGroup): number {
  * @example
  *   groupByType(entries, {}); // [{ group: "type:Bug", entries }, { group: "type:Feature", entries }, { group: "notype", entries }]
  */
-export function groupByType(entries: Classified[], statusMap: StatusMap = {}, order: "newest" | "oldest" = "newest", me = ""): { group: TypeGroup; entries: Classified[] }[] {
+export function groupByType(entries: Classified[], statusMap: StatusMap = {}, order: "newest" | "oldest" = "newest", me = "", bars: TypeGroup[] = []): { group: TypeGroup; entries: Classified[] }[] {
   const byType = new Map<TypeGroup, Classified[]>();
   for (const entry of entries) {
     const group: TypeGroup = entry.item.kind === "pr" ? "pr" : entry.item.issueType ? `type:${entry.item.issueType.name}` : "notype";
@@ -60,9 +60,8 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
   const within = (a: Classified, b: Classified) =>
     WORK_RANK.indexOf(workStatus(a.item, statusMap)) - WORK_RANK.indexOf(workStatus(b.item, statusMap)) ||
     (order === "newest" ? updated(b).localeCompare(updated(a)) : updated(a).localeCompare(updated(b)));
-  return [...byType.keys()]
-    .sort((a, b) => typeRank(a) - typeRank(b) || a.localeCompare(b))
-    .map((group) => ({ group, entries: byType.get(group)!.sort(within) }));
+  const byDefault = [...byType.keys()].sort((a, b) => typeRank(a) - typeRank(b) || a.localeCompare(b));
+  return withSaved(byDefault, bars).map((group) => ({ group, entries: byType.get(group)!.sort(within) }));
 }
 
 /** The bars in display order. */
@@ -135,17 +134,48 @@ export function groupPlate(entries: Classified[], statusMap: StatusMap = {}, ord
  *   orderBars(["review", "focus", "progress", "todo", "later", "finished"]); // "planned" before "later"
  */
 export function orderBars(order: PlateGroup[]): PlateGroup[] {
-  const bars = order.filter((g) => PLATE_GROUPS.includes(g));
-  for (const group of PLATE_GROUPS.filter((g) => !bars.includes(g))) {
-    const next = PLATE_GROUPS.slice(PLATE_GROUPS.indexOf(group) + 1).find((g) => bars.includes(g));
-    bars.splice(next ? bars.indexOf(next) : bars.length, 0, group);
+  return withSaved(PLATE_GROUPS, order);
+}
+
+/**
+ * The bars of `defaults` in the saved order, completed with those it leaves out: each goes before
+ * the first bar that follows it by default. Saved bars not among `defaults` are dropped.
+ *
+ * @example
+ *   withSaved(["pr", "type:Bug", "notype"], ["notype", "pr"]); // ["notype", "pr", "type:Bug"]
+ */
+export function withSaved<T>(defaults: readonly T[], saved: readonly T[]): T[] {
+  const bars = saved.filter((g) => defaults.includes(g));
+  for (const group of defaults.filter((g) => !bars.includes(g))) {
+    const next = defaults.slice(defaults.indexOf(group) + 1).find((g) => bars.includes(g));
+    bars.splice(next !== undefined ? bars.indexOf(next) : bars.length, 0, group);
   }
   return bars;
 }
 
 /** Moves `bar` to just before `target`, for drag and drop. */
 export function moveBar(order: PlateGroup[], bar: PlateGroup, target: PlateGroup): PlateGroup[] {
-  const without = orderBars(order).filter((g) => g !== bar);
+  return moveBefore(orderBars(order), bar, target);
+}
+
+/**
+ * The type bars after dragging `bar` before `target`: the shown bars in their new order, then
+ * saved bars not shown now, so a type that is away for a while keeps its place in `saved`.
+ *
+ * @example
+ *   moveTypeBar(["pr", "type:Bug", "notype"], [], "notype", "pr"); // ["notype", "pr", "type:Bug"]
+ */
+export function moveTypeBar(shown: TypeGroup[], saved: TypeGroup[], bar: TypeGroup, target: TypeGroup): TypeGroup[] {
+  return [...moveBefore(shown, bar, target), ...saved.filter((g) => !shown.includes(g))];
+}
+
+/** Whether a bar of the tables is one of `groupByType`'s. */
+export function isTypeGroup(group: string): group is TypeGroup {
+  return group === "pr" || group === "notype" || group.startsWith("type:");
+}
+
+function moveBefore<T>(order: T[], bar: T, target: T): T[] {
+  const without = order.filter((g) => g !== bar);
   without.splice(without.indexOf(target), 0, bar);
   return without;
 }

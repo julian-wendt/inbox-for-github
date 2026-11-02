@@ -5,7 +5,7 @@ import type { LogLevel } from "./log";
 import type { Handoff, Item, Reopen, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "./model";
 import { REOPEN_DEFAULT } from "./reopen";
 import type { RepoFilter } from "./repoFilter";
-import { MOVES_UP_DEFAULT, type MovesUp, type PlateGroup } from "./ui/assignments";
+import { MOVES_UP_DEFAULT, type MovesUp, type PlateGroup, type TypeGroup } from "./ui/assignments";
 import type { Planned } from "./ui/plan";
 import type { NotifyReason } from "./ui/attention";
 import type { AttributeSetting } from "./ui/attributes";
@@ -210,6 +210,8 @@ export interface Settings {
   detailAttributes: AttributeSetting[] | null;
   /** The order of the bars in Assigned to me; bars left out follow in their default order. */
   plateOrder: PlateGroup[];
+  /** The order of the type bars in Assigned to me, grouped by type; bars left out keep their default place. */
+  typeOrder: TypeGroup[];
   /** Per board, how its status values map to work statuses; values left out are guessed (see `workStatusOf`). */
   statusMap: StatusMap;
   /** Load status and sprint from GitHub Projects boards; off saves a query per refresh. */
@@ -234,7 +236,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

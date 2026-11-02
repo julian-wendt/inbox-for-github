@@ -3,7 +3,7 @@ import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
-import { assignedAt, hasNewActivity, isNewAssignment, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
+import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
 import { dateLocale, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
@@ -157,6 +157,8 @@ export function AssignedTable(props: Props) {
   const [dragged, setDragged] = useState<TableGroup | null>(null);
   const [over, setOver] = useState<TableGroup | null>(null);
   const byStatus = assigned && props.grouping === "status";
+  // By type, only the type bars move; Blocked, Follow-up and Finished stay at the bottom.
+  const movable = (group: TableGroup) => assigned && (byStatus || isTypeGroup(group));
   const dotted = (color: string, text: string) => (
     <>
       <i className={`option-dot option-${color}`} aria-hidden />
@@ -165,8 +167,8 @@ export function AssignedTable(props: Props) {
   );
   const label = (group: TableGroup, entries: Classified[]) => {
     if (group === "pr") return t("table.pr");
-    if (group === "notype") return dotted("gray", t("table.noType"));
-    if (group === "finished") return dotted("green", t("table.finished"));
+    if (group === "notype") return t("table.noType");
+    if (group === "finished") return t("table.finished");
     if (group === "unassigned") return t("table.unassigned");
     if (group === "taken") return t("table.taken");
     if (group.startsWith("type:")) return dotted(entries[0]?.item.issueType?.color.toLowerCase() ?? "gray", group.slice(5));
@@ -227,14 +229,14 @@ export function AssignedTable(props: Props) {
               key={group}
               className={`bar-group${over === group && dragged !== group ? " drop-target" : ""}`}
               onDragOver={(e) => {
-                if (!dragged) return;
+                if (!dragged || !movable(group)) return;
                 e.preventDefault();
                 setOver(group);
               }}
               onDragLeave={() => setOver((current) => (current === group ? null : current))}
               onDrop={(e) => {
                 e.preventDefault();
-                if (dragged && dragged !== group) onMove(dragged, group);
+                if (dragged && dragged !== group && movable(group)) onMove(dragged, group);
                 setDragged(null);
                 setOver(null);
               }}
@@ -247,7 +249,7 @@ export function AssignedTable(props: Props) {
                   onToggle(group);
                 }}
                 data-bar={group}
-                draggable={byStatus}
+                draggable={movable(group)}
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = "move";
                   setDragged(group);
@@ -256,9 +258,9 @@ export function AssignedTable(props: Props) {
                   setDragged(null);
                   setOver(null);
                 }}
-                title={byStatus ? t("table.dragHint") : undefined}
+                title={movable(group) ? t("table.dragHint") : undefined}
               >
-                <GripVertical size={16} className={`bar-grip${byStatus ? "" : " hidden"}`} />
+                <GripVertical size={16} className={`bar-grip${movable(group) ? "" : " hidden"}`} />
                 <ChevronRight size={14} className="bar-chevron" />
                 {label(group, entries)}
                 <span>{entries.length}</span>

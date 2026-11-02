@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, onPlate, orderBars, plateCount, shownStatus, type PlateGroup } from "./assignments";
+import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -136,6 +136,12 @@ describe("groupByType", () => {
     expect(groupByType(entries).map((g) => g.group)).toEqual(["pr", "type:Bug", "type:Spike", "type:Task", "type:Feature", "type:Story", "notype"]);
   });
 
+  it("follows the saved order and puts a type it leaves out before the bar that follows it by default", () => {
+    const entries = [typed("story", "Story"), typed("none", null), typed("bug", "Bug"), typed("task", "Task")];
+    expect(groupByType(entries, {}, "newest", "", ["type:Story", "type:Bug"]).map((g) => g.group)).toEqual(["type:Task", "type:Story", "type:Bug", "notype"]);
+    expect(groupByType(entries, {}, "newest", "", ["notype", "type:Gone"]).map((g) => g.group)).toEqual(["type:Bug", "type:Task", "type:Story", "notype"]);
+  });
+
   it("orders each bar by how far the work is, then by the last update", () => {
     const entries = [typed("todo", "Bug"), typed("review", "Bug", "In Review"), typed("progress", "Bug", "In Progress")];
     expect(groupByType(entries)[0].entries.map((e) => e.item.id)).toEqual(["review", "progress", "todo"]);
@@ -211,3 +217,15 @@ describe("lastOthersActivity", () => {
   });
 });
 
+describe("moveTypeBar", () => {
+  it("moves a type bar before another and keeps saved bars that are not shown", () => {
+    expect(moveTypeBar(["pr", "type:Bug", "notype"], ["type:Epic", "pr"], "notype", "pr")).toEqual(["notype", "pr", "type:Bug", "type:Epic"]);
+  });
+});
+
+describe("withSaved", () => {
+  it("completes a saved order with the bars it leaves out", () => {
+    expect(withSaved(["a", "b", "c", "d"], ["c", "a"])).toEqual(["b", "c", "a", "d"]);
+    expect(withSaved(["a", "b"], ["x"])).toEqual(["a", "b"]);
+  });
+});
