@@ -12,7 +12,7 @@ Notable tokens:
 | Token | Use |
 |---|---|
 | `--text`, `--text-muted`, `--text-faint` | text levels; lists and detail use `--text-content` (slightly dimmer, about 12:1 in both themes) |
-| `--border`, `--border-strong` | quiet and visible lines; chips use `--border-strong` |
+| `--border`, `--border-strong` | quiet and visible lines; cards, inputs and dropdowns use `--border` (`--border-strong` on hover), chips `--border-strong` |
 | `--hover`, `--selected` | row and button backgrounds |
 | `--focus-fill` | keyboard focus fill, 3:1 against the panel |
 | `--segment-fill` | the active part of a date or time field; softer by choice, below 3:1 |
@@ -44,6 +44,7 @@ darkens instead.
   (`calc(var(--radius-m) - 1px)` inside a 1px border).
 - Items of one kind are equally tall wherever they appear: in the settings every control is
   `--control-h` (30 px) and every row with a switch at least `--row-h`, with or without a hint.
+  The organization dropdown is the one larger control (40 px), as it carries an avatar and a count.
 - A segmented control picks one option; one where several can be on (weekdays) is
   `.segmented.multi`, whose options stand apart with a gap.
 - Controls in a list or table header are greyed out (`disabled`, `--text-faint`) when they have

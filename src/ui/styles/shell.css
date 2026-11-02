@@ -673,7 +673,7 @@
 }
 
 /* Controls of one kind stand equally tall in every section. */
-.dialog.settings :is(.btn, .repo-search, .org-add input, .segment-field, .org-select-button) {
+.dialog.settings :is(.btn, .repo-search, .org-add input, .segment-field) {
   height: var(--control-h);
 }
 
@@ -718,13 +718,13 @@
 .org-select-button {
   height: 40px;
   padding: 0 12px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-m);
   background: var(--bg);
 }
 
 .org-select-button:hover {
-  border-color: var(--text-faint);
+  border-color: var(--border-strong);
 }
 
 .org-select .org-avatar {
@@ -872,7 +872,7 @@
   min-width: 160px;
   height: 28px;
   padding: 0 10px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-m);
   background: var(--bg);
   -webkit-user-select: text;
@@ -914,7 +914,7 @@
   flex: 1;
   height: 30px;
   padding: 0 10px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-m);
   background: var(--bg);
   -webkit-user-select: text;
