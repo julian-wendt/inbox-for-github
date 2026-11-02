@@ -23,8 +23,10 @@ describe("shownActivities", () => {
       { kind: "review-requested", at: at(4), actor: "alice", reviewer: "team:security" },
       { kind: "reviewed", at: at(5), actor: "copilot[bot]", state: "COMMENTED" },
       { kind: "reviewed", at: at(6), actor: "dave", state: "APPROVED" },
+      { kind: "assigned", at: at(7), actor: "Me", assignee: "dave" },
+      { kind: "unassigned", at: at(8), actor: "Me", assignee: "dave" },
     ];
-    expect(shownActivities({ activities }, "me", []).map((s) => s.activity.at)).toEqual([at(2), at(4), at(6)]);
+    expect(shownActivities({ activities }, "me", []).map((s) => s.activity.at)).toEqual([at(2), at(4), at(6), at(7), at(8)]);
   });
 
   it("groups force pushes by one person, and keeps only withdrawn review requests that concern me", () => {

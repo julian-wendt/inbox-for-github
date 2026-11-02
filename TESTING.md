@@ -332,6 +332,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       die Aktion.
 - [ ] Mehrere Items schnell hintereinander mit ⌃A zuweisen: keine Wartezeit, alle landen auf GitHub.
 - [ ] Im Verlauf des Items steht sofort „Du hast dich selbst zugewiesen“ bzw. nach ⌃U „… entfernt“.
+- [ ] Auf GitHub jemand anderen zuweisen oder entfernen: nach dem Laden steht im Verlauf „Du hast bob
+      zugewiesen“ bzw. „Du hast die Zuweisung von bob entfernt“; Zuweisungen zwischen anderen stehen nicht darin.
 - [ ] ⌃A weist nur zu: auf einem Item, dem du schon zugewiesen bist, sagt es „Nichts zuzuweisen“. ⌃U nimmt dich heraus, ohne Zuweisung sagt es „Nichts zu entfernen“. A, U, ⇧A und ⌘A tun das nie (U und R sind gelesen/ungelesen); im Kommentar- oder Notizfeld springt ⌃A an den Zeilenanfang.
       Schlägt es fehl (ohne WLAN), steht dort „Zuweisen auf GitHub fehlgeschlagen“ bzw. „Entfernen auf GitHub fehlgeschlagen“ mit
       rotem Warnzeichen, die Fehlermeldung als Tooltip; der Eintrag bleibt.

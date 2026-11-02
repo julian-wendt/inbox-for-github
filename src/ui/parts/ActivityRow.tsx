@@ -91,11 +91,19 @@ export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: 
       break;
     case "assigned":
       icon = UserRound;
-      text = mine ? t("activity.assignedSelf") : tRich("activity.assigned", { name: <strong>{activity.actor}</strong> });
+      text = !sameLogin(activity.assignee, me)
+        ? tRich("activity.assignedOther", { name: <strong>{activity.assignee}</strong> })
+        : mine
+          ? t("activity.assignedSelf")
+          : tRich("activity.assigned", { name: <strong>{activity.actor}</strong> });
       break;
     case "unassigned":
       icon = UserMinus;
-      text = mine ? t("activity.unassignedSelf") : tRich("activity.unassigned", { name: <strong>{activity.actor}</strong> });
+      text = !sameLogin(activity.assignee, me)
+        ? tRich("activity.unassignedOther", { name: <strong>{activity.assignee}</strong> })
+        : mine
+          ? t("activity.unassignedSelf")
+          : tRich("activity.unassigned", { name: <strong>{activity.actor}</strong> });
       break;
     case "review-requested":
       icon = Eye;
