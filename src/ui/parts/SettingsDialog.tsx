@@ -1,7 +1,7 @@
 import { Bell, BellOff, Building2, CalendarDays, CircleUserRound, FolderGit2, FolderOpen, ListChecks, Palette, RotateCcw, Settings2, SquareKanban, X, type LucideIcon } from "lucide-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Budget } from "../../github/client";
 import { revealLog, type LogLevel } from "../../log";
 import type { FeedbackMode } from "../../feedback";
@@ -65,6 +65,8 @@ const CLOSED_DAYS = [0, 1, 7, 30];
 const REFRESH_MINUTES = [0, 1, 5, 15, 30, 60];
 
 const LOG_LEVELS: LogLevel[] = ["off", "debug", "verbose"];
+const OPEN_AT = ["top", "relevant", "latest"] as const;
+const DESCRIPTION_MODES = ["collapsed", "expandable", "full"] as const;
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
@@ -242,19 +244,10 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
 
           {section === "general" && (
             <>
-              <div className="field">
-                <span>{t("settings.language")}</span>
-                <div className="segmented">
-                  {LANGUAGES.map((l) => (
-                    <button key={l.id} className={draft.language === l.id ? "on" : ""} onClick={() => change({ language: l.id })}>
-                      {l.title}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.languageHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.workdays")}</span>
+              <Field label={t("settings.language")} hint={t("settings.languageHint")}>
+                <Choice options={LANGUAGES.map((l) => l.id)} value={draft.language} label={(id) => LANGUAGES.find((l) => l.id === id)!.title} onChange={(language) => change({ language })} />
+              </Field>
+              <Field label={t("settings.workdays")} hint={t("settings.workdaysHint")}>
                 <div className="segmented weekdays">
                   {WEEK.map((day) => (
                     <button
@@ -267,10 +260,8 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                     </button>
                   ))}
                 </div>
-                <small>{t("settings.workdaysHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.followUpTime")}</span>
+              </Field>
+              <Field label={t("settings.followUpTime")} hint={t("settings.followUpTimeHint")}>
                 <div className="time-field">
                   <SegmentField
                     label={t("settings.followUpTime")}
@@ -282,48 +273,25 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                     onChange={(index, value) => change({ followUpTime: clockText({ ...clockOf(draft.followUpTime), [index === 0 ? "hours" : "minutes"]: value }) })}
                   />
                 </div>
-                <small>{t("settings.followUpTimeHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.refresh")}</span>
-                <div className="segmented">
-                  {REFRESH_MINUTES.map((m) => (
-                    <button key={m} className={draft.refreshMinutes === m ? "on" : ""} onClick={() => change({ refreshMinutes: m })}>
-                      {m === 0 ? t("settings.refresh.off") : t("settings.refresh.minutes", { count: m })}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.refreshHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("usage.title")}</span>
+              </Field>
+              <Field label={t("settings.refresh")} hint={t("settings.refreshHint")}>
+                <Choice options={REFRESH_MINUTES} value={draft.refreshMinutes} label={(m) => (m === 0 ? t("settings.refresh.off") : t("settings.refresh.minutes", { count: m }))} onChange={(refreshMinutes) => change({ refreshMinutes })} />
+              </Field>
+              <Field label={t("usage.title")} hint={t("usage.hint")}>
                 <UsageMeter usage={usage} refreshMinutes={draft.refreshMinutes} />
-                <small>{t("usage.hint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.maxItems")}</span>
-                <div className="segmented">
-                  {MAX_ITEMS.map((n) => (
-                    <button key={n} className={draft.maxItems === n ? "on" : ""} onClick={() => change({ maxItems: n })}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.maxItemsHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.closedDays")}</span>
-                <div className="segmented">
-                  {CLOSED_DAYS.map((n) => (
-                    <button key={n} className={draft.closedDays === n ? "on" : ""} onClick={() => change({ closedDays: n })}>
-                      {n === 0 ? t("settings.closedDays.off") : n === 1 ? t("settings.closedDays.day") : t("settings.closedDays.days", { count: n })}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.closedDaysHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.repoFolder")}</span>
+              </Field>
+              <Field label={t("settings.maxItems")} hint={t("settings.maxItemsHint")}>
+                <Choice options={MAX_ITEMS} value={draft.maxItems} label={String} onChange={(maxItems) => change({ maxItems })} />
+              </Field>
+              <Field label={t("settings.closedDays")} hint={t("settings.closedDaysHint")}>
+                <Choice
+                  options={CLOSED_DAYS}
+                  value={draft.closedDays}
+                  label={(n) => (n === 0 ? t("settings.closedDays.off") : n === 1 ? t("settings.closedDays.day") : t("settings.closedDays.days", { count: n }))}
+                  onChange={(closedDays) => change({ closedDays })}
+                />
+              </Field>
+              <Field label={t("settings.repoFolder")} hint={t("settings.repoFolderHint")}>
                 <input
                   key={draft.repoFolder}
                   className="repo-search"
@@ -334,27 +302,17 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                   onBlur={(e) => e.target.value.trim() !== draft.repoFolder && change({ repoFolder: e.target.value.trim() })}
                   onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
                 />
-                <small>{t("settings.repoFolderHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.logging")}</span>
+              </Field>
+              <Field label={t("settings.logging")} hint={t("settings.loggingHint")}>
                 <div className="logging-row">
-                  <div className="segmented">
-                    {LOG_LEVELS.map((level) => (
-                      <button key={level} className={draft.logging === level ? "on" : ""} onClick={() => change({ logging: level })}>
-                        {t(`settings.logging.${level}`)}
-                      </button>
-                    ))}
-                  </div>
+                  <Choice options={LOG_LEVELS} value={draft.logging} label={(level) => t(`settings.logging.${level}`)} onChange={(logging) => change({ logging })} />
                   <button className="btn" onClick={() => void revealLog()}>
                     <FolderOpen size={14} aria-hidden />
                     {t("settings.logShow")}
                   </button>
                 </div>
-                <small>{t("settings.loggingHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.reset")}</span>
+              </Field>
+              <Field label={t("settings.reset")} hint={resetCount === null ? t("settings.resetHint") : t(resetCount === 1 ? "settings.resetDoneOne" : "settings.resetDone", { count: resetCount })}>
                 <div className="reset-row">
                   {confirmReset ? (
                     <>
@@ -371,8 +329,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                     </button>
                   )}
                 </div>
-                <small>{resetCount === null ? t("settings.resetHint") : t(resetCount === 1 ? "settings.resetDoneOne" : "settings.resetDone", { count: resetCount })}</small>
-              </div>
+              </Field>
             </>
           )}
 
@@ -380,7 +337,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
 
           {section === "notify" && (
             <>
-              <div className="field">
+              <Field>
                 <div className="toggle-card">
                   <Toggle title={t("settings.notifications")} hint={t("settings.notificationsHint")} checked={draft.notifications} onChange={(on) => change({ notifications: on })} />
                   <fieldset className="toggle-card-part" disabled={!draft.notifications}>
@@ -394,176 +351,115 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                     <Toggle title={t("settings.notifyInFront")} hint={t("settings.notifyInFrontHint")} checked={draft.notifyInFront} onChange={(on) => change({ notifyInFront: on })} />
                   </fieldset>
                 </div>
-              </div>
-              <div className="field">
-                <span>{t("settings.delivery")}</span>
+              </Field>
+              <Field label={t("settings.delivery")} hint={t(`settings.deliveryHint.${draft.notifyDelivery.mode}`)}>
                 <fieldset className="field-group" disabled={!draft.notifications}>
                   <DeliveryEditor value={draft.notifyDelivery} onChange={(notifyDelivery) => change({ notifyDelivery })} />
                 </fieldset>
-                <small>{t(`settings.deliveryHint.${draft.notifyDelivery.mode}`)}</small>
-              </div>
-              <div className="field">
-                <Toggle title={t("settings.dockBadge")} hint={t("settings.dockBadgeHint")} checked={draft.dockBadge} onChange={(on) => change({ dockBadge: on })} />
-              </div>
+              </Field>
+              <Field>
+                <div className="toggle-card">
+                  <Toggle title={t("settings.dockBadge")} hint={t("settings.dockBadgeHint")} checked={draft.dockBadge} onChange={(on) => change({ dockBadge: on })} />
+                </div>
+              </Field>
             </>
           )}
 
           {section === "look" && (
             <>
-              <div className="field">
-                <span>{t("settings.theme")}</span>
-                <div className="segmented">
-                  {THEMES.map((id) => (
-                    <button key={id} className={theme === id ? "on" : ""} onClick={() => change({ theme: id })}>
-                      {t(`settings.theme.${id}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.themeHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.group.lists")}</span>
+              <Field label={t("settings.theme")} hint={t("settings.themeHint")}>
+                <Choice options={THEMES} value={theme} label={(id) => t(`settings.theme.${id}`)} onChange={(next) => change({ theme: next })} />
+              </Field>
+              <Field label={t("settings.group.lists")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.groupByTime")} hint={t("settings.groupByTimeHint")} checked={draft.groupByTime} onChange={(on) => change({ groupByTime: on })} />
                   <Toggle title={t("settings.hoverActs")} hint={t("settings.hoverActsHint")} checked={draft.hoverActs} onChange={(on) => change({ hoverActs: on })} />
                 </div>
-              </div>
-              <div className="field">
-                <span>{t("settings.group.sidebar")}</span>
+              </Field>
+              <Field label={t("settings.group.sidebar")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.viewCounts")} hint={t("settings.viewCountsHint")} checked={draft.viewCounts} onChange={(on) => change({ viewCounts: on })} />
                   <Toggle title={t("settings.repoCounts")} hint={t("settings.repoCountsHint")} checked={draft.repoCounts} onChange={(on) => change({ repoCounts: on })} />
                   <Toggle title={t("settings.refreshInRepos")} hint={t("settings.refreshInReposHint")} checked={draft.refreshInRepos} onChange={(on) => change({ refreshInRepos: on })} />
                 </div>
-              </div>
+              </Field>
               <AttributeList
                 list={combineAttributes(draft.tableAttributes, draft.detailAttributes, attributes)}
                 options={attributes}
                 onChange={(list) => change(splitAttributes(list))}
               />
-              <div className="field">
-                <span>{t("settings.recentComments")}</span>
-                <div className="segmented">
-                  {RECENT_COMMENTS.map((n) => (
-                    <button key={n} className={draft.recentComments === n ? "on" : ""} onClick={() => change({ recentComments: n })}>
-                      {n === 0 ? t("settings.recentComments.all") : n}
-                    </button>
-                  ))}
+              <Field label={t("settings.recentComments")} hint={t("settings.recentCommentsHint")}>
+                <Choice options={RECENT_COMMENTS} value={draft.recentComments} label={(n) => (n === 0 ? t("settings.recentComments.all") : String(n))} onChange={(recentComments) => change({ recentComments })} />
+              </Field>
+              <Field label={t("settings.botComments")} hint={t("settings.botCommentsHint")}>
+                <Choice options={BOT_COMMENTS} value={draft.botComments} label={(id) => t(`settings.botComments.${id}`)} onChange={(botComments) => change({ botComments })} />
+              </Field>
+              <Field label={t("settings.openAt")} hint={t("settings.openAtHint")}>
+                <Choice options={OPEN_AT} value={draft.openAt} label={(id) => t(`settings.openAt.${id}`)} onChange={(openAt) => change({ openAt })} />
+              </Field>
+              <Field label={t("settings.descriptionMode")} hint={t("settings.descriptionModeHint")}>
+                <Choice options={DESCRIPTION_MODES} value={draft.descriptionMode} label={(id) => t(`settings.descriptionMode.${id}`)} onChange={(descriptionMode) => change({ descriptionMode })} />
+              </Field>
+              <Field>
+                <div className="toggle-card">
+                  <Toggle title={t("settings.stickyReply")} hint={t("settings.stickyReplyHint")} checked={draft.stickyReply} onChange={(on) => change({ stickyReply: on })} />
                 </div>
-                <small>{t("settings.recentCommentsHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.botComments")}</span>
-                <div className="segmented">
-                  {BOT_COMMENTS.map((id) => (
-                    <button key={id} className={draft.botComments === id ? "on" : ""} onClick={() => change({ botComments: id })}>
-                      {t(`settings.botComments.${id}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.botCommentsHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.openAt")}</span>
-                <div className="segmented">
-                  {(["top", "relevant", "latest"] as const).map((id) => (
-                    <button key={id} className={draft.openAt === id ? "on" : ""} onClick={() => change({ openAt: id })}>
-                      {t(`settings.openAt.${id}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.openAtHint")}</small>
-              </div>
-              <div className="field">
-                <span>{t("settings.descriptionMode")}</span>
-                <div className="segmented">
-                  {(["collapsed", "expandable", "full"] as const).map((id) => (
-                    <button key={id} className={draft.descriptionMode === id ? "on" : ""} onClick={() => change({ descriptionMode: id })}>
-                      {t(`settings.descriptionMode.${id}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t("settings.descriptionModeHint")}</small>
-              </div>
-              <div className="field">
-                <Toggle title={t("settings.stickyReply")} hint={t("settings.stickyReplyHint")} checked={draft.stickyReply} onChange={(on) => change({ stickyReply: on })} />
-              </div>
+              </Field>
             </>
           )}
 
           {section === "avatars" && (
             <>
-              <div className="toggle-card">
-                <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
-              </div>
-              <div className="field">
-                <span>{t("settings.orbs")}</span>
+              <Field>
+                <div className="toggle-card">
+                  <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
+                </div>
+              </Field>
+              <Field label={t("settings.orbs")} hint={t("settings.orbsHint")}>
                 <OrbShuffle looks={draft.orbLooks} onChange={(orbLooks) => change({ orbLooks })} />
-                <small>{t("settings.orbsHint")}</small>
-              </div>
+              </Field>
             </>
           )}
 
           {section === "rules" && (
             <>
-              <div className="field">
-                <span>{t("settings.reopen")}</span>
-                <div className="segmented">
-                  {REOPEN.map((id) => (
-                    <button key={id} className={reopenShown === id ? "on" : ""} onClick={() => change({ reopenOn: id })}>
-                      {t(`settings.reopen.${id}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t(`settings.reopen.${reopenShown}Hint`)}</small>
+              <Field label={t("settings.reopen")} hint={t(`settings.reopen.${reopenShown}Hint`)}>
+                <Choice options={REOPEN} value={reopenShown} label={(id) => t(`settings.reopen.${id}`)} onChange={(next) => change({ reopenOn: next })} />
+              </Field>
+              <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
+                  <Toggle title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
                 </div>
-              </div>
-
-              <div className="field">
-                <span>{t("settings.ownFeedback")}</span>
-                <div className="segmented">
-                  {FEEDBACK_MODES.map((mode) => (
-                    <button key={mode} className={draft.ownFeedback === mode ? "on" : ""} onClick={() => change({ ownFeedback: mode })}>
-                      {t(`settings.ownFeedback.${mode}`)}
-                    </button>
-                  ))}
-                </div>
-                <small>{t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}</small>
+              </Field>
+              <Field label={t("settings.ownFeedback")} hint={t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}>
+                <Choice options={FEEDBACK_MODES} value={draft.ownFeedback} label={(mode) => t(`settings.ownFeedback.${mode}`)} onChange={(ownFeedback) => change({ ownFeedback })} />
+              </Field>
+              <Field label={t("settings.group.yourWork")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
-                  <Toggle title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
                   <Toggle title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
                 </div>
-              </div>
-
-              <div className="field">
-                <span>{t("settings.movesUp")}</span>
-                <small>{t("settings.movesUpHint")}</small>
+              </Field>
+              <Field label={t("settings.movesUp")} hint={t("settings.movesUpHint")}>
                 <div className="toggle-card">
                   {MOVES_UP.map((id) => (
                     <Toggle key={id} title={t(`settings.movesUp.${id}`)} hint={t(`settings.movesUp.${id}Hint`)} checked={draft.movesUp[id]} onChange={(on) => change({ movesUp: { ...draft.movesUp, [id]: on } })} />
                   ))}
                 </div>
-              </div>
-
-              <div className="field">
-                <span>{t("settings.automation")}</span>
+              </Field>
+              <Field label={t("settings.automation")}>
                 <div className="toggle-card">
                   {RULES.map((rule) => (
                     <Toggle key={rule.id} title={ruleText(rule.id, "title")} hint={ruleText(rule.id, "description")} checked={rules[rule.id]} onChange={(on) => change({ rules: { ...rules, [rule.id]: on } })} />
                   ))}
                 </div>
-              </div>
-
+              </Field>
               {orgs.length > 0 && (
-                <div className="field">
-                  <span>{t("settings.directOnly")}</span>
-                  <small>{t("settings.directOnlyHint")}</small>
+                <Field label={t("settings.directOnly")} hint={t("settings.directOnlyHint")}>
                   <OrgSelect orgs={orgs} memberOrgs={owners} value={repoOrg} filters={directOnlyFilters} onChange={setRepoOrg} off />
                   <RepoFilterEditor key={repoOrg} org={repoOrg} filter={directOnlyFilters[repoOrg] ?? { mode: "only", repos: [] }} onChange={(f) => setDirectOnly(repoOrg, f)} listOnly />
-                </div>
+                </Field>
               )}
             </>
           )}
@@ -640,6 +536,41 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
           </div>
         )}
       </motion.div>
+    </div>
+  );
+}
+
+/**
+ * One setting: its label above, the control, and the hint below, so every section reads the same.
+ * A field of switches leaves the label to the card's group, or out when the switch names itself.
+ *
+ * @example
+ *   <Field label={t("settings.theme")} hint={t("settings.themeHint")}><Choice … /></Field>
+ */
+function Field({ label, hint, children }: { label?: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="field">
+      {label && <span>{label}</span>}
+      {children}
+      {hint && <small>{hint}</small>}
+    </div>
+  );
+}
+
+/**
+ * A few exclusive choices as a segmented control, the current one marked.
+ *
+ * @example
+ *   <Choice options={THEMES} value={theme} label={(id) => t(`settings.theme.${id}`)} onChange={(theme) => change({ theme })} />
+ */
+function Choice<T extends string | number>({ options, value, label, onChange }: { options: readonly T[]; value: T; label: (option: T) => string; onChange: (option: T) => void }) {
+  return (
+    <div className="segmented">
+      {options.map((option) => (
+        <button key={option} className={value === option ? "on" : ""} onClick={() => onChange(option)}>
+          {label(option)}
+        </button>
+      ))}
     </div>
   );
 }

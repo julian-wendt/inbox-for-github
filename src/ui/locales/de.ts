@@ -766,6 +766,8 @@ export const de: Messages = {
   "settings.notifyOnHint": "Ein ausgeschalteter Grund stellt nur seine Mitteilung ab; das Item landet trotzdem in deiner Inbox.",
   "settings.group.lists": "Listen",
   "settings.group.sidebar": "Seitenleiste",
+  "settings.group.reviewed": "Pull Requests, die du reviewt hast",
+  "settings.group.yourWork": "Deine Zuweisungen und Items",
   "rule.mention-after-my-activity.title": "Nur unbeantwortete Erwähnungen",
   "rule.mention-after-my-activity.description": "Eine Erwähnung hält ein Item in der Inbox, bis du danach kommentierst. Erwähnst du dich selbst, gilt das als Notiz an dich und bleibt, bis du ohne Selbst-Erwähnung kommentierst.",
   "settings.boardsField": "Status und Sprint von diesen Boards anzeigen",

@@ -520,7 +520,8 @@
   font-weight: 500;
 }
 
-.field small {
+.field small,
+.toggle-row small {
   color: var(--text-faint);
   font-size: 12px;
 }

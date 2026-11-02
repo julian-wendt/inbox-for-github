@@ -9,9 +9,9 @@ take it, so a new key needs no migration.
 1. **Type and default:** add the field to `Settings` with a doc comment saying what it does, and
    its default to `DEFAULT_SETTINGS`.
 2. **Texts:** label and hint keys (`settings.<name>`, `settings.<name>Hint`) in `en.ts` and `de.ts`.
-3. **UI:** a field in `SettingsDialog.tsx` under the fitting section (`general`, `notify`, `look`,
-   `rules`, `boards`, …), following the neighbors: a `Toggle` for booleans, `segmented` for a few
-   choices. Switches that belong together share one `toggle-card`; switches that only refine a
+3. **UI:** a `Field` in `SettingsDialog.tsx` under the fitting section (`general`, `notify`, `look`,
+   `rules`, `boards`, …): label above, control, hint below. A `Toggle` in a `toggle-card` for
+   booleans, also a lone one; `Choice` (a segmented control) for a few choices. Switches that belong together share one `toggle-card`; switches that only refine a
    main switch go into a `toggle-card-part` under it, disabled while it is off. Every setting
    gets a hint that says precisely what it does.
 4. **Use it:** read it from `inbox.settings` in `App.tsx`, or in `useInbox` when it affects fetching.

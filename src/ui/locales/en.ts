@@ -764,6 +764,8 @@ export const en = {
   "settings.notifyOnHint": "A reason switched off only stops its notification; the item still lands in your inbox.",
   "settings.group.lists": "Lists",
   "settings.group.sidebar": "Sidebar",
+  "settings.group.reviewed": "Pull requests you reviewed",
+  "settings.group.yourWork": "Your assignments and items",
   "rule.mention-after-my-activity.title": "Only unanswered mentions",
   "rule.mention-after-my-activity.description": "A mention keeps an item in the inbox until you comment after it. If you mention yourself, it counts as a note to you and stays until you comment without mentioning yourself.",
   "settings.boardsField": "Show status and sprint from these boards",
