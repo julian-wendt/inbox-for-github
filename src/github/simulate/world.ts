@@ -173,11 +173,12 @@ export class GitHubSimulator {
   }
 
   /** A person, or `team:<slug>` for a team. */
-  requestReview(ref: Ref, actor: string, reviewer: string): void {
+  /** @param quiet  Leaves `updatedAt` alone, for the case that GitHub does too (not verified). */
+  requestReview(ref: Ref, actor: string, reviewer: string, { quiet = false } = {}): void {
     const entry = this.entry(ref);
     entry.requested.add(reviewer);
     this.event(entry.raw, { __typename: "ReviewRequestedEvent", actor: this.author(actor), requestedReviewer: this.reviewer(reviewer) });
-    this.touch(entry.raw);
+    if (!quiet) this.touch(entry.raw);
   }
 
   /** Takes the request back; GitHub does not move `updatedAt` for it as far as known. */

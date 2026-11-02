@@ -82,7 +82,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`. Next to them, the ids
   of all open review requests (`fetchReviewIds`, 1 point): a cached item whose request is gone
-  loses the reason "review" and, left without a reason, the cache (`withdrawReviews`).
+  loses the reason "review" and, left without a reason, the cache (`withdrawReviews`); an id the
+  cache does not hold as a review request is loaded by id and gets it (`unseenReviews`,
+  `addRequested`, at most 50 per delta), whether or not the request moved `updatedAt`.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
   `encodeScope`). Narrowing a setting filters locally. A longer closed window runs a delta plus
   the closed searches over the added days only (`widensClosed`, `closedBefore`); switching boards

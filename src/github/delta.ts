@@ -1,4 +1,4 @@
-import type { Item } from "../model";
+import type { Item, Reason } from "../model";
 
 /** A full fetch at least this often; deltas miss changes that do not touch `updatedAt`, such as board status. */
 export const FULL_EVERY_MS = 15 * 60_000;
@@ -48,6 +48,48 @@ export function withdrawReviews(items: Item[], requested: ReadonlySet<string>): 
     const reasons = item.reasons.filter((r) => r !== "review");
     return reasons.length > 0 ? [{ ...item, reasons }] : [];
   });
+}
+
+/** The most new review requests one delta loads by id: one request of 19 points (see `REFRESH_CHUNK`). */
+export const NEW_REVIEWS_MAX = 50;
+
+/**
+ * The open review requests a delta's search did not bring: ids among `requested` whose item is
+ * not held as a review request. The delta finds a request only when it moves the item's
+ * `updatedAt`, which is not verified; the ids show every request regardless. At most
+ * `NEW_REVIEWS_MAX`, so a cut-off full fetch cannot make every delta load hundreds.
+ *
+ * @param items      The items after the delta's merge.
+ * @param requested  The ids of all open pull requests requesting the viewer's review (`fetchReviewIds`).
+ * @returns The ids to load by node id, in the order GitHub returned them.
+ *
+ * @example
+ *   unseenReviews(items, new Set(["PR_new", "PR_known"])); // ["PR_new"]
+ */
+export function unseenReviews(items: Item[], requested: ReadonlySet<string>): string[] {
+  const known = new Set(items.filter((item) => item.reasons.includes("review")).map((item) => item.id));
+  return [...requested].filter((id) => !known.has(id)).slice(0, NEW_REVIEWS_MAX);
+}
+
+/**
+ * Puts the pull requests of new review requests in, loaded by id (see `unseenReviews`): each gets
+ * the reason "review" next to what its data shows, keeps "involved" from a cached copy, and
+ * replaces that copy or joins the items.
+ *
+ * @param items   The items after the delta's merge.
+ * @param loaded  The requested pull requests, loaded by node id (`fetchItemsById`).
+ * @returns The items with the loaded ones in.
+ *
+ * @example
+ *   addRequested(items, [pr]); // pr with reasons ["review", …], replacing a cached copy
+ */
+export function addRequested(items: Item[], loaded: Item[]): Item[] {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  for (const fresh of loaded) {
+    const kept = byId.get(fresh.id)?.reasons.filter((r) => r === "involved") ?? [];
+    byId.set(fresh.id, { ...fresh, reasons: [...new Set<Reason>([...kept, "review", ...fresh.reasons])] });
+  }
+  return [...byId.values()];
 }
 
 /**

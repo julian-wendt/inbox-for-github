@@ -3,7 +3,7 @@ import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
+import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -320,7 +320,14 @@ export function useInbox(): Inbox {
       const before = lastFetch.current?.items ?? [];
       const moves = findTransfers(before, fetched);
       let items = (delta ? mergeDelta(before, fetched, coverage.closedDays) : fetched).filter((item) => !moves.has(item.id));
-      if (requested) items = withdrawReviews(items, requested);
+      if (requested) {
+        items = withdrawReviews(items, requested);
+        const unseen = unseenReviews(items, requested);
+        if (unseen.length > 0) {
+          items = addRequested(items, await fetchItemsById(token, unseen, { me: viewer.login, boards: want.boards, signal }));
+          log.debug("new review requests", { loaded: unseen.length });
+        }
+      }
       if (delta) logMerge(before, fetched, items);
       if (moves.size > 0) logTransfers(before, fetched, moves);
       if (delta && want.boards && !had.coverage.boards) items = await withBoards(token, items, signal);

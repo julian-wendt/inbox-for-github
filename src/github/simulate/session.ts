@@ -13,7 +13,7 @@ import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf, isWaiting } from "../../ui/followUp";
 import { planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
-import { canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withdrawReviews, withinClosedWindow } from "../delta";
+import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
 import type { GitHubSimulator, Ref } from "./world";
 
@@ -87,7 +87,11 @@ export class InboxSession {
     const moves = findTransfers(this.items, fetched);
     this.carryOver(moves);
     this.items = (delta ? mergeDelta(this.items, fetched, closedDays, this.nowMs) : fetched).filter((item) => !moves.has(item.id));
-    if (requested) this.items = withdrawReviews(this.items, requested);
+    if (requested) {
+      this.items = withdrawReviews(this.items, requested);
+      const unseen = unseenReviews(this.items, requested);
+      if (unseen.length > 0) this.items = addRequested(this.items, await fetchItemsById(TOKEN, unseen, { me: this.me, boards: loadBoards }));
+    }
     this.last = { fetchedAt: this.world.now, fullAt: delta ? this.last!.fullAt : this.world.now, key };
     return { kind: delta ? "delta" : "full", cost: this.world.requests.slice(before).reduce((sum, r) => sum + r.cost, 0) };
   }

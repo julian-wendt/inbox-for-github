@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Item } from "../model";
-import { canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, transferCandidates, widensClosed, withdrawReviews } from "./delta";
+import { addRequested, canDelta, covers, decodeScope, encodeScope, findTransfers, FULL_EVERY_MS, mergeDelta, mergeReloaded, NEW_REVIEWS_MAX, transferCandidates, unseenReviews, widensClosed, withdrawReviews } from "./delta";
 
 const item = (id: string, overrides: Partial<Item> = {}) => ({ id, title: id, closed: null, ...overrides }) as Item;
 const now = Date.parse("2026-10-23T12:00:00Z");
@@ -38,6 +38,31 @@ describe("withdrawReviews", () => {
       ["other", ["involved"]],
     ]);
     expect(after[3]).toBe(other);
+  });
+});
+
+describe("unseenReviews", () => {
+  it("names the requests not held as review requests, cached or not", () => {
+    const items = [item("held", { reasons: ["review"] }), item("involved", { reasons: ["involved"] })];
+    expect(unseenReviews(items, new Set(["held", "involved", "new"]))).toEqual(["involved", "new"]);
+  });
+
+  it("loads at most NEW_REVIEWS_MAX at once", () => {
+    const ids = new Set(Array.from({ length: NEW_REVIEWS_MAX + 5 }, (_, i) => `PR_${i}`));
+    expect(unseenReviews([], ids)).toHaveLength(NEW_REVIEWS_MAX);
+  });
+});
+
+describe("addRequested", () => {
+  it("adds the reason review, keeps involved from the cached copy, and adds what was not cached", () => {
+    const cached = item("pr", { reasons: ["involved"], title: "old" });
+    const other = item("other", { reasons: ["involved"] });
+    const after = addRequested([cached, other], [item("pr", { reasons: ["mentioned"], title: "new" }), item("fresh", { reasons: [] })]);
+    expect(after.map((i) => [i.id, i.title, i.reasons])).toEqual([
+      ["pr", "new", ["involved", "review", "mentioned"]],
+      ["other", other.title, ["involved"]],
+      ["fresh", item("fresh").title, ["review"]],
+    ]);
   });
 });
 

@@ -122,6 +122,22 @@ describe("API usage", () => {
     expect(app.entry(issue).item.boards[0].status).toBe("In progress");
   });
 
+  it("finds a new review request in a delta even when it leaves updatedAt alone", async () => {
+    const { world, app } = sim;
+    const pr = world.pullRequest();
+    await app.refresh();
+    expect(app.items.map((i) => i.id)).not.toContain(pr.id);
+    world.advance(7 * MINUTE);
+    await app.refresh();
+
+    world.advance(7 * MINUTE);
+    world.requestReview(pr, "alice", "octocat", { quiet: true });
+    const { kind } = await app.refresh();
+
+    expect(kind).toBe("delta");
+    expect(app.entry(pr)).toMatchObject({ bucket: "inbox", asks: ["review"] });
+  });
+
   it("drops closed items from a delta once they are older than the window", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });

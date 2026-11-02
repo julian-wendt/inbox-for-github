@@ -86,7 +86,9 @@ one account. An event that moves `updatedAt` can never be later than it.
 - Either way a withdrawn request drops the item out of the review search, so a delta does not
   see it through `updated:>=` unless the item still involves the viewer. Every delta therefore
   reads the ids of all open review requests (`fetchReviewIds`) and takes back the reason
-  "review" where an id is gone (`withdrawReviews`).
+  "review" where an id is gone (`withdrawReviews`). Whether a new request moves `updatedAt` is
+  not verified, so the same ids also bring in requests the delta's search missed
+  (`unseenReviews`, loaded through `fetchItemsById`: 1 point for one, 19 for 50).
 
 ## Transferred issues (2026-10-29)
 
