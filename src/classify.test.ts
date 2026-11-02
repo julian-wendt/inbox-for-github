@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classify } from "./classify";
+import { ASK_RULES_DEFAULT, classify, type AskRules } from "./classify";
 import type { Comment, Item, Reopen, StoredStatus } from "./model";
 import { ruleSwitches } from "./rules";
 import { findMention } from "./timeline";
@@ -48,8 +48,14 @@ const done = (day: number): StoredStatus => ({
   changedAt: `2026-10-${String(day).padStart(2, "0")}T12:00:00Z`,
 });
 
+/** Mentions and review requests alone, as before feedback, replies and closings asked; most cases here are about those. */
+const MENTIONS_ONLY: AskRules = { ownFeedback: "off", assignedFeedback: false, threadReplies: false, ownClosed: false };
+
 const run = (i: Item, stored?: StoredStatus, overrides?: Record<string, boolean>, reopenOn?: Reopen) =>
-  classify(i, ME, stored, ruleSwitches(overrides), reopenOn);
+  classify(i, ME, stored, ruleSwitches(overrides), reopenOn, undefined, undefined, undefined, MENTIONS_ONLY);
+
+const withRules = (i: Item, rules: Partial<AskRules> = {}, stored?: StoredStatus, filedAt?: string) =>
+  classify(i, ME, stored, ruleSwitches(), "mention", Date.parse("2026-10-20T00:00:00Z"), true, undefined, { ...ASK_RULES_DEFAULT, ...rules }, filedAt);
 
 describe("findMention", () => {
   it("matches the login case-insensitively", () => {
@@ -391,11 +397,11 @@ describe("snoozing in the tables", () => {
     expect(classify(assigned(), ME, snoozed, ruleSwitches(), "mention", at("2026-10-09T09:01:00Z"))).toMatchObject({ bucket: "assigned", status: "open", asks: [], statusReset: true });
   });
 
-  it("adds a later mention to the inbox but stays snoozed; posts do not end it", () => {
+  it("adds a later mention or post to the inbox but stays snoozed", () => {
     const mentioned = assigned({ comments: [comment("bob", "@me look", 6)] });
     expect(classify(mentioned, ME, snoozed, ruleSwitches(), "mention", at("2026-10-07T00:00:00Z"))).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["mention"], statusReset: false });
     const posted = assigned({ comments: [comment("bob", "progress", 6)] });
-    expect(classify(posted, ME, snoozed, ruleSwitches(), "any-post", at("2026-10-07T00:00:00Z"))).toMatchObject({ bucket: "assigned", status: "snoozed", statusReset: false });
+    expect(classify(posted, ME, snoozed, ruleSwitches(), "any-post", at("2026-10-07T00:00:00Z"))).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["feedback"], statusReset: false });
   });
 
   it("does the same for the viewer's own items", () => {
@@ -478,5 +484,58 @@ describe("planned items", () => {
 
   it("end with a stored Done, which the plan does not outlast", () => {
     expect(planned(item({ comments: [comment("alice", "@me?", 4)] }), at(3), { status: "done", changedAt: at(6) })).toMatchObject({ bucket: "done", status: "done" });
+  });
+});
+
+describe("feedback, thread replies and closings", () => {
+  const at = (day: number) => `2026-10-0${day}T00:00:00Z`;
+  const own = (overrides: Partial<Item> = {}) => item({ author: ME, reasons: ["involved"], ...overrides });
+  const assigned = (overrides: Partial<Item> = {}) => item({ reasons: ["assigned", "involved"], assignees: [ME], ...overrides });
+
+  it("brings an own item into the inbox for a post by someone else, until the viewer answers", () => {
+    expect(withRules(own({ comments: [comment("bob", "why this?", 2)] }))).toMatchObject({ bucket: "inbox", asks: ["feedback"], feedback: { by: "bob", kind: "commented" } });
+    expect(withRules(own({ comments: [comment("bob", "why this?", 2), comment(ME, "because", 3)] })).bucket).toBe("authored");
+  });
+
+  it("takes only requested changes in the 'changes' mode, and nothing with 'off'", () => {
+    const pr = own({ kind: "pr", reviews: [{ author: "bob", at: at(2), state: "APPROVED" }] });
+    expect(withRules(pr).asks).toEqual(["feedback"]);
+    expect(withRules(pr, { ownFeedback: "changes" }).bucket).toBe("authored");
+    expect(withRules({ ...pr, reviews: [{ author: "bob", at: at(2), state: "CHANGES_REQUESTED" }] }, { ownFeedback: "changes" }).asks).toEqual(["feedback"]);
+    expect(withRules(pr, { ownFeedback: "off" }).bucket).toBe("authored");
+  });
+
+  it("asks on an assignment for a post by someone else, unless switched off", () => {
+    const posted = assigned({ comments: [comment("bob", "progress?", 2)] });
+    expect(withRules(posted)).toMatchObject({ bucket: "inbox", asks: ["feedback"] });
+    expect(withRules(posted, { assignedFeedback: false }).bucket).toBe("assigned");
+  });
+
+  it("files feedback from before filedAt, and lets a later one ask again", () => {
+    const posted = assigned({ comments: [comment("bob", "progress?", 2)] });
+    expect(withRules(posted, {}, undefined, at(3)).bucket).toBe("assigned");
+    expect(withRules(assigned({ comments: [...posted.comments, comment("bob", "and now?", 4)] }), {}, undefined, at(3)).asks).toEqual(["feedback"]);
+  });
+
+  it("adds feedback on a waiting table item to the inbox without ending the follow-up", () => {
+    const waiting: StoredStatus = { status: "snoozed", changedAt: at(2), until: "2026-10-30T09:00:00Z" };
+    expect(withRules(assigned({ comments: [comment("bob", "progress?", 3)] }), {}, waiting)).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["feedback"] });
+    expect(withRules(assigned({ comments: [comment("bob", "progress?", 1)] }), {}, waiting)).toMatchObject({ bucket: "assigned", asks: [] });
+  });
+
+  it("asks for an answer in a review thread the viewer wrote in, and brings a done item back for it", () => {
+    const thread = (comments: [string, number][]) => ({ resolved: false, resolvedBy: null, outdated: false, comments: comments.map(([author, day]) => ({ author, at: at(day), url: "u", review: null, reply: true })) });
+    const pr = item({ kind: "pr", reasons: ["involved"], threads: [thread([[ME, 2], ["alice", 4]])] });
+    expect(withRules(pr)).toMatchObject({ bucket: "inbox", asks: ["reply"], repliedBy: "alice" });
+    expect(withRules(pr, { threadReplies: false }).bucket).toBe("involved");
+    expect(withRules(pr, {}, { status: "done", changedAt: at(3) })).toMatchObject({ bucket: "inbox", statusReset: true });
+    expect(withRules(pr, {}, { status: "done", changedAt: at(5) }).bucket).toBe("done");
+  });
+
+  it("brings an own item closed by someone else into the inbox until filed", () => {
+    const closed = own({ closed: { state: "closed", at: at(3) }, activities: [{ kind: "state", at: at(3), actor: "bob", change: "closed" }] });
+    expect(withRules(closed)).toMatchObject({ bucket: "inbox", asks: ["closed"], closedBy: "bob" });
+    expect(withRules(closed, { ownClosed: false }).bucket).toBe("involved");
+    expect(withRules(closed, {}, undefined, at(4)).bucket).toBe("involved");
   });
 });

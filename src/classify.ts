@@ -2,16 +2,34 @@ import type { Bucket, Item, Reopen, Status, StoredStatus } from "./model";
 import { REOPEN_DEFAULT, reopens, snoozeEnded } from "./reopen";
 import { pushedSinceReview, reviewAnswered } from "./review";
 import { RULES, type Rule } from "./rules";
-import { lastReplyAt, mentionsOf, sameLogin, type Mention } from "./timeline";
+import { closedByOther, feedbackSince, lastAnswerAt, threadReply, type Feedback, type FeedbackMode } from "./feedback";
+import { lastReplyAt, latest, mentionsOf, sameLogin, type Mention } from "./timeline";
 import { updatesSince, type Update } from "./handoff";
 
 /**
  * Why an item sits in the inbox; "reopened" is a stored "Offen" that revived an answered
  * request, set by the viewer (O) or written when a follow-up date passed, "update"
  * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off,
- * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`).
+ * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`),
+ * "feedback" a post or review by someone else on an item of the viewer's tables (see `feedbackSince`),
+ * "reply" an answer in a review thread the viewer wrote in (see `threadReply`), and "closed" an own
+ * item someone else closed without merging (see `closedByOther`).
  */
-export type Ask = "update" | "review" | "commits" | "mention" | "reopened";
+export type Ask = "update" | "review" | "commits" | "mention" | "reopened" | "feedback" | "reply" | "closed";
+
+/** Which further asks bring an item into the inbox (the settings of the same names). */
+export interface AskRules {
+  /** Feedback on the viewer's own items. */
+  ownFeedback: FeedbackMode;
+  /** Posts and reviews by others on the viewer's assignments. */
+  assignedFeedback: boolean;
+  /** Answers in review threads the viewer wrote in, on pull requests of others. */
+  threadReplies: boolean;
+  /** Own items closed by someone else without merging. */
+  ownClosed: boolean;
+}
+
+export const ASK_RULES_DEFAULT: AskRules = { ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true };
 
 export interface Classified {
   item: Item;
@@ -35,6 +53,12 @@ export interface Classified {
   assignedBy?: string;
   /** With the "commits" ask: who pushed since the viewer's review, last pusher last. */
   pushedBy?: string[];
+  /** With the "feedback" ask: the latest feedback since the viewer's last answer. */
+  feedback?: Feedback;
+  /** With the "reply" ask: who answered in the review thread. */
+  repliedBy?: string;
+  /** With the "closed" ask: who closed the viewer's item. */
+  closedBy?: string;
   /** The stored status fell back to "Offen" (see `reopens`); the caller should delete it. */
   statusReset: boolean;
 }
@@ -76,6 +100,9 @@ export interface Classified {
  * @param reviewOnCommits  Pushes by others bring a reviewed pull request back (the "reviewOnCommits" setting).
  * @param plannedAt  When the viewer pinned the item for today or planned it for a day (ISO 8601), if they did
  *                   (the "plannedAt" setting); asks from before then do not put it into the inbox.
+ * @param askRules  Which feedback, thread replies and closings ask for the viewer (see `AskRules`).
+ * @param filedAt   When the viewer last filed the item's asks with D without finishing it (the
+ *                  "filedAt" setting); asks from before then, closing included, do not count.
  *
  * @example
  *   classify(item, "octocat", { status: "done", changedAt: "2026-10-01T12:00:00Z" }, ruleSwitches());
@@ -89,6 +116,8 @@ export function classify(
   now = Date.now(),
   reviewOnCommits = true,
   plannedAt?: string,
+  askRules: AskRules = ASK_RULES_DEFAULT,
+  filedAt?: string,
 ): Classified {
   const rules = RULES.filter((r) => switches[r.id]);
   const assigned = item.reasons.includes("assigned");
@@ -100,13 +129,23 @@ export function classify(
     stored = undefined;
   }
   if (item.closed) {
+    const closer = own && askRules.ownClosed ? closedByOther(item, me) : null;
+    if (closer && closer.at > (filedAt ?? "")) {
+      return { item, mention: null, statusReset: false, statusAt: stored?.changedAt ?? null, bucket: "inbox", status: "done", answered: null, asks: ["closed"], closedBy: closer.by };
+    }
     const forMe = item.reasons.includes("review") || mentionsOf(item, me).length > 0;
     return { item, mention: null, statusReset: false, statusAt: stored?.changedAt ?? null, bucket: forMe ? "done" : "involved", status: "done", answered: null, asks: [] };
   }
   const tableSnooze = inTable && stored?.status === "snoozed";
   const pushed = reviewOnCommits ? pushedSinceReview(item, me) : null;
   const pushedSinceStatus = !!pushed && !!stored && stored.status !== "open" && pushed.at > stored.changedAt;
-  const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now) || pushedSinceStatus;
+  const reply = !own && askRules.threadReplies ? threadReply(item, me) : null;
+  const repliedSinceStatus = !inTable && !!reply && !!stored && stored.status !== "open" && reply.at > stored.changedAt;
+  const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now) || pushedSinceStatus || repliedSinceStatus;
+  const feedbackMode: FeedbackMode = own ? askRules.ownFeedback : assigned && askRules.assignedFeedback ? "any" : "off";
+  const found = inTable ? feedbackSince(item, me, latest(lastAnswerAt(item, me), filedAt), feedbackMode) : null;
+  // A mention is feedback too, but asks already as one.
+  const feedback = found && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
   const effective = statusReset ? undefined : stored;
   const mention = pendingMention(item, rules, { me });
   const requestedBy = requesterOf(item, me);
@@ -114,8 +153,18 @@ export function classify(
   const result = { item, mention, statusReset, statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   if (effective && tableSnooze) {
-    const asks: Ask[] = mention && mention.at > effective.changedAt ? ["mention"] : [];
-    return { ...result, mention: asks.length > 0 ? mention : null, bucket: asks.length > 0 ? "inbox" : assigned ? "assigned" : "authored", status: "snoozed", answered: null, asks };
+    const since = (at: string) => at > effective.changedAt && at > (filedAt ?? "");
+    const newFeedback = feedback && since(feedback.at) ? feedback : null;
+    const asks: Ask[] = [...(mention && since(mention.at) ? (["mention"] as const) : []), ...(newFeedback ? (["feedback"] as const) : [])];
+    return {
+      ...result,
+      mention: asks.includes("mention") ? mention : null,
+      bucket: asks.length > 0 ? "inbox" : assigned ? "assigned" : "authored",
+      status: "snoozed",
+      answered: null,
+      asks,
+      ...(newFeedback && { feedback: newFeedback }),
+    };
   }
   if (effective && effective.status !== "open") {
     const { status } = effective;
@@ -132,15 +181,29 @@ export function classify(
   else if (pushed) asks.push("commits");
   if (mention) asks.push("mention");
   else if (mentionOpen && !asks.includes("reopened")) asks.push("reopened");
+  if (feedback) asks.push("feedback");
+  if (reply && (!reopenedAt || reply.at > reopenedAt)) asks.push("reply");
 
   // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : undefined;
-  const fresh = plannedAt ? asks.filter((ask) => (askedAt(ask) ?? "") > plannedAt) : asks;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
+  const seenAt = latest(plannedAt, filedAt);
+  const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const parked = fresh.length < asks.length;
   const shown = parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result;
 
-  if (fresh.length > 0) return { ...shown, bucket: "inbox", status: "open", answered: null, asks: fresh, ...(fresh.includes("commits") && { pushedBy: pushed!.by }) };
+  if (fresh.length > 0) {
+    return {
+      ...shown,
+      bucket: "inbox",
+      status: "open",
+      answered: null,
+      asks: fresh,
+      ...(fresh.includes("commits") && { pushedBy: pushed!.by }),
+      ...(fresh.includes("feedback") && { feedback: feedback! }),
+      ...(fresh.includes("reply") && { repliedBy: reply!.by }),
+    };
+  }
   if (assigned) return { ...shown, bucket: "assigned", status: "open", answered: null, asks: fresh };
   if (plannedAt) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
   if (reviewed || mentioned) {

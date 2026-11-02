@@ -48,6 +48,12 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
           return t("explain.commits");
         case "reopened":
           return t("explain.reopened", { ago: statusAt ? agoInSentence(statusAt) : "" });
+        case "feedback":
+          return t(`explain.feedback.${entry.feedback!.kind}`, { name: entry.feedback!.by, ago: agoInSentence(entry.feedback!.at) });
+        case "reply":
+          return t("explain.reply", { name: entry.repliedBy ?? "" });
+        case "closed":
+          return t("explain.closedByOther", { name: entry.closedBy ?? "" });
         case "mention":
           return mention!.self
             ? t("explain.reminder", { ago: agoInSentence(mention!.at) })
