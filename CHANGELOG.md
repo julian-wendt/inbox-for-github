@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.5.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.4.0...v0.5.0) (2026-11-02)
+
+
+### Features
+
+* add a Follow-up view for everything that waits on others ([#64](https://github.com/julian-wendt/inbox-for-github/issues/64)) ([1e09cd6](https://github.com/julian-wendt/inbox-for-github/commit/1e09cd6028e4e5e6545a4aca7d97fc4d00c147fe))
+* add icons for plans, calendar events and follow-ups ([#55](https://github.com/julian-wendt/inbox-for-github/issues/55)) ([21e54fa](https://github.com/julian-wendt/inbox-for-github/commit/21e54faa02f1befa3dc62aa36e6ec06094ba4a8d))
+* bring feedback, thread replies and closings into the inbox ([#69](https://github.com/julian-wendt/inbox-for-github/issues/69)) ([029ec7f](https://github.com/julian-wendt/inbox-for-github/commit/029ec7f14fa4658f5a2ad0f93669c149a7ebbb05))
+* keep D from finishing own items and lone assignments ([#71](https://github.com/julian-wendt/inbox-for-github/issues/71)) ([1420670](https://github.com/julian-wendt/inbox-for-github/commit/1420670287d2cbf667e940229500476fe07f2ef1))
+* let the type bars of Assigned to me be reordered ([#77](https://github.com/julian-wendt/inbox-for-github/issues/77)) ([328ce27](https://github.com/julian-wendt/inbox-for-github/commit/328ce2720135b1a3bb94d379f903bcad773171e0))
+* mark new settings and give every setting one layout ([#70](https://github.com/julian-wendt/inbox-for-github/issues/70)) ([a9775c3](https://github.com/julian-wendt/inbox-for-github/commit/a9775c37b6906767946d5d8f3d09083f5de25420))
+* refresh in full every 15 min and catch new review requests ([#66](https://github.com/julian-wendt/inbox-for-github/issues/66)) ([a5f9853](https://github.com/julian-wendt/inbox-for-github/commit/a5f9853d371c009a0b4a8da62fbac1882bb1ad68))
+
+
+### Bug Fixes
+
+* clear dead statuses and stale activity log entries ([#72](https://github.com/julian-wendt/inbox-for-github/issues/72)) ([9d208c6](https://github.com/julian-wendt/inbox-for-github/commit/9d208c6754093d5402f5c61dcc13b2cb49c1d229))
+* color follow-ups and mentions pink, apart from merged purple ([#76](https://github.com/julian-wendt/inbox-for-github/issues/76)) ([b91bf3b](https://github.com/julian-wendt/inbox-for-github/commit/b91bf3bcf4aa7a699bf0871d762e98eb7232c533))
+* keep a follow-up when unassigning yourself ([#73](https://github.com/julian-wendt/inbox-for-github/issues/73)) ([53b1965](https://github.com/julian-wendt/inbox-for-github/commit/53b1965b920ed6d0ee6c05a4793d61a5a3b96d70))
+* keep a new calendar event linked to its item ([#56](https://github.com/julian-wendt/inbox-for-github/issues/56)) ([13d89ac](https://github.com/julian-wendt/inbox-for-github/commit/13d89ac94096b349827949f28d598f51b27cee15))
+* make the missing calendar access notice stand out ([#60](https://github.com/julian-wendt/inbox-for-github/issues/60)) ([1b1e3b2](https://github.com/julian-wendt/inbox-for-github/commit/1b1e3b28025f6d182877661fe6bc716e9a6778a1))
+* stop keys from acting on the hovered row by default ([#62](https://github.com/julian-wendt/inbox-for-github/issues/62)) ([348a72f](https://github.com/julian-wendt/inbox-for-github/commit/348a72f270b7d1f936313d6bd4291c1888ab9e9a))
+* stop reserving width in the detail's status switch ([#74](https://github.com/julian-wendt/inbox-for-github/issues/74)) ([7a09bb6](https://github.com/julian-wendt/inbox-for-github/commit/7a09bb68f543bcaf3c98bc75319cb9bea7c1b3a5))
+
 ## [0.4.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.1...v0.4.0) (2026-10-29)
 
 
