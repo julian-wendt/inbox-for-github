@@ -16,10 +16,10 @@ Notable tokens:
 | `--hover`, `--selected` | row and button backgrounds |
 | `--focus-fill` | keyboard focus fill, 3:1 against the panel |
 | `--segment-fill` | the active part of a date or time field; softer by choice, below 3:1 |
-| `--yellow`, `--green`, `--blue`, `--red`, `--purple` | the only tone of each hue; AA as text in both themes, except light yellow (3:1, icons and dots only) |
+| `--yellow`, `--green`, `--blue`, `--red`, `--purple`, `--pink` | the only tone of each hue; AA as text in both themes, except light yellow (3:1, icons and dots only) |
 | `--st-*`, `--new`, `--mention` | status roles, aliases of a hue above; never a value of their own |
 | `--green-fill` | filled green under white text (comment button, switches); the light green in both themes |
-| `--orange`, `--pink` | dots and decoration only (GitHub Projects options, the dev stripe) |
+| `--orange` | dots and decoration only (GitHub Projects options, the dev stripe) |
 | `--radius-s/m/l` | 4, 6, 10 px |
 
 ## Contrast
