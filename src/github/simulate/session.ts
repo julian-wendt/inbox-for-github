@@ -6,7 +6,7 @@ import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
-import { onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
+import { leaveClears, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
@@ -145,11 +145,11 @@ export class InboxSession {
     }
   }
 
-  /** ⌃A on an assignment: the viewer leaves, the stored status goes, and both come back on failure. */
+  /** ⌃U on an assignment: the viewer leaves, the stored status goes unless it is a follow-up, and both come back on failure. */
   async leave(ref: Ref): Promise<string | null> {
     const before = this.item(ref);
     const previous = this.statuses.get(ref.id);
-    this.statuses.delete(ref.id);
+    if (leaveClears(previous)) this.statuses.delete(ref.id);
     this.replace({
       ...before,
       assignees: before.assignees.filter((a) => !sameLogin(a, this.me)),

@@ -1,5 +1,5 @@
 import type { Classified } from "../classify";
-import type { Item, Status } from "../model";
+import type { Item, Status, StoredStatus } from "../model";
 import { isBot, latest, posts, sameLogin } from "../timeline";
 import { workStatus, type StatusMap } from "../workStatus";
 import type { AuthoredGroup } from "./authored";
@@ -252,4 +252,16 @@ export function plateCount(groups: { group: PlateGroup; entries: Classified[] }[
 /** The local calendar date, e.g. "2026-10-23", which decides when "today" starts over. */
 export function localDay(now = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Whether leaving the assignees (⌃U) clears the stored status. A follow-up stays: the viewer set a
+ * date to look at the item again, and that holds whoever works on it; "done", "my part done" and
+ * a stored Open belong to the assignment and go with it.
+ *
+ * @example
+ *   leaveClears({ status: "snoozed", changedAt: "…", until: "…" }); // false
+ */
+export function leaveClears(stored: StoredStatus | undefined): boolean {
+  return !!stored && stored.status !== "snoozed";
 }

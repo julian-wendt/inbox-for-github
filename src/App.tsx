@@ -47,7 +47,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, leaveClears, localDay, moveBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -907,7 +907,7 @@ export default function App() {
     if (!leavable(c)) return quiet ? undefined : actions.notify(t("unassign.nothing"));
     const { id, number, assignees, reasons, activities } = c.item;
     const previous = inbox.statuses.get(id);
-    if (previous) void inbox.clearStatus(id);
+    if (leaveClears(previous)) void inbox.clearStatus(id);
     const at = new Date().toISOString();
     inbox.updateItem(id, (item) => ({
       ...item,

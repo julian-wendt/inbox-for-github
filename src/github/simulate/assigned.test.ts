@@ -126,6 +126,19 @@ describe("Assigning myself", () => {
     expect(app.viewOf(issue)).toBe("inbox");
   });
 
+  it("keeps a follow-up when the viewer leaves", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
+    await app.refresh();
+    const until = new Date(world.now.getTime() + 2 * DAY).toISOString();
+    app.snooze(issue, until);
+
+    expect(await app.leave(issue)).toBeNull();
+
+    expect(app.statuses.get(issue.id)).toMatchObject({ status: "snoozed", until });
+    expect(app.followUp(issue)).toBe(until);
+  });
+
   it("assigns the viewer again with the status they had when leaving fails", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
