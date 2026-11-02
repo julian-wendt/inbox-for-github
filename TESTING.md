@@ -19,8 +19,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Sidebar
 
-- [ ] Eine Liste ohne Überschrift und ohne Trennlinie: Inbox, Geplant, Mir zugewiesen,
-      Von mir erstellt, Erledigt (Tasten 1–5); der Tooltip nennt die Taste.
+- [ ] Eine Liste ohne Überschrift und ohne Trennlinie: Inbox, Geplant, Wiedervorlage, Mir zugewiesen,
+      Von mir erstellt, Erledigt (Tasten 1–6); der Tooltip nennt die Taste.
       „Beobachtet“ und „Alle“ gibt es nicht mehr.
 - [ ] ⌘K findet nur Items, die in einer Ansicht stehen; ein Sprung landet in deren Ansicht, ein
       eigener zugewiesener PR in „Von mir erstellt“.
@@ -208,7 +208,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       den Tabellen zeigt den Punkt auch ein mit U markiertes Item.
 
 - [ ] Ungeöffnete Items in Inbox und Zugewiesen stehen fett; nach 2,5 s geöffnet werden sie normal,
-      das Badge am Dock sinkt um eins. Das Badge zählt nur, was wieder oder noch zu tun ist: ungelesene Inbox-Items und ungelesene Zuweisungen (ohne die Leisten Später und Fertig); ein mit U markiertes Item in Wiedervorlage oder Erledigt zählt nicht. Ein neuer Beitrag eines anderen macht sie wieder fett.
+      das Badge am Dock sinkt um eins. Das Badge zählt nur, was wieder oder noch zu tun ist: ungelesene Inbox-Items und ungelesene Zuweisungen (ohne die Leisten Blockiert, Wiedervorlage und Fertig); ein mit U markiertes Item in Wiedervorlage oder Erledigt zählt nicht. Ein neuer Beitrag eines anderen macht sie wieder fett.
       Die Zeit zählt nur bei vorderem Fenster: zu einer anderen App wechseln stoppt sie und
       beginnt beim Zurückkommen von vorn; schnelles Durchblättern mit ↑/↓ liest nichts.
 - [ ] Ansicht in der Seitenleiste samt Zahl ist fett, solange sie Ungelesenes hat; Geplant,
@@ -246,7 +246,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Von mir erstellt
 
-- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute, Sterne und Gruppierungsumschalter. Leisten: Nicht zugewiesen, Zugewiesen, Später (mit Wiedervorlage).
+- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute, Sterne und Gruppierungsumschalter. Leisten: Nicht zugewiesen, Zugewiesen, Wiedervorlage.
 - [ ] „Nicht zugewiesen“: Issues ohne Zuständige und fertige PRs ohne Reviewer; ein Draft-PR
       steht unter „Zugewiesen“.
 - [ ] Rechts in der Zeile nur das Alter („3W“), Tooltip „Eröffnet am …“; kein Avatar. Sortiert nach
@@ -256,7 +256,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Mir zugewiesen
 
 - [ ] Umschalter „Typ · Status“ (kein „Zeit“ und „Repo“ mehr; eine gespeicherte Wahl davon zeigt
-      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Ohne Typ, Später (mit den auf dem Board blockierten), ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Ohne Typ“
+      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Ohne Typ, Blockiert (auf dem Board blockiert), Wiedervorlage, ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Ohne Typ“
       grau, „Fertig“ grün. Jede Status-Leiste hat eine leise Beschreibung hinter der Zahl.
 - [ ] In jeder Typ-Leiste zuerst Review, dann In Arbeit, Backlog, Erledigt; darin nach dem
       Zeitpunkt der Zuweisung (Sortierknopf dreht das).
@@ -342,9 +342,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] F auf einer Zuweisung oder einem eigenen Item öffnet die Zeiten (Nächster Werktag, die
       übrigen Wochentage, Nächste Woche, Datum wählen, Ohne Datum). Das Item bleibt in seiner Tabelle: eine Zuweisung
-      rückt in die Leiste „Später“ (mit den auf dem Board blockierten, eingeklappt, nicht
-      mitgezählt), ein eigenes Item in „Später“ von „Von mir erstellt“; in „Geplant“
-      steht keins von beiden. Mit Datum steht rechts in der Zeile, wann es zurückkommt, hinter
+      rückt in die Leiste „Wiedervorlage“ (eingeklappt, nicht mitgezählt; die auf dem Board
+      blockierten stehen in „Blockiert“), ein eigenes Item in „Wiedervorlage“ von „Von mir
+      erstellt“; beide stehen außerdem in der Ansicht Wiedervorlage, in „Geplant“ keins. Mit Datum steht rechts in der Zeile, wann es zurückkommt, hinter
       einem Kreispfeil (↻); das Alter einer Zeile ohne Wiedervorlage bleibt ohne Icon.
       O holt es zurück, F bietet erneut die Zeiten; ⌘Z nimmt es zurück.
 - [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Arbeitsleiste, ohne
@@ -352,7 +352,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       oder ein Review schon beantwortet, steht es zusätzlich als „wieder offen“ in der Inbox, bis
       du antwortest, D oder F drückst.
 - [ ] Eine Erwähnung auf einem Item in Wiedervorlage: sie steht in der Inbox, das Item bleibt in
-      „Später“. Andere Beiträge holen es nicht zurück, auch nicht mit „Jeder Beitrag“.
+      „Wiedervorlage“ (Leiste und Ansicht). Andere Beiträge holen es nicht zurück, auch nicht mit „Jeder Beitrag“.
 - [ ] Das × im Chip entfernt die Wiedervorlage, ebenso X auf dem Item (auch Kontextmenü und ⌘K,
       mit Zeiger über der Zeile, bei Markierten für alle); das Item ist dann, als wäre nie etwas
       gesetzt worden. ⌘Z nimmt es zurück. Bei einem Item ohne Datum tut X nichts.
@@ -392,7 +392,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Geplant (Ansicht)
 
 - [ ] Für heute Angeheftetes (Stern) und Geplantes (Kalender), aus allen Views; keine
-      Wiedervorlagen (die warten unten in der Inbox oder in ihrer Tabelle). Umschalter Alle · Issues ·
+      Wiedervorlagen (die stehen in der Ansicht Wiedervorlage). Umschalter Alle · Issues ·
       Pull Requests, kein Reviews/Sonstige.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
@@ -441,14 +441,25 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       App das Item um, mit Hinweis. Den Termin löschen: der Plan geht, das Item steht wieder in der
       Inbox.
 
+## Wiedervorlage (Ansicht)
+
+- [ ] Jedes Item auf Wiedervorlage, egal woher: aus der Inbox, eine Zuweisung, ein eigenes Item;
+      auch eins, das eine Erwähnung seither zusätzlich in die Inbox gebracht hat. Fällige und
+      geschlossene stehen nicht darin. Die Inbox hat unten keine Leiste „Später“ mehr.
+- [ ] Leisten nach dem Tag der Rückkehr: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne
+      Datum; früheste zuerst, der Sortierknopf dreht die datierten. Rechts in der Zeile ↻ und die Zeit.
+- [ ] Das Layout-Menü im Kopf schaltet zwischen Liste mit Detail und Tabelle wie „Mir zugewiesen“
+      (mit Sprint-Filter und Spaltenwahl); die Wahl bleibt pro Ansicht, unabhängig von „Geplant“.
+- [ ] Die Zahl in der Seitenleiste zählt alle wartenden Wiedervorlagen; der Repo-Filter grenzt sie ein.
+- [ ] Hilfe (?) beschreibt die Ansicht; leer steht dort, dass F etwas auf Wiedervorlage legt.
+
 ## Wiedervorlage fällig
 
 - [ ] Ein Inbox-Item mit beantworteter Erwähnung mit F → D auf eine Zeit in zwei Minuten legen: es
-      steht in der Leiste „Später“ unten in der Inbox (eingeklappt, auch nach einem Update, das die
-      Leiste neu bringt). Zur Zeit steht es wieder oben als „wieder offen“, ohne Mitteilung; das
+      steht in der Ansicht Wiedervorlage, nicht mehr in der Inbox. Zur Zeit steht es wieder oben als „wieder offen“, ohne Mitteilung; das
       Protokoll zeigt „Wiedervorlage fällig“. Antwort, D oder F nehmen es heraus.
 - [ ] Dasselbe mit einem Item, bei dem nie jemand auf dich gewartet hat: es verschwindet zur Zeit
-      aus „Später“ und steht nirgends mehr (nur das Protokoll kennt es).
+      aus Wiedervorlage und steht nirgends mehr (nur das Protokoll kennt es).
 - [ ] App mit ⌘Q beenden, die Zeit verstreichen lassen, neu starten: das Item steht wieder in der
       Inbox, keine Mitteilung.
 - [ ] Fenster mit ⌘W oder dem roten Knopf schließen: die App bleibt im Dock, Klick aufs Icon holt

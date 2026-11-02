@@ -2,6 +2,17 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-11-02
+
+- **Follow-up gets its own view again.** A follow-up is also how to check back on work handed to
+  others: an assignment whose part is done, an issue someone else took on, an own pull request.
+  Spread over the inbox's bottom bar and two table bars, nothing showed all that the viewer waits
+  on. The view lists every follow-up that waits, by the day it comes back, as a list or a table
+  like Planned. The inbox's bar went; the tables keep theirs, now named Follow-up, so they still
+  show all the viewer owns, and Assigned to me shows board-blocked items in a bar Blocked of
+  their own. Supersedes "Planned shows Today and plans only; follow-ups … wait in a collapsed bar"
+  of 2026-10-28 in that part; whether the table bars stay is open.
+
 ## 2026-10-30
 
 - **Keys act on the selection, not on the row under the mouse, by default.** A resting pointer

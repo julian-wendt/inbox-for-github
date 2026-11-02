@@ -23,11 +23,11 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 4. **Classify:** `directOnly` (`src/rules/directOnly.ts`) first drops the "review" reason from items in the repos the "Only addressed to me" setting covers when no request names the viewer; then `classify` (`src/classify.ts`) puts each item into a bucket from the item, the
    viewer's stored status and the rules. `useInbox` runs it over all items, after leaving out
    untracked items, repos filtered in the settings and closed items outside the window.
-5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–5); `AssignedTable`
+5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–6); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
-   Created by me (`groupAuthored`), `InboxList` the Inbox (with the follow-ups that left it in the
-   bar `WAITING_GROUP` at its bottom), Planned (`datedOf` for what is pinned or planned,
-   `groupBySnoozeEnd` for the day bars) and Done.
+   Created by me (`groupAuthored`), `InboxList` the Inbox, Planned (`datedOf` for what is pinned
+   or planned, `groupBySnoozeEnd` for the day bars), Follow-up (`isWaiting`, by the day each
+   comes back) and Done. Planned and Follow-up render as a list or a table (`useViewLayout`).
    The sidebar counts follow the picked repositories; the other filters narrow only the list.
 
 ## Buckets and statuses
@@ -52,9 +52,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   there stores a fresh snapshot; Open (O) in the bar clears the status. `restoreStatus` undoes exactly.
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
-  table, in the bar `later` with board-blocked items; only its date ends it (no "reopenOn"), and a
+  table, in the bar `later` ("Follow-up"; board-blocked items have their own bar `blocked`); only its date ends it (no "reopenOn"), and a
   mention since adds it to the inbox while it stays waiting. Other items leave their list for the
-  bucket `snoozed` and wait in the bar "Later" at the inbox's bottom, folded by default; Planned
+  bucket `snoozed`. The Follow-up view lists every follow-up that waits, from any list; Planned
   shows only what is pinned for today or planned for a later day (settings `focus`, `planned`,
   `pinnedOn`). At its date the stored status becomes "open"
   (automatic, source `auto:snooze-ended`; the log says "follow-up came due"): the item is back

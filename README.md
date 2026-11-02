@@ -12,9 +12,9 @@ there is something to ship, not on a schedule.
 
 ## What it does
 
-- **Five views:** *Inbox* (someone waits for you: a mention, a review request, new commits on a
-  pull request you reviewed; your follow-ups wait in its *Later* bar), *Planned* (what you pinned
-  for today or planned for a day), *Done*, *Assigned to me* (by type or board status, with "my
+- **Six views:** *Inbox* (someone waits for you: a mention, a review request, new commits on a
+  pull request you reviewed), *Planned* (what you pinned for today or planned for a day),
+  *Follow-up* (everything you wait on others for, by the day it comes back), *Done*, *Assigned to me* (by type or board status, with "my
   part done") and *Created by me*. Answered mentions and reviews move to *Done* on their own;
   follow-ups and done items come back when someone needs you again. A light bulb in the detail
   view explains why an item is where it is.
