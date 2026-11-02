@@ -938,7 +938,13 @@
   transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 
-.segmented button:not(.on):hover {
+/* A choice that has its place but nothing to do here, greyed out like header controls. */
+.segmented button:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.segmented button:not(.on, :disabled):hover {
   background: var(--hover);
   color: var(--text);
 }

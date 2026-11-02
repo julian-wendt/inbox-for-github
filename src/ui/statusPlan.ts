@@ -2,6 +2,14 @@ import type { Classified } from "../classify";
 import type { Status } from "../model";
 import { sameLogin } from "../timeline";
 import { onPlate } from "./assignments";
+import type { View } from "./labels";
+
+/**
+ * Why D does nothing: an own item still open on GitHub ("open"), any item in Created by me
+ * ("created"), or an assignment in Assigned to me nobody else is on ("alone"). The last two are
+ * fixed by the view, so the menus grey D out there.
+ */
+export type Blocked = "open" | "created" | "alone";
 
 /** What choosing a status does to an item; `App` carries it out and announces it. */
 export type StatusPlan =
@@ -10,7 +18,7 @@ export type StatusPlan =
   | { do: "hand-off" }
   | { do: "clear" }
   | { do: "file" }
-  | { do: "blocked" }
+  | { do: "blocked"; why: Blocked }
   | { do: "set"; status: Status }
   | { do: "none" };
 
@@ -29,22 +37,42 @@ export type StatusPlan =
  * and an own item someone else closed, are filed instead ("file": the "filedAt" setting): the asks go, the item
  * stays where it is, and an assignment keeps the viewer's part; D once more, without asks, ends it.
  *
+ * In Created by me D does nothing at all: an own item ends by closing it on GitHub. In Assigned
+ * to me it does nothing while the viewer is the only assignee, so no work is left without anyone.
+ *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.
  * @param me      The viewer's login.
+ * @param view    The view the viewer chose it in; without one, as in the inbox.
  *
  * @example
  *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for an open assignment
  */
-export function planStatus(c: Classified, status: Status, me: string): StatusPlan {
+export function planStatus(c: Classified, status: Status, me: string, view?: View): StatusPlan {
   if (status === "open" && c.updates) return { do: "resume" };
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
+  const why = viewBlocks(c, me, view);
+  if (why) return { do: "blocked", why };
   if (c.asks.includes("closed") || (inTable(c, me) && c.asks.some((ask) => ask === "feedback" || ask === "reply"))) return { do: "file" };
-  if (openOnGitHubForGood(c, me)) return c.asks.includes("reopened") ? { do: "clear" } : { do: "blocked" };
+  if (openOnGitHubForGood(c, me)) return c.asks.includes("reopened") ? { do: "clear" } : { do: "blocked", why: "open" };
   if (onPlate(c, me)) return { do: "hand-off" };
   return { do: "set", status };
+}
+
+/**
+ * Why the view alone keeps D from an open item, if it does: Created by me, or Assigned to me with
+ * the viewer as the only assignee. Null in every other view.
+ *
+ * @example
+ *   viewBlocks(entry, "octocat", "assigned"); // "alone" for an issue only octocat is assigned to
+ */
+export function viewBlocks({ item }: Pick<Classified, "item">, me: string, view?: View): Blocked | null {
+  if (item.closed) return null;
+  if (view === "authored") return "created";
+  if (view === "assigned" && item.assignees.length > 0 && item.assignees.every((a) => sameLogin(a, me))) return "alone";
+  return null;
 }
 
 /** Open and in a table: assigned to the viewer, or opened by them. */

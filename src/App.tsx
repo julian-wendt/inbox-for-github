@@ -24,7 +24,7 @@ import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { planStatus } from "./ui/statusPlan";
+import { planStatus, viewBlocks } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
@@ -179,6 +179,8 @@ export default function App() {
     return () => window.removeEventListener("mousemove", move);
   }, [hoverActs]);
   const me = inbox.me ?? "";
+  /** D does nothing in this view for this item (see `viewBlocks`), so the menus grey it out. */
+  const doneOff = (c: Classified) => viewBlocks(c, me, bucket) !== null;
   const unreadInboxIds = useMemo(
     () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me))).map((c) => c.item.id)),
     [inbox.classified, inbox.seen, inbox.unreadMarks, me],
@@ -657,7 +659,7 @@ export default function App() {
   const open = marked.filter((c) => !c.item.closed);
   /** What D or O chooses for one item, as a step with an exact undo; null where it would change nothing, as for a single item. */
   const planStep = (c: Classified, status: Status) => {
-    const plan = planStatus(c, status, me);
+    const plan = planStatus(c, status, me, bucket);
     const previous = inbox.statuses.get(c.item.id);
     const undo = () => void inbox.restoreStatus(c.item.id, previous);
     switch (plan.do) {
@@ -679,11 +681,11 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const files = (c: Classified) => planStatus(c, status, me).do === "file";
+    const files = (c: Classified) => planStatus(c, status, me, bucket).do === "file";
     const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
     const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set) : [])];
-    const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
+    const blocked = open.filter((c) => planStatus(c, status, me, bucket).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
     const parts = [
       ...(set.length > 0 ? [plural("marks.toastOne", "marks.toast", set.length, { status: t(`status.${status}`) })] : []),
@@ -782,7 +784,7 @@ export default function App() {
   const applyStatus = (c: Classified, status: Status) => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
-    const plan = planStatus(c, status, me);
+    const plan = planStatus(c, status, me, bucket);
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
@@ -810,7 +812,7 @@ export default function App() {
       case "clear":
         return change(t("toast.filed", { number }), () => void inbox.clearStatus(id));
       case "blocked":
-        return actions.notify(t("done.blocked", { number }));
+        return actions.notify(t(plan.why === "alone" ? "done.alone" : "done.blocked", { number }));
       case "set":
         if (ends.length === 0) return actions.apply(c, plan.status);
         if (c.item.closed) return actions.notify(t("closed.noStatus", { number }));
@@ -1020,6 +1022,7 @@ export default function App() {
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
       checked: c.status === s.id && !(planned && s.id === "open"),
+      disabled: s.id === "done" && doneOff(c),
       onSelect: () => applyStatus(c, s.id),
       // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
       ...(s.id === "snoozed" && { items: snoozeEntries(c) }),
@@ -1349,6 +1352,7 @@ export default function App() {
             descriptionMode={inbox.settings.descriptionMode}
             onReplied={replied}
             onStatus={(s) => current && applyStatus(current, s)}
+            doneOff={!!current && doneOff(current)}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
             onOrca={current && orcaOffered(current) ? () => runOrca(current) : undefined}
@@ -1384,6 +1388,7 @@ export default function App() {
                 descriptionMode={inbox.settings.descriptionMode}
                 onReplied={replied}
                 onStatus={(s) => current && applyStatus(current, s)}
+                doneOff={!!current && doneOff(current)}
             onCopy={(format: LinkFormat) => current && void copy(itemLink(current.item, format))}
             onReload={() => current && reloadCurrent(current)}
             onOrca={current && orcaOffered(current) ? () => runOrca(current) : undefined}
@@ -1436,6 +1441,7 @@ export default function App() {
           current={current}
           onClose={() => setDialog(null)}
           onStatus={(s) => current && applyStatus(current, s)}
+          doneOff={!!current && doneOff(current)}
             onUntrack={() => current && untrack(current)}
             unread={!!current && isUnread(current)}
             onToggleRead={() => current && toggleRead([current])}
