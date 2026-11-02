@@ -10,7 +10,7 @@ import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
-import { datedText, planTexts, type Dated } from "../plan";
+import { datedText, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
@@ -171,7 +171,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
                     <PlanIcon dated={dated} size={13} strokeWidth={1.75} color="var(--st-planned)" />
-                    <SteadyLabel text={plan?.text ?? t("detail.plan")} reserve={planTexts()} />
+                    <SteadyLabel text={plan ? t("detail.planned") : t("detail.plan")} reserve={[t("detail.plan"), t("detail.planned")]} />
                     <ChevronDown size={12} className="segment-more" />
                   </button>
                 ),
@@ -282,7 +282,7 @@ interface PostProps {
  * weight of the chosen segment, so the switch does not jump when the choice or the plan changes.
  *
  * @example
- *   <SteadyLabel text="Thursday" reserve={planTexts()} />
+ *   <SteadyLabel text="Planned" reserve={["Plan", "Planned"]} />
  */
 function SteadyLabel({ text, reserve }: { text: string; reserve: string[] }) {
   return (

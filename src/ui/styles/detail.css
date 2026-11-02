@@ -136,7 +136,7 @@
 /* See `SteadyLabel`: the hidden copies only take up room. */
 .steady-label {
   display: inline-grid;
-  justify-items: start;
+  justify-items: center;
 }
 
 .steady-label > * {
