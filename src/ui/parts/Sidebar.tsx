@@ -58,6 +58,8 @@ interface Props {
   /** Stops the running refresh. */
   onStop: () => void;
   onSettings: () => void;
+  /** A new setting waits to be seen: the settings button carries a dot. */
+  settingsNew: boolean;
   onRules: () => void;
 }
 
@@ -165,7 +167,7 @@ export function Sidebar(props: Props) {
           )}
         </span>
         <UsageRing usage={props.usage} refreshMinutes={props.refreshMinutes} onClick={props.onSettings} />
-        <button className="icon-btn" onClick={props.onSettings} title={t("sidebar.settings")}>
+        <button className={`icon-btn${props.settingsNew ? " has-new" : ""}`} onClick={props.onSettings} title={props.settingsNew ? t("sidebar.settingsNew") : t("sidebar.settings")}>
           <Settings2 size={15} />
         </button>
         <button className="icon-btn" onClick={props.onRules} title={t("sidebar.rules")}>

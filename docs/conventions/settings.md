@@ -14,8 +14,10 @@ take it, so a new key needs no migration.
    booleans, also a lone one; `Choice` (a segmented control) for a few choices. Switches that belong together share one `toggle-card`; switches that only refine a
    main switch go into a `toggle-card-part` under it, disabled while it is off. Every setting
    gets a hint that says precisely what it does.
-4. **Use it:** read it from `inbox.settings` in `App.tsx`, or in `useInbox` when it affects fetching.
-5. **Restart** the dev window; the running state has no value for the new key.
+4. **Mark it new:** add the key with its section to `NEW_SETTINGS` (`src/ui/newSettings.ts`) and
+   pass `isNew` to its `Field` or `Toggle`. Drop entries a release or two later.
+5. **Use it:** read it from `inbox.settings` in `App.tsx`, or in `useInbox` when it affects fetching.
+6. **Restart** the dev window; the running state has no value for the new key.
 
 ## Rules
 

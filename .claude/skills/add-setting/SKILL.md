@@ -11,9 +11,10 @@ Follow `docs/conventions/settings.md`; the steps in short:
    `DEFAULT_SETTINGS`. Missing keys take the default on load, so no migration.
 2. **Texts:** `settings.<name>` and `settings.<name>Hint` in `src/ui/locales/en.ts` and `de.ts`
    (see the `ui-text` skill).
-3. **`src/ui/parts/SettingsDialog.tsx`:** add the control to the fitting section, copying a
-   neighbor: a `toggle-row` with `className="switch"` for a boolean, `.segmented` for a few choices.
-   Write through `change({ <name>: value })`.
+3. **`src/ui/parts/SettingsDialog.tsx`:** add a `Field` to the fitting section, copying a
+   neighbor: a `Toggle` in a `toggle-card` for a boolean, `Choice` for a few choices. Write
+   through `change({ <name>: value })`. Add the key to `NEW_SETTINGS` (`src/ui/newSettings.ts`)
+   and pass `isNew={isNew("<name>")}` to its `Field` or `Toggle`, so it shows "New".
 4. **Use it** via `inbox.settings.<name>` in `App.tsx`, or in `useInbox` if it changes fetching. A
    fetch setting must narrow locally and only fetch when widened (`docs/reference/architecture.md`).
 5. **Check:** `npm run typecheck && npm run lint && npm test`, then restart the dev window (the

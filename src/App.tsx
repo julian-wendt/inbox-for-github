@@ -51,6 +51,8 @@ import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, 
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
+import { unseenSettings } from "./ui/newSettings";
+import { useSeenSettings } from "./ui/useSeenSettings";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
@@ -88,6 +90,7 @@ type Step = { run: () => void; undo: () => void };
 
 export default function App() {
   const inbox = useInbox();
+  const seenSettings = useSeenSettings();
   // Before any child renders, so every t() call of this render uses the chosen language.
   setLang(inbox.settings.language);
   const [chosen, setChosen] = useState<View>("inbox");
@@ -1213,6 +1216,7 @@ export default function App() {
         onRefresh={() => void inbox.refresh()}
         onStop={inbox.stopRefresh}
         onSettings={() => setDialog("settings")}
+        settingsNew={unseenSettings(seenSettings.seen).length > 0}
         onRules={() => setDialog("rules")}
       />
       {table ? (
@@ -1483,6 +1487,8 @@ export default function App() {
           attributes={attributes}
           statusCount={inbox.statuses.size}
           onResetStatuses={inbox.resetStatuses}
+          seenSettings={seenSettings.seen}
+          onSeen={seenSettings.markSeen}
         />
       )}
     </div>

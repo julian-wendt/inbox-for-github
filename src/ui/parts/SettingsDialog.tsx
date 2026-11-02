@@ -18,6 +18,7 @@ import { useGutter } from "../useGutter";
 import { HOURS, MINUTES } from "../segments";
 import { clockOf, clockText } from "../snooze";
 import { toggleWorkday, WEEK, weekdayName } from "../plan";
+import { unseenSettings, type SettingsSection } from "../newSettings";
 import { SegmentField } from "./SegmentField";
 import { CalendarSettings } from "./CalendarSettings";
 import { guessWorkStatus, WORK_STATUSES, type WorkStatus } from "../../workStatus";
@@ -32,7 +33,7 @@ import { OrgSelect } from "./OrgSelect";
 import { RepoFilterEditor } from "./RepoFilterEditor";
 import { UsageMeter } from "./UsageMeter";
 
-type Section = "general" | "notify" | "calendar" | "orgs" | "repos" | "look" | "avatars" | "rules" | "boards" | "untracked";
+type Section = SettingsSection;
 
 const SECTIONS: { id: Section; icon: LucideIcon }[] = [
   { id: "general", icon: Settings2 },
@@ -97,10 +98,17 @@ interface Props {
   statusCount: number;
   /** Drops every stored status; resolves to how many there were. */
   onResetStatuses: () => Promise<number>;
+  /** Keys of the new settings (`NEW_SETTINGS`) the viewer has seen. */
+  seenSettings: readonly string[];
+  /** Records new settings as seen: those of each section the viewer opens, and all on the welcome's start. */
+  onSeen: (keys: readonly string[]) => void;
 }
 
-export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs, me, usage, boards, attributes, statusCount, onResetStatuses }: Props) {
+export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs, me, usage, boards, attributes, statusCount, onResetStatuses, seenSettings, onSeen }: Props) {
   const [active, setActive] = useState<Section>("general");
+  // Chips stay for the whole visit, so a section opened now still shows what was new in it.
+  const [fresh] = useState(() => new Set<string>(unseenSettings(seenSettings)));
+  const isNew = (key: keyof Settings) => fresh.has(key);
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetCount, setResetCount] = useState<number | null>(null);
   const reset = async () => {
@@ -145,7 +153,9 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   const toggleBoard = (id: string, shown: boolean) =>
     change({ hiddenBoards: shown ? hiddenBoards.filter((b) => b !== id) : [...hiddenBoards, id] });
   const start = () => {
-    if (orgs.length > 0) onSave({ ...draft, orgs: [...new Set(orgs)] });
+    if (orgs.length === 0) return;
+    onSeen(unseenSettings([]));
+    onSave({ ...draft, orgs: [...new Set(orgs)] });
   };
 
   useEffect(() => {
@@ -156,6 +166,10 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   }, [welcome, onClose]);
 
   const section = welcome ? "orgs" : active;
+
+  useEffect(() => {
+    if (!welcome) onSeen(unseenSettings(seenSettings, section));
+  }, [welcome, section, seenSettings, onSeen]);
 
   return (
     <div className="overlay" onMouseDown={welcome ? undefined : onClose}>
@@ -178,6 +192,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <button key={id} className={`nav-item${active === id ? " on" : ""}`} onClick={() => setActive(id)}>
                 <Icon size={15} strokeWidth={1.8} />
                 <span>{t(`settings.section.${id}`)}</span>
+                {unseenSettings(seenSettings, id).length > 0 && <NewChip />}
               </button>
             ))}
           </nav>
@@ -429,16 +444,16 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
-                  <Toggle title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
+                  <Toggle isNew={isNew("threadReplies")} title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
                 </div>
               </Field>
-              <Field label={t("settings.ownFeedback")} hint={t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}>
+              <Field isNew={isNew("ownFeedback")} label={t("settings.ownFeedback")} hint={t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}>
                 <Choice options={FEEDBACK_MODES} value={draft.ownFeedback} label={(mode) => t(`settings.ownFeedback.${mode}`)} onChange={(ownFeedback) => change({ ownFeedback })} />
               </Field>
               <Field label={t("settings.group.yourWork")}>
                 <div className="toggle-card">
-                  <Toggle title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
-                  <Toggle title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
+                  <Toggle isNew={isNew("assignedFeedback")} title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
+                  <Toggle isNew={isNew("ownClosed")} title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
                 </div>
               </Field>
               <Field label={t("settings.movesUp")} hint={t("settings.movesUpHint")}>
@@ -547,10 +562,15 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
  * @example
  *   <Field label={t("settings.theme")} hint={t("settings.themeHint")}><Choice … /></Field>
  */
-function Field({ label, hint, children }: { label?: string; hint?: string; children: ReactNode }) {
+function Field({ label, hint, isNew = false, children }: { label?: string; hint?: string; isNew?: boolean; children: ReactNode }) {
   return (
     <div className="field">
-      {label && <span>{label}</span>}
+      {label && (
+        <span>
+          {label}
+          {isNew && <NewChip />}
+        </span>
+      )}
       {children}
       {hint && <small>{hint}</small>}
     </div>
@@ -582,14 +602,24 @@ function Choice<T extends string | number>({ options, value, label, onChange }: 
  * @example
  *   <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
  */
-function Toggle({ title, hint, checked, onChange, compact = false }: { title: string; hint?: string; checked: boolean; onChange: (on: boolean) => void; compact?: boolean }) {
+function Toggle({ title, hint, checked, onChange, compact = false, isNew = false }: { title: string; hint?: string; checked: boolean; onChange: (on: boolean) => void; compact?: boolean; isNew?: boolean }) {
   return (
     <label className={`toggle-row${compact ? " compact" : ""}`}>
       <span>
-        {compact ? title : <strong>{title}</strong>}
+        {compact ? title : (
+          <strong>
+            {title}
+            {isNew && <NewChip />}
+          </strong>
+        )}
         {hint && <small>{hint}</small>}
       </span>
       <input type="checkbox" className="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     </label>
   );
+}
+
+/** The quiet mark of a setting that came with a recent release (see `NEW_SETTINGS`). */
+function NewChip() {
+  return <span className="new-chip">{t("settings.new")}</span>;
 }

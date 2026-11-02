@@ -167,7 +167,7 @@
   transition: background 100ms var(--ease), color 100ms var(--ease);
 }
 
-.nav-item span:not(.nav-count, .repo-dot, .repo-check) {
+.nav-item span:not(.nav-count, .repo-dot, .repo-check, .new-chip) {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -467,6 +467,42 @@
 
 .settings-warning {
   color: var(--new);
+}
+
+/* A setting from a recent release; blue holds 4.5:1 on the panel and the hover fill in both themes. */
+.new-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--blue);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 1px;
+}
+
+.nav-item .new-chip {
+  margin-left: 0;
+}
+
+.icon-btn.has-new {
+  position: relative;
+}
+
+.icon-btn.has-new::after {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--blue);
+  content: "";
 }
 
 .dialog.settings .dialog-actions {
