@@ -25,8 +25,8 @@ export type StatusPlan =
  * Only an issue with another assignee besides the viewer can have "my part done". Back from a
  * follow-up or a reopen, such an item asks again; D files it without hiding it ("clear").
  *
- * An item of the tables (assigned or the viewer's own) that sits in the inbox, and an own item
- * someone else closed, are filed instead ("file": the "filedAt" setting): the asks go, the item
+ * An item of the tables (assigned or the viewer's own) that asks for feedback or a thread answer,
+ * and an own item someone else closed, are filed instead ("file": the "filedAt" setting): the asks go, the item
  * stays where it is, and an assignment keeps the viewer's part; D once more, without asks, ends it.
  *
  * @param c       The item as classified.
@@ -41,7 +41,7 @@ export function planStatus(c: Classified, status: Status, me: string): StatusPla
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
-  if (c.asks.includes("closed") || (inTable(c, me) && c.asks.length > 0 && !c.asks.includes("reopened"))) return { do: "file" };
+  if (c.asks.includes("closed") || (inTable(c, me) && c.asks.some((ask) => ask === "feedback" || ask === "reply"))) return { do: "file" };
   if (openOnGitHubForGood(c, me)) return c.asks.includes("reopened") ? { do: "clear" } : { do: "blocked" };
   if (onPlate(c, me)) return { do: "hand-off" };
   return { do: "set", status };

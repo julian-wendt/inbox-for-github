@@ -676,12 +676,18 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const filed = marked.filter((c) => (!c.item.closed || planStatus(c, status, me).do === "file") && planStep(c, status) !== null);
-    const steps = [...filed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(filed) : [])];
+    const files = (c: Classified) => planStatus(c, status, me).do === "file";
+    const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
+    const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
+    const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
-    const text = plural("marks.toastOne", "marks.toast", filed.length, { status: t(`status.${status}`) });
-    bulk(blocked > 0 ? `${text} · ${t("marks.blocked", { count: blocked })}` : text, steps);
+    const parts = [
+      ...(set.length > 0 ? [plural("marks.toastOne", "marks.toast", set.length, { status: t(`status.${status}`) })] : []),
+      ...(filed.length > 0 ? [plural("marks.filedOne", "marks.filed", filed.length)] : []),
+      ...(blocked > 0 ? [t("marks.blocked", { count: blocked })] : []),
+    ];
+    bulk(parts.join(" · "), steps);
   };
   /** The text for one item or for several: `one` takes no count. */
   const plural = (one: MessageKey, many: MessageKey, count: number, params: Record<string, string | number> = {}) => t(count === 1 ? one : many, { count, ...params });

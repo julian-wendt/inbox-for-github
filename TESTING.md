@@ -250,8 +250,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Teil erledigt“. Mit Wiedervorlage bleibt sie in ihrer Leiste wartend und steht zusätzlich in der Inbox.
 - [ ] In einem Review-Thread eines fremden PRs antworten, dann antwortet der Autor: „@alice hat in
       deinem Thread geantwortet“, auch wenn der PR erledigt war. Eine Antwort dort oder D nimmt ihn heraus.
-- [ ] Jemand anderes schließt ein eigenes Issue ohne Merge: „Von @bob geschlossen“ in der Inbox, bis D.
-      Selbst geschlossen oder gemergt kommt es nicht.
+- [ ] Jemand anderes schließt ein eigenes Issue als „nicht geplant“: „Von @bob geschlossen“ in der
+      Inbox, bis D. Selbst geschlossen, als erledigt geschlossen oder gemergt kommt es nicht.
 - [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
       erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
       Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.

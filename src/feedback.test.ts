@@ -68,4 +68,9 @@ describe("closedByOther", () => {
     expect(closedByOther(closed("bob", "merged"), "me")).toBeNull();
     expect(closedByOther(base, "me")).toBeNull();
   });
+
+  it("is nothing for an issue closed as completed, as by a merged pull request", () => {
+    const done = item({ kind: "issue", closed: { state: "closed", at: at(5) }, activities: [{ kind: "state", at: at(5), actor: "bob", change: "closed", reason: "COMPLETED" }] });
+    expect(closedByOther(done, "me")).toBeNull();
+  });
 });

@@ -139,13 +139,14 @@ export function classify(
   const tableSnooze = inTable && stored?.status === "snoozed";
   const pushed = reviewOnCommits ? pushedSinceReview(item, me) : null;
   const pushedSinceStatus = !!pushed && !!stored && stored.status !== "open" && pushed.at > stored.changedAt;
-  const reply = !own && askRules.threadReplies ? threadReply(item, me) : null;
-  const repliedSinceStatus = !inTable && !!reply && !!stored && stored.status !== "open" && reply.at > stored.changedAt;
+  const threadAnswer = !own && askRules.threadReplies ? threadReply(item, me) : null;
+  const repliedSinceStatus = !inTable && !!threadAnswer && !!stored && stored.status !== "open" && threadAnswer.at > stored.changedAt;
   const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now) || pushedSinceStatus || repliedSinceStatus;
   const feedbackMode: FeedbackMode = own ? askRules.ownFeedback : assigned && askRules.assignedFeedback ? "any" : "off";
   const found = inTable ? feedbackSince(item, me, latest(lastAnswerAt(item, me), filedAt), feedbackMode) : null;
   // A mention is feedback too, but asks already as one.
   const feedback = found && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
+  const reply = threadAnswer && !feedback && !mentionsOf(item, me).some((m) => m.at === threadAnswer.at) ? threadAnswer : null;
   const effective = statusReset ? undefined : stored;
   const mention = pendingMention(item, rules, { me });
   const requestedBy = requesterOf(item, me);
@@ -155,7 +156,12 @@ export function classify(
   if (effective && tableSnooze) {
     const since = (at: string) => at > effective.changedAt && at > (filedAt ?? "");
     const newFeedback = feedback && since(feedback.at) ? feedback : null;
-    const asks: Ask[] = [...(mention && since(mention.at) ? (["mention"] as const) : []), ...(newFeedback ? (["feedback"] as const) : [])];
+    const newReply = reply && since(reply.at) ? reply : null;
+    const asks: Ask[] = [
+      ...(mention && since(mention.at) ? (["mention"] as const) : []),
+      ...(newFeedback ? (["feedback"] as const) : []),
+      ...(newReply ? (["reply"] as const) : []),
+    ];
     return {
       ...result,
       mention: asks.includes("mention") ? mention : null,
@@ -164,6 +170,7 @@ export function classify(
       answered: null,
       asks,
       ...(newFeedback && { feedback: newFeedback }),
+      ...(newReply && { repliedBy: newReply.by }),
     };
   }
   if (effective && effective.status !== "open") {
@@ -207,9 +214,9 @@ export function classify(
   if (assigned) return { ...shown, bucket: "assigned", status: "open", answered: null, asks: fresh };
   if (plannedAt) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
   if (reviewed || mentioned) {
-    return { ...result, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks };
+    return { ...shown, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks: fresh };
   }
-  return { ...result, bucket: sameLogin(item.author, me) ? "authored" : "involved", status: "open", answered: null, asks };
+  return { ...shown, bucket: own ? "authored" : "involved", status: "open", answered: null, asks: fresh };
 }
 
 /**

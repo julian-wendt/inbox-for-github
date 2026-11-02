@@ -67,8 +67,10 @@ export function threadReply(item: Pick<Item, "threads">, me: string): { at: stri
 }
 
 /**
- * Who closed the item without merging it, when that was someone other than the viewer; null for
- * an open or merged item, one the viewer closed, and one whose closing the events do not name.
+ * Who closed the item without it being done, when that was someone other than the viewer: a pull
+ * request closed without merging, an issue closed as not planned or a duplicate. Null for an open
+ * or merged item, an issue closed as completed (also by a merged pull request), one the viewer
+ * closed, and one whose closing the events do not name.
  *
  * @example
  *   closedByOther(issue, "octocat"); // { at: "2026-11-02T09:00:00Z", by: "bob" }
@@ -76,6 +78,6 @@ export function threadReply(item: Pick<Item, "threads">, me: string): { at: stri
 export function closedByOther(item: Pick<Item, "closed" | "activities">, me: string): { at: string; by: string } | null {
   if (item.closed?.state !== "closed") return null;
   const last = item.activities.filter((a) => a.kind === "state" && a.change === "closed").at(-1);
-  if (!last || last.kind !== "state" || sameLogin(last.actor, me)) return null;
+  if (!last || last.kind !== "state" || sameLogin(last.actor, me) || last.reason === "COMPLETED") return null;
   return { at: item.closed.at, by: last.actor };
 }

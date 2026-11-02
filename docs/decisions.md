@@ -6,7 +6,8 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 - **Feedback, thread answers and closings by others ask for you.** A post or review by someone
   else on an item you opened or that is assigned to you, an answer in a review thread you wrote in
-  on someone else's pull request, and your own item closed by someone else without merging all
+  on someone else's pull request, and your own item closed by someone else without it being done
+  (a pull request not merged, an issue not planned or a duplicate) all
   bring the item into the inbox, without a mention. Waiting for feedback is what an own item does;
   missing it was the gap. Your reply, review or push answers it; D files it (`filedAt`) without
   finishing anything, so an assignment keeps your part and an own item stays open. Each has its

@@ -532,6 +532,19 @@ describe("feedback, thread replies and closings", () => {
     expect(withRules(pr, {}, { status: "done", changedAt: at(5) }).bucket).toBe("done");
   });
 
+  it("leaves a filed own item without its asks, so a second D has nothing left to file", () => {
+    const mentioned = own({ comments: [comment("bob", "@me look", 2)] });
+    expect(withRules(mentioned, {}, undefined, at(4))).toMatchObject({ asks: [], mention: null });
+  });
+
+  it("adds a thread answer on a waiting assignment to the inbox, once, not again as feedback", () => {
+    const thread = { resolved: false, resolvedBy: null, outdated: false, comments: [{ author: ME, at: at(2), url: "u", review: null, reply: true }, { author: "alice", at: at(4), url: "u", review: null, reply: true }] };
+    const waiting: StoredStatus = { status: "snoozed", changedAt: at(3), until: "2026-10-30T09:00:00Z" };
+    const pr = assigned({ kind: "pr", threads: [thread] });
+    expect(withRules(pr, { assignedFeedback: false }, waiting)).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["reply"] });
+    expect(withRules({ ...pr, comments: [comment("alice", "inline", 4)] }).asks).toEqual(["feedback"]);
+  });
+
   it("brings an own item closed by someone else into the inbox until filed", () => {
     const closed = own({ closed: { state: "closed", at: at(3) }, activities: [{ kind: "state", at: at(3), actor: "bob", change: "closed" }] });
     expect(withRules(closed)).toMatchObject({ bucket: "inbox", asks: ["closed"], closedBy: "bob" });
