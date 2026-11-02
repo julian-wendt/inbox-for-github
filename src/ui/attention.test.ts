@@ -36,6 +36,14 @@ describe("notificationTitle", () => {
     expect(notificationTitle({ asks: ["mention"], mention: { by: "me", at, excerpt: "", self: true } })).toBe("Self-mention");
     expect(notificationTitle({ asks: ["review"], mention: null })).toBe("Review requested");
   });
+
+  it("names who gave feedback, answered in a thread or closed an own item, under its own reason", () => {
+    expect(notificationTitle({ asks: ["feedback"], mention: null, feedback: { by: "bob", at, kind: "approved" } })).toBe("bob approved");
+    expect(notificationTitle({ asks: ["reply"], mention: null, repliedBy: "alice" })).toBe("alice answered in your review thread");
+    expect(notificationTitle({ asks: ["closed"], mention: null, closedBy: "bob" })).toBe("bob closed your item");
+    expect(notifyReason({ asks: ["feedback"], mention: null })).toBe("feedback");
+    expect(notifyReason({ asks: ["review", "feedback"], mention: null })).toBe("review");
+  });
 });
 
 describe("notifyReason", () => {

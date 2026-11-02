@@ -182,10 +182,13 @@ export function updateSummary(updates: Update[]): string {
  * @example
  *   rowContext(classified); // "@alice mentioned you"
  */
-export function rowContext({ item, mention, answered, asks, updates, pushedBy, requestedBy, assignedBy }: Pick<Classified, "item" | "mention" | "answered"> & Partial<Pick<Classified, "asks" | "updates" | "pushedBy" | "requestedBy" | "assignedBy">>): string {
+export function rowContext({ item, mention, answered, asks, updates, pushedBy, requestedBy, assignedBy, feedback, repliedBy, closedBy }: Pick<Classified, "item" | "mention" | "answered"> & Partial<Pick<Classified, "asks" | "updates" | "pushedBy" | "requestedBy" | "assignedBy" | "feedback" | "repliedBy" | "closedBy">>): string {
   if (asks?.includes("update") && updates) return t("row.update", { what: updateSummary(updates) });
+  if (asks?.includes("closed") && closedBy) return t("row.closedBy", { name: closedBy });
   if (item.closed) return t(item.closed.state === "merged" ? "row.merged" : "row.closed");
   if (mention) return mention.self ? t("row.reminder") : t("row.mentioned", { name: mention.by });
+  if (asks?.includes("feedback") && feedback) return t(`row.feedback.${feedback.kind}`, { name: feedback.by });
+  if (asks?.includes("reply") && repliedBy) return t("row.replied", { name: repliedBy });
   if (asks?.includes("commits") && pushedBy) return t(pushedBy.length > 1 ? "row.commitsMany" : "row.commits", { name: pushedBy.at(-1)! });
   if (answered) return answered === "review" ? t("row.reviewAnswered") : t("row.answered");
   if (item.reasons.includes("review")) return requestedBy ? t("row.reviewRequestedBy", { name: requestedBy }) : t("row.reviewRequested");

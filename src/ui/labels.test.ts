@@ -16,6 +16,12 @@ describe("rowContext", () => {
     expect(rowContext({ item, answered: null, mention: { by: "me", at, excerpt: "", self: true } })).toBe("Deine Selbst-Erwähnung");
   });
 
+  it("names who gave feedback, answered in a thread or closed an own item", () => {
+    expect(rowContext({ item, answered: null, mention: null, asks: ["feedback"], feedback: { by: "bob", at, kind: "changes" } })).toBe("@bob hat Änderungen angefordert");
+    expect(rowContext({ item, answered: null, mention: null, asks: ["reply"], repliedBy: "alice" })).toBe("@alice hat in deinem Thread geantwortet");
+    expect(rowContext({ item: { ...item, closed: { state: "closed", at } }, answered: null, mention: null, asks: ["closed"], closedBy: "bob" })).toBe("Von @bob geschlossen");
+  });
+
   it("names who pushed since the viewer's review", () => {
     expect(rowContext({ item, answered: null, mention: null, asks: ["commits"], pushedBy: ["alice"] })).toBe("Neue Commits von alice");
     expect(rowContext({ item, answered: null, mention: null, asks: ["commits"], pushedBy: ["bob", "alice"] })).toBe("Neue Commits von alice und anderen");

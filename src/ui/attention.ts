@@ -23,20 +23,22 @@ export function arrivals(classified: Classified[], known: ReadonlySet<string> | 
 }
 
 /** Why an item notifies; each has its own switch in the settings. */
-export type NotifyReason = "mention" | "review" | "reminder" | "update";
+export type NotifyReason = "mention" | "review" | "reminder" | "update" | "feedback";
 
 /** The reasons in the order the settings list them. */
-export const NOTIFY_REASONS: NotifyReason[] = ["mention", "review", "reminder", "update"];
+export const NOTIFY_REASONS: NotifyReason[] = ["mention", "review", "feedback", "reminder", "update"];
 
 /**
  * Why an inbox item notifies: the viewer mentioned themselves as a note to self, an item whose
- * part they finished moved, a review is requested, or someone mentioned them.
+ * part they finished moved, someone gave feedback, answered in a review thread or closed an own
+ * item, a review is requested, or someone mentioned them.
  *
  * @example
  *   notifyReason(entry); // "mention"
  */
 export function notifyReason({ asks, mention }: Pick<Classified, "asks" | "mention">): NotifyReason {
   if (asks.includes("update")) return "update";
+  if (!mention && !asks.some((ask) => ask === "review" || ask === "commits") && asks.some((ask) => ask === "feedback" || ask === "reply" || ask === "closed")) return "feedback";
   if (!mention) return "review";
   return mention.self ? "reminder" : "mention";
 }
@@ -57,8 +59,12 @@ export function notifies(reason: NotifyReason, switches: Partial<Record<NotifyRe
  * @example
  *   notificationTitle(entry); // "bob mentioned you"
  */
-export function notificationTitle(entry: Pick<Classified, "asks" | "mention">): string {
+export function notificationTitle(entry: Pick<Classified, "asks" | "mention"> & Partial<Pick<Classified, "feedback" | "repliedBy" | "closedBy">>): string {
   switch (notifyReason(entry)) {
+    case "feedback":
+      if (entry.closedBy) return t("notify.closedBy", { name: entry.closedBy });
+      if (entry.repliedBy && !entry.feedback) return t("notify.replied", { name: entry.repliedBy });
+      return t(`notify.feedback.${entry.feedback?.kind ?? "commented"}`, { name: entry.feedback?.by ?? "" });
     case "reminder":
       return t("notify.reminder");
     case "update":
