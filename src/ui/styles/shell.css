@@ -619,15 +619,14 @@
   display: inline-flex;
   align-items: center;
   height: var(--control-h);
-  padding: 0 3px 0 4px;
+  padding-right: 3px;
   border-radius: var(--radius-m);
   background: var(--control-fill);
 }
 
-/* Side room about as wide as the room above and below the digits. */
 .dialog.settings .time-chip .segment-field {
   height: 100%;
-  padding: 0 2px;
+  padding: 0 8px 0 10px;
   border-color: transparent;
   background: none;
   font-weight: 500;
@@ -638,13 +637,12 @@
 }
 
 .time-chip-dash {
-  padding: 0 2px;
   color: var(--text-muted);
 }
 
 .time-chip-x {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .reset-row {
