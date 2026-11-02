@@ -26,7 +26,7 @@ interface Props {
   /** Does the next `count` taken-back changes again. */
   onRedoSteps: (count: number) => void;
   onStatus: (status: Status) => void;
-  /** Leaves Done out: the view is Created by me, where an item ends only by closing it on GitHub. */
+  /** Leaves Done out where the view does not offer it (see `doneAccess`). */
   doneOff?: boolean;
   onOpenCurrent: () => void;
   /** "Open in Orca", offered while Orca knows the current item's repo. */

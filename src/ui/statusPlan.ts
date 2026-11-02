@@ -75,6 +75,21 @@ export function viewBlocks({ item }: Pick<Classified, "item">, me: string, view?
   return null;
 }
 
+/** Whether a view offers D for an item: as usual, greyed out, or not at all. */
+export type DoneAccess = "on" | "off" | "hidden";
+
+/**
+ * How a view offers D for an item: not at all in Created by me, where it never applies, and
+ * greyed out in Assigned to me while the viewer is the only assignee (see `viewBlocks`).
+ *
+ * @example
+ *   doneAccess(entry, "octocat", "authored"); // "hidden"
+ */
+export function doneAccess(c: Pick<Classified, "item">, me: string, view?: View): DoneAccess {
+  const why = viewBlocks(c, me, view);
+  return why === "created" ? "hidden" : why === "alone" ? "off" : "on";
+}
+
 /** Open and in a table: assigned to the viewer, or opened by them. */
 function inTable({ item }: Classified, me: string): boolean {
   return !item.closed && (item.reasons.includes("assigned") || sameLogin(item.author, me));

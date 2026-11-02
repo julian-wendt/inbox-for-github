@@ -940,7 +940,7 @@
 
 /* A choice that has its place but nothing to do here, greyed out like header controls. */
 .segmented button:disabled {
-  color: var(--text-faint);
+  opacity: 0.4;
   cursor: default;
 }
 

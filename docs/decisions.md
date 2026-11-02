@@ -4,11 +4,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-02
 
-- **D depends on the view for the tables.** In Created by me D does nothing and is greyed out (left
-  out of the palette): an own item ends by closing or merging it on GitHub, and marking it done
-  here changes nothing about that, even with another assignee. In Assigned to me D marks your
-  part done, but not while you are the only assignee, so no work is left with nobody on it;
-  unassign yourself or hand it on instead. The inbox keeps D as it was. Supersedes the "own issue
+- **D depends on the view for the tables.** Created by me does not offer D at all (switch, menu
+  and palette leave it out; the key does nothing): an own item ends by closing or merging it on
+  GitHub, and marking it done here changes nothing about that, even with another assignee. In
+  Assigned to me D marks your part done, but is greyed out while you are the only assignee, so no
+  work is left with nobody on it; unassign yourself or hand it on instead. The inbox keeps D as it was. Supersedes the "own issue
   with another assignee takes D as my part done" part of "D does not finish what you opened".
 - **New settings say "New" until their section was open once.** A quiet blue chip on the field
   and its section, and a dot on the settings button, so a setting that came with an update is

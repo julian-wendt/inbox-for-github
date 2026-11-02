@@ -8,6 +8,7 @@ import { findMention, isBot, latest, posts, sameLogin } from "../../timeline";
 import { explain } from "../explain";
 import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
+import type { DoneAccess } from "../statusPlan";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
 import { datedText, planTexts, type Dated } from "../plan";
@@ -64,8 +65,8 @@ interface Props {
   /** Called with the item's id after a reply or state change was posted, to reload it. */
   onReplied: (id: string, change?: StateWrite) => void;
   onStatus: (status: Status) => void;
-  /** Done is greyed out: the view is Created by me, where an item ends only by closing it on GitHub. */
-  doneOff?: boolean;
+  /** Whether the status switch offers Done (see `doneAccess`). */
+  done?: DoneAccess;
   onCopy: (format: LinkFormat) => void;
   onReload: () => void;
   /** "Open in Orca" (W), offered while Orca knows the item's repo or can clone it (see `orcaHint`). */
@@ -100,7 +101,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, doneOff = false, onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -162,7 +163,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             </span>
           ) : (
             <div className="segmented compact status-switch" role="radiogroup" aria-label={t("detail.status")}>
-              {statusesFor(entry).map((s) => [
+              {statusesFor(entry)
+                .filter((s) => !(done === "hidden" && s.id === "done"))
+                .map((s) => [
                 s.id === "snoozed" && (
                   <button
                     key="plan"
@@ -183,7 +186,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   aria-checked={status === s.id && !(plan && s.id === "open")}
                   className={status === s.id && !(plan && s.id === "open") ? "on" : ""}
                   title={`${s.title} (${s.key})`}
-                  disabled={doneOff && s.id === "done"}
+                  disabled={done === "off" && s.id === "done"}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} />
