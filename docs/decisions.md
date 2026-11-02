@@ -4,12 +4,12 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-02
 
-- **D depends on the view for the tables.** Created by me does not offer D at all (switch, menu
-  and palette leave it out; the key does nothing): an own item ends by closing or merging it on
-  GitHub, and marking it done here changes nothing about that, even with another assignee. In
-  Assigned to me D marks your part done, but is greyed out while you are the only assignee, so no
-  work is left with nobody on it; unassign yourself or hand it on instead. The inbox keeps D as it was. Supersedes the "own issue
-  with another assignee takes D as my part done" part of "D does not finish what you opened".
+- **D never finishes an own item or one assigned to you alone.** In every view, D on such an
+  item changes no status; it only files what asks for you (mention, feedback, review request,
+  thread answer). An own item ends by closing or merging it on GitHub, even with another
+  assignee; an assignment nobody else is on would leave its work lying. Without anything to file,
+  D is left out on own items and greyed out on lone assignments; the key does nothing. Shared
+  assignments keep "my part done". Supersedes "D does not finish what you opened" below.
 - **New settings say "New" until their section was open once.** A quiet blue chip on the field
   and its section, and a dot on the settings button, so a setting that came with an update is
   found without the release notes. Seen is a per-device convenience in localStorage; a fresh

@@ -338,7 +338,7 @@ describe("Transferred issues", () => {
 
   it("finds the new copy among the cached items when the old one is reloaded, also when it was cached before transfers were read", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat"] });
+    const issue = world.issue({ repo: "octo-org/docs", assignees: ["octocat", "bob"] });
     await app.refresh();
     app.done(issue);
     world.advance(10 * MINUTE);
