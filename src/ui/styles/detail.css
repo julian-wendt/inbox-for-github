@@ -133,21 +133,6 @@
   align-items: center;
 }
 
-/* See `SteadyLabel`: the hidden copies only take up room. */
-.steady-label {
-  display: inline-grid;
-  justify-items: start;
-}
-
-.steady-label > * {
-  grid-area: 1 / 1;
-}
-
-.steady-label > [aria-hidden] {
-  visibility: hidden;
-  font-weight: 600;
-}
-
 .chip {
   display: inline-flex;
   gap: 6px;
@@ -867,7 +852,7 @@
 }
 
 .icon-completed {
-  color: var(--mention);
+  color: var(--purple);
 }
 
 .icon-closed-pr {

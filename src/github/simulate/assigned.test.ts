@@ -126,6 +126,19 @@ describe("Assigning myself", () => {
     expect(app.viewOf(issue)).toBe("inbox");
   });
 
+  it("keeps a follow-up when the viewer leaves", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
+    await app.refresh();
+    const until = new Date(world.now.getTime() + 2 * DAY).toISOString();
+    app.snooze(issue, until);
+
+    expect(await app.leave(issue)).toBeNull();
+
+    expect(app.statuses.get(issue.id)).toMatchObject({ status: "snoozed", until });
+    expect(app.followUp(issue)).toBe(until);
+  });
+
   it("assigns the viewer again with the status they had when leaving fails", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
@@ -145,7 +158,7 @@ describe("Assigning myself", () => {
 describe("My part done", () => {
   it("keeps a handed-off assignment on the plate, without counting it as news", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
 
     app.done(issue);
@@ -158,7 +171,7 @@ describe("My part done", () => {
 
   it("brings an update into the inbox, and ticking it off keeps the item on the plate", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
 
@@ -176,7 +189,7 @@ describe("My part done", () => {
 
   it("takes the tick-off back with undo", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
     world.advance(HOUR);
@@ -191,7 +204,7 @@ describe("My part done", () => {
 
   it("counts a moved board status, a linked pull request and closing as updates", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     world.setBoard(issue, { status: "In progress", sprint: "Sprint 12" });
     await app.refresh();
     app.done(issue);
@@ -218,7 +231,7 @@ describe("My part done", () => {
 
   it("shows a closed assignment nowhere once the closing was ticked off, and never under Done", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
     world.advance(HOUR);
@@ -231,7 +244,7 @@ describe("My part done", () => {
 
   it("files a closed assignment under Done only when it also mentioned the viewer", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     world.comment(issue, "alice", "@octocat please check");
     world.close(issue, "alice");
     await app.refresh();
@@ -241,7 +254,7 @@ describe("My part done", () => {
 
   it("takes the item back into the work with O and leaves done alone there", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
     app.done(issue);
@@ -255,7 +268,7 @@ describe("My part done", () => {
 
   it("drops the handoff once the viewer is unassigned elsewhere, as if no status were stored", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
 
@@ -267,7 +280,7 @@ describe("My part done", () => {
 
   it("turns a plain done on an assignment from an older version into my part done", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.statuses.set(issue.id, { status: "done", changedAt: world.stamp() });
 
@@ -279,7 +292,7 @@ describe("My part done", () => {
 
   it("leaves a mention on a handed-off assignment in the inbox while it stays on the plate", async () => {
     const { world, app } = sim;
-    const issue = world.issue({ assignees: ["octocat"] });
+    const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
     app.done(issue);
 
@@ -366,7 +379,7 @@ describe("Created by me", () => {
     expect(app.views().inbox).toContain(asked.id);
   });
 
-  it("lets D hand off an own issue only when another person is assigned too", async () => {
+  it("never lets D finish or hand off an own item, also with another person assigned", async () => {
     const { world, app } = sim;
     const alone = world.issue({ author: "octocat", assignees: ["octocat"] });
     const shared = world.issue({ author: "octocat", assignees: ["octocat", "alice"] });
@@ -378,8 +391,37 @@ describe("Created by me", () => {
     app.done(pr);
 
     expect(app.statuses.has(alone.id)).toBe(false);
-    expect(app.statuses.get(shared.id)?.handoff).toBeDefined();
+    expect(app.statuses.has(shared.id)).toBe(false);
     expect(app.statuses.has(pr.id)).toBe(false);
+  });
+
+  it("clears a done stored before the lock on an own item or a lone assignment", async () => {
+    const { world, app } = sim;
+    const lone = world.issue({ assignees: ["octocat"] });
+    const own = world.issue({ author: "octocat" });
+    const shared = world.issue({ assignees: ["octocat", "alice"] });
+    app.statuses.set(lone.id, { status: "done", changedAt: world.stamp(), handoff: { boards: {}, prs: [] } });
+    app.statuses.set(own.id, { status: "done", changedAt: world.stamp() });
+    app.statuses.set(shared.id, { status: "done", changedAt: world.stamp(), handoff: { boards: {}, prs: [] } });
+
+    await app.refresh();
+    app.classified();
+
+    expect(app.statuses.has(lone.id)).toBe(false);
+    expect(app.statuses.has(own.id)).toBe(false);
+    expect(app.statuses.get(shared.id)?.handoff).toBeDefined();
+    expect(app.log.get(lone.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:locked" });
+  });
+
+  it("does not let D hand off an assignment nobody else is on", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: ["octocat"] });
+    await app.refresh();
+
+    app.done(issue);
+
+    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.views().assigned).toContain(issue.id);
   });
 
   it("sorts by opening, newest first", async () => {

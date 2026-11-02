@@ -2,9 +2,8 @@
 :root {
   --font: "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
-  /* Mid tones that keep 3:1 as dots on light and dark backgrounds alike. */
+  /* A mid tone that keeps 3:1 as a dot on light and dark backgrounds alike. */
   --orange: #dc5a1e;
-  --pink: #db61a2;
 
   --radius-s: 4px;
   --radius-m: 6px;
@@ -48,14 +47,15 @@
   --blue: #0969da;
   --red: #cf222e;
   --purple: #7445c9;
+  --pink: #b8347f;
   /* Status roles name a hue, so every state of one color is the same color. */
   --st-open: var(--text-faint);
-  --st-snoozed: var(--purple);
+  --st-snoozed: var(--pink);
   --st-done: var(--green);
   --st-accepted: var(--blue);
   --st-planned: var(--blue);
   --new: var(--red);
-  --mention: var(--purple);
+  --mention: var(--pink);
   /* Filled green under white text (button, switch); dark mode takes the deeper light tone for 4.5:1. */
   --green-fill: var(--green);
   /* Raised card areas such as post headers, as on GitHub. */
@@ -93,6 +93,7 @@
     --blue: #4493f8;
     --red: #ff6b6f;
     --purple: #b796f5;
+  --pink: #f778ba;
     --green-fill: #1a7a35;
     --surface: #212226;
     color-scheme: dark;
@@ -127,6 +128,7 @@
   --blue: #4493f8;
   --red: #ff6b6f;
   --purple: #b796f5;
+  --pink: #f778ba;
   --green-fill: #1a7a35;
   --surface: #212226;
   color-scheme: dark;

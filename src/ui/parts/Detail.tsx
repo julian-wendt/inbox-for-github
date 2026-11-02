@@ -8,9 +8,10 @@ import { findMention, isBot, latest, posts, sameLogin } from "../../timeline";
 import { explain } from "../explain";
 import { t } from "../i18n";
 import { shownActivities, shownHistory } from "../activities";
+import type { DoneAccess } from "../statusPlan";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
-import { datedText, planTexts, type Dated } from "../plan";
+import { datedText, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
@@ -64,6 +65,8 @@ interface Props {
   /** Called with the item's id after a reply or state change was posted, to reload it. */
   onReplied: (id: string, change?: StateWrite) => void;
   onStatus: (status: Status) => void;
+  /** Whether the status switch offers Done (see `doneAccess`). */
+  done?: DoneAccess;
   onCopy: (format: LinkFormat) => void;
   onReload: () => void;
   /** "Open in Orca" (W), offered while Orca knows the item's repo or can clone it (see `orcaHint`). */
@@ -98,7 +101,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -160,7 +163,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             </span>
           ) : (
             <div className="segmented compact status-switch" role="radiogroup" aria-label={t("detail.status")}>
-              {statusesFor(entry).map((s) => [
+              {statusesFor(entry)
+                .filter((s) => !(done === "hidden" && s.id === "done"))
+                .map((s) => [
                 s.id === "snoozed" && (
                   <button
                     key="plan"
@@ -171,7 +176,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
                     <PlanIcon dated={dated} size={13} strokeWidth={1.75} color="var(--st-planned)" />
-                    <SteadyLabel text={plan?.text ?? t("detail.plan")} reserve={planTexts()} />
+                    {plan?.text ?? t("detail.plan")}
                     <ChevronDown size={12} className="segment-more" />
                   </button>
                 ),
@@ -181,10 +186,11 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   aria-checked={status === s.id && !(plan && s.id === "open")}
                   className={status === s.id && !(plan && s.id === "open") ? "on" : ""}
                   title={`${s.title} (${s.key})`}
+                  disabled={done === "off" && s.id === "done"}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} />
-                  <SteadyLabel text={s.title} reserve={[s.title]} />
+                  {s.title}
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
                 </button>,
               ])}
@@ -277,26 +283,6 @@ interface PostProps {
 }
 
 /** One post; comments by bots can fold to their first line, since they are mostly reports. */
-/**
- * A segment's label that keeps one width: as wide as the widest of `reserve` set in bold, the
- * weight of the chosen segment, so the switch does not jump when the choice or the plan changes.
- *
- * @example
- *   <SteadyLabel text="Thursday" reserve={planTexts()} />
- */
-function SteadyLabel({ text, reserve }: { text: string; reserve: string[] }) {
-  return (
-    <span className="steady-label">
-      <span>{text}</span>
-      {reserve.map((r) => (
-        <span key={r} aria-hidden>
-          {r}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef }: PostProps) {
   const note = review && reviewNote(review);
   const bot = isBot(post.author);

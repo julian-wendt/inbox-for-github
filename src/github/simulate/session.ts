@@ -6,12 +6,12 @@ import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
-import { onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
+import { leaveClears, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf, isWaiting } from "../../ui/followUp";
-import { planStatus } from "../../ui/statusPlan";
+import { lockOf, planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
@@ -145,11 +145,11 @@ export class InboxSession {
     }
   }
 
-  /** ⌃A on an assignment: the viewer leaves, the stored status goes, and both come back on failure. */
+  /** ⌃U on an assignment: the viewer leaves, the stored status goes unless it is a follow-up, and both come back on failure. */
   async leave(ref: Ref): Promise<string | null> {
     const before = this.item(ref);
     const previous = this.statuses.get(ref.id);
-    this.statuses.delete(ref.id);
+    if (leaveClears(previous)) this.statuses.delete(ref.id);
     this.replace({
       ...before,
       assignees: before.assignees.filter((a) => !sameLogin(a, this.me)),
@@ -323,6 +323,11 @@ export class InboxSession {
     const { id } = c.item;
     if (c.statusReset) {
       this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
+      return true;
+    }
+    if (this.statuses.get(id)?.status === "done" && lockOf(c, this.me) !== null) {
+      this.statuses.delete(id);
+      this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:locked" }]);
       return true;
     }
     const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, this.me);

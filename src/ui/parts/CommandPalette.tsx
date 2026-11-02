@@ -26,6 +26,8 @@ interface Props {
   /** Does the next `count` taken-back changes again. */
   onRedoSteps: (count: number) => void;
   onStatus: (status: Status) => void;
+  /** Leaves Done out where the view does not offer it (see `doneAccess`). */
+  doneOff?: boolean;
   onOpenCurrent: () => void;
   /** "Open in Orca", offered while Orca knows the current item's repo. */
   onOrca?: () => void;
@@ -105,7 +107,9 @@ export function CommandPalette(props: Props) {
                     {t("plan.remove")}
                   </Item>
                 )}
-                {statusesFor(props.current).map((s) => (
+                {statusesFor(props.current)
+                  .filter((s) => !(props.doneOff && s.id === "done"))
+                  .map((s) => (
                   <Item key={s.id} onSelect={run(() => (s.id === "snoozed" ? props.onFollowUp() : props.onStatus(s.id)))} icon={<StatusIcon status={s.id} />} keys={s.key} hint={statusHint(s.id)}>
                     {t("palette.status", { status: s.title })}
                   </Item>

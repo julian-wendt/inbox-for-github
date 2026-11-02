@@ -44,6 +44,11 @@ export class MemoryStore implements Persistence {
     return Promise.resolve(new Map(this.statusMap));
   }
 
+  /** The demo's seeded log is consistent; nothing to repair. */
+  repairStatusLog(): Promise<number> {
+    return Promise.resolve(0);
+  }
+
   statusLog(): Promise<Map<string, StatusChange[]>> {
     return Promise.resolve(new Map(this.log));
   }

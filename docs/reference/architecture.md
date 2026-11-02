@@ -52,6 +52,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   while assigned and open, nowhere once closed and ticked off, and in the inbox (ask `update`) while
   `updatesSince` finds posts by others, board moves, new linked pull requests or closing. D
   there stores a fresh snapshot; Open (O) in the bar clears the status. `restoreStatus` undoes exactly.
+- **Repairs at start:** `Store.repairStatusLog` drops log entries at the end of an item's
+  history that no stored status stands behind (`staleLogRows`), so the activity log never shows
+  "marked as done" for an open item. A "done" stored on an item D may no longer finish
+  (`lockOf`: own, or assigned to the viewer alone) is cleared once (source `auto:locked`).
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
   table, in the bar `later` ("Follow-up"; board-blocked items have their own bar `blocked`); only its date ends it (no "reopenOn"), and a
