@@ -892,12 +892,12 @@
   color: var(--text);
 }
 
-/* Days chosen one by one, so each stands apart instead of reading as one switch. */
-.segmented.weekdays {
+/* Several chosen at once, so each stands apart instead of reading as one switch. */
+.segmented.multi {
   gap: 4px;
 }
 
-.segmented.weekdays button {
+.segmented.multi button {
   min-width: 48px;
   padding: 0 10px;
 }

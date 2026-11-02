@@ -65,7 +65,7 @@ export function DeliveryEditor({ value, onChange }: { value: Delivery; onChange:
         ))}
       </div>
       {value.mode !== "immediately" && (
-        <div className="segmented" role="group" aria-label={t("settings.deliveryDays")}>
+        <div className="segmented multi" role="group" aria-label={t("settings.deliveryDays")}>
           {WEEK.map((day) => (
             <button key={day} className={value.days.includes(day) ? "on" : ""} aria-pressed={value.days.includes(day)} onClick={() => toggleDay(day)}>
               {weekdayName(day)}

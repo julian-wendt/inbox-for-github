@@ -263,7 +263,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                 <Choice options={LANGUAGES.map((l) => l.id)} value={draft.language} label={(id) => LANGUAGES.find((l) => l.id === id)!.title} onChange={(language) => change({ language })} />
               </Field>
               <Field label={t("settings.workdays")} hint={t("settings.workdaysHint")}>
-                <div className="segmented weekdays">
+                <div className="segmented multi">
                   {WEEK.map((day) => (
                     <button
                       key={day}
