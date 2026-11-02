@@ -21,7 +21,7 @@ function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<It
 describe("groupPlate", () => {
   const board = (status: string) => ({ boards: [{ id: "b", title: "b", status, sprint: null, fields: [] }] });
 
-  it("puts review, progress, todo and later in their bars, and what is finished but open last", () => {
+  it("puts review, progress, todo, blocked and later in their bars, and what is finished but open last", () => {
     const groups = groupPlate([
       entry("new", { status: "open", bucket: "inbox" }),
       entry("review", {}, board("In Review")),
@@ -38,12 +38,13 @@ describe("groupPlate", () => {
       ["review", ["review"]],
       ["progress", ["progress"]],
       ["todo", ["new", "todo"]],
-      ["later", ["blocked", "snoozed"]],
+      ["blocked", ["blocked"]],
+      ["later", ["snoozed"]],
       ["finished", ["done", "mine-done"]],
     ]);
   });
 
-  it("files snoozed items under Later, whatever their work status", () => {
+  it("files snoozed items under Follow-up, whatever their work status", () => {
     const groups = groupPlate([entry("a"), entry("z", { status: "snoozed", bucket: "snoozed" })]);
     expect(groups.map((g) => [g.group, g.entries.map((e) => e.item.id)])).toEqual([
       ["todo", ["a"]],
@@ -80,8 +81,9 @@ describe("isNewAssignment", () => {
 });
 
 describe("plateCount", () => {
-  it("counts everything on the plate but the later bar", () => {
-    expect(plateCount(groupPlate([entry("a", { bucket: "inbox" }), entry("b"), entry("c", { status: "snoozed", bucket: "snoozed" })]))).toBe(2);
+  it("counts everything on the plate but the blocked and follow-up bars", () => {
+    const blocked = { boards: [{ id: "b", title: "b", status: "Blocked", sprint: null, fields: [] }] };
+    expect(plateCount(groupPlate([entry("a", { bucket: "inbox" }), entry("b"), entry("c", { status: "snoozed", bucket: "snoozed" }), entry("d", {}, blocked)]))).toBe(2);
   });
 });
 
@@ -102,19 +104,19 @@ describe("assignedAt", () => {
 
 describe("bar order", () => {
   it("completes a partial order with each remaining bar before the one it precedes by default", () => {
-    expect(orderBars(["todo", "review"])).toEqual(["progress", "todo", "review", "later", "finished"]);
+    expect(orderBars(["todo", "review"])).toEqual(["progress", "todo", "review", "blocked", "later", "finished"]);
   });
 
   it("puts a bar missing from a saved order where it belongs by default", () => {
-    expect(orderBars(["review", "progress", "todo", "finished"])).toEqual(["review", "progress", "todo", "later", "finished"]);
+    expect(orderBars(["review", "progress", "todo", "later", "finished"])).toEqual(["review", "progress", "todo", "blocked", "later", "finished"]);
   });
 
   it("ignores bars a saved order names that no longer exist, like Today and Planned", () => {
-    expect(orderBars(["focus", "review", "planned"] as unknown as PlateGroup[])).toEqual(["review", "progress", "todo", "later", "finished"]);
+    expect(orderBars(["focus", "review", "planned"] as unknown as PlateGroup[])).toEqual(["review", "progress", "todo", "blocked", "later", "finished"]);
   });
 
   it("moves a bar to just before the one it was dropped on", () => {
-    expect(moveBar([], "later", "review")).toEqual(["later", "review", "progress", "todo", "finished"]);
+    expect(moveBar([], "later", "review")).toEqual(["later", "review", "progress", "todo", "blocked", "finished"]);
   });
 });
 

@@ -143,7 +143,7 @@ export default function App() {
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`]);
+  const bars = useCollapsed("assigned-collapsed", ["blocked", "later", "finished", `inbox:${WAITING_GROUP}`], [`inbox:${WAITING_GROUP}`, "blocked"]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);

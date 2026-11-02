@@ -31,6 +31,7 @@ const HINTS: Partial<Record<TableGroup, MessageKey>> = {
   review: "table.reviewHint",
   progress: "table.progressHint",
   todo: "table.todoHint",
+  blocked: "table.blockedHint",
   later: "table.laterHint",
   finished: "table.finishedHint",
   pr: "table.prHint",
@@ -172,8 +173,7 @@ export function AssignedTable(props: Props) {
     if (group.startsWith("day:")) return t(`time.group.${group.slice(4)}` as MessageKey);
     return t(`table.${group as PlateGroup}`);
   };
-  // Created by me has no board-blocked items in Later, only snoozed ones.
-  const hintOf = (group: TableGroup) => (group === "later" && !assigned ? "table.laterAuthoredHint" : HINTS[group]);
+  const hintOf = (group: TableGroup) => HINTS[group];
   const scroll = useRef<HTMLDivElement>(null);
   const section = useRef<HTMLElement>(null);
   useGutter(() => scroll.current, () => section.current);

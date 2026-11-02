@@ -6,12 +6,12 @@ import type { AuthoredGroup } from "./authored";
 import type { SnoozeGroup } from "./timeGroups";
 
 /**
- * A bar in the "Assigned to me" table: the work statuses, "later" for snoozed or blocked ones,
- * and "finished" for what is done but still open on GitHub: done on its board, or the viewer's
+ * A bar in the "Assigned to me" table: the work statuses, "blocked" for what is blocked on its
+ * board, "later" for the viewer's follow-ups, and "finished" for what is done but still open on GitHub: done on its board, or the viewer's
  * part done. Assignments not opened yet sit in their work status bar, marked as new in their row;
  * so do those pinned for today or planned for a day, with their star or day (Planned lists them).
  */
-export type PlateGroup = "review" | "progress" | "todo" | "later" | "finished";
+export type PlateGroup = "review" | "progress" | "todo" | "blocked" | "later" | "finished";
 
 /** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a bar of Created by me or a day bar of Planned. */
 export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup | DayGroup;
@@ -66,7 +66,7 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
 }
 
 /** The bars in display order. */
-export const PLATE_GROUPS: PlateGroup[] = ["review", "progress", "todo", "later", "finished"];
+export const PLATE_GROUPS: PlateGroup[] = ["review", "progress", "todo", "blocked", "later", "finished"];
 
 /**
  * What counts as activity besides posts and reviews by others (the "movesUp" setting). The
@@ -105,7 +105,7 @@ export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MO
 /**
  * The viewer's plate for "Assigned to me": every open item assigned to them that is not done,
  * in the table's bars. Snoozed ones go to "later", the rest by their work status (see
- * `workStatus`), where a blocked board status also counts as "later". Each bar is sorted by when
+ * `workStatus`), where a blocked board status goes to "blocked". Each bar is sorted by when
  * the viewer was assigned (`assignedAt`), newest first.
  *
  * @param entries    All classified items; only current assignments that are open or snoozed are used,
@@ -165,7 +165,7 @@ function plateGroup(entry: Classified, statusMap: StatusMap): PlateGroup {
   if (entry.updates) return "finished";
   if (entry.status === "snoozed") return "later";
   const work = workStatus(entry.item, statusMap);
-  return work === "snoozed" ? "later" : work === "done" ? "finished" : work;
+  return work === "snoozed" ? "blocked" : work === "done" ? "finished" : work;
 }
 
 /**
@@ -239,12 +239,12 @@ export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, see
   return !!last && !!since && last > since;
 }
 
-/** The bars that ask for work now; planned, blocked and finished items are parked. */
+/** The bars that ask for work now; blocked, followed-up and finished items are parked. */
 export function isActiveBar(group: PlateGroup): boolean {
-  return group !== "later" && group !== "finished";
+  return group !== "blocked" && group !== "later" && group !== "finished";
 }
 
-/** The number for the sidebar: everything on the plate except the Later and Done bars. */
+/** The number for the sidebar: everything on the plate except the Blocked, Follow-up and Finished bars. */
 export function plateCount(groups: { group: PlateGroup; entries: Classified[] }[]): number {
   return groups.filter((g) => isActiveBar(g.group)).reduce((n, g) => n + g.entries.length, 0);
 }
