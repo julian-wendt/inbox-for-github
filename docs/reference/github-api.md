@@ -76,8 +76,10 @@ against its `updatedAt`, over 959 pull requests in large public repositories and
 one account. An event that moves `updatedAt` can never be later than it.
 
 - **Do not move it:** a board status change (`ProjectV2ItemStatusChangedEvent`, 15 items whose
-  `updatedAt` was earlier than the change) and a cross-reference from elsewhere
-  (`CrossReferencedEvent`, 68 such items).
+  `updatedAt` was earlier than the change), a cross-reference from elsewhere
+  (`CrossReferencedEvent`, 68 such items) and an assignment (`AssignedEvent`: two issues assigned
+  to a second person through GitHub's UI kept their `updatedAt` of six days before, seen
+  2026-11-02).
 - **Likely move it:** a withdrawn review request (`ReviewRequestRemovedEvent`), an unassignment
   and a label added or removed: never later than `updatedAt` (57, 71 and over 400 items), some
   exactly on it. Not proven without a controlled write.
@@ -132,7 +134,8 @@ of the item and its boards took two to three seconds.
 
 ## Known gaps
 
-- Deltas miss changes that do not touch `updatedAt`, such as a board status change, and items
+- Deltas miss changes that do not touch `updatedAt`, such as a board status change or an
+  assignment, and items
   that drop out of the involved search; the hourly full fetch catches them. Withdrawn review
   requests are the exception (see above). Resolving a review thread
   likely does not touch it either (not verified).
