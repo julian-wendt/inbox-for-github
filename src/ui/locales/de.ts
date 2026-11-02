@@ -356,6 +356,8 @@ export const de: Messages = {
   "settings.deliveryAddRange": "Zeitraum hinzufügen",
   "settings.deliveryHint.times": "Neue Items melden sich nie einzeln. Sie werden gesammelt, und zu jeder hier gesetzten Uhrzeit an den gewählten Tagen kommt eine Zusammenfassung. Die App muss laufen; das Fenster zu schließen genügt.",
   "settings.deliveryDays": "Tage",
+  "settings.deliveryHoursLabel": "Arbeitszeit",
+  "settings.deliveryTimesLabel": "Uhrzeiten",
   "settings.deliveryTimes": "Uhrzeit der Zusammenfassung",
   "settings.deliveryAdd": "Uhrzeit hinzufügen",
   "settings.deliveryRemove": "{time} entfernen",

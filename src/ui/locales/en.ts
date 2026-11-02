@@ -354,6 +354,8 @@ export const en = {
   "settings.deliveryAddRange": "Add hours",
   "settings.deliveryHint.times": "New items never notify one by one. They are collected, and one summary arrives at each time set here, on the days chosen. The app has to be running; closing its window is fine.",
   "settings.deliveryDays": "Days",
+  "settings.deliveryHoursLabel": "Hours",
+  "settings.deliveryTimesLabel": "Times",
   "settings.deliveryTimes": "Summary time",
   "settings.deliveryAdd": "Add time",
   "settings.deliveryRemove": "Remove {time}",

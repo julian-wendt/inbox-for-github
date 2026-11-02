@@ -582,17 +582,67 @@
   opacity: 0.5;
 }
 
-.delivery-rows {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
+/* Days and times of the schedule in one card, a labelled line each. */
+.delivery-card {
+  justify-self: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
 }
 
-.delivery-row {
-  display: flex;
+.delivery-line {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
+  padding: 10px 12px;
+}
+
+.delivery-line + .delivery-line {
+  border-top: 1px solid var(--border);
+}
+
+.delivery-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.delivery-times {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
+}
+
+/* A time (or range) and its × as one piece, as tall as every other control. */
+.time-chip {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-h);
+  padding-right: 3px;
+  border-radius: var(--radius-m);
+  background: var(--control-fill);
+}
+
+.dialog.settings .time-chip .segment-field {
+  height: 100%;
+  padding: 0 8px 0 10px;
+  border-color: transparent;
+  background: none;
+  font-weight: 500;
+}
+
+.time-chip .segment-field:focus-within {
+  border-color: var(--accent);
+}
+
+.time-chip-dash {
+  color: var(--text-muted);
+}
+
+.time-chip-x {
+  width: 22px;
+  height: 22px;
 }
 
 .reset-row {

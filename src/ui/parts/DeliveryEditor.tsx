@@ -1,4 +1,5 @@
 import { Plus, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { formatTime, nextRange, nextTime, timeParts, type Delivery, type DeliveryMode } from "../delivery";
 import { dateLocale, t } from "../i18n";
 import { HOURS, MINUTES } from "../segments";
@@ -31,18 +32,25 @@ function TimeField({ label, value, onChange }: { label: string; value: string; o
   );
 }
 
-function RemoveButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {
+/** A time or a range with its own ×, as one piece; the × shows only where one can go. */
+function TimeChip({ removeLabel, onRemove, children }: { removeLabel: string; onRemove?: () => void; children: ReactNode }) {
   return (
-    <button className="btn" aria-label={label} disabled={disabled} onClick={onClick}>
-      <X size={14} />
-    </button>
+    <span className="time-chip">
+      {children}
+      {onRemove && (
+        <button className="icon-btn time-chip-x" aria-label={removeLabel} title={removeLabel} onClick={onRemove}>
+          <X size={13} />
+        </button>
+      )}
+    </span>
   );
 }
 
 /**
  * The controls for when notifications may arrive: the mode; the days for the other two; the
  * working hours as several ranges, so a break fits between them, or the summary times. Ranges
- * and times stay in the order typed, so a field never moves under the cursor.
+ * and times stay in the order typed, so a field never moves under the cursor. Days and times sit
+ * in one card, each on a labelled line.
  *
  * @param value     The current schedule.
  * @param onChange  Called with the changed schedule on every edit.
@@ -54,6 +62,8 @@ export function DeliveryEditor({ value, onChange }: { value: Delivery; onChange:
   const toggleDay = (day: number) => onChange({ ...value, days: value.days.includes(day) ? value.days.filter((d) => d !== day) : [...value.days, day] });
   const setRange = (index: number, edge: "from" | "to", time: string) => onChange({ ...value, ranges: value.ranges.map((range, i) => (i === index ? { ...range, [edge]: time } : range)) });
   const setTime = (index: number, time: string) => onChange({ ...value, times: value.times.map((x, i) => (i === index ? time : x)) });
+  const removeRange = (index: number) => (value.ranges.length > 1 ? () => onChange({ ...value, ranges: value.ranges.filter((_, i) => i !== index) }) : undefined);
+  const removeTime = (index: number) => (value.times.length > 1 ? () => onChange({ ...value, times: value.times.filter((_, i) => i !== index) }) : undefined);
 
   return (
     <>
@@ -65,40 +75,44 @@ export function DeliveryEditor({ value, onChange }: { value: Delivery; onChange:
         ))}
       </div>
       {value.mode !== "immediately" && (
-        <div className="segmented multi" role="group" aria-label={t("settings.deliveryDays")}>
-          {WEEK.map((day) => (
-            <button key={day} className={value.days.includes(day) ? "on" : ""} aria-pressed={value.days.includes(day)} onClick={() => toggleDay(day)}>
-              {weekdayName(day)}
-            </button>
-          ))}
-        </div>
-      )}
-      {value.mode === "hours" && (
-        <div className="delivery-rows">
-          {value.ranges.map((range, index) => (
-            <div key={index} className="delivery-row">
-              <TimeField label={t("settings.deliveryFrom")} value={range.from} onChange={(time) => setRange(index, "from", time)} />
-              <span>–</span>
-              <TimeField label={t("settings.deliveryTo")} value={range.to} onChange={(time) => setRange(index, "to", time)} />
-              <RemoveButton label={t("settings.deliveryRemove", { time: `${range.from}–${range.to}` })} disabled={value.ranges.length === 1} onClick={() => onChange({ ...value, ranges: value.ranges.filter((_, i) => i !== index) })} />
+        <div className="delivery-card">
+          <div className="delivery-line">
+            <span className="delivery-label">{t("settings.deliveryDays")}</span>
+            <div className="segmented multi" role="group" aria-label={t("settings.deliveryDays")}>
+              {WEEK.map((day) => (
+                <button key={day} className={value.days.includes(day) ? "on" : ""} aria-pressed={value.days.includes(day)} onClick={() => toggleDay(day)}>
+                  {weekdayName(day)}
+                </button>
+              ))}
             </div>
-          ))}
-          <button className="btn" disabled={value.ranges.length >= MAX_ENTRIES} onClick={() => onChange({ ...value, ranges: [...value.ranges, nextRange(value.ranges)] })}>
-            <Plus size={14} /> {t("settings.deliveryAddRange")}
-          </button>
-        </div>
-      )}
-      {value.mode === "times" && (
-        <div className="delivery-row">
-          {value.times.map((time, index) => (
-            <div key={index} className="delivery-row">
-              <TimeField label={t("settings.deliveryTimes")} value={time} onChange={(next) => setTime(index, next)} />
-              <RemoveButton label={t("settings.deliveryRemove", { time })} disabled={value.times.length === 1} onClick={() => onChange({ ...value, times: value.times.filter((_, i) => i !== index) })} />
+          </div>
+          <div className="delivery-line">
+            <span className="delivery-label">{t(value.mode === "hours" ? "settings.deliveryHoursLabel" : "settings.deliveryTimesLabel")}</span>
+            <div className="delivery-times">
+              {value.mode === "hours"
+                ? value.ranges.map((range, index) => (
+                    <TimeChip key={index} removeLabel={t("settings.deliveryRemove", { time: `${range.from}–${range.to}` })} onRemove={removeRange(index)}>
+                      <TimeField label={t("settings.deliveryFrom")} value={range.from} onChange={(time) => setRange(index, "from", time)} />
+                      <span className="time-chip-dash">–</span>
+                      <TimeField label={t("settings.deliveryTo")} value={range.to} onChange={(time) => setRange(index, "to", time)} />
+                    </TimeChip>
+                  ))
+                : value.times.map((time, index) => (
+                    <TimeChip key={index} removeLabel={t("settings.deliveryRemove", { time })} onRemove={removeTime(index)}>
+                      <TimeField label={t("settings.deliveryTimes")} value={time} onChange={(next) => setTime(index, next)} />
+                    </TimeChip>
+                  ))}
+              {value.mode === "hours" ? (
+                <button className="btn" disabled={value.ranges.length >= MAX_ENTRIES} onClick={() => onChange({ ...value, ranges: [...value.ranges, nextRange(value.ranges)] })}>
+                  <Plus size={14} /> {t("settings.deliveryAddRange")}
+                </button>
+              ) : (
+                <button className="btn" disabled={value.times.length >= MAX_ENTRIES} onClick={() => onChange({ ...value, times: [...value.times, nextTime(value.times)] })}>
+                  <Plus size={14} /> {t("settings.deliveryAdd")}
+                </button>
+              )}
             </div>
-          ))}
-          <button className="btn" disabled={value.times.length >= MAX_ENTRIES} onClick={() => onChange({ ...value, times: [...value.times, nextTime(value.times)] })}>
-            <Plus size={14} /> {t("settings.deliveryAdd")}
-          </button>
+          </div>
         </div>
       )}
     </>
