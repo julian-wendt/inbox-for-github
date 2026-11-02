@@ -55,6 +55,8 @@ export class InboxSession {
   readonly log = new Map<string, StatusChange[]>();
   readonly writeFailures = new Map<string, { kind: "assign" | "unassign"; error: string }[]>();
   readonly settings: Required<SessionSettings>;
+  /** The "filedAt" setting: when D last filed an item's asks without finishing it. */
+  readonly filedAt = new Map<string, string>();
   private last: { fetchedAt: Date; fullAt: Date; key: string } | null = null;
   private undoStep: (() => void) | null = null;
 
@@ -182,6 +184,12 @@ export class InboxSession {
       case "clear":
         this.statuses.delete(ref.id);
         break;
+      case "file": {
+        const before = this.filedAt.get(ref.id);
+        this.filedAt.set(ref.id, this.world.now.toISOString());
+        this.undoStep = () => (before ? this.filedAt.set(ref.id, before) : this.filedAt.delete(ref.id));
+        return;
+      }
       case "blocked":
         return;
       case "tick-update":
@@ -239,7 +247,7 @@ export class InboxSession {
     const list = () =>
       withinClosedWindow(this.items, this.settings.closedDays, this.nowMs).map((raw) => {
         const item = directOnly(raw, this.me, this.settings.directOnly);
-        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, undefined, this.settings.askRules);
+        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, undefined, this.settings.askRules, this.filedAt.get(item.id));
       });
     for (let pass = 0; pass < 3; pass++) {
       let changed = false;

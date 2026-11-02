@@ -9,6 +9,7 @@ export type StatusPlan =
   | { do: "tick-update" }
   | { do: "hand-off" }
   | { do: "clear" }
+  | { do: "file" }
   | { do: "blocked" }
   | { do: "set"; status: Status }
   | { do: "none" };
@@ -24,6 +25,10 @@ export type StatusPlan =
  * Only an issue with another assignee besides the viewer can have "my part done". Back from a
  * follow-up or a reopen, such an item asks again; D files it without hiding it ("clear").
  *
+ * An item of the tables (assigned or the viewer's own) that sits in the inbox, and an own item
+ * someone else closed, are filed instead ("file": the "filedAt" setting): the asks go, the item
+ * stays where it is, and an assignment keeps the viewer's part; D once more, without asks, ends it.
+ *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.
  * @param me      The viewer's login.
@@ -36,9 +41,15 @@ export function planStatus(c: Classified, status: Status, me: string): StatusPla
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
+  if (c.asks.includes("closed") || (inTable(c, me) && c.asks.length > 0 && !c.asks.includes("reopened"))) return { do: "file" };
   if (openOnGitHubForGood(c, me)) return c.asks.includes("reopened") ? { do: "clear" } : { do: "blocked" };
   if (onPlate(c, me)) return { do: "hand-off" };
   return { do: "set", status };
+}
+
+/** Open and in a table: assigned to the viewer, or opened by them. */
+function inTable({ item }: Classified, me: string): boolean {
+  return !item.closed && (item.reasons.includes("assigned") || sameLogin(item.author, me));
 }
 
 /** An item the viewer opened that D cannot finish: a pull request, or an issue without another assignee to hand a part to. */
