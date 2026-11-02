@@ -1,6 +1,6 @@
 import { LayoutList, Table2 } from "lucide-react";
 import { t } from "../i18n";
-import type { Layout } from "../usePlannedLayout";
+import type { Layout } from "../useViewLayout";
 import { HeaderMenu } from "./HeaderMenu";
 
 /**

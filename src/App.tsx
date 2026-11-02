@@ -52,7 +52,7 @@ import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayCho
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
-import { usePlannedLayout } from "./ui/usePlannedLayout";
+import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
@@ -93,8 +93,13 @@ export default function App() {
   const [chosen, setChosen] = useState<View>("inbox");
   const views = VIEWS;
   const bucket = chosen;
-  const [layout, setLayout] = usePlannedLayout();
-  const table = bucket === "assigned" || bucket === "authored" || (bucket === "planned" && layout === "table");
+  const [plannedLayout, setPlannedLayout] = useViewLayout("planned");
+  const [followUpLayout, setFollowUpLayout] = useViewLayout("snoozed");
+  // Planned and Follow-up list items by the day they come up, as a list or as a table.
+  const byReturn = bucket === "planned" || bucket === "snoozed";
+  const layout = bucket === "snoozed" ? followUpLayout : plannedLayout;
+  const setLayout = bucket === "snoozed" ? setFollowUpLayout : setPlannedLayout;
+  const table = bucket === "assigned" || bucket === "authored" || (byReturn && layout === "table");
   const [repoFilter, setRepoFilter] = useState<string[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
   const [ask, setAsk] = useState<AskFilter>("all");
@@ -129,7 +134,7 @@ export default function App() {
     setMarks(new Set());
   };
   // Each table keeps its own sprint filter while the viewer switches views.
-  const [sprints, setSprints] = useState<Record<"assigned" | "authored" | "planned", SprintFilter>>({ assigned: "all", authored: "all", planned: "all" });
+  const [sprints, setSprints] = useState<Record<"assigned" | "authored" | "planned" | "snoozed", SprintFilter>>({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
   // The free-text search over title and number: null while the search bar is closed, else the typed text.
   const [search, setSearch] = useState<string | null>(null);
   const query = search ?? "";
@@ -241,26 +246,31 @@ export default function App() {
     () => (bucket === "snoozed" ? groupBySnoozeEnd(followUpAll.filter((c) => matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "", sort.of("snoozed") === "oldest") : []),
     [bucket, followUpAll, query, sort],
   );
+  const followUpSprints = useMemo(() => sprintChoices(followUpAll.map((c) => c.item), hidden), [followUpAll, hidden]);
+  const followUpTable = useMemo(
+    (): { group: TableGroup; entries: Classified[] }[] => bySprint(followUpGroups.map((g) => ({ group: `day:${g.group}` as TableGroup, entries: g.entries })), sprints.snoozed, followUpSprints),
+    [followUpGroups, bySprint, sprints.snoozed, followUpSprints],
+  );
   const byReturnGroups = bucket === "snoozed" ? followUpGroups : plannedGroups;
   const listed = useMemo(
     () =>
       table
         ? []
-        : bucket === "planned" || bucket === "snoozed"
+        : byReturn
           ? byReturnGroups.flatMap((g) => g.entries)
           : oriented(sortByRecency((asking ? askBase.filter((c) => matchesAsk(c, ask, me)) : scoped.filter((c) => c.bucket === bucket)).filter((c) => matchesText(c.item, query)), rowTime), sort.of(bucket)),
-    [scoped, askBase, asking, ask, query, me, bucket, table, sort, rowTime, byReturnGroups],
+    [scoped, askBase, asking, ask, query, me, bucket, byReturn, table, sort, rowTime, byReturnGroups],
   );
   const timeGroups = useMemo(() => {
     if (table) return undefined;
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
-    if (bucket === "planned" || bucket === "snoozed") return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
+    if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
     if (inbox.settings.groupByTime) return groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) }));
     return undefined;
-  }, [bucket, table, listed, byReturnGroups, inbox.settings.groupByTime, sort, rowTime]);
+  }, [bucket, byReturn, table, listed, byReturnGroups, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Done stays open in the inbox.
-  const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : authored;
+  const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : bucket === "snoozed" ? followUpTable : authored;
   const viewGroups: { group: string; entries: Classified[] }[] | undefined = table ? tableGroups : timeGroups;
   const barKey = useCallback((group: string) => (bucket === "assigned" ? group : `${bucket}:${group}`), [bucket]);
   const folded = useCallback((group: string) => bars.collapsed.has(barKey(group)), [bars.collapsed, barKey]);
@@ -371,7 +381,7 @@ export default function App() {
     [inbox.settings.tableAttributes, inbox.settings.detailAttributes, attributes],
   );
   const detailKeys = useMemo(() => shownKeys(combined, "detail"), [combined]);
-  const tableView = bucket === "authored" ? "authored" : bucket === "planned" ? "planned" : "assigned";
+  const tableView = bucket === "authored" || bucket === "planned" || bucket === "snoozed" ? bucket : "assigned";
   const ownColumns = inbox.settings.tableColumns[tableView];
   const columnKeys = useMemo(() => tableKeys(combined, ownColumns), [combined, ownColumns]);
   // Assigned to me also switches the opening date after the title; Created by me times its rows by it.
@@ -400,7 +410,7 @@ export default function App() {
     setRepoFilter([]);
     setKind("all");
     setAsk("all");
-    setSprints({ assigned: "all", authored: "all", planned: "all" });
+    setSprints({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
     setSearch(null);
   };
   // With "hoverActs", keys act on the row under the mouse; the arrow keys and an open pop-up hand them back to the selection.
@@ -1112,7 +1122,7 @@ export default function App() {
   /** Shows an item in its view with every filter cleared, so it cannot be hidden by one. */
   const jumpTo = (c: Classified) => {
     setRepoFilter([]);
-    setSprints({ assigned: "all", authored: "all", planned: "all" });
+    setSprints({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
     if (kind !== "all" && kind !== c.item.kind) setKind("all");
     setAsk("all");
     setBucket(viewOf(c, me) ?? "inbox");
@@ -1195,8 +1205,8 @@ export default function App() {
           onSelectBar={(group) => selection.select(`bar:${group}`)}
           onToggle={toggleBar}
           sprint={sprints[bucket]}
-          sprints={bucket === "assigned" ? plateSprints : bucket === "planned" ? plannedSprints : authoredSprints}
-          layout={bucket === "planned" ? layout : undefined}
+          sprints={bucket === "assigned" ? plateSprints : bucket === "planned" ? plannedSprints : bucket === "snoozed" ? followUpSprints : authoredSprints}
+          layout={byReturn ? layout : undefined}
           onLayout={setLayout}
           onSprint={(filter) => setSprints((current) => ({ ...current, [bucket]: filter }))}
           onToggleAll={(fold) => bars.setAll(tableGroups.map((g) => barKey(g.group)), fold)}
@@ -1238,7 +1248,7 @@ export default function App() {
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
-          layout={bucket === "planned" ? layout : undefined}
+          layout={byReturn ? layout : undefined}
           onLayout={setLayout}
           onMenu={openMenu}
           counts={counts}

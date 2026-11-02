@@ -194,7 +194,7 @@ export interface Settings {
   /** The attributes of the Assigned to me table in the viewer's order, with their switches; null until changed (see `resolveAttributes`). */
   tableAttributes: AttributeSetting[] | null;
   /** Per table, its own attribute switches from its header menu; attributes without one follow `tableAttributes`. */
-  tableColumns: Partial<Record<"assigned" | "authored" | "planned", Record<string, boolean>>>;
+  tableColumns: Partial<Record<"assigned" | "authored" | "planned" | "snoozed", Record<string, boolean>>>;
   /** The attributes of the detail view's meta line, like `tableAttributes`, in the same order. */
   detailAttributes: AttributeSetting[] | null;
   /** The order of the bars in Assigned to me; bars left out follow in their default order. */

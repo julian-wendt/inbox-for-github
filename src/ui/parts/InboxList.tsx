@@ -8,7 +8,7 @@ import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
 import { rowWhen } from "../followUp";
 import type { Dated } from "../plan";
-import type { Layout } from "../usePlannedLayout";
+import type { Layout } from "../useViewLayout";
 import type { SortOrder } from "../useSortOrders";
 import { BucketInfo } from "./BucketInfo";
 import { Elsewhere } from "./Elsewhere";
