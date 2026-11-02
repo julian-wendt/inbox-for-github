@@ -167,7 +167,7 @@ export function AssignedTable(props: Props) {
   );
   const label = (group: TableGroup, entries: Classified[]) => {
     if (group === "pr") return t("table.pr");
-    if (group === "notype") return t("table.noType");
+    if (group === "notype") return dotted("gray", t("table.noType"));
     if (group === "finished") return t("table.finished");
     if (group === "unassigned") return t("table.unassigned");
     if (group === "taken") return t("table.taken");
