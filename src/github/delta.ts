@@ -1,7 +1,7 @@
 import type { Item } from "../model";
 
 /** A full fetch at least this often; deltas miss changes that do not touch `updatedAt`, such as board status. */
-export const FULL_EVERY_MS = 60 * 60_000;
+export const FULL_EVERY_MS = 15 * 60_000;
 
 /** Deltas start this much before the last fetch, so items GitHub's search indexes late are not missed. */
 export const DELTA_OVERLAP_MS = 5 * 60_000;

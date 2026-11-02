@@ -136,6 +136,6 @@ of the item and its boards took two to three seconds.
 
 - Deltas miss changes that do not touch `updatedAt`, such as a board status change or an
   assignment, and items
-  that drop out of the involved search; the hourly full fetch catches them. Withdrawn review
+  that drop out of the involved search; the full fetch every 15 minutes catches them. Withdrawn review
   requests are the exception (see above). Resolving a review thread
   likely does not touch it either (not verified).

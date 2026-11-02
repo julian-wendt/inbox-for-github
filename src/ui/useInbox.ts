@@ -99,8 +99,8 @@ export interface Inbox {
  * At start the last successful fetch comes from the store, so the list shows at once and also
  * without a connection; a failed fetch keeps it and sets `error`. Fetching starts once the store
  * is open and restarts whenever the organization list changes; it
- * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within an hour of a
- * full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
+ * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within
+ * `FULL_EVERY_MS` (15 minutes) of a full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
  * the closed window, the item limit or switching boards off filters the cached items instead of
  * refetching. A longer closed window loads only the added days, switching boards on only the
  * boards; a higher item limit fetches in full. When GitHub's hourly

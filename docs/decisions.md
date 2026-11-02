@@ -4,6 +4,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-02
 
+- **A full fetch every 15 minutes, not every hour.** Deltas see only what moves `updatedAt`, and
+  assignments, board moves and cross-references do not; with an hourly full fetch they lagged up
+  to an hour. A full fetch of about 200 items costs about 120 points, so four an hour plus a delta
+  every minute stay near 1,400 of GitHub's 5,000. The budget is shared with every other tool on
+  the same token, which is why it is not tighter. Supersedes "an hourly full fetch" below.
 - **Follow-up gets its own view again.** A follow-up is also how to check back on work handed to
   others: an assignment whose part is done, an issue someone else took on, an own pull request.
   Spread over the inbox's bottom bar and two table bars, nothing showed all that the viewer waits

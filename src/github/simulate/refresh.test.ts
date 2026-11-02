@@ -14,9 +14,9 @@ describe("API usage", () => {
     const spent = pointsSpent();
 
     const first = await app.refresh();
-    world.advance(10 * MINUTE);
+    world.advance(7 * MINUTE);
     await app.refresh();
-    world.advance(10 * MINUTE);
+    world.advance(7 * MINUTE);
     const quiet = await app.refresh();
 
     expect(first.kind).toBe("full");
@@ -35,7 +35,7 @@ describe("API usage", () => {
     expect(lastBudget()).toMatchObject({ limit: 5000, remaining: 5000 - cost, resetAt: world.budget.resetAt });
   });
 
-  it("fetches in full again after an hour", async () => {
+  it("fetches in full again after FULL_EVERY_MS", async () => {
     const { world, app } = sim;
     world.issue({ assignees: ["octocat"] });
     await app.refresh();
@@ -100,7 +100,7 @@ describe("API usage", () => {
     expect(app.entry(issue).item.comments).toHaveLength(1);
   });
 
-  it("sees a withdrawn review request in a delta, a board move only in the hourly full fetch", async () => {
+  it("sees a withdrawn review request in a delta, a board move only in the next full fetch", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     world.setBoard(issue, { status: "Backlog" });
@@ -108,16 +108,16 @@ describe("API usage", () => {
     world.requestReview(pr, "alice", "octocat");
     await app.refresh();
 
-    world.advance(10 * MINUTE);
+    world.advance(7 * MINUTE);
     await app.refresh();
-    world.advance(10 * MINUTE);
+    world.advance(7 * MINUTE);
     world.setBoard(issue, { status: "In progress" });
     world.withdrawReviewRequest(pr, "alice", "octocat");
     await app.refresh();
     expect(app.entry(issue).item.boards[0].status).toBe("Backlog");
     expect(app.items.map((i) => i.id)).not.toContain(pr.id);
 
-    world.advance(HOUR);
+    world.advance(FULL_EVERY_MS);
     await app.refresh();
     expect(app.entry(issue).item.boards[0].status).toBe("In progress");
   });
