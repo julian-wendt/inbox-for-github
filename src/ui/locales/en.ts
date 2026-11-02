@@ -142,7 +142,6 @@ export const en = {
 
   "detail.status": "Status",
   "detail.plan": "Plan",
-  "detail.planned": "Planned",
   "detail.nothingSelected": "Nothing selected",
   "detail.navHint": "to navigate",
   "detail.commandsHint": "for commands",

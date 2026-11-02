@@ -144,7 +144,6 @@ export const de: Messages = {
 
   "detail.status": "Status",
   "detail.plan": "Planen",
-  "detail.planned": "Geplant",
   "detail.nothingSelected": "Nichts ausgewählt",
   "detail.navHint": "zum Navigieren",
   "detail.commandsHint": "für Befehle",

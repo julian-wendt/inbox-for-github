@@ -171,7 +171,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
                     <PlanIcon dated={dated} size={13} strokeWidth={1.75} color="var(--st-planned)" />
-                    <SteadyLabel text={plan ? t("detail.planned") : t("detail.plan")} reserve={[t("detail.plan"), t("detail.planned")]} />
+                    {plan?.text ?? t("detail.plan")}
                     <ChevronDown size={12} className="segment-more" />
                   </button>
                 ),
@@ -184,7 +184,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} />
-                  <SteadyLabel text={s.title} reserve={[s.title]} />
+                  {s.title}
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
                 </button>,
               ])}
@@ -277,26 +277,6 @@ interface PostProps {
 }
 
 /** One post; comments by bots can fold to their first line, since they are mostly reports. */
-/**
- * A segment's label that keeps one width: as wide as the widest of `reserve` set in bold, the
- * weight of the chosen segment, so the switch does not jump when the choice or the plan changes.
- *
- * @example
- *   <SteadyLabel text="Planned" reserve={["Plan", "Planned"]} />
- */
-function SteadyLabel({ text, reserve }: { text: string; reserve: string[] }) {
-  return (
-    <span className="steady-label">
-      <span>{text}</span>
-      {reserve.map((r) => (
-        <span key={r} aria-hidden>
-          {r}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef }: PostProps) {
   const note = review && reviewNote(review);
   const bot = isBot(post.author);
