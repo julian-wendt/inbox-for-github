@@ -34,7 +34,8 @@ One exception: the initial in an avatar orb is white at 2.4:1 or better, see
 
 **Keyboard focus** is a fill (`--focus-fill`) with the text inside switched to `--text`, shown
 only after keyboard use (`html[data-input="pointer"]` hides it after clicks, set in
-`src/main.tsx`). No outlines or rings. Text fields show focus by their border; `.btn.success`
+`src/main.tsx`). No outlines or rings. Text fields show focus by their border in `--text-faint`
+(5:1 against the panel in both themes, quieter than `--accent`); `.btn.success`
 darkens instead.
 
 ## Shapes

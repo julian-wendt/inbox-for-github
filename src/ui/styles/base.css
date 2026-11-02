@@ -57,7 +57,7 @@ html:not([data-input="pointer"]) .btn.success:focus-visible {
 /* Text fields show focus by their border; a tint behind the text would read as a fill.
    :where keeps it weaker than a field's own focus style (comment box, private note). */
 :where(input:not([type="checkbox"], [type="radio"]), select, textarea):focus-visible {
-  border-color: var(--accent);
+  border-color: var(--text-faint);
   box-shadow: none;
 }
 

@@ -211,7 +211,7 @@
 }
 
 .segment-field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-faint);
 }
 
 /* The focused part always shows, since digits and arrows act on it. */

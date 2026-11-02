@@ -634,7 +634,7 @@
 }
 
 .time-chip .segment-field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-faint);
 }
 
 .time-chip-dash {
@@ -969,7 +969,7 @@
 }
 
 .time-field .segment-field:focus-within {
-  border-color: var(--accent);
+  border-color: var(--text-faint);
 }
 
 /* Weight, not only the faint fill, tells the selected segment apart. */
