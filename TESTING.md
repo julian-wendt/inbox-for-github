@@ -493,8 +493,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Datenbank angefasst wird.
 - [ ] Jede Ansicht ist gefüllt: Inbox (Erwähnung, Review-Anfrage, Team-Anfrage, Erinnerung an
       dich selbst, fällige Wiedervorlage, Update zu „Mein Teil erledigt“), Mir zugewiesen (alle
-      Typen, Blockiert, Fertig, Später, ein fremder PR), Von mir erstellt (Entwurf mit Konflikten,
-      Wiedervorlage, PR mit Reviews), Geplant (fünf Wiedervorlagen), Erledigt (gemergt, geschlossen,
+      Typen, Blockiert, Wiedervorlage, Fertig, ein fremder PR), Von mir erstellt (Entwurf mit Konflikten,
+      Wiedervorlage, PR mit Reviews), Wiedervorlage (fünf Items), Erledigt (gemergt, geschlossen,
       beantwortet). Avatare sind farbige Initialen, nichts lädt aus dem Netz.
 - [ ] Kommentieren, Schließen, Wiedereröffnen und Zuweisen funktionieren und ändern nur die
       Demo-Welt; nach einem Neustart ist alles wie am Anfang. Zeiten wie „vor 2 Std.“ stimmen

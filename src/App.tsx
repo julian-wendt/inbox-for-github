@@ -95,7 +95,6 @@ export default function App() {
   const bucket = chosen;
   const [plannedLayout, setPlannedLayout] = useViewLayout("planned");
   const [followUpLayout, setFollowUpLayout] = useViewLayout("snoozed");
-  // Planned and Follow-up list items by the day they come up, as a list or as a table.
   const byReturn = bucket === "planned" || bucket === "snoozed";
   const layout = bucket === "snoozed" ? followUpLayout : plannedLayout;
   const setLayout = bucket === "snoozed" ? setFollowUpLayout : setPlannedLayout;
@@ -195,7 +194,7 @@ export default function App() {
       () => cs.forEach((c) => void (read ? inbox.markSeen(c.item.id) : inbox.markUnread(c.item.id))),
     );
   };
-  /** The unread assignments that still ask for work: the bars Planned, Later and Done are parked. */
+  /** The unread assignments that still ask for work: the bars Blocked, Follow-up and Finished are parked. */
   const unreadPlateIds = useMemo(
     () =>
       new Set(
@@ -245,6 +244,10 @@ export default function App() {
   const followUpGroups = useMemo(
     () => (bucket === "snoozed" ? groupBySnoozeEnd(followUpAll.filter((c) => matchesText(c.item, query)), (c) => c.until, (c) => c.statusAt ?? "", sort.of("snoozed") === "oldest") : []),
     [bucket, followUpAll, query, sort],
+  );
+  const unreadFollowUpIds = useMemo(
+    () => new Set(followUpAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me))).map((c) => c.item.id)),
+    [followUpAll, inbox.seen, inbox.unreadMarks, me],
   );
   const followUpSprints = useMemo(() => sprintChoices(followUpAll.map((c) => c.item), hidden), [followUpAll, hidden]);
   const followUpTable = useMemo(
@@ -342,8 +345,8 @@ export default function App() {
 
   const counts = useMemo(
     () =>
-      ({ ...countBy(scoped, (c) => c.bucket), inbox: inboxAll.length, planned: plannedAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }) as Record<View, number>,
-    [scoped, inboxAll, plannedAll, plateAll, authoredAll],
+      ({ ...countBy(scoped, (c) => c.bucket), inbox: inboxAll.length, planned: plannedAll.length, snoozed: followUpAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }) as Record<View, number>,
+    [scoped, inboxAll, plannedAll, followUpAll, plateAll, authoredAll],
   );
   // The picked repos narrow the sidebar's counts like the list; the other filters do not.
   const viewCounts = useMemo(() => {
@@ -352,6 +355,7 @@ export default function App() {
       ...countBy(all, (c) => c.bucket),
       inbox: all.filter((c) => c.bucket === "inbox").length,
       planned: all.filter((c) => datedOf(c, focus, plans, today) !== null).length,
+      snoozed: all.filter(isWaiting).length,
       assigned: plateCount(groupPlate(all, inbox.settings.statusMap, [], me)),
       authored: authoredCount(groupAuthored(all, me)),
     } as Record<View, number>;
@@ -1244,7 +1248,7 @@ export default function App() {
       ) : (
         <InboxList
           timeOf={rowTime}
-          unread={bucket === "planned" ? unreadPlannedIds : unreadInboxIds}
+          unread={bucket === "planned" ? unreadPlannedIds : bucket === "snoozed" ? unreadFollowUpIds : unreadInboxIds}
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
           today={today}

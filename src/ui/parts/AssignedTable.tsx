@@ -173,7 +173,6 @@ export function AssignedTable(props: Props) {
     if (group.startsWith("day:")) return t(`time.group.${group.slice(4)}` as MessageKey);
     return t(`table.${group as PlateGroup}`);
   };
-  const hintOf = (group: TableGroup) => HINTS[group];
   const scroll = useRef<HTMLDivElement>(null);
   const section = useRef<HTMLElement>(null);
   useGutter(() => scroll.current, () => section.current);
@@ -263,7 +262,7 @@ export function AssignedTable(props: Props) {
                 <ChevronRight size={14} className="bar-chevron" />
                 {label(group, entries)}
                 <span>{entries.length}</span>
-                {hintOf(group) && <small className="bar-hint">{t(hintOf(group)!)}</small>}
+                {HINTS[group] && <small className="bar-hint">{t(HINTS[group])}</small>}
               </button>
               {!collapsed.has(group) && entries.map(row)}
             </div>

@@ -17,8 +17,8 @@ export function followUpOf(entry: Pick<Classified, "status" | "until">): { at: s
 }
 
 /**
- * Whether the item belongs in the Follow-up view: stored as a follow-up whose date, if it has
- * one, has not passed, whichever list it otherwise sits in. One that a mention since brought into
+ * Whether the classified item belongs in the Follow-up view: still a follow-up, whichever list it
+ * otherwise sits in. `classify` already turned one whose date passed back into "open". One that a mention since brought into
  * the inbox still counts, as it still waits.
  *
  * @example

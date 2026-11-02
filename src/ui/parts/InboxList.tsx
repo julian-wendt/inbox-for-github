@@ -219,7 +219,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       entry={entry}
                       selected={entry.item.id === selected}
                       marked={marks.has(entry.item.id)}
-                      unread={(bucket === "inbox" || bucket === "planned") && unread.has(entry.item.id)}
+                      unread={(bucket === "inbox" || byReturn) && unread.has(entry.item.id)}
                       dated={bucket === "planned" ? undefined : (dated ?? undefined)}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
                       when={rowWhen(entry, dated, bucket === "planned")}
