@@ -294,6 +294,7 @@ export const de: Messages = {
   "history.snoozed": "Du hast es auf Wiedervorlage gelegt",
   "history.open": "Du hast es wieder geöffnet",
   "history.due": "Wiedervorlage fällig",
+  "history.unlocked": "Erledigt zurückgenommen: D erledigt dieses Item nicht mehr",
   "history.reopened": "Automatisch wieder geöffnet",
 
   "help.title": "Hilfe",

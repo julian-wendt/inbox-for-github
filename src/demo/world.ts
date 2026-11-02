@@ -76,7 +76,7 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
 
   const ownKeys = world.issue({ repo: REPO.relay, title: "Rotate the staging API keys", author: me, ago: 5 * DAY, labels: [CHORE] });
 
-  const rounding = world.issue({ repo: REPO.ledger, title: "Fix rounding in the monthly statement", author: "ines-d", ago: 8 * DAY, type: "Bug", assignees: [me] });
+  const rounding = world.issue({ repo: REPO.ledger, title: "Fix rounding in the monthly statement", author: "ines-d", ago: 8 * DAY, type: "Bug", assignees: [me, "ines-d"] });
   world.at(8 * DAY - MIN, () => world.assign(rounding, "ines-d", me));
   roadmap(rounding, "In review", "Sprint 24");
   world.at(40 * MIN, () => world.comment(rounding, "ines-d", "Verified the fix on the staging data, the totals match now."));

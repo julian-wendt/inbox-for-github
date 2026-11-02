@@ -293,6 +293,7 @@ export const en = {
   "history.open": "You reopened it",
   "history.reopened": "Reopened automatically",
   "history.due": "Follow-up came due",
+  "history.unlocked": "Done taken back: D no longer finishes this item",
 
   "help.title": "Help",
   "help.tab.rules": "How it sorts",

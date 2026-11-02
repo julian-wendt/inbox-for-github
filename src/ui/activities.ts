@@ -62,7 +62,7 @@ function sameRun(a: Activity, b: Activity): boolean {
  *   historyText({ status: "open", at: "…", automatic: true, source: "auto:snooze-ended" }); // "history.due" → "Follow-up came due"
  */
 export function historyText(change: StatusChange): MessageKey {
-  if (change.automatic) return change.source === "auto:snooze-ended" ? "history.due" : "history.reopened";
+  if (change.automatic) return change.source === "auto:snooze-ended" ? "history.due" : change.source === "auto:locked" ? "history.unlocked" : "history.reopened";
   return `history.${change.status}`;
 }
 

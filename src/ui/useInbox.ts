@@ -16,6 +16,7 @@ import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
 import { movedKeys, movedLists, movedSettings } from "../transfer";
+import { lockOf } from "./statusPlan";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -153,6 +154,14 @@ function logTransfers(before: Item[], fetched: Item[], moves: Map<string, string
 }
 
 /** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
+/**
+ * A "done" or "my part done" stored on an item D may no longer finish (see `lockOf`): from before
+ * the lock, it would hide open work for good, so the app clears it once.
+ */
+function lockedDone(c: Classified, stored: StoredStatus | undefined, viewer: string): boolean {
+  return stored?.status === "done" && lockOf(c, viewer) !== null;
+}
+
 function legacyDone(c: Classified, viewer: string): boolean {
   const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, viewer);
   return c.status === "done" && c.answered === null && !c.updates && !c.item.closed && !ownPr && c.item.reasons.includes("assigned");
@@ -259,6 +268,8 @@ export function useInbox(): Inbox {
       log.debug("app started", { build: __APP_COMMIT__ });
       log.debug("store opened");
       setSettings(stored);
+      const repaired = await opened.repairStatusLog();
+      if (repaired > 0) log.debug("stale status log entries dropped", { count: repaired });
       setStatuses(await opened.statuses());
       setWriteFailures(await opened.writeFailures());
       setStatusLog(await opened.statusLog());
@@ -598,9 +609,9 @@ export function useInbox(): Inbox {
 
   /** Drops the stored status at the viewer's request, as if never set (see `Store.clearStatus`). */
   const clearStatus = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, auto?: string) => {
       if (!store) return;
-      const source = manualSource();
+      const source = auto ?? manualSource();
       const change = await store.clearStatus(nodeId, undefined, source);
       logChange(nodeId, undefined, `clearStatus:${source}`);
       setStatuses((current) => {
@@ -650,13 +661,16 @@ export function useInbox(): Inbox {
     for (const c of classified) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
       if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
-      if (me && legacyDone(c, me) && !converting.current.has(c.item.id)) {
+      if (me && lockedDone(c, statuses.get(c.item.id), me) && !converting.current.has(c.item.id)) {
+        converting.current.add(c.item.id);
+        void clearStatus(c.item.id, "auto:locked");
+      } else if (me && legacyDone(c, me) && !converting.current.has(c.item.id)) {
         // A "done" on an assignment from before "my part done" becomes one, from now on.
         converting.current.add(c.item.id);
         void writeStatus(c.item.id, "done", true, { handoff: snapshotOf(c.item) }, "auto:legacy-done");
       }
     }
-  }, [classified, writeStatus, me, statuses, now]);
+  }, [classified, writeStatus, clearStatus, me, statuses, now]);
 
   const latestClassified = useRef(classified);
   useEffect(() => {

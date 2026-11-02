@@ -382,6 +382,24 @@ describe("Created by me", () => {
     expect(app.statuses.has(pr.id)).toBe(false);
   });
 
+  it("clears a done stored before the lock on an own item or a lone assignment", async () => {
+    const { world, app } = sim;
+    const lone = world.issue({ assignees: ["octocat"] });
+    const own = world.issue({ author: "octocat" });
+    const shared = world.issue({ assignees: ["octocat", "alice"] });
+    app.statuses.set(lone.id, { status: "done", changedAt: world.stamp(), handoff: { boards: {}, prs: [] } });
+    app.statuses.set(own.id, { status: "done", changedAt: world.stamp() });
+    app.statuses.set(shared.id, { status: "done", changedAt: world.stamp(), handoff: { boards: {}, prs: [] } });
+
+    await app.refresh();
+    app.classified();
+
+    expect(app.statuses.has(lone.id)).toBe(false);
+    expect(app.statuses.has(own.id)).toBe(false);
+    expect(app.statuses.get(shared.id)?.handoff).toBeDefined();
+    expect(app.log.get(lone.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:locked" });
+  });
+
   it("does not let D hand off an assignment nobody else is on", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });

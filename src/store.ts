@@ -270,6 +270,20 @@ export class Store {
     );
   }
 
+  /**
+   * Drops log entries no stored status stands behind (see `staleLogRows`), so the history does
+   * not claim a status the item no longer has. Runs before the log is read.
+   *
+   * @returns How many entries it dropped.
+   */
+  async repairStatusLog(): Promise<number> {
+    const rows = await this.db.select<{ id: number; node_id: string; status: Status }[]>("SELECT id, node_id, status FROM status_log ORDER BY id");
+    const stored = await this.db.select<{ node_id: string; status: Status }[]>("SELECT node_id, status FROM item_status");
+    const stale = staleLogRows(rows, new Map(stored.map((r) => [r.node_id, r.status])));
+    for (const id of stale) await this.db.execute("DELETE FROM status_log WHERE id = $1", [id]);
+    return stale.length;
+  }
+
   /** Every logged status change, per item id, oldest first. */
   async statusLog(): Promise<Map<string, StatusChange[]>> {
     const rows = await this.db.select<{ node_id: string; status: Status; changed_at: string; automatic: number; source: string | null }[]>(
@@ -522,3 +536,28 @@ export class Store {
  * swaps in a `MemoryStore` behind it (see `openStorage`).
  */
 export type Persistence = Pick<Store, keyof Store>;
+
+/**
+ * The ids of log entries at the end of an item's history that disagree with its stored status:
+ * an item without a stored status is open, so a trailing "done" or "snoozed" with nothing stored
+ * behind it is stale. Entries go from the end until one matches; where none matches but a status
+ * is stored, the history stays as it is.
+ *
+ * @param rows    The log, oldest first.
+ * @param stored  The stored status per item id.
+ *
+ * @example
+ *   staleLogRows([{ id: 1, node_id: "I_1", status: "done" }], new Map()); // [1]
+ */
+export function staleLogRows(rows: { id: number; node_id: string; status: Status }[], stored: ReadonlyMap<string, Status>): number[] {
+  const byNode = new Map<string, { id: number; status: Status }[]>();
+  for (const r of rows) byNode.set(r.node_id, [...(byNode.get(r.node_id) ?? []), r]);
+  return [...byNode].flatMap(([node, history]) => {
+    const now = stored.get(node) ?? "open";
+    let keep = history.length - 1;
+    while (keep >= 0 && history[keep].status !== now) keep--;
+    if (keep === history.length - 1) return [];
+    if (keep === -1 && stored.has(node)) return [];
+    return history.slice(keep + 1).map((r) => r.id);
+  });
+}
