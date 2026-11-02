@@ -35,7 +35,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Statuses** (`Status` in `src/model.ts`) are the viewer's own: `open`, `snoozed`, `done`.
   They live in `item_status` with a log in `status_log`; nothing is sent to GitHub.
 - **Buckets** (`Bucket`) say where an item belongs: `inbox` (someone waits for an answer: a
-  pending mention, an unanswered review request, a stored Open that asks again), `planned` (pinned for
+  pending mention, an unanswered review request, feedback by others on an item of the tables,
+  an answer in the viewer's review thread, an own item closed by someone else, a stored Open that
+  asks again), `planned` (pinned for
   today or planned for a day, with no ask since; only the Planned view shows it), `assigned`,
   `authored`, `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no
   view shows.
@@ -61,6 +63,14 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   where its asks put it, and what was answered before asks again (`reopened`) until the viewer
   replies, D or F; the list shows no mark of it. `followUpOf` gives the date that the bell and
   chip show, and only while the item waits.
+- **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
+  posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
+  tables, answers in a review thread the viewer wrote in on another's pull request, and an own item
+  closed by someone else. The settings `ownFeedback`, `assignedFeedback`, `threadReplies` and
+  `ownClosed` switch them (`AskRules`). D on such an item finishes nothing (`planStatus` "file"):
+  it stores the time in the `filedAt` setting, and `classify` drops the asks from before it. A
+  reply reopens a stored Done or Follow-up like a push does; feedback on a waiting table item adds
+  it to the inbox and leaves the follow-up running.
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
   `pinnedOn`), and `plannedAt` records when each item last got one. `classify` drops the asks
   from before that time: with none left, the item leaves the inbox for `planned`, or stays in its

@@ -4,6 +4,14 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-02
 
+- **Feedback, thread answers and closings by others ask for you.** A post or review by someone
+  else on an item you opened or that is assigned to you, an answer in a review thread you wrote in
+  on someone else's pull request, and your own item closed by someone else without merging all
+  bring the item into the inbox, without a mention. Waiting for feedback is what an own item does;
+  missing it was the gap. Your reply, review or push answers it; D files it (`filedAt`) without
+  finishing anything, so an assignment keeps your part and an own item stays open. Each has its
+  switch in Settings → Rules; feedback on own items can be narrowed to requested changes. Bots do
+  not count. Supersedes "Reviews on them show there, not in the inbox" below.
 - **A full fetch every 15 minutes, not every hour.** Deltas see only what moves `updatedAt`, and
   assignments, board moves and cross-references do not; with an hourly full fetch they lagged up
   to an hour. A full fetch of about 200 items costs about 120 points, so four an hour plus a delta
