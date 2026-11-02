@@ -9,6 +9,9 @@
   --radius-s: 4px;
   --radius-m: 6px;
   --radius-l: 10px;
+  /* One height per kind in the settings: every control, and every row with a switch (title and a one-line hint). */
+  --control-h: 30px;
+  --row-h: 62px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --bg: #f3f4f6;

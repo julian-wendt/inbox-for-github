@@ -31,7 +31,7 @@ export function OrgPicker({ memberOrgs, selected, onChange }: { memberOrgs: Org[
       {memberOrgs.length === 0 && <small>{t("orgs.loading")}</small>}
       {memberOrgs.map((org) => (
         <div key={org.login}>
-          <label className="toggle-row org-row">
+          <label className="toggle-row">
             <img className="avatar org-avatar" src={org.avatarUrl.startsWith("data:") ? org.avatarUrl : `${org.avatarUrl}${org.avatarUrl.includes("?") ? "&" : "?"}s=56`} width={28} height={28} alt="" />
             <span>
               <strong>{org.name ?? org.login}</strong>
@@ -43,7 +43,7 @@ export function OrgPicker({ memberOrgs, selected, onChange }: { memberOrgs: Org[
       ))}
       {others.map((login) => (
         <div key={login}>
-          <label className="toggle-row org-row">
+          <label className="toggle-row">
             <span className="org-avatar placeholder">{login.slice(0, 1).toUpperCase()}</span>
             <span>
               <strong>{login}</strong>

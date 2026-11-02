@@ -620,8 +620,9 @@
   user-select: text;
 }
 
-.org-row {
-  padding-block: 8px;
+/* Controls of one kind stand equally tall in every section. */
+.dialog.settings :is(.btn, .repo-search, .org-add input, .segment-field, .org-select-button) {
+  height: var(--control-h);
 }
 
 .org-avatar {
@@ -931,6 +932,7 @@
   display: flex;
   gap: 16px;
   align-items: center;
+  min-height: var(--row-h);
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
@@ -981,6 +983,7 @@
 }
 
 .toggle-row.compact {
+  min-height: 0;
   padding-block: 6px;
 }
 

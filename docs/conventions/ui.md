@@ -42,6 +42,8 @@ darkens instead.
 - Chips, pills and labels are fully rounded (`border-radius: 999px`).
 - A highlight inside a rounded container matches the container's inner radius
   (`calc(var(--radius-m) - 1px)` inside a 1px border).
+- Items of one kind are equally tall wherever they appear: in the settings every control is
+  `--control-h` (30 px) and every row with a switch at least `--row-h`, with or without a hint.
 - A segmented control picks one option; one where several can be on (weekdays) is
   `.segmented.multi`, whose options stand apart with a gap.
 - Controls in a list or table header are greyed out (`disabled`, `--text-faint`) when they have
