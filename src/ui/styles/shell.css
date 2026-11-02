@@ -945,9 +945,9 @@
   color: var(--text);
 }
 
-/* Several chosen at once, so each stands apart instead of reading as one switch. */
+/* Several chosen at once, so each stands apart instead of reading as one switch; the gap matches the track's own padding. */
 .segmented.multi {
-  gap: 4px;
+  gap: 2px;
 }
 
 .segmented.multi button {
