@@ -1,5 +1,5 @@
 import { datedOf } from "../../ui/plan";
-import { classify, type Classified } from "../../classify";
+import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
 import { snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
 import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
@@ -27,6 +27,7 @@ export interface SessionSettings {
   maxItems?: number;
   reopenOn?: Reopen;
   reviewOnCommits?: boolean;
+  askRules?: AskRules;
   rules?: Record<string, boolean>;
   directOnly?: Record<string, string[]>;
 }
@@ -62,7 +63,7 @@ export class InboxSession {
     settings: SessionSettings = {},
   ) {
     this.me = world.viewer;
-    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: 200, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, rules: {}, directOnly: {}, ...settings };
+    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: 200, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, askRules: ASK_RULES_DEFAULT, rules: {}, directOnly: {}, ...settings };
   }
 
   private get nowMs(): number {
@@ -238,7 +239,7 @@ export class InboxSession {
     const list = () =>
       withinClosedWindow(this.items, this.settings.closedDays, this.nowMs).map((raw) => {
         const item = directOnly(raw, this.me, this.settings.directOnly);
-        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits);
+        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, undefined, this.settings.askRules);
       });
     for (let pass = 0; pass < 3; pass++) {
       let changed = false;

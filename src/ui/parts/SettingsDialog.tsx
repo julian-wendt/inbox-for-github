@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { Budget } from "../../github/client";
 import { revealLog, type LogLevel } from "../../log";
+import type { FeedbackMode } from "../../feedback";
 import type { Org, Reopen } from "../../model";
 import type { MovesUp } from "../assignments";
 import type { RepoFilter } from "../../repoFilter";
@@ -67,6 +68,7 @@ const LOG_LEVELS: LogLevel[] = ["off", "debug", "verbose"];
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
+const FEEDBACK_MODES: FeedbackMode[] = ["any", "changes", "off"];
 const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
 
 /** The dictionary key of a rule's title or description; every rule id must have both. */
@@ -516,6 +518,23 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                 <small>{t(`settings.reopen.${reopenShown}Hint`)}</small>
                 <div className="toggle-card">
                   <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
+                </div>
+              </div>
+
+              <div className="field">
+                <span>{t("settings.ownFeedback")}</span>
+                <div className="segmented">
+                  {FEEDBACK_MODES.map((mode) => (
+                    <button key={mode} className={draft.ownFeedback === mode ? "on" : ""} onClick={() => change({ ownFeedback: mode })}>
+                      {t(`settings.ownFeedback.${mode}`)}
+                    </button>
+                  ))}
+                </div>
+                <small>{t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}</small>
+                <div className="toggle-card">
+                  <Toggle title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
+                  <Toggle title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
+                  <Toggle title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
                 </div>
               </div>
 
