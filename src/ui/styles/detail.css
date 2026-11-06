@@ -643,9 +643,20 @@
   list-style: none;
 }
 
+/* Drawn by hand in em, so it scales with the text; -0.09em puts its centre on Inter's line centre (0.36em). */
 .md .task-list-item input[type="checkbox"] {
-  margin: 0 8px 0 0;
-  vertical-align: -2px;
+  width: 0.9em;
+  height: 0.9em;
+  margin: 0 0.5em 0 0;
+  padding: 2px;
+  border: 1.5px solid var(--text-faint);
+  border-radius: var(--radius-s);
+  appearance: none;
+  vertical-align: -0.09em;
+}
+
+.md .task-list-item input[type="checkbox"]:checked {
+  background: var(--text-faint) content-box;
 }
 
 .md details {
