@@ -1,4 +1,4 @@
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw } from "lucide-react";
+import { CalendarDays, ChevronRight, ChevronsDownUp, ChevronsUpDown, Columns3, GripVertical, IterationCw } from "lucide-react";
 import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
@@ -23,7 +23,7 @@ import { followUpWhen, rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../useViewLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { KindIcon, PlanIcon, WhenIcon } from "./ItemMarks";
+import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -143,6 +143,7 @@ export function AssignedTable(props: Props) {
         onMark={(range) => props.onMark(entry.item.id, range)}
         showOpened={props.showOpened}
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
+        event={dated ?? undefined}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
         when={rowWhen(entry, dated, props.mode === "planned")}
         assigned={assigned}
@@ -299,6 +300,8 @@ interface RowProps {
   showOpened: boolean;
   /** Pinned for today or planned for a day: the day as a blue badge after the title; left out in Planned, whose end column names it. */
   dated?: Dated;
+  /** The dated item in every view, Planned too: its calendar event gets a badge of its own. */
+  event?: Dated;
   /** The day the item came into Today when that was before today: it carries over, marked. */
   carriedSince?: string;
   /** A row of Assigned to me, timed by the assignment; otherwise the row is timed by the opening. */
@@ -309,7 +312,7 @@ interface RowProps {
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, dated, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, dated, event, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(dateLocale(), { dateStyle: "medium", timeStyle: "short" });
@@ -348,10 +351,11 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         )}
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
-            <PlanIcon dated={dated} size={13} strokeWidth={1.75} />
+            <CalendarDays size={13} strokeWidth={1.75} aria-hidden />
             <span>{datedText(dated).text}</span>
           </span>
         )}
+        {event && <EventMark dated={event} className="table-planned" />}
         {showOpened && (
           <span className="table-opened" title={opened}>
             {openedText(item.createdAt)}

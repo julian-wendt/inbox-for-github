@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { CalendarDays } from "lucide-react";
 import { numberSpans, titleSpans } from "../textFilter";
 import { Highlight } from "./Highlight";
 import type { Classified } from "../../classify";
@@ -7,7 +8,7 @@ import { compactAgo, rowContext } from "../labels";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
-import { KindIcon, PlanIcon, WhenIcon } from "./ItemMarks";
+import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
 import type { RowWhen } from "../followUp";
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
   unread: boolean;
   /** Pinned for today (T) or planned for a day (P): the day in the context line. */
   dated?: Dated;
+  /** The dated item in every view, Planned too: its calendar event gets a mark of its own. */
+  event?: Dated;
   /** In Today since a day before today: carried over, marked since when. */
   carriedSince?: string;
   /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
@@ -36,7 +39,7 @@ interface Props {
   still: boolean;
 }
 
-export function InboxRow({ entry, selected, marked, unread, dated, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
+export function InboxRow({ entry, selected, marked, unread, dated, event, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
   const { item, mention, status } = entry;
   const person = mention?.by ?? item.author;
   const ref = useScrollIntoView<HTMLLIElement>(selected);
@@ -74,6 +77,7 @@ export function InboxRow({ entry, selected, marked, unread, dated, carriedSince,
             </span>
           )}
           {dated && <DayMark dated={dated} />}
+          {event && <EventMark dated={event} className="row-mark" />}
           {/* "Assigned to you · app"; in Assigned to me the group heading names the repo already. */}
           <span>{`${rowContext(entry)} · ${item.repo.split("/")[1]}`}</span>
         </span>
@@ -98,7 +102,7 @@ function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <PlanIcon dated={dated} size={14} strokeWidth={1.75} />
+      <CalendarDays size={14} strokeWidth={1.75} aria-hidden />
       {text}
     </span>
   );

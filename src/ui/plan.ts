@@ -336,6 +336,19 @@ export function datedAt(dated: Dated): string {
 }
 
 /**
+ * How a dated item's calendar event shows beside its day: the start time once the calendar gave
+ * it back (empty before), with "In the calendar" and the time as tooltip. Null without an event.
+ *
+ * @example
+ *   eventText({ kind: "today", day: "2026-10-29", event: { start } }); // { text: "14:00", title: "In the calendar · 14:00" }
+ */
+export function eventText(dated: Dated): { text: string; title: string } | null {
+  if (!dated.event) return null;
+  const text = dated.event.start === undefined ? "" : startText(dated.event.start);
+  return { text, title: text ? `${t("plan.inCalendar")} · ${text}` : t("plan.inCalendar") };
+}
+
+/**
  * How a dated item names its day, in its row's mark, at the end of a Planned row and on the
  * detail's plan chip, with the tooltip: "Today" or the planned day (see `dayText`), and
  * "In the calendar" in the tooltip while it has an event.

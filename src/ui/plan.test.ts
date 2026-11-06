@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, withEvent, isPinnable, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, eventText, withEvent, isPinnable, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -263,5 +263,18 @@ describe("dayText", () => {
 
   it("names the coming work week's days on a Sunday, as the menus offer them", () => {
     expect(dayText("2026-11-04", new Date(2026, 10, 1))).toBe("Wednesday");
+  });
+});
+
+describe("eventText", () => {
+  const day = { kind: "planned", day: "2026-10-29" } as const;
+
+  it("names the event's start, or only that it is in the calendar before the start is known", () => {
+    expect(eventText({ ...day, event: { start: new Date(2026, 9, 29, 14).getTime() } })).toEqual({ text: "14:00", title: "In the calendar · 14:00" });
+    expect(eventText({ ...day, event: {} })).toEqual({ text: "", title: "In the calendar" });
+  });
+
+  it("gives nothing without an event", () => {
+    expect(eventText(day)).toBeNull();
   });
 });

@@ -44,22 +44,21 @@ export function followUpWhen(entry: Pick<Classified, "status" | "until">, now = 
 export interface RowWhen {
   text: string;
   title: string;
-  /** A plan (with or without an event) or a follow-up; none for Today, whose bar says it already. */
-  icon?: "plan" | "event" | "followUp";
+  /** A plan or a follow-up; none for Today, whose bar says it already. An event has its own mark (see `eventText`). */
+  icon?: "plan" | "followUp";
 }
 
 /**
  * The end of a row: in Planned the plan's day (see `datedText`), elsewhere a follow-up's return
- * time (see `followUpWhen`), each with its icon. A pin for today gets an icon only with an event.
- * Nothing for a plain age.
+ * time (see `followUpWhen`), each with its icon; a pin for today gets none. Nothing for a plain age.
  *
  * @param planned  Whether the row is in the Planned view.
  *
  * @example
- *   rowWhen(entry, { kind: "planned", day: "2026-10-29", event: {} }, true); // { text: "Thursday", title: "…", icon: "event" }
+ *   rowWhen(entry, { kind: "planned", day: "2026-10-29" }, true); // { text: "Thursday", title: "…", icon: "plan" }
  */
 export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Dated | null, planned: boolean, now = new Date()): RowWhen | undefined {
-  if (planned && dated) return { ...datedText(dated, now), icon: dated.event ? "event" : dated.kind === "planned" ? "plan" : undefined };
+  if (planned && dated) return { ...datedText(dated, now), icon: dated.kind === "planned" ? "plan" : undefined };
   const followUp = followUpWhen(entry, now);
   return followUp && { ...followUp, icon: "followUp" };
 }

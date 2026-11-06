@@ -61,14 +61,14 @@ describe("rowWhen", () => {
   const until = new Date(2026, 9, 20, 15).toISOString();
   const plan = { kind: "planned", day: "2026-10-22" } as const;
 
-  it("gives a plan in Planned its icon, with a check while it has an event", () => {
+  it("gives a plan in Planned its icon, the same with an event, which has its own mark", () => {
     expect(rowWhen({ status: "open" }, plan, true, at)?.icon).toBe("plan");
-    expect(rowWhen({ status: "open" }, { ...plan, event: {} }, true, at)?.icon).toBe("event");
+    expect(rowWhen({ status: "open" }, { ...plan, event: {} }, true, at)?.icon).toBe("plan");
   });
 
-  it("leaves a pin for today without an icon unless it has an event", () => {
+  it("leaves a pin for today without an icon, with an event too", () => {
     expect(rowWhen({ status: "open" }, { kind: "today", day: "2026-10-20" }, true, at)).toMatchObject({ text: "Today", icon: undefined });
-    expect(rowWhen({ status: "open" }, { kind: "today", day: "2026-10-20", event: {} }, true, at)?.icon).toBe("event");
+    expect(rowWhen({ status: "open" }, { kind: "today", day: "2026-10-20", event: {} }, true, at)?.icon).toBeUndefined();
   });
 
   it("marks a follow-up's time, and leaves a plain age to the row", () => {
