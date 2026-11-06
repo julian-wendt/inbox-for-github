@@ -137,6 +137,13 @@ describe("sortTime", () => {
     expect(sortTime(entry({ bucket: "inbox" }), "me")).toBe("2026-10-20T00:00:00Z");
   });
 
+  it("stamps an item reopened by a new post with that post, not the mention before it", () => {
+    const mention = { at: "2026-09-02T00:00:00Z", by: "carol" } as Classified["mention"];
+    expect(sortTime(entry({ bucket: "inbox", mention }), "me")).toBe("2026-09-02T00:00:00Z");
+    expect(sortTime(entry({ bucket: "inbox", mention, statusAt: "2026-10-20T00:05:00Z" }), "me")).toBe("2026-10-20T00:00:00Z");
+    expect(sortTime(entry({ bucket: "inbox", mention, statusReset: true }), "me")).toBe("2026-10-20T00:00:00Z");
+  });
+
   it("leaves out commits and the viewer's own posts, and falls back to the creation", () => {
     const pushed = { ...item, comments: [{ author: "me", body: "pushed a fix", createdAt: "2026-10-21T12:00:00Z" }] };
     expect(sortTime(entry({ bucket: "authored", item: pushed }), "me")).toBe("2026-10-10T00:00:00Z");
