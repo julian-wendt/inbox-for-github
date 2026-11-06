@@ -417,9 +417,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
       früheste zuerst, der Sortierknopf dreht die datierten, „Ohne Datum“ bleibt unten.
 - [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum.
-      Vor dem Tag steht der Kalender, vor „Heute“ keiner. Ein Item mit Termin trägt dazu, wo andere
-      Ansichten den Tag zeigen, einen Kalender mit Uhr und die Startzeit (Tooltip „Im Kalender · 14:00“);
-      ohne Termin fehlt er. So auch in der Tabellen-Darstellung und am Plan-Chip im Detail; in der
+      Vor dem Tag steht der Kalender, vor „Heute“ keiner. Ein Item mit Termin trägt in der Liste am
+      Ende der Kontextzeile, mit „·“ abgetrennt, einen Kalender mit Uhr und die Startzeit (Tooltip
+      „Im Kalender · 14:00“); ohne Termin fehlt er, und ein langer Kontext endet weiter auf „…“. So auch in der Tabellen-Darstellung und am Plan-Chip im Detail; in der
       Tabelle enden die Chips der Attribute auf jeder Zeile an derselben Stelle, auch neben
       „Donnerstag“ oder einer Wiedervorlage. Übertragenes aus Heute trägt „Seit gestern“ in Rot in
       der Kontextzeile.

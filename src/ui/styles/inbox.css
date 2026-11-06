@@ -325,7 +325,7 @@
   font-size: 12.5px;
 }
 
-.row-context > span:last-child {
+.row-context > .row-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
