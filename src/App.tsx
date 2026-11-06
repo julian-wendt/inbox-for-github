@@ -24,7 +24,7 @@ import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { doneAccess, handsOff, planStatus } from "./ui/statusPlan";
+import { doneAccess, keepsItsPlan, planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
@@ -187,9 +187,9 @@ export default function App() {
     return () => window.removeEventListener("mousemove", move);
   }, [hoverActs]);
   const me = inbox.me ?? "";
-  /** How D is offered for an item: as usual, greyed out, or not at all (see `doneAccess`). */
+  /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
   const inPlanned = bucket === "planned";
-  const doneIn = (c: Classified) => doneAccess(c, me, inPlanned);
+  const doneIn = (c: Classified) => doneAccess(c, me);
   const unreadInboxIds = useMemo(
     () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me))).map((c) => c.item.id)),
     [inbox.classified, inbox.seen, inbox.unreadMarks, me],
@@ -668,7 +668,7 @@ export default function App() {
   const open = marked.filter((c) => !c.item.closed);
   /** What D or O chooses for one item, as a step with an exact undo; null where it would change nothing, as for a single item. */
   const planStep = (c: Classified, status: Status) => {
-    const plan = planStatus(c, status, me, inPlanned);
+    const plan = planStatus(c, status, me);
     const previous = inbox.statuses.get(c.item.id);
     const undo = () => void inbox.restoreStatus(c.item.id, previous);
     switch (plan.do) {
@@ -690,12 +690,12 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const files = (c: Classified) => planStatus(c, status, me, inPlanned).do === "file";
-    const keepsItsPlan = (c: Classified) => inPlanned && handsOff(planStatus(c, status, me, true));
+    const files = (c: Classified) => planStatus(c, status, me).do === "file";
+    const keeps = (c: Classified) => keepsItsPlan(c, planStatus(c, status, me), me, inPlanned);
     const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
-    const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set.filter((c) => !keepsItsPlan(c))) : [])];
-    const blocked = open.filter((c) => planStatus(c, status, me, inPlanned).do === "blocked").length;
+    const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
+    const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
     const parts = [
       ...(set.length > 0 ? [plural("marks.toastOne", "marks.toast", set.length, { status: t(`status.${status}`) })] : []),
@@ -794,14 +794,14 @@ export default function App() {
   const applyStatus = (c: Classified, status: Status) => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
-    const plan = planStatus(c, status, me, inPlanned);
+    const plan = planStatus(c, status, me);
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
       return actions.announce(t("toast.filed", { number }), step.undo, step.run);
     }
-    // D ends a plan too, in the same toast and undo; "my part done" in Planned keeps it, event included.
-    const ends = status === "done" && !(inPlanned && handsOff(plan)) ? unplanStep([c]) : [];
+    // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
+    const ends = status === "done" && !keepsItsPlan(c, plan, me, inPlanned) ? unplanStep([c]) : [];
     const change = (text: string, run: () => void) => {
       const again = () => (run(), ends.forEach((s) => s.run()));
       again();
@@ -1034,7 +1034,6 @@ export default function App() {
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
       checked: c.status === s.id && !(planned && s.id === "open"),
-      disabled: s.id === "done" && doneIn(c) === "off",
       onSelect: () => applyStatus(c, s.id),
       // Snoozing offers its dates as a submenu, also to change the date; "Open" brings it back.
       ...(s.id === "snoozed" && { items: snoozeEntries(c) }),

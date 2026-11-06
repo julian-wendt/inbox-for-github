@@ -5,10 +5,9 @@ import { onPlate } from "./assignments";
 
 /**
  * Why D changes no status on an item: the viewer opened it ("own"; it ends by closing or merging
- * it on GitHub), or it is assigned to the viewer alone ("alone"; no work may be left without
- * anyone on it). D still files what asks on such an item.
+ * it on GitHub). D still files what asks on such an item.
  */
-export type Lock = "own" | "alone";
+export type Lock = "own";
 
 /** What choosing a status does to an item; `App` carries it out and announces it. */
 export type StatusPlan =
@@ -33,25 +32,23 @@ export type StatusPlan =
  * D does nothing ("blocked"). An own item someone else closed is filed the same way, and so are
  * feedback and thread answers on any item of the tables.
  *
- * In Planned an assignment of the viewer alone is not locked: D there means "my part done" for
- * now, as on a shared one, and the item keeps its plan (see `keepsPlan`), so nothing is left lying.
+ * An assignment of the viewer alone is not locked: D there means "my part done" for now, as on a
+ * shared one, and the item keeps its plan (see `keepsItsPlan`), so nothing is left lying.
  *
- * @param c          The item as classified.
- * @param status     The status the viewer chose.
- * @param me         The viewer's login.
- * @param inPlanned  Whether the viewer chose it in the Planned view.
+ * @param c       The item as classified.
+ * @param status  The status the viewer chose.
+ * @param me      The viewer's login.
  *
  * @example
- *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for an assignment shared with others
- *   planStatus(entry, "done", "octocat", true); // { do: "hand-off" } for one octocat alone is on, too
+ *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for an assignment, shared or not
  */
-export function planStatus(c: Classified, status: Status, me: string, inPlanned = false): StatusPlan {
+export function planStatus(c: Classified, status: Status, me: string): StatusPlan {
   if (status === "open" && c.updates) return { do: "resume" };
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
   if (c.asks.includes("closed") || (inTable(c, me) && c.asks.some((ask) => ask === "feedback" || ask === "reply"))) return { do: "file" };
-  const lock = inPlanned && lockOf(c, me) === "alone" ? null : lockOf(c, me);
+  const lock = lockOf(c, me);
   if (lock) {
     if (c.asks.length === 0) return { do: "blocked", why: lock };
     return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
@@ -61,40 +58,45 @@ export function planStatus(c: Classified, status: Status, me: string, inPlanned 
 }
 
 /**
- * Why D may change no status of an open item, if so: the viewer opened it, or they are its only
- * assignee. Null for closed items and everything else.
+ * Why D may change no status of an open item, if so: the viewer opened it. Null for closed items
+ * and everything else.
  *
  * @example
- *   lockOf(entry, "octocat"); // "alone" for an issue of someone else only octocat is assigned to
+ *   lockOf(entry, "octocat"); // "own" for an open issue octocat opened
  */
 export function lockOf({ item }: Pick<Classified, "item">, me: string): Lock | null {
-  if (item.closed) return null;
-  if (sameLogin(item.author, me)) return "own";
-  if (item.assignees.length > 0 && item.assignees.every((a) => sameLogin(a, me))) return "alone";
-  return null;
+  return !item.closed && sameLogin(item.author, me) ? "own" : null;
 }
 
-/** Whether D is offered for an item: as usual, greyed out, or not at all. */
-export type DoneAccess = "on" | "off" | "hidden";
+/** Whether D is offered for an item: as usual, or not at all. */
+export type DoneAccess = "on" | "hidden";
 
 /**
- * How D is offered for an item: as usual while it has something to do, not at all on an own item
- * without asks (it never applies there), and greyed out on one assigned to the viewer alone.
- *
- * @param inPlanned  Whether the item shows in the Planned view (see `planStatus`).
+ * How D is offered for an item: as usual while it has something to do, and not at all on an own
+ * item without asks (it never applies there).
  *
  * @example
  *   doneAccess(entry, "octocat"); // "hidden" for an own pull request without asks
  */
-export function doneAccess(c: Classified, me: string, inPlanned = false): DoneAccess {
-  const plan = planStatus(c, "done", me, inPlanned);
-  if (plan.do !== "blocked") return "on";
-  return plan.why === "own" ? "hidden" : "off";
+export function doneAccess(c: Classified, me: string): DoneAccess {
+  return planStatus(c, "done", me).do === "blocked" ? "hidden" : "on";
 }
 
-/** Whether D sets "my part done", which in Planned keeps the item's plan instead of ending it. */
-export function handsOff(plan: StatusPlan): boolean {
-  return plan.do === "hand-off" || plan.do === "tick-update";
+/**
+ * Whether D keeps the item's plan and calendar event instead of ending them: when it sets "my
+ * part done" in Planned, or on an assignment the viewer alone is on, in any view, as nobody else
+ * carries that work on. The plan goes once the item closes on GitHub (see `keepsPlan`).
+ *
+ * @param plan       What D does to the item (see `planStatus`).
+ * @param inPlanned  Whether the viewer chose it in the Planned view.
+ *
+ * @example
+ *   keepsItsPlan(entry, { do: "hand-off" }, "octocat", false); // true for an issue only octocat is on
+ */
+export function keepsItsPlan({ item }: Pick<Classified, "item">, plan: StatusPlan, me: string, inPlanned: boolean): boolean {
+  const handsOff = plan.do === "hand-off" || plan.do === "tick-update";
+  const alone = item.assignees.length > 0 && item.assignees.every((a) => sameLogin(a, me));
+  return handsOff && (inPlanned || alone);
 }
 
 /** Open and in a table: assigned to the viewer, or opened by them. */

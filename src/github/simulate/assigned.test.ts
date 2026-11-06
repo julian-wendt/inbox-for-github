@@ -395,7 +395,7 @@ describe("Created by me", () => {
     expect(app.statuses.has(pr.id)).toBe(false);
   });
 
-  it("clears a done stored before the lock on an own item or a lone assignment", async () => {
+  it("clears a done stored before the lock on an own item, and keeps my part done on a lone assignment", async () => {
     const { world, app } = sim;
     const lone = world.issue({ assignees: ["octocat"] });
     const own = world.issue({ author: "octocat" });
@@ -407,21 +407,22 @@ describe("Created by me", () => {
     await app.refresh();
     app.classified();
 
-    expect(app.statuses.has(lone.id)).toBe(false);
+    expect(app.statuses.get(lone.id)?.handoff).toBeDefined();
     expect(app.statuses.has(own.id)).toBe(false);
     expect(app.statuses.get(shared.id)?.handoff).toBeDefined();
-    expect(app.log.get(lone.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:locked" });
+    expect(app.log.get(own.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:locked" });
   });
 
-  it("does not let D hand off an assignment nobody else is on", async () => {
+  it("lets D hand off an assignment nobody else is on", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     await app.refresh();
 
     app.done(issue);
 
-    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.statuses.get(issue.id)?.handoff).toBeDefined();
     expect(app.views().assigned).toContain(issue.id);
+    expect(app.views().inbox).not.toContain(issue.id);
   });
 
   it("sorts by opening, newest first", async () => {

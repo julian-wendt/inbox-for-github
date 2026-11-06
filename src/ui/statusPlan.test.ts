@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify, type Classified } from "../classify";
 import type { Item } from "../model";
 import { ruleSwitches } from "../rules";
-import { doneAccess, handsOff, planStatus } from "./statusPlan";
+import { doneAccess, keepsItsPlan, planStatus } from "./statusPlan";
 
 const ME = "me";
 
@@ -38,23 +38,19 @@ describe("planStatus", () => {
     expect(planStatus(handedOff, "open", ME)).toEqual({ do: "resume" });
   });
 
-  it("changes no status of an own item or one assigned to the viewer alone outside Planned", () => {
+  it("changes no status of an own item, also with another person assigned", () => {
     expect(planStatus(entry({ kind: "pr", author: ME, assignees: [] }), "done", ME)).toEqual({ do: "blocked", why: "own" });
     expect(planStatus(entry({ author: ME, assignees: [ME, "bob"] }), "done", ME)).toEqual({ do: "blocked", why: "own" });
-    expect(planStatus(entry({}), "done", ME)).toEqual({ do: "blocked", why: "alone" });
   });
 
-  it("hands off a lone assignment in Planned, and keeps an own item locked there", () => {
-    expect(planStatus(entry({}), "done", ME, true)).toEqual({ do: "hand-off" });
-    expect(planStatus(entry({}, ["mention"]), "done", ME, true)).toEqual({ do: "hand-off" });
-    expect(planStatus(entry({ author: ME, assignees: [ME] }), "done", ME, true)).toEqual({ do: "blocked", why: "own" });
-    expect(doneAccess(entry({}), ME, true)).toBe("on");
-    expect(doneAccess(entry({}), ME)).toBe("off");
+  it("hands off an assignment the viewer alone is on, as a shared one", () => {
+    expect(planStatus(entry({}), "done", ME)).toEqual({ do: "hand-off" });
+    expect(planStatus(entry({}, ["mention"]), "done", ME)).toEqual({ do: "hand-off" });
   });
 
   it("files what asks on a locked item instead", () => {
-    expect(planStatus(entry({}, ["mention"]), "done", ME)).toEqual({ do: "file" });
-    expect(planStatus(entry({}, ["review"]), "done", ME)).toEqual({ do: "file" });
+    expect(planStatus(entry({ author: ME, assignees: [ME] }, ["mention"]), "done", ME)).toEqual({ do: "file" });
+    expect(planStatus(entry({ author: ME, assignees: [ME] }, ["review"]), "done", ME)).toEqual({ do: "file" });
     expect(planStatus(entry({ author: ME, kind: "pr", assignees: [], reasons: ["involved"] }, ["mention"]), "done", ME)).toEqual({ do: "file" });
     expect(planStatus(entry({ author: ME, assignees: [ME] }, ["reopened"]), "done", ME)).toEqual({ do: "clear" });
   });
@@ -75,18 +71,23 @@ describe("planStatus", () => {
 });
 
 describe("doneAccess", () => {
-  it("offers D while it does something, hides it on own items and greys it out on lone assignments", () => {
+  it("offers D while it does something and hides it on own items", () => {
     expect(doneAccess(entry({ assignees: [ME, "bob"] }), ME)).toBe("on");
     expect(doneAccess(entry({ author: ME, kind: "pr", assignees: [], reasons: ["involved"] }), ME)).toBe("hidden");
-    expect(doneAccess(entry({}), ME)).toBe("off");
-    expect(doneAccess(entry({}, ["mention"]), ME)).toBe("on");
+    expect(doneAccess(entry({}), ME)).toBe("on");
+    expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME)).toBe("on");
   });
 });
 
-describe("handsOff", () => {
-  it("names the plans that set my part done, which keep a plan in Planned", () => {
-    expect(handsOff({ do: "hand-off" })).toBe(true);
-    expect(handsOff({ do: "tick-update" })).toBe(true);
-    expect(handsOff({ do: "set", status: "done" })).toBe(false);
+describe("keepsItsPlan", () => {
+  const lone = entry({});
+  const shared = entry({ assignees: [ME, "bob"] });
+
+  it("keeps the plan when D sets my part done on a lone assignment in any view, or on any in Planned", () => {
+    expect(keepsItsPlan(lone, { do: "hand-off" }, ME, false)).toBe(true);
+    expect(keepsItsPlan(lone, { do: "tick-update" }, ME, false)).toBe(true);
+    expect(keepsItsPlan(shared, { do: "hand-off" }, ME, true)).toBe(true);
+    expect(keepsItsPlan(shared, { do: "hand-off" }, ME, false)).toBe(false);
+    expect(keepsItsPlan(lone, { do: "set", status: "done" }, ME, true)).toBe(false);
   });
 });

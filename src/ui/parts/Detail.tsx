@@ -186,7 +186,6 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   aria-checked={status === s.id && !(plan && s.id === "open")}
                   className={status === s.id && !(plan && s.id === "open") ? "on" : ""}
                   title={`${s.title} (${s.key})`}
-                  disabled={done === "off" && s.id === "done"}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} />

@@ -392,6 +392,12 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Ein zugewiesenes Issue wird geschlossen: es erscheint nicht unter Erledigt (war dein Teil
       erledigt, kommt das Schließen einmal als Update). Geschlossene Items mit Erwähnung oder
       Review-Anfrage stehen weiter unter Erledigt.
+- [ ] Ein Issue, das mir allein zugewiesen ist, mit Plan und Termin: D in Mir zugewiesen (Liste und
+      Tabelle), auf seiner Zeile in der Inbox, im Kontextmenü, in ⌘K und „Erledigt“ im
+      Detail-Umschalter sind nicht ausgegraut und setzen „Mein Teil erledigt“, ohne „Plan entfernt“.
+      Das Item steht unter „Fertig“, Plan und Termin bleiben, auch nach einem Neustart. Neue
+      Aktivität bringt es zurück, schließen auf GitHub nimmt Plan und Termin. Bei einer geteilten
+      Zuweisung nimmt D außerhalb von Geplant den Plan weiter mit; ein eigenes Item bietet D nicht an.
 - [ ] Ein „Erledigt“ auf einer Zuweisung aus älteren Versionen steht nach dem Start in „Fertig“.
 
 ## Mehrfachauswahl
@@ -417,8 +423,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Tabelle enden die Chips der Attribute auf jeder Zeile an derselben Stelle, auch neben
       „Donnerstag“ oder einer Wiedervorlage. Übertragenes aus Heute trägt „Seit gestern“ in Rot in
       der Kontextzeile.
-- [ ] D auf einem geplanten Issue, das mir allein zugewiesen ist (hier, nicht in anderen Ansichten,
-      wo D ausgegraut bleibt), und „Erledigt“ im Detail-Umschalter: Toast „#12 → Mein Teil erledigt“,
+- [ ] D auf einem geplanten Issue, das mir allein zugewiesen ist, und „Erledigt“ im Detail-Umschalter: Toast „#12 → Mein Teil erledigt“,
       ohne „Plan entfernt“; das Item verlässt Geplant und steht in Mir zugewiesen unter „Erledigt“.
       Plan und Termin im Kalender bleiben, auch am nächsten Morgen. Neue Aktivität bringt es mit
       seinem Tag zurück nach Geplant; schließen auf GitHub nimmt Plan und Termin. ⌘Z stellt es

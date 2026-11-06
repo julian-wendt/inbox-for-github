@@ -458,7 +458,7 @@ export const de: Messages = {
   "sidebar.stop": "Aktualisierung stoppen",
   "bucket.assigned": "Mir zugewiesen",
   "help.assigned.lead": "Alles, was dir zugewiesen ist: deine Arbeit.",
-  "help.assigned.leaves": "Geht, sobald das Item geschlossen wird oder du nicht mehr zugewiesen bist. D setzt deinen Teil auf erledigt, solange noch jemand anderes zugewiesen ist; bist nur du es, legt D nur ab, was nach dir fragt.",
+  "help.assigned.leaves": "Geht, sobald das Item geschlossen wird oder du nicht mehr zugewiesen bist. D setzt deinen Teil auf erledigt, auch wenn nur du zugewiesen bist: Es wandert nach „Erledigt“, behält Plan und Kalendertermin und kommt mit Neuem zurück.",
   "help.assigned.back": "Eine Erwähnung oder ein Beitrag von jemand anderem darin steht zusätzlich in der Inbox, bis du antwortest oder es mit D ablegst.",
   "help.assigned.dated": "Für heute angeheftet (T) oder geplant (P) bleibt ein Item in seiner Leiste, mit Stern oder Tag; Geplant listet sie nach Tag.",
   "plate.newDot": "Neue Aktivität, seit du zuletzt reingeschaut hast",

@@ -456,7 +456,7 @@ export const en = {
   "sidebar.stop": "Stop refreshing",
   "bucket.assigned": "Assigned to me",
   "help.assigned.lead": "Everything assigned to you: your work.",
-  "help.assigned.leaves": "Leaves when the item is closed or you are unassigned. D marks your part done while someone else is assigned too; while you are the only one, it only files what asks for you.",
+  "help.assigned.leaves": "Leaves when the item is closed or you are unassigned. D marks your part done, also while you are the only one: it leaves for Done, keeps its plan and calendar event, and comes back on news.",
   "help.assigned.back": "A mention or a post by someone else on it shows in the inbox as well, until you reply or file it with D.",
   "help.assigned.dated": "Pinned for today (T) or planned (P), an item keeps its bar, with its star or day; Planned lists them by day.",
   "plate.newDot": "New activity since you last looked",
