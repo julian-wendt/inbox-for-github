@@ -115,6 +115,12 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   failing that, a refresh runs, and what is still unresolved leaves the cache (`dropGone`).
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
+- **In the background:** the refresh timer is a plain `setInterval` and keeps running only
+  because the window sets `"backgroundThrottling": "disabled"` in `tauri.conf.json`. Without it,
+  WKWebView's default `inactiveSchedulingPolicy` suspends the page's timers while the window is
+  hidden (closing only hides it), minimised or covered, and new items arrived only once the
+  window came back. Tauri 2.12 (wry 0.57.0, `src/wkwebview/mod.rs`) maps `disabled` to
+  `WKInactiveSchedulingPolicy.none`, on macOS 14 and later only (read 2026-11-06).
 
 ## Local data
 

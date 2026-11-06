@@ -18,6 +18,7 @@
         "minWidth": 960,
         "minHeight": 560,
         "dragDropEnabled": false,
+        "backgroundThrottling": "disabled",
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "transparent": true,
