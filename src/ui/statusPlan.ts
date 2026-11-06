@@ -33,20 +33,25 @@ export type StatusPlan =
  * D does nothing ("blocked"). An own item someone else closed is filed the same way, and so are
  * feedback and thread answers on any item of the tables.
  *
- * @param c       The item as classified.
- * @param status  The status the viewer chose.
- * @param me      The viewer's login.
+ * In Planned an assignment of the viewer alone is not locked: D there means "my part done" for
+ * now, as on a shared one, and the item keeps its plan (see `keepsPlan`), so nothing is left lying.
+ *
+ * @param c          The item as classified.
+ * @param status     The status the viewer chose.
+ * @param me         The viewer's login.
+ * @param inPlanned  Whether the viewer chose it in the Planned view.
  *
  * @example
  *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for an assignment shared with others
+ *   planStatus(entry, "done", "octocat", true); // { do: "hand-off" } for one octocat alone is on, too
  */
-export function planStatus(c: Classified, status: Status, me: string): StatusPlan {
+export function planStatus(c: Classified, status: Status, me: string, inPlanned = false): StatusPlan {
   if (status === "open" && c.updates) return { do: "resume" };
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
   if (c.asks.includes("closed") || (inTable(c, me) && c.asks.some((ask) => ask === "feedback" || ask === "reply"))) return { do: "file" };
-  const lock = lockOf(c, me);
+  const lock = inPlanned && lockOf(c, me) === "alone" ? null : lockOf(c, me);
   if (lock) {
     if (c.asks.length === 0) return { do: "blocked", why: lock };
     return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
@@ -76,13 +81,20 @@ export type DoneAccess = "on" | "off" | "hidden";
  * How D is offered for an item: as usual while it has something to do, not at all on an own item
  * without asks (it never applies there), and greyed out on one assigned to the viewer alone.
  *
+ * @param inPlanned  Whether the item shows in the Planned view (see `planStatus`).
+ *
  * @example
  *   doneAccess(entry, "octocat"); // "hidden" for an own pull request without asks
  */
-export function doneAccess(c: Classified, me: string): DoneAccess {
-  const plan = planStatus(c, "done", me);
+export function doneAccess(c: Classified, me: string, inPlanned = false): DoneAccess {
+  const plan = planStatus(c, "done", me, inPlanned);
   if (plan.do !== "blocked") return "on";
   return plan.why === "own" ? "hidden" : "off";
+}
+
+/** Whether D sets "my part done", which in Planned keeps the item's plan instead of ending it. */
+export function handsOff(plan: StatusPlan): boolean {
+  return plan.do === "hand-off" || plan.do === "tick-update";
 }
 
 /** Open and in a table: assigned to the viewer, or opened by them. */

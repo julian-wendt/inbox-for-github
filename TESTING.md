@@ -413,9 +413,16 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Rechts in der Zeile „Heute“ oder der geplante Tag („Morgen“, „Do“); Tooltip mit vollem Datum.
       Vor dem Tag steht der Kalender, vor „Heute“ keiner. Ein Item mit Termin trägt dazu, wo andere
       Ansichten den Tag zeigen, einen Kalender mit Uhr und die Startzeit (Tooltip „Im Kalender · 14:00“);
-      ohne Termin fehlt er. So auch in der Tabellen-Darstellung und am Plan-Chip im Detail; dort enden die Chips der Attribute auf jeder Zeile an
-      derselben Stelle, auch neben „Donnerstag“ oder einer Wiedervorlage. Übertragenes
-      aus Heute trägt „Seit gestern“ in Rot in der Kontextzeile.
+      ohne Termin fehlt er. So auch in der Tabellen-Darstellung und am Plan-Chip im Detail; in der
+      Tabelle enden die Chips der Attribute auf jeder Zeile an derselben Stelle, auch neben
+      „Donnerstag“ oder einer Wiedervorlage. Übertragenes aus Heute trägt „Seit gestern“ in Rot in
+      der Kontextzeile.
+- [ ] D auf einem geplanten Issue, das mir allein zugewiesen ist (hier, nicht in anderen Ansichten,
+      wo D ausgegraut bleibt), und „Erledigt“ im Detail-Umschalter: Toast „#12 → Mein Teil erledigt“,
+      ohne „Plan entfernt“; das Item verlässt Geplant und steht in Mir zugewiesen unter „Erledigt“.
+      Plan und Termin im Kalender bleiben, auch am nächsten Morgen. Neue Aktivität bringt es mit
+      seinem Tag zurück nach Geplant; schließen auf GitHub nimmt Plan und Termin. ⌘Z stellt es
+      zurück. Ein eigenes Item bietet D auch hier nicht an.
 - [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
       oder Mir zugewiesen steht, zählt dort weiter.
 - [ ] Das Icon-Menü im Kopf (Liste/Tabelle) schaltet die Darstellung um; die Tabelle hat

@@ -104,14 +104,15 @@ export function todayOf(settings: Today): Today {
  * @param today      The local date of today (see `localDay`).
  * @param pinnable   Whether an item can be pinned now.
  * @param loaded     Whether an item is loaded at all; pins and plans of items not loaded yet are kept.
+ * @param keeps      Whether a loaded item keeps its pin or plan though it cannot be pinned (see `keepsPlan`); it stays without moving into Today.
  *
  * @example
  *   rollOver({ focus: ["I_1"], focusDay: "2026-10-26", planned: [{ id: "I_2", day: "2026-10-27" }], pinnedOn: { I_1: "2026-10-26" }, plannedAt: {} }, "2026-10-27", () => true);
  *   // { focus: ["I_1", "I_2"], focusDay: "2026-10-27", planned: [], pinnedOn: { I_1: "2026-10-26", I_2: "2026-10-27" }, plannedAt: {} }
  */
-export function rollOver(state: Today, today: string, pinnable: (id: string) => boolean, loaded: (id: string) => boolean = () => false): Today | null {
+export function rollOver(state: Today, today: string, pinnable: (id: string) => boolean, loaded: (id: string) => boolean = () => false, keeps: (id: string) => boolean = pinnable): Today | null {
   if (state.focusDay === today) return null;
-  const keep = (id: string) => pinnable(id) || !loaded(id);
+  const keep = (id: string) => keeps(id) || !loaded(id);
   const carried = state.focus.filter(keep);
   const kept = state.planned.filter((p) => keep(p.id));
   const due = kept
@@ -235,6 +236,17 @@ export function isPinnable(entry: Pick<Classified, "status" | "item">): boolean 
 }
 
 /**
+ * Whether an item keeps its pin or plan: while T and P take it, and while its part is done but it
+ * is still open, as D in Planned leaves it; the calendar event stays with the plan.
+ *
+ * @example
+ *   keepsPlan({ status: "done", updates: [], item }); // true for an open assignment whose part is done
+ */
+export function keepsPlan(entry: Pick<Classified, "status" | "item" | "updates">): boolean {
+  return isPinnable(entry) || (!entry.item.closed && entry.updates !== undefined);
+}
+
+/**
  * Today without the items: their pins, plans and times go, as when a follow-up takes an item's
  * "when". The day Today stands for stays.
  *
@@ -301,14 +313,14 @@ export type Dated = ({ kind: "today"; day: string } | { kind: "planned"; day: st
 
 /**
  * Why an item shows in the Planned view, or null: pinned for today or planned for a later day,
- * both only while it can be pinned.
+ * both only while it can be pinned, or while its part is done and news on it came in.
  *
  * @example
  *   datedOf(entry, ["I_1"], [], "2026-10-28"); // { kind: "today", day: "2026-10-28" } for I_1
  */
-export function datedOf(entry: Pick<Classified, "status" | "item">, focus: readonly string[], planned: Planned[], today = localDay()): Dated | null {
+export function datedOf(entry: Pick<Classified, "status" | "item" | "updates">, focus: readonly string[], planned: Planned[], today = localDay()): Dated | null {
   const { id } = entry.item;
-  if (!isPinnable(entry)) return null;
+  if (!isPinnable(entry) && !(keepsPlan(entry) && entry.updates?.length)) return null;
   if (focus.includes(id)) return { kind: "today", day: today };
   const plan = planned.find((p) => p.id === id);
   return plan ? { kind: "planned", day: plan.day } : null;

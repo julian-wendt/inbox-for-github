@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify, type Classified } from "../classify";
 import type { Item } from "../model";
 import { ruleSwitches } from "../rules";
-import { doneAccess, planStatus } from "./statusPlan";
+import { doneAccess, handsOff, planStatus } from "./statusPlan";
 
 const ME = "me";
 
@@ -38,10 +38,18 @@ describe("planStatus", () => {
     expect(planStatus(handedOff, "open", ME)).toEqual({ do: "resume" });
   });
 
-  it("changes no status of an own item or one assigned to the viewer alone, in any view", () => {
+  it("changes no status of an own item or one assigned to the viewer alone outside Planned", () => {
     expect(planStatus(entry({ kind: "pr", author: ME, assignees: [] }), "done", ME)).toEqual({ do: "blocked", why: "own" });
     expect(planStatus(entry({ author: ME, assignees: [ME, "bob"] }), "done", ME)).toEqual({ do: "blocked", why: "own" });
     expect(planStatus(entry({}), "done", ME)).toEqual({ do: "blocked", why: "alone" });
+  });
+
+  it("hands off a lone assignment in Planned, and keeps an own item locked there", () => {
+    expect(planStatus(entry({}), "done", ME, true)).toEqual({ do: "hand-off" });
+    expect(planStatus(entry({}, ["mention"]), "done", ME, true)).toEqual({ do: "hand-off" });
+    expect(planStatus(entry({ author: ME, assignees: [ME] }), "done", ME, true)).toEqual({ do: "blocked", why: "own" });
+    expect(doneAccess(entry({}), ME, true)).toBe("on");
+    expect(doneAccess(entry({}), ME)).toBe("off");
   });
 
   it("files what asks on a locked item instead", () => {
@@ -72,5 +80,13 @@ describe("doneAccess", () => {
     expect(doneAccess(entry({ author: ME, kind: "pr", assignees: [], reasons: ["involved"] }), ME)).toBe("hidden");
     expect(doneAccess(entry({}), ME)).toBe("off");
     expect(doneAccess(entry({}, ["mention"]), ME)).toBe("on");
+  });
+});
+
+describe("handsOff", () => {
+  it("names the plans that set my part done, which keep a plan in Planned", () => {
+    expect(handsOff({ do: "hand-off" })).toBe(true);
+    expect(handsOff({ do: "tick-update" })).toBe(true);
+    expect(handsOff({ do: "set", status: "done" })).toBe(false);
   });
 });
