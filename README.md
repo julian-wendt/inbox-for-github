@@ -14,8 +14,8 @@ there is something to ship, not on a schedule.
 
 - **Six views:** *Inbox* (someone waits for you: a mention, a review request, new commits on a
   pull request you reviewed), *Planned* (what you pinned for today or planned for a day),
-  *Follow-up* (everything you wait on others for, by the day it comes back), *Done*, *Assigned to me* (by type or board status, with "my
-  part done") and *Created by me*. Answered mentions and reviews move to *Done* on their own;
+  *Follow-up* (everything you wait on others for, by the day it comes back), *Done*, *Assigned to me* (by type, board status or repository,
+  with "my part done") and *Created by me* (by who took it on or by repository). Answered mentions and reviews move to *Done* on their own;
   follow-ups and done items come back when someone needs you again. A light bulb in the detail
   view explains why an item is where it is.
 - **Your own status** per item: open, today (T), planned for a day (P), follow-up (F) or done (D),

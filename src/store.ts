@@ -159,8 +159,10 @@ export interface Settings {
   dockBadge: boolean;
   /** Comments the detail shows before folding older ones away; 0 shows all. */
   recentComments: number;
-  /** The Assigned to me table groups its bars by issue type or by work status. "time" and "repo" are no longer offered and read as "type". */
+  /** The Assigned to me table groups its bars by issue type, work status or repository. "time" is no longer offered and reads as "type". */
   tableGrouping: "type" | "status" | "time" | "repo";
+  /** The Created by me table groups its bars by who has taken the item on ("status") or by repository. */
+  authoredGrouping: "status" | "repo";
   /** The sidebar shows item counts next to the views, and next to the repositories. */
   viewCounts: boolean;
   repoCounts: boolean;
@@ -238,7 +240,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: false, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: false, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

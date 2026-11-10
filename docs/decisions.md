@@ -23,6 +23,12 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   made some keys follow the pointer and others (Enter, Space, the palette) the selection, and a
   resting pointer could still send D to the wrong row. The switch is removed; the stored value
   stays unused. Supersedes "`hoverActs` stays as a setting" of 2026-10-30.
+- **Assigned to me and Created by me can group by repository,** one bar per repository by name,
+  for whoever works through one codebase at a time. Follow-up, Blocked and Finished stay at the
+  bottom as in every grouping. Within a repository bar rows go by the time they show, without
+  the type bars' "furthest along first". The repository bars are not reorderable: names are easy
+  to find, and a saved order per repository would be one more thing to keep. Created by me has
+  its own choice (`authoredGrouping`), since it has no types to share with Assigned to me.
 
 ## 2026-11-06
 
