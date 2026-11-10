@@ -27,6 +27,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Footer zeigt Verbrauchsring, Einstellungen, Fragezeichen; der Radiergummi sitzt in der Überschrift „Nach Repository filtern“.
 - [ ] Der Radiergummi erscheint nur, wenn ein Repo gewählt ist; Klick setzt es zurück. ⌘K → „Filter
       zurücksetzen“ setzt alle Filter zurück (Repos, Issues/Pull Requests, Sonstige/Reviews, Sprint).
+- [ ] Pop-up in den Tabellen per Klick geöffnet: Schließen (Esc, Leertaste, ✕ oder Klick daneben) hebt auch die
+      Auswahl der Zeile auf; ↑/↓ macht danach bei ihr weiter. Per Enter oder Leertaste geöffnet, oder im Pop-up mit
+      ↑/↓ weitergegangen: die Zeile bleibt ausgewählt.
 - [ ] Esc schließt von innen nach außen: Menü, Pop-up, Markierung, dann die Auswahl (Detail zeigt
       „Nichts ausgewählt“). Filter und Ansicht bleiben, auch mehrfach gedrückt. ↑/↓ danach macht
       beim zuletzt gewählten Item weiter.
@@ -198,6 +201,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Tasten und Auswahl
 
 - [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus; die Einstellung dazu gibt es nicht mehr.
+- [ ] Ohne Auswahl (Pop-up per Klick geöffnet und geschlossen, Esc, oder eine Leiste ausgewählt) melden D, F, O, X,
+      T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“.
+- [ ] Tabelle: mehrere mit ⇧↓ markieren, Enter: das Pop-up öffnet ohne Markierung, D erledigt nur das gezeigte Item.
+      Im Pop-up mit ⇧↓ weitermarkiert: D wirkt weiter nur aufs gezeigte Item.
 
 ## Gelesen und ungelesen
 

@@ -77,6 +77,7 @@ export const de: Messages = {
   "undo.redo": "Wiederholen: {what}",
   "toast.filed": "#{number}: abgelegt",
   "marks.blocked": "{count} auf GitHub noch offen, bleiben wie sie sind",
+  "noop.noSelection": "Kein Item ausgewählt. ↑/↓ oder ein Klick wählt eins aus.",
   "noop.noFollowUp": "#{number} hat keinen Plan und keine Wiedervorlage, die man entfernen könnte.",
   "noop.noOrca": "#{number} lässt sich nicht in Orca öffnen: Orca läuft nicht oder hat noch kein Repository, neben das {repo} kommen könnte.",
   "noop.notPlannable": "#{number} lässt sich nicht planen: es ist geschlossen oder erledigt.",

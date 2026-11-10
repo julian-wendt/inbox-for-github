@@ -62,6 +62,7 @@ export const en = {
   "toast.undone": "Undone",
   "toast.filed": "#{number}: filed",
   "marks.blocked": "{count} still open on GitHub, left as they are",
+  "noop.noSelection": "No item selected. ↑/↓ or a click selects one.",
   "noop.noFollowUp": "#{number} has no plan or follow-up to remove.",
   "noop.noOrca": "#{number} cannot be opened in Orca: Orca is not running, or has no repository yet that {repo} could go next to.",
   "noop.notPlannable": "#{number} cannot be planned: it is closed or done.",
