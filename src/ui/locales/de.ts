@@ -543,8 +543,6 @@ export const de: Messages = {
   "time.group.older": "Älter",
   "settings.groupByTime": "Listen nach Zeit gruppieren",
   "settings.groupByTimeHint": "Inbox und Erledigt in Heute, Gestern, Diese Woche, Letzte Woche, Diesen Monat und Älter, nach der Zeit in der Zeile; Geplant nach seinen Tagen. ⌘G schaltet es in der Liste um.",
-  "settings.hoverActs": "Tasten wirken auf die Zeile unter der Maus",
-  "settings.hoverActsHint": "D, F, X, O, U, R, P, C, ⌃A, ⌃U, ⌃O und ⌃R wirken auf die Zeile, auf die du zeigst, ohne sie zu öffnen, oder auf die markierten Items, wenn welche markiert sind. Die Pfeiltasten geben sie dem ausgewählten Item zurück, bis du die Maus wieder bewegst.",
   "table.groupBy": "Gruppieren nach",
   "table.groupBy.status": "Status",
   "table.groupBy.time": "Zeit",

@@ -388,7 +388,6 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.group.lists")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.groupByTime")} hint={t("settings.groupByTimeHint")} checked={draft.groupByTime} onChange={(on) => change({ groupByTime: on })} />
-                  <Toggle title={t("settings.hoverActs")} hint={t("settings.hoverActsHint")} checked={draft.hoverActs} onChange={(on) => change({ hoverActs: on })} />
                 </div>
               </Field>
               <Field label={t("settings.group.sidebar")}>

@@ -195,12 +195,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Zurück auf „Sofort“ mit Gesammeltem: die Zusammenfassung kommt sofort. Beim ersten Einschalten
       einer Zeitplanung kommt nichts nach, was vorher da war.
 
-## Tasten unter der Maus
+## Tasten und Auswahl
 
-- [ ] Maus über einer Zeile (nicht der ausgewählten), D drücken: diese Zeile wird erledigt, die
-      Auswahl und die offene Detailansicht bleiben. Ebenso F, X, O, U, R, P, C, ⌃A, ⌃U, ⌃O, ⌃R.
-- [ ] Nach ↑/↓ wirken die Tasten wieder auf die Auswahl, bis die Maus sich bewegt. Mit offenem
-      Pop-up wirken sie aufs Pop-up. Einstellungen › Darstellung › Listen: ausgeschaltet nur Auswahl.
+- [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus; die Einstellung dazu gibt es nicht mehr.
 
 ## Gelesen und ungelesen
 

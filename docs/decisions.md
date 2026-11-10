@@ -2,6 +2,13 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-11-10
+
+- **Keys act on the selection only; the row under the mouse is gone as a target.** `hoverActs`
+  made some keys follow the pointer and others (Enter, Space, the palette) the selection, and a
+  resting pointer could still send D to the wrong row. The switch is removed; the stored value
+  stays unused. Supersedes "`hoverActs` stays as a setting" of 2026-10-30.
+
 ## 2026-11-06
 
 - **D works on an assignment of the viewer alone in every view, and keeps its plan there.** What

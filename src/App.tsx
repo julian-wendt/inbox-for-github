@@ -174,18 +174,6 @@ export default function App() {
     void inbox.saveSettings({ ...settings, typeOrder: moveTypeBar(shown, settings.typeOrder, bar, target) });
   };
   const [popup, setPopup] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const hoverActs = inbox.settings.hoverActs;
-  useEffect(() => {
-    if (!hoverActs) return;
-    // mousemove, not mouseover: rows scrolling under a resting pointer must not take the keys.
-    const move = (e: MouseEvent) => {
-      const row = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-id]") : null;
-      setHovered(row?.dataset.id ?? null);
-    };
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
-  }, [hoverActs]);
   const me = inbox.me ?? "";
   /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
   const inPlanned = bucket === "planned";
@@ -431,10 +419,7 @@ export default function App() {
     setSprints({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
     setSearch(null);
   };
-  // With "hoverActs", keys act on the row under the mouse; the arrow keys and an open pop-up hand them back to the selection.
-  const hoveredEntry = inbox.settings.hoverActs && !(popup && table) && hovered ? entries.find((c) => c.item.id === hovered) : undefined;
-  const target = hoveredEntry ?? current;
-  const withCurrent = (fn: (c: Classified) => void) => () => target && fn(target);
+  const withCurrent = (fn: (c: Classified) => void) => () => current && fn(current);
 
   const pinnable = isPinnable;
   const toggleFocus = (c: Classified, extra: Step[] = []) => {
@@ -1120,8 +1105,8 @@ export default function App() {
 
   useHotkeys(
     {
-      ArrowDown: (e) => (setHovered(null), e.shiftKey ? extend(1) : step(1)),
-      ArrowUp: (e) => (setHovered(null), e.shiftKey ? extend(-1) : step(-1)),
+      ArrowDown: (e) => (e.shiftKey ? extend(1) : step(1)),
+      ArrowUp: (e) => (e.shiftKey ? extend(-1) : step(-1)),
       // With items marked, D, O, F, X, U, R, ⌃A and ⌃U act on all of them.
       d: marked.length > 0 ? () => bulkStatus("done") : withCurrent((c) => applyStatus(c, "done")),
       f: marked.length > 0 ? openBulkTimes : withCurrent(snooze),

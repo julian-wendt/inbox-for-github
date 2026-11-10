@@ -168,7 +168,7 @@ export interface Settings {
   refreshInRepos: boolean;
   /** Lists show time headings (today, yesterday, this week, …). */
   groupByTime: boolean;
-  /** Keys act on the row under the mouse rather than the selected one, until the arrow keys move again. */
+  /** No longer used: keys once acted on the row under the mouse. The stored value is kept. */
   hoverActs: boolean;
   /** Where the detail view starts when an item opens. */
   openAt: OpenAt;

@@ -541,8 +541,6 @@ export const en = {
   "time.group.older": "Older",
   "settings.groupByTime": "Group lists by time",
   "settings.groupByTimeHint": "Inbox and Done in Today, Yesterday, This week, Last week, This month and Older, by the time each row shows; Planned by its days. ⌘G switches it in the list.",
-  "settings.hoverActs": "Keys act on the row under the mouse",
-  "settings.hoverActsHint": "D, F, X, O, U, R, P, C, ⌃A, ⌃U, ⌃O and ⌃R work on the row you point at, without opening it, or on the marked items when some are marked. The arrow keys hand them back to the selected item until you move the mouse again.",
   "table.groupBy": "Group by",
   "table.groupBy.status": "Status",
   "table.groupBy.time": "Time",
