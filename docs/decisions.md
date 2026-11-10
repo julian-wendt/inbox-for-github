@@ -14,8 +14,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 - **An open pop-up owns the keys.** With items marked and a pop-up open, D, F and the others act
   on the shown item, not on the marks; Enter and Space drop the marks as a click does.
 - **Closing a pop-up lets go of a row reached by a click,** and keeps one reached with the
-  keyboard: the selection is the keyboard's cursor, and a click meant the item, not the row. A
-  key pressed with no item selected says so in a toast.
+  keyboard: the selection is the keyboard's cursor, and a click meant the item, not the row. The
+  same holds when the pop-up closes because its item left the table, as after D: a click-opened
+  one leaves nothing selected, so a second D cannot hit the next row unseen; a key-opened one
+  moves on to the next row, for working through a table. A key pressed with no item selected
+  says so in a toast.
 - **Keys act on the selection only; the row under the mouse is gone as a target.** `hoverActs`
   made some keys follow the pointer and others (Enter, Space, the palette) the selection, and a
   resting pointer could still send D to the wrong row. The switch is removed; the stored value

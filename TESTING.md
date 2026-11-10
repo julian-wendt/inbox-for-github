@@ -209,6 +209,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Pop-up zu öffnen. Nach einem Mausklick auf einen Knopf öffnen Enter und Leertaste wieder das Pop-up der Auswahl.
 - [ ] Schalter an, vom Kommentarfeld mit Tab zu „Senden“: Enter sendet. Sortierung anklicken, mit ⌘Tab weg und zurück:
       Enter öffnet das Pop-up der Auswahl, die Sortierung bleibt.
+- [ ] Pop-up per Klick geöffnet, D (Leiste „Erledigt“ eingeklappt): das Pop-up schließt, keine Zeile ist ausgewählt, ein
+      zweites D zeigt „Kein Item ausgewählt“. Per Enter geöffnet, D: das Pop-up schließt, die nächste Zeile ist ausgewählt.
 - [ ] Pop-up per Klick geöffnet, dann mit ⇧↓ weiter: Esc schließt es, die Zeile bleibt ausgewählt. Ebenso nach einem
       Sprung aus der Palette (⌘K) bei offenem Pop-up.
 - [ ] Tabelle: mehrere mit ⇧↓ markieren, Enter: das Pop-up öffnet ohne Markierung, D erledigt nur das gezeigte Item.

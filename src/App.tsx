@@ -1089,7 +1089,11 @@ export default function App() {
   }, [ready, settings, changeSettings]);
 
   // The pop-up belongs to its item: when the item leaves the list, it closes instead of showing the next one.
-  if (popup && selection.replaced) setPopup(false);
+  // Its item left the table (D, a follow-up, a refresh): the successor is a row the viewer did not pick by mouse.
+  if (popup && selection.replaced) {
+    if (popup === "pointer") selection.select(null);
+    setPopup(false);
+  }
   const showPopup = popup && table && current !== null && !selection.replaced;
   /** Enter or Space on a row: its pop-up, without the marks, as a click opens it. */
   const openPopup = () => {
