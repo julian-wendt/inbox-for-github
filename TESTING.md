@@ -30,6 +30,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Pop-up in den Tabellen per Klick geöffnet: Schließen (Esc, Leertaste, ✕ oder Klick daneben) hebt auch die
       Auswahl der Zeile auf; ↑/↓ macht danach bei ihr weiter. Per Enter oder Leertaste geöffnet, oder im Pop-up mit
       ↑/↓ weitergegangen: die Zeile bleibt ausgewählt.
+- [ ] Esc bei offener Ansichts-Info (Glühbirne) schließt nur die Info: Suche, Markierung und Auswahl bleiben.
 - [ ] Esc schließt von innen nach außen: Menü, Pop-up, Markierung, dann die Auswahl (Detail zeigt
       „Nichts ausgewählt“). Filter und Ansicht bleiben, auch mehrfach gedrückt. ↑/↓ danach macht
       beim zuletzt gewählten Item weiter.

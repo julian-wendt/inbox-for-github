@@ -18,9 +18,14 @@ export function BucketInfo({ bucket, reopenOn, onShowRules }: { bucket: View; re
 
   useEffect(() => {
     if (!open) return;
-    const close = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
+    // Capture phase and stopped, so Esc closes this first and not also the search or selection behind it.
+    const close = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setOpen(false);
+    };
+    window.addEventListener("keydown", close, true);
+    return () => window.removeEventListener("keydown", close, true);
   }, [open]);
 
   return (
