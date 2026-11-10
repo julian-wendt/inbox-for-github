@@ -4,6 +4,8 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-10
 
+- **A row of a table counts as seen only once its pop-up showed it,** not while it is merely
+  selected: the row shows nothing of the item, and a right click selects it too.
 - **An open pop-up owns the keys.** With items marked and a pop-up open, D, F and the others act
   on the shown item, not on the marks; Enter and Space drop the marks as a click does.
 - **Closing a pop-up lets go of a row reached by a click,** and keeps one reached with the

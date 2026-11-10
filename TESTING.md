@@ -205,6 +205,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“.
 - [ ] Tabelle: mehrere mit ⇧↓ markieren, Enter: das Pop-up öffnet ohne Markierung, D erledigt nur das gezeigte Item.
       Im Pop-up mit ⇧↓ weitermarkiert: D wirkt weiter nur aufs gezeigte Item.
+- [ ] Tabelle: eine neue Zuweisung nur auswählen (↑/↓, Rechtsklick, ⌘-Klick) und warten: „Neu“ und Fettdruck bleiben.
+      Erst das offene Pop-up nimmt sie nach gut zwei Sekunden weg. In den Listen reicht die Auswahl wie bisher.
 
 ## Gelesen und ungelesen
 

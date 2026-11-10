@@ -1100,7 +1100,8 @@ export default function App() {
     if (popup === "pointer") selection.select(null);
   };
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
-  const openedId = current?.item.id;
+  // In a table a selected row shows nothing of the item; only its pop-up counts as opened.
+  const openedId = !table || showPopup ? current?.item.id : undefined;
   const openedUpdatedAt = current?.item.updatedAt;
   const markSeen = inbox.markSeen;
   const windowFocused = useWindowFocus();
