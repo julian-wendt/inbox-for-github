@@ -1144,6 +1144,8 @@ export default function App() {
       " ": () => (selectedBar ? toggleBar(selectedBar) : showPopup ? closePopup() : table && current && openPopup()),
       ArrowRight: () => selectedBar && setBar(selectedBar, true),
       ArrowLeft: () => (selectedBar ? setBar(selectedBar, false) : !showPopup && foldCurrent()),
+      // The web view walks buttons whatever the Mac's "Keyboard navigation" says; the app's own switch decides.
+      ...(settings.tabToButtons ? {} : { Tab: () => undefined }),
       // Switches of the app, not of an item, so they go with ⌘.
       "mod+t": () => (asking && !table ? setAsk((f) => nextOf(ASK_FILTERS, f)) : setKind((k) => nextOf(KINDS.map((o) => o.id), k))),
       "mod+g": toggleGrouping,

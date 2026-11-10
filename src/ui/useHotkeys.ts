@@ -14,6 +14,8 @@ const FIELD_KEYS = new Set(["mod+z", "mod+y"]);
  * Binds window-wide shortcuts. Plain keys and "ctrl+" keys are ignored while focus is in a text
  * field, so typing never triggers actions (⌃A, ⌃O and the like edit text there); "mod+"
  * shortcuts and Escape always fire, except ⌘Z and ⌘Y, which a text field keeps for undoing and redoing its typing.
+ * Enter and Space stay with a button or link the keyboard moved the focus to (Tab, with the Mac's
+ * "Keyboard navigation" on), so it can be pressed; after a click they are shortcuts again.
  *
  * @param hotkeys  The bindings; may change on every render without rebinding the listener.
  * @param enabled  False suspends all bindings, e.g. while a dialog owns the keyboard.
@@ -36,6 +38,7 @@ export function useHotkeys(hotkeys: Hotkeys, enabled = true): void {
       const handler = current.current[key];
       if (!handler) return;
       if ((!event.metaKey || FIELD_KEYS.has(key)) && key !== "Escape" && isTyping(event.target)) return;
+      if ((key === "Enter" || key === " ") && isKeyFocusedControl(event.target)) return;
       event.preventDefault();
       noteInput(`key:${key}`);
       handler(event);
@@ -43,6 +46,11 @@ export function useHotkeys(hotkeys: Hotkeys, enabled = true): void {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [enabled]);
+}
+
+/** A button or link that got the focus from the keyboard; `main.tsx` keeps `data-focus` on the root. */
+function isKeyFocusedControl(target: EventTarget | null): boolean {
+  return document.documentElement.dataset.focus === "keys" && target instanceof HTMLElement && target.matches("button, a[href], summary");
 }
 
 function isTyping(target: EventTarget | null): boolean {

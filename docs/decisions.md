@@ -4,6 +4,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-10
 
+- **Tab reaches the main window's buttons only with a setting, off by default.** Native Mac apps
+  walk text fields only unless "Keyboard navigation" is on in the system; the web view walks
+  buttons regardless, so the app carries the switch itself (`tabToButtons`). With it on, a button
+  the keyboard focused takes Enter and Space, which otherwise open the pop-up or fold the bar;
+  after a click they are shortcuts again.
 - **A row of a table counts as seen only once its pop-up showed it,** not while it is merely
   selected: the row shows nothing of the item, and a right click selects it too.
 - **An open pop-up owns the keys.** With items marked and a pop-up open, D, F and the others act

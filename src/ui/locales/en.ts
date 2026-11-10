@@ -540,6 +540,8 @@ export const en = {
   "time.group.lastWeek": "Last week",
   "time.group.month": "This month",
   "time.group.older": "Older",
+  "settings.tabToButtons": "Tab reaches buttons",
+  "settings.tabToButtonsHint": "Tab and ⇧Tab walk the buttons of the main window, and Enter or Space presses the one in focus. Off, as in most Mac apps, Tab does nothing there and both keys always act on the selected row or bar. Text fields, dialogs and menus keep Tab either way.",
   "settings.groupByTime": "Group lists by time",
   "settings.groupByTimeHint": "Inbox and Done in Today, Yesterday, This week, Last week, This month and Older, by the time each row shows; Planned by its days. ⌘G switches it in the list.",
   "table.groupBy": "Group by",

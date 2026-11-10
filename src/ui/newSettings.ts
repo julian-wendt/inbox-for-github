@@ -13,6 +13,7 @@ export const NEW_SETTINGS: { key: keyof Settings; section: SettingsSection }[] =
   { key: "ownFeedback", section: "rules" },
   { key: "assignedFeedback", section: "rules" },
   { key: "ownClosed", section: "rules" },
+  { key: "tabToButtons", section: "look" },
 ];
 
 /**
