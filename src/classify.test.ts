@@ -387,6 +387,35 @@ describe("snooze with a date", () => {
   });
 });
 
+describe("follow-ups with a reminder", () => {
+  const reminded: StoredStatus = { status: "snoozed", changedAt: "2026-10-01T00:00:00Z", until: "2026-10-05T09:00:00Z", remind: true };
+  const at = (iso: string) => Date.parse(iso);
+
+  it("asks as due from its time, before and after the stored Offen is written", () => {
+    expect(classify(item(), ME, reminded, ruleSwitches(), "mention", at("2026-10-04T00:00:00Z"))).toMatchObject({ bucket: "snoozed", asks: [] });
+    expect(classify(item(), ME, reminded, ruleSwitches(), "mention", at("2026-10-05T09:01:00Z"))).toMatchObject({ bucket: "inbox", asks: ["due"], statusReset: true });
+    const back: StoredStatus = { status: "open", changedAt: "2026-10-05T09:01:00Z", remind: true };
+    expect(classify(item(), ME, back, ruleSwitches(), "mention", at("2026-10-08T00:00:00Z"))).toMatchObject({ bucket: "inbox", asks: ["due"], statusReset: false });
+  });
+
+  it("puts own items and assignments into the inbox too", () => {
+    const own = item({ author: ME, reasons: ["involved"] });
+    expect(classify(own, ME, reminded, ruleSwitches(), "mention", at("2026-10-05T09:01:00Z"))).toMatchObject({ bucket: "inbox", asks: ["due"] });
+    const assigned = item({ reasons: ["assigned", "involved"], assignees: [ME] });
+    expect(classify(assigned, ME, reminded, ruleSwitches(), "mention", at("2026-10-05T09:01:00Z"))).toMatchObject({ bucket: "inbox", asks: ["due"] });
+  });
+
+  it("is not due when a mention brings the item back before its time", () => {
+    const mentioned = item({ comments: [comment("bob", "@me ping", 2)] });
+    expect(classify(mentioned, ME, reminded, ruleSwitches(), "mention", at("2026-10-03T00:00:00Z")).asks).toEqual(["mention"]);
+  });
+
+  it("stays out of the inbox while a plan made after its time answers it", () => {
+    const back: StoredStatus = { status: "open", changedAt: "2026-10-05T09:01:00Z", remind: true };
+    expect(classify(item(), ME, back, ruleSwitches(), "mention", at("2026-10-08T00:00:00Z"), true, "2026-10-06T00:00:00Z")).toMatchObject({ bucket: "planned", asks: [] });
+  });
+});
+
 describe("snoozing in the tables", () => {
   const assigned = (overrides: Partial<Item> = {}) => item({ reasons: ["assigned", "involved"], assignees: ["me"], ...overrides });
   const snoozed: StoredStatus = { status: "snoozed", changedAt: "2026-10-04T12:00:00Z", until: "2026-10-09T09:00:00Z" };

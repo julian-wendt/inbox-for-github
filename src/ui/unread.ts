@@ -18,7 +18,7 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity } from "./assignmen
 export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: string): boolean {
   const since = seen.get(entry.item.id);
   if (!since) return true;
-  const reopened = entry.asks.includes("reopened") ? entry.statusAt : null;
+  const reopened = entry.asks.some((ask) => ask === "reopened" || ask === "due") ? entry.statusAt : null;
   const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me), reopened);
   return !!last && last > since;
 }

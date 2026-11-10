@@ -106,6 +106,7 @@ export const de: Messages = {
   "explain.review": "Dein Review ist angefragt. Geht raus, sobald du kommentierst oder reviewst.",
   "explain.commits": "Jemand anderes hat nach deinem Review gepusht. Geht raus, sobald du wieder reviewst oder kommentierst.",
   "explain.reopened": "Seit {ago} wieder offen, durch dich (O) oder weil die Wiedervorlage fällig wurde. Geht raus, sobald du erneut antwortest.",
+  "explain.due": "Deine Wiedervorlage mit Erinnerung ist seit {ago} fällig. Bleibt, bis du sie mit D ablegst oder mit F eine neue setzt.",
   "explain.reminder": "Deine Selbst-Erwähnung {ago}. Geht raus, sobald du ohne Selbst-Erwähnung kommentierst.",
   "explain.mention": "@{name} hat dich {ago} erwähnt. Geht raus, sobald du antwortest.",
   "explain.feedback.changes": "@{name} hat {ago} Änderungen angefordert. Geht raus, sobald du antwortest, reviewst oder pushst, oder mit D.",

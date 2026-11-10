@@ -1,5 +1,5 @@
 import type { Bucket, Item, Reopen, Status, StoredStatus } from "./model";
-import { REOPEN_DEFAULT, reopens, snoozeEnded } from "./reopen";
+import { REOPEN_DEFAULT, reminderDue, reopens, snoozeEnded } from "./reopen";
 import { pushedSinceReview, reviewAnswered } from "./review";
 import { RULES, type Rule } from "./rules";
 import { closedByOther, feedbackSince, lastAnswerAt, threadReply, type Feedback, type FeedbackMode } from "./feedback";
@@ -13,9 +13,10 @@ import { updatesSince, type Update } from "./handoff";
  * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`),
  * "feedback" a post or review by someone else on an item of the viewer's tables (see `feedbackSince`),
  * "reply" an answer in a review thread the viewer wrote in (see `threadReply`), and "closed" an own
- * item someone else closed without merging (see `closedByOther`).
+ * item someone else closed without merging (see `closedByOther`), "due" a follow-up with a
+ * reminder whose date passed (see `reminderDue`), on any item, those of the tables included.
  */
-export type Ask = "update" | "review" | "commits" | "mention" | "reopened" | "feedback" | "reply" | "closed";
+export type Ask = "due" | "update" | "review" | "commits" | "mention" | "reopened" | "feedback" | "reply" | "closed";
 
 /** Which further asks bring an item into the inbox (the settings of the same names). */
 export interface AskRules {
@@ -79,9 +80,10 @@ export interface Classified {
  * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
  *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Offen" (an
  *    explicit reopen, or the one written when a follow-up date passed) counts as a fresh request:
- *    what was answered before it asks again (`reopened`). With `reviewOnCommits`, a push by someone
- *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
- *    is no such ask.
+ *    what was answered before it asks again (`reopened`). A follow-up with a reminder whose date
+ *    passed asks on its own (`due`, see `reminderDue`), also on items of the tables. With
+ *    `reviewOnCommits`, a push by someone else since the viewer's last review or comment asks
+ *    again (`commits`). An assignment alone is no such ask.
  * 2b. A plan (`plannedAt`: the item is pinned for today or planned for a day) answers the asks
  *    the viewer saw when they made it: only an ask that came later shows the item in the inbox.
  *    With none, the item stays in its table ("assigned", "authored") or goes to "planned", which
@@ -148,6 +150,7 @@ export function classify(
   const feedback = found && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
   const reply = threadAnswer && !feedback && !mentionsOf(item, me).some((m) => m.at === threadAnswer.at) ? threadAnswer : null;
   const effective = statusReset ? undefined : stored;
+  const due = reminderDue(stored, now);
   const mention = pendingMention(item, rules, { me });
   const requestedBy = requesterOf(item, me);
   const assignedBy = assignerOf(item, me);
@@ -184,6 +187,7 @@ export function classify(
   const reviewOpen = reviewed && !reviewAnswered(item, me, reopenedAt);
   const mentionOpen = mention !== null || (mentioned && !!reopenedAt && (lastReplyAt(item, me) ?? "") <= reopenedAt);
   const asks: Ask[] = [];
+  if (due) asks.push("due");
   if (reviewOpen) asks.push(reopenedAt && reviewAnswered(item, me) ? "reopened" : "review");
   else if (pushed) asks.push("commits");
   if (mention) asks.push("mention");
@@ -193,7 +197,7 @@ export function classify(
 
   // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : ask === "due" ? (stored?.status === "open" ? stored.changedAt : stored?.until) : undefined;
   const seenAt = latest(plannedAt, filedAt);
   const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const parked = fresh.length < asks.length;

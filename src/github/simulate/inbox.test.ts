@@ -346,6 +346,55 @@ describe("Snoozed until a date (Wiedervorlage)", () => {
     expect(app.followUp(issue)).toBeNull();
     expect(app.viewOf(issue)).toBe("inbox");
   });
+
+  it("holds an own pull request with a reminder in the inbox from its time until D, which clears it", async () => {
+    const { world, app } = sim;
+    const pr = world.pullRequest({ author: "octocat" });
+    world.requestReview(pr, "octocat", "alice");
+    await app.refresh();
+    expect(app.viewOf(pr)).toBe("authored");
+    app.snooze(pr, new Date(world.now.getTime() + DAY).toISOString(), true);
+    world.advance(DAY - MINUTE);
+    expect(app.entry(pr)).toMatchObject({ bucket: "authored", status: "snoozed", asks: [] });
+
+    world.advance(2 * MINUTE);
+
+    expect(app.entry(pr)).toMatchObject({ bucket: "inbox", asks: ["due"] });
+    expect(app.statuses.get(pr.id)).toMatchObject({ status: "open", remind: true });
+    world.advance(HOUR);
+    expect(app.viewOf(pr)).toBe("inbox");
+
+    app.done(pr);
+
+    expect(app.statuses.has(pr.id)).toBe(false);
+    expect(app.viewOf(pr)).toBe("authored");
+  });
+
+  it("returns a follow-up without a reminder quietly to its table, as before", async () => {
+    const { world, app } = sim;
+    const pr = world.pullRequest({ author: "octocat" });
+    await app.refresh();
+    app.snooze(pr, new Date(world.now.getTime() + MINUTE).toISOString());
+    world.advance(2 * MINUTE);
+
+    expect(app.entry(pr)).toMatchObject({ bucket: "authored", asks: [] });
+    expect(app.statuses.get(pr.id)).not.toHaveProperty("remind");
+  });
+
+  it("ends a due reminder with a new follow-up, which waits again", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ author: "alice" });
+    world.comment(issue, "alice", "@octocat please look");
+    world.comment(issue, "octocat", "Looking.");
+    await app.refresh();
+    app.snooze(issue, new Date(world.now.getTime() + MINUTE).toISOString(), true);
+    world.advance(2 * MINUTE);
+    expect(app.entry(issue).asks).toContain("due");
+
+    app.snooze(issue, new Date(world.now.getTime() + DAY).toISOString());
+
+    expect(app.entry(issue)).toMatchObject({ bucket: "snoozed", asks: [] });
+  });
 });
 
 describe("Read and unread", () => {

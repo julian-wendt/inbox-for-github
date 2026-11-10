@@ -26,6 +26,11 @@ describe("arrivals", () => {
     expect(arrivals([back, asked], new Set()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
 
+  it("leaves a due reminder to its own notification, unless something else asks too", () => {
+    const due = entry("I_2", { asks: ["due"] });
+    const asked = entry("I_3", { asks: ["due", "mention"] });
+    expect(arrivals([due, asked], new Set()).map((c) => c.item.id)).toEqual(["I_3"]);
+  });
 });
 
 describe("notificationTitle", () => {

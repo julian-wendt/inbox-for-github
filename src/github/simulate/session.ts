@@ -2,7 +2,7 @@ import { datedOf } from "../../ui/plan";
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
 import { snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
-import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
+import { REOPEN_DEFAULT, resetExtra, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
@@ -169,7 +169,7 @@ export class InboxSession {
   }
 
   /** D or O or a snooze choice, as `App.applyStatus` carries it out. */
-  choose(ref: Ref, status: Status, until?: string): void {
+  choose(ref: Ref, status: Status, until?: string, remind = false): void {
     const c = this.entry(ref);
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
@@ -198,7 +198,7 @@ export class InboxSession {
         break;
       case "set":
         if (c.item.closed || (c.status === plan.status && until === undefined)) return;
-        this.write(ref.id, plan.status, false, until ? { until } : {});
+        this.write(ref.id, plan.status, false, until ? { until, ...(remind && { remind }) } : {});
         break;
       case "none":
         return;
@@ -214,9 +214,9 @@ export class InboxSession {
     this.choose(ref, "open");
   }
 
-  /** F with a time (or without): the item waits for a follow-up, in place if it belongs to a table. */
-  snooze(ref: Ref, until?: string): void {
-    this.choose(ref, "snoozed", until);
+  /** F with a time (or without): the item waits for a follow-up, in place if it belongs to a table; `remind` asks for a reminder at that time. */
+  snooze(ref: Ref, until?: string, remind = false): void {
+    this.choose(ref, "snoozed", until, remind);
   }
 
   /** X or the × in the chip: takes the follow-up off, as if never set. */
@@ -322,7 +322,7 @@ export class InboxSession {
   private settle(c: Classified): boolean {
     const { id } = c.item;
     if (c.statusReset) {
-      this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
+      this.write(id, "open", true, resetExtra(this.statuses.get(id), this.nowMs), snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
       return true;
     }
     if (this.statuses.get(id)?.status === "done" && lockOf(c, this.me) !== null) {

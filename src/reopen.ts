@@ -1,4 +1,4 @@
-import type { Item, Reopen, StoredStatus } from "./model";
+import type { Item, Reopen, StatusExtra, StoredStatus } from "./model";
 import { mentionsOf, othersPostedAfter } from "./timeline";
 
 export const REOPEN_DEFAULT: Reopen = "mention";
@@ -11,6 +11,29 @@ export const REOPEN_DEFAULT: Reopen = "mention";
  */
 export function snoozeEnded(stored: StoredStatus | undefined, now = Date.now()): boolean {
   return stored?.status === "snoozed" && !!stored.until && Date.parse(stored.until) <= now;
+}
+
+/**
+ * Whether a follow-up with a reminder came due: its date passed, or the "open" written for it
+ * still holds it. It stays due until the viewer files it, sets a new follow-up or reopens it.
+ *
+ * @example
+ *   reminderDue({ status: "snoozed", changedAt: "2026-10-01T00:00:00Z", until: "2026-10-05T09:00:00Z", remind: true }); // true after that time
+ *   reminderDue({ status: "open", changedAt: "2026-10-05T09:00:00Z", remind: true }); // true
+ */
+export function reminderDue(stored: StoredStatus | undefined, now = Date.now()): boolean {
+  return !!stored?.remind && (stored.status === "open" || snoozeEnded(stored, now));
+}
+
+/**
+ * What the "open" written for a status that fell back keeps: the reminder of a follow-up whose
+ * date passed, so the item stays due (see `reminderDue`); nothing otherwise.
+ *
+ * @example
+ *   store.setStatus(id, "open", true, now, resetExtra(stored, now.getTime()));
+ */
+export function resetExtra(stored: StoredStatus | undefined, now = Date.now()): StatusExtra {
+  return stored?.remind && snoozeEnded(stored, now) ? { remind: true } : {};
 }
 
 /**

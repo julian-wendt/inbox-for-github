@@ -38,7 +38,8 @@ const SCHEMA = [
      changed_at TEXT NOT NULL,
      until      TEXT,
      due        INTEGER NOT NULL DEFAULT 0,
-     handoff    TEXT
+     handoff    TEXT,
+     remind     INTEGER
    )`,
   `CREATE TABLE IF NOT EXISTS status_log (
      id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,7 +87,8 @@ const SCHEMA = [
 
 /**
  * Removes what databases of earlier builds still hold and nothing reads any more: the reminders
- * table, the `keep_open` column of `item_status` and the settings `snoozeAuthored` and `orbSeeds`. Does nothing
+ * table, the `keep_open` column of `item_status` and the settings `snoozeAuthored` and `orbSeeds`,
+ * and adds the `remind` column that databases from before it lack. Does nothing
  * on a database created by `SCHEMA`, so it is safe on every start.
  *
  * @example
@@ -98,6 +100,7 @@ async function dropLeftovers(db: Database): Promise<void> {
   await db.execute("DELETE FROM settings WHERE key IN ('snoozeAuthored', 'orbSeeds')");
   const statusColumns = await db.select<{ name: string }[]>("PRAGMA table_info(item_status)");
   if (statusColumns.some((c) => c.name === "keep_open")) await db.execute("ALTER TABLE item_status DROP COLUMN keep_open");
+  if (!statusColumns.some((c) => c.name === "remind")) await db.execute("ALTER TABLE item_status ADD COLUMN remind INTEGER");
 }
 
 /** Where an opened item starts: at the top, at the relevant spot (see `DetailBody`), or at the latest entries. */
@@ -263,13 +266,13 @@ export class Store {
   }
 
   async statuses(): Promise<Map<string, StoredStatus>> {
-    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; handoff: string | null }[]>(
-      "SELECT node_id, status, changed_at, until, handoff FROM item_status",
+    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; remind: number | null; handoff: string | null }[]>(
+      "SELECT node_id, status, changed_at, until, remind, handoff FROM item_status",
     );
     return new Map(
       rows.map((r) => [
         r.node_id,
-        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
+        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.remind === 1 && { remind: true }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
       ]),
     );
   }
@@ -304,7 +307,8 @@ export class Store {
    * longer count.
    *
    * @param automatic  True when the app reopens the item by the "reopenOn" setting, not the viewer.
-   * @param extra      `until` with "snoozed" brings it back at that time; `handoff` with "done"
+   * @param extra      `until` with "snoozed" brings it back at that time; `remind` notifies then
+   *                   and, kept on the "open" written for it, holds the item in the inbox; `handoff` with "done"
    *                   ends the viewer's part of an assignment, keeping how the item looked.
    * @param source     What caused the change, for tracing it later: the input ("key:o", "menu",
    *                   "palette", "click") or the code path ("auto:reopen"); null when unknown.
@@ -315,7 +319,7 @@ export class Store {
     await this.writeStatus(nodeId, status, changedAt, extra);
     await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) VALUES ($1, $2, $3, $4, $5)", [nodeId, status, changedAt, automatic ? 1 : 0, source]);
     return {
-      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.handoff && { handoff: extra.handoff }) },
+      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.remind && { remind: true }), ...(extra.handoff && { handoff: extra.handoff }) },
       change: { status, at: changedAt, automatic, ...(source && { source }) },
     };
   }
@@ -346,9 +350,9 @@ export class Store {
 
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {
     await this.db.execute(
-      `INSERT INTO item_status (node_id, status, changed_at, until, handoff) VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, handoff = excluded.handoff`,
-      [nodeId, status, changedAt, extra.until ?? null, extra.handoff ? JSON.stringify(extra.handoff) : null],
+      `INSERT INTO item_status (node_id, status, changed_at, until, remind, handoff) VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, remind = excluded.remind, handoff = excluded.handoff`,
+      [nodeId, status, changedAt, extra.until ?? null, extra.remind ? 1 : null, extra.handoff ? JSON.stringify(extra.handoff) : null],
     );
   }
 

@@ -197,6 +197,11 @@ export interface StoredStatus {
   changedAt: string;
   /** Snoozed until this time (ISO 8601); it comes back then, or earlier by the "reopenOn" setting. */
   until?: string;
+  /**
+   * The viewer asked to be reminded: with "snoozed", the follow-up notifies at `until`; with
+   * "open", that time has passed and the item stays at the top of the inbox until filed.
+   */
+  remind?: boolean;
   /** With "done": the viewer's part of an assignment ended; what happens after it is an update for them. */
   handoff?: Handoff;
 }
@@ -211,7 +216,7 @@ export interface Handoff {
 }
 
 /** What a status change may carry besides the status: see `StoredStatus`. */
-export type StatusExtra = Pick<StoredStatus, "until" | "handoff">;
+export type StatusExtra = Pick<StoredStatus, "until" | "remind" | "handoff">;
 
 /** A write to GitHub that failed and was undone here, kept for the item's timeline. */
 export interface WriteFailure {

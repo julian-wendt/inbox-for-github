@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
-import { snoozeEnded } from "../reopen";
+import { resetExtra, snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
@@ -660,7 +660,7 @@ export function useInbox(): Inbox {
   useEffect(() => {
     for (const c of classified) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
-      if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
+      if (c.statusReset) void writeStatus(c.item.id, "open", true, resetExtra(statuses.get(c.item.id), now), snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
       if (me && lockedDone(c, statuses.get(c.item.id), me) && !converting.current.has(c.item.id)) {
         converting.current.add(c.item.id);
         void clearStatus(c.item.id, "auto:locked");

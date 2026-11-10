@@ -6,7 +6,8 @@ import { t } from "./i18n";
  *
  * The first result (`known` is null) is the baseline, so a restart does not replay the inbox.
  * After that, every item that newly enters the inbox notifies, except one that only asks again
- * ("reopened"): the viewer reopened it, or its follow-up date came, and both return quietly.
+ * ("reopened"): the viewer reopened it, or its follow-up date came, and both return quietly. A
+ * reminder that came due ("due") is left out too: it notifies on its own, whatever the delivery mode.
  *
  * @param classified  The current classification.
  * @param known       Ids of the inbox items in the previous result, or null before the first one.
@@ -19,7 +20,7 @@ import { t } from "./i18n";
 export function arrivals(classified: Classified[], known: ReadonlySet<string> | null): Classified[] {
   const inbox = classified.filter((c) => c.bucket === "inbox");
   if (!known) return [];
-  return inbox.filter((c) => !known.has(c.item.id) && !c.asks.every((ask) => ask === "reopened"));
+  return inbox.filter((c) => !known.has(c.item.id) && !c.asks.every((ask) => ask === "reopened" || ask === "due"));
 }
 
 /** Why an item notifies; each has its own switch in the settings. */

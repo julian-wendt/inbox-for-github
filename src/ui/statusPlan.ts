@@ -28,7 +28,7 @@ export type StatusPlan =
  *
  * A locked item (see `lockOf`) never gets "done" or "my part done", in any view. D on it files
  * whatever asks ("file": the "filedAt" setting): the asks go, the item stays where it is. Back
- * from a follow-up or a reopen alone, it clears the stored Open instead ("clear"). Without asks,
+ * from a follow-up, due reminders included, or a reopen alone, it clears the stored Open instead ("clear"). Without asks,
  * D does nothing ("blocked"). An own item someone else closed is filed the same way, and so are
  * feedback and thread answers on any item of the tables.
  *
@@ -51,7 +51,7 @@ export function planStatus(c: Classified, status: Status, me: string): StatusPla
   const lock = lockOf(c, me);
   if (lock) {
     if (c.asks.length === 0) return { do: "blocked", why: lock };
-    return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
+    return c.asks.every((ask) => ask === "reopened" || ask === "due") ? { do: "clear" } : { do: "file" };
   }
   if (onPlate(c, me)) return { do: "hand-off" };
   return { do: "set", status };

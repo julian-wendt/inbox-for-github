@@ -104,6 +104,7 @@ export const en = {
   "explain.review": "Your review is requested. Leaves once you comment or review.",
   "explain.commits": "Someone else pushed after your review. Leaves once you review or comment again.",
   "explain.reopened": "Open again since {ago}, by you (O) or because its follow-up date passed. Leaves once you reply again.",
+  "explain.due": "Your follow-up with a reminder came due {ago}. Stays until you file it with D or set a new one with F.",
   "explain.reminder": "Your self-mention from {ago}. Leaves once you comment without mentioning yourself.",
   "explain.mention": "@{name} mentioned you {ago}. Leaves once you reply.",
   "explain.feedback.changes": "@{name} requested changes {ago}. Leaves once you reply, review or push, or file it with D.",
