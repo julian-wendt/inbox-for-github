@@ -203,11 +203,14 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus; die Einstellung dazu gibt es nicht mehr.
 - [ ] Ohne Auswahl (Pop-up per Klick geöffnet und geschlossen, Esc, oder eine Leiste ausgewählt) melden D, F, O, X,
-      T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“.
+      T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
 - [ ] Einstellungen › Darstellung › Listen › „Tab erreicht Knöpfe“ aus (Standard): Tab und ⇧Tab tun im Hauptfenster
-      nichts. An: Tab erreicht die Knöpfe; Enter und Leertaste drücken den fokussierten Knopf (z. B. Sortierung), statt
+      nichts, auch nicht in der Suche oder im Kommentarfeld. An: Tab erreicht die Knöpfe; Enter und Leertaste drücken den fokussierten Knopf (z. B. Sortierung), statt
       das Pop-up zu öffnen. Nach einem Mausklick auf einen Knopf öffnen Enter und Leertaste wieder das Pop-up der Auswahl.
-- [ ] Vom Kommentarfeld mit Tab zu „Senden“: Enter sendet.
+- [ ] Schalter an, vom Kommentarfeld mit Tab zu „Senden“: Enter sendet. Sortierung anklicken, mit ⌘Tab weg und zurück:
+      Enter öffnet das Pop-up der Auswahl, die Sortierung bleibt.
+- [ ] Pop-up per Klick geöffnet, dann mit ⇧↓ weiter: Esc schließt es, die Zeile bleibt ausgewählt. Ebenso nach einem
+      Sprung aus der Palette (⌘K) bei offenem Pop-up.
 - [ ] Tabelle: mehrere mit ⇧↓ markieren, Enter: das Pop-up öffnet ohne Markierung, D erledigt nur das gezeigte Item.
       Im Pop-up mit ⇧↓ weitermarkiert: D wirkt weiter nur aufs gezeigte Item.
 - [ ] Tabelle: eine neue Zuweisung nur auswählen (↑/↓, Rechtsklick, ⌘-Klick) und warten: „Neu“ und Fettdruck bleiben.

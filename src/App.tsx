@@ -335,12 +335,15 @@ export default function App() {
     if (!to) return;
     setMarks((m) => markRange(m, ids, from, to));
     selection.select(to);
+    keyboardOwnsPopup();
   };
   const step = (offset: number) => {
     clearMarks();
     selection.move(offset);
-    if (popup) setPopup("keys");
+    keyboardOwnsPopup();
   };
+  /** An open pop-up whose row the keyboard moved on (or a jump landed in) keeps that row selected when it closes. */
+  const keyboardOwnsPopup = () => popup && setPopup("keys");
   // Assigned to me keeps its folded bars unprefixed, as stored before other tables existed.
   const tableFolded = useMemo(
     () => (bucket === "assigned" ? bars.collapsed : new Set([...bars.collapsed].filter((k) => k.startsWith(`${bucket}:`)).map((k) => k.slice(bucket.length + 1)))),
@@ -422,7 +425,7 @@ export default function App() {
     setSearch(null);
   };
   /** A key for the selected item; with none selected it says so, since a click that closed a pop-up leaves none. */
-  const withCurrent = (fn: (c: Classified) => void) => () => (current ? fn(current) : actions.notify(t("noop.noSelection")));
+  const withCurrent = (fn: (c: Classified) => void) => () => (current ? fn(current) : entries.length > 0 && actions.notify(t("noop.noSelection")));
 
   const pinnable = isPinnable;
   const toggleFocus = (c: Classified, extra: Step[] = []) => {
@@ -1144,12 +1147,12 @@ export default function App() {
       " ": () => (selectedBar ? toggleBar(selectedBar) : showPopup ? closePopup() : table && current && openPopup()),
       ArrowRight: () => selectedBar && setBar(selectedBar, true),
       ArrowLeft: () => (selectedBar ? setBar(selectedBar, false) : !showPopup && foldCurrent()),
-      // The web view walks buttons whatever the Mac's "Keyboard navigation" says; the app's own switch decides.
+      // The web view walks buttons whatever the Mac's "Keyboard navigation" says; the app's own switch decides, in text fields too.
       ...(settings.tabToButtons ? {} : { Tab: () => undefined }),
       // Switches of the app, not of an item, so they go with ⌘.
       "mod+t": () => (asking && !table ? setAsk((f) => nextOf(ASK_FILTERS, f)) : setKind((k) => nextOf(KINDS.map((o) => o.id), k))),
       "mod+g": toggleGrouping,
-      // The selected item alone, as #17 decided; with nothing selected, everything, as before.
+      // The selected item alone; ⌘R refreshes everything.
       "ctrl+r": withCurrent(reloadCurrent),
       "mod+r": () => void inbox.refresh(),
       "mod+shift+r": () => void inbox.refresh(true),
@@ -1174,6 +1177,7 @@ export default function App() {
     setAsk("all");
     setBucket(viewOf(c, me) ?? "inbox");
     setReveal(c.item.id);
+    keyboardOwnsPopup();
   };
   /** A click on a notification: its item, or the inbox for the summary of several. */
   const openNotified = (itemId: string | null) => {

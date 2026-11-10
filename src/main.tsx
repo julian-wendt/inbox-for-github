@@ -14,11 +14,11 @@ if (import.meta.env.DEV) document.documentElement.dataset.env = "dev";
 
 // WebKit focuses clicked buttons and matches :focus-visible for them; the focus cue is for the keyboard only.
 document.addEventListener("pointerdown", () => (document.documentElement.dataset.input = "pointer"), true);
-// A control the keyboard moved the focus to keeps Enter and Space (see `useHotkeys`); one a click focused does not.
-document.addEventListener("pointerdown", () => delete document.documentElement.dataset.focus, true);
-document.addEventListener("focusin", () => {
-  if (document.documentElement.dataset.input !== "pointer") document.documentElement.dataset.focus = "keys";
-});
+// A control Tab moved the focus to keeps Enter and Space (see `useHotkeys`); one a click, a script or the window's return focused does not.
+let tabbed = false;
+document.addEventListener("keydown", (e) => (tabbed = e.key === "Tab"), true);
+document.addEventListener("pointerdown", () => (tabbed = false), true);
+document.addEventListener("focusin", () => (tabbed ? (document.documentElement.dataset.focus = "keys") : delete document.documentElement.dataset.focus));
 document.addEventListener("keydown", () => delete document.documentElement.dataset.input, true);
 document.addEventListener("pointerdown", () => noteInput("click"), true);
 

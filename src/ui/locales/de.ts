@@ -543,7 +543,7 @@ export const de: Messages = {
   "time.group.month": "Diesen Monat",
   "time.group.older": "Älter",
   "settings.tabToButtons": "Tab erreicht Knöpfe",
-  "settings.tabToButtonsHint": "Tab und ⇧Tab wandern durch die Knöpfe des Hauptfensters, Enter oder Leertaste drückt den fokussierten. Aus, wie in den meisten Mac-Apps, tut Tab dort nichts, und beide Tasten wirken immer auf die ausgewählte Zeile oder Leiste. Textfelder, Dialoge und Menüs behalten Tab in jedem Fall.",
+  "settings.tabToButtonsHint": "Tab und ⇧Tab wandern durch die Knöpfe des Hauptfensters, Enter oder Leertaste drückt den fokussierten. Aus, wie in den meisten Mac-Apps, tut Tab dort nichts, auch nicht in seinen Textfeldern, und beide Tasten wirken immer auf die ausgewählte Zeile oder Leiste. Dialoge und Menüs behalten Tab in jedem Fall.",
   "settings.groupByTime": "Listen nach Zeit gruppieren",
   "settings.groupByTimeHint": "Inbox und Erledigt in Heute, Gestern, Diese Woche, Letzte Woche, Diesen Monat und Älter, nach der Zeit in der Zeile; Geplant nach seinen Tagen. ⌘G schaltet es in der Liste um.",
   "table.groupBy": "Gruppieren nach",

@@ -72,10 +72,11 @@ lowercased; `mod+` is ⌘, `shift+` is added with ⌘ and for letters. Single-ke
 fire while typing in a field.
 
 Tab in the main window follows the "Tab reaches buttons" setting (`tabToButtons`), off by
-default as in most Mac apps: Tab then does nothing outside a text field. The web view itself walks
-buttons whatever the Mac's "Keyboard navigation" setting says (tried 2026-11-10). Enter and Space
-mean the selected row or bar, except on a button or link the keyboard moved the focus to, which
-they press (`useHotkeys`, `data-focus` in `src/main.tsx`). Dialogs and menus keep their own keys.
+default as in most Mac apps: Tab then does nothing there, in its text fields neither, so it never
+strands the focus on a button. The web view itself walks buttons whatever the Mac's "Keyboard
+navigation" setting says (tried 2026-11-10). Enter and Space mean the selected row or bar, except
+on a button or link Tab moved the focus to, which they press (`useHotkeys`, `data-focus` in
+`src/main.tsx`); focus from a click, a script or the window coming back does not count. Dialogs and menus keep their own keys.
 A control that should be reachable with the setting off gets a shortcut or a palette entry.
 
 A key is a letter of its entry's English label, in both languages: N for "Next workday", W for
