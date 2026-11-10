@@ -255,7 +255,7 @@ export const en = {
   "assign.nothing": "Nothing to assign: already assigned to you, or closed.",
   "unassign.nothing": "Nothing to remove: you are not assigned.",
   "keys.kind": "Step the filter in the header: all, issues, pull requests, or all, reviews, other",
-  "keys.grouping": "Switch the grouping: type or status bars in Assigned to me, time groups or none in the lists",
+  "keys.grouping": "Switch the grouping: type, status or repository bars in Assigned to me, status or repository bars in Created by me, time groups or none in the lists",
   "keys.snooze": "Follow up: the item waits, in its table if it sits in one, and comes back to the inbox at its date; then N next workday, 1–5 a weekday, W next week, D pick a date, F without a date, X remove the follow-up",
   "keys.done": "Done",
   "keys.reminderRemove": "Remove the plan or the follow-up, also a long past one; on marked items from all of them",

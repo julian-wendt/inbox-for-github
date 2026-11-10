@@ -3,7 +3,7 @@ import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
-import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type PlateGroup, type TableGroup } from "../assignments";
+import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type PlateGroup, type TableGroup, type TableGrouping } from "../assignments";
 import { dateLocale, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
@@ -55,9 +55,10 @@ interface Props {
   reopenOn: Reopen;
   onShowRules: () => void;
   groups: { group: TableGroup; entries: Classified[] }[];
-  /** Bars by issue type or by work status (reorderable). */
-  grouping: "type" | "status";
-  onGrouping: (grouping: "type" | "status") => void;
+  /** What the bars are grouped by, and the choices of the switch; without choices there is no switch. Status bars of Assigned to me and its type bars are reorderable. */
+  grouping: TableGrouping;
+  groupings?: readonly TableGrouping[];
+  onGrouping: (grouping: TableGrouping) => void;
   collapsed: Set<string>;
   onToggle: (group: TableGroup) => void;
   /** The sprint filter and the sprints to choose from; without sprints there is no filter. */
@@ -173,6 +174,7 @@ export function AssignedTable(props: Props) {
     if (group === "unassigned") return t("table.unassigned");
     if (group === "taken") return t("table.taken");
     if (group.startsWith("type:")) return dotted(entries[0]?.item.issueType?.color.toLowerCase() ?? "gray", group.slice(5));
+    if (group.startsWith("repo:")) return group.slice(5);
     if (group.startsWith("day:")) return t(`time.group.${group.slice(4)}` as MessageKey);
     return t(`table.${group as PlateGroup}`);
   };
@@ -202,9 +204,9 @@ export function AssignedTable(props: Props) {
           ))}
         </div>
         {props.layout && props.onLayout && <LayoutSwitch layout={props.layout} onLayout={props.onLayout} />}
-        {assigned && (
+        {props.groupings && (
           <div className="segmented compact table-grouping" role="radiogroup" aria-label={t("table.groupBy")}>
-            {(["type", "status"] as const).map((g) => (
+            {props.groupings.map((g) => (
               <button key={g} role="radio" aria-checked={props.grouping === g} className={props.grouping === g ? "on" : ""} onClick={() => props.onGrouping(g)}>
                 {t(`table.groupBy.${g}`)}
               </button>

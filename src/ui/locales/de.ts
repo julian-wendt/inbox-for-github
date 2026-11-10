@@ -257,7 +257,7 @@ export const de: Messages = {
   "assign.nothing": "Nichts zuzuweisen: du bist schon zugewiesen, oder es ist geschlossen.",
   "unassign.nothing": "Nichts zu entfernen: du bist nicht zugewiesen.",
   "keys.kind": "Filter im Kopf weiterschalten: alle, Issues, Pull Requests oder alle, Reviews, Sonstige",
-  "keys.grouping": "Gruppierung wechseln: Typ- oder Status-Leisten in „Mir zugewiesen“, Zeitgruppen oder keine in den Listen",
+  "keys.grouping": "Gruppierung wechseln: Typ-, Status- oder Repo-Leisten in „Mir zugewiesen“, Status- oder Repo-Leisten in „Von mir erstellt“, Zeitgruppen oder keine in den Listen",
   "keys.snooze": "Wiedervorlage: das Item wartet, in seiner Tabelle, wenn es in einer steht, und kommt zum Datum in die Inbox zurück; dann N nächster Werktag, 1–5 ein Wochentag, W nächste Woche, D Datum wählen, F ohne Datum, X Wiedervorlage entfernen",
   "keys.reminderRemove": "Plan oder Wiedervorlage entfernen, auch eine längst vergangene; bei markierten Items bei allen",
   "keys.done": "Erledigt",

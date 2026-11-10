@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
+import { assignedAt, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -126,6 +126,16 @@ describe("localDay", () => {
   });
 });
 
+
+describe("groupByRepo", () => {
+  it("makes one bar per repository by name, each in the given order of its time", () => {
+    const at = (id: string, repo: string, createdAt: string) => entry(id, {}, { repo, createdAt });
+    const entries = [at("docs", "octo-org/docs", "2026-10-01T00:00:00Z"), at("old", "octo-org/app", "2026-10-01T00:00:00Z"), at("new", "octo-org/app", "2026-10-02T00:00:00Z")];
+    const ids = (order?: "oldest") => groupByRepo(entries, (c) => c.item.createdAt, order).map((g) => [g.group, g.entries.map((e) => e.item.id)]);
+    expect(ids()).toEqual([["repo:octo-org/app", ["new", "old"]], ["repo:octo-org/docs", ["docs"]]]);
+    expect(ids("oldest")[0][1]).toEqual(["old", "new"]);
+  });
+});
 
 describe("groupByType", () => {
   const typed = (id: string, name: string | null, status?: string) =>

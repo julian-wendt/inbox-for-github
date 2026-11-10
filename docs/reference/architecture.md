@@ -25,7 +25,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
    untracked items, repos filtered in the settings and closed items outside the window.
 5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–6); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
-   Created by me (`groupAuthored`), `InboxList` the Inbox, Planned (`datedOf` for what is pinned
+   Created by me (`groupAuthored`), both by repository with `groupByRepo`, `InboxList` the Inbox, Planned (`datedOf` for what is pinned
    or planned, `groupBySnoozeEnd` for the day bars), Follow-up (`isWaiting`, by the day each
    comes back) and Done. Planned and Follow-up render as a list or a table (`useViewLayout`).
    The sidebar counts follow the picked repositories; the other filters narrow only the list.

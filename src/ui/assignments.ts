@@ -13,8 +13,14 @@ import type { SnoozeGroup } from "./timeGroups";
  */
 export type PlateGroup = "review" | "progress" | "todo" | "blocked" | "later" | "finished";
 
-/** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a bar of Created by me or a day bar of Planned. */
-export type TableGroup = PlateGroup | TypeGroup | AuthoredGroup | DayGroup;
+/** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a repository bar (see `groupByRepo`), a bar of Created by me or a day bar of Planned. */
+export type TableGroup = PlateGroup | TypeGroup | RepoGroup | AuthoredGroup | DayGroup;
+
+/** A repository bar: `repo:octo-org/app`. */
+export type RepoGroup = `repo:${string}`;
+
+/** What the bars of Assigned to me and Created by me can be grouped by; Created by me has no types. */
+export type TableGrouping = "type" | "status" | "repo";
 
 /** A day bar of Planned as a table: `day:today` to `day:undated` (see `groupBySnoozeEnd`). */
 export type DayGroup = `day:${SnoozeGroup}`;
@@ -62,6 +68,26 @@ export function groupByType(entries: Classified[], statusMap: StatusMap = {}, or
     (order === "newest" ? updated(b).localeCompare(updated(a)) : updated(a).localeCompare(updated(b)));
   const byDefault = [...byType.keys()].sort((a, b) => typeRank(a) - typeRank(b) || a.localeCompare(b));
   return withSaved(byDefault, bars).map((group) => ({ group, entries: byType.get(group)!.sort(within) }));
+}
+
+/**
+ * One bar per repository, by name, each sorted by the given time.
+ *
+ * @param entries  The table's items, without the bars that stay at the bottom (follow-ups, blocked, finished).
+ * @param timeOf   The time a row shows: the assignment in Assigned to me, the opening in Created by me.
+ * @param order    "newest" or "oldest" by that time.
+ *
+ * @example
+ *   groupByRepo(entries, (c) => c.item.createdAt); // [{ group: "repo:octo-org/app", entries }, { group: "repo:octo-org/docs", entries }]
+ */
+export function groupByRepo(entries: Classified[], timeOf: (entry: Classified) => string, order: "newest" | "oldest" = "newest"): { group: RepoGroup; entries: Classified[] }[] {
+  const byRepo = new Map<RepoGroup, Classified[]>();
+  for (const entry of entries) {
+    const group: RepoGroup = `repo:${entry.item.repo}`;
+    byRepo.set(group, [...(byRepo.get(group) ?? []), entry]);
+  }
+  const within = (a: Classified, b: Classified) => (order === "newest" ? timeOf(b).localeCompare(timeOf(a)) : timeOf(a).localeCompare(timeOf(b)));
+  return [...byRepo.keys()].sort((a, b) => a.localeCompare(b)).map((group) => ({ group, entries: byRepo.get(group)!.sort(within) }));
 }
 
 /** The bars in display order. */

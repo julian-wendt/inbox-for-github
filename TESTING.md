@@ -34,8 +34,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Sonstige/Reviews und Sprint ändern sie nicht. Der Kopf der Liste zeigt keine Zahl neben dem Titel.
 - [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox und Erledigt Alle → Reviews → Sonstige, sonst
       Alle → Issues → Pull Requests, danach wieder Alle. ⌘G wechselt in „Mir zugewiesen“ zwischen
-      Typ und Status, in den Listen die Zeitgruppen an und aus (auch in den Einstellungen sichtbar);
-      in „Von mir erstellt“ tut ⌘G nichts. T und G allein schalten nichts mehr um. `/` öffnet die Palette nicht mehr, ⌘K schon.
+      Typ, Status und Repo, in „Von mir erstellt“ zwischen Status und Repo, in den Listen die Zeitgruppen an und aus
+      (auch in den Einstellungen sichtbar). Nach Repo: eine Leiste je Repository, alphabetisch; Follow-up, Blockiert
+      und Erledigt bleiben unten. T und G allein schalten nichts mehr um. `/` öffnet die Palette nicht mehr, ⌘K schon.
 - [ ] Fragezeichen öffnet die Hilfe.
 - [ ] ⌘R: Icon dreht sich mit kleinem Quadrat. Klick darauf stoppt, die Liste bleibt, unten
       steht wieder „Zuletzt aktualisiert …“.

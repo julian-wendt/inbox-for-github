@@ -47,7 +47,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { withAssignees, withSelfAssigned, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, onPlate, plateCount, type PlateGroup, type TableGroup } from "./ui/assignments";
+import { assignedAt, withAssignees, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, onPlate, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -155,7 +155,12 @@ export default function App() {
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
-  const authored = useMemo(() => filterGroups(bySprint(authoredAll, sprints.authored, authoredSprints), query), [authoredAll, sprints.authored, authoredSprints, bySprint, query]);
+  const authoredByStatus = useMemo(() => filterGroups(bySprint(authoredAll, sprints.authored, authoredSprints), query), [authoredAll, sprints.authored, authoredSprints, bySprint, query]);
+  const authored = useMemo((): { group: TableGroup; entries: Classified[] }[] => {
+    if (inbox.settings.authoredGrouping !== "repo") return authoredByStatus;
+    const open = authoredByStatus.filter((g) => g.group !== "later").flatMap((g) => g.entries);
+    return [...groupByRepo(open, (c) => c.item.createdAt, sort.of("authored")), ...authoredByStatus.filter((g) => g.group === "later")];
+  }, [authoredByStatus, inbox.settings.authoredGrouping, sort]);
   const plate = useMemo((): { group: TableGroup; entries: Classified[] }[] => {
     const order = sort.of("assigned");
     const byStatus = plateNewest.map((g) => ({ ...g, entries: oriented(g.entries, order) }));
@@ -163,8 +168,12 @@ export default function App() {
     // What waits and what is finished but open stay at the bottom, in every grouping.
     const parked = byStatus.filter((g) => !isActiveBar(g.group));
     const working = plateNewest.filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
+    if (inbox.settings.tableGrouping === "repo") return [...groupByRepo(working, (c) => assignedAt(c.item, inbox.me ?? "").at, order), ...parked];
     return [...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? "", inbox.settings.typeOrder), ...parked];
   }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.settings.typeOrder, inbox.me]);
+  const tableGrouping: TableGrouping = bucket === "authored" ? inbox.settings.authoredGrouping : inbox.settings.tableGrouping === "time" ? "type" : inbox.settings.tableGrouping;
+  const setGrouping = (grouping: TableGrouping) =>
+    void inbox.saveSettings(bucket === "authored" ? { ...inbox.settings, authoredGrouping: grouping === "repo" ? "repo" : "status" } : { ...inbox.settings, tableGrouping: grouping });
   /** Drag and drop of a bar in Assigned to me: the status bars by status, the type bars by type. */
   const moveTableBar = (bar: TableGroup, target: TableGroup) => {
     const { settings } = inbox;
@@ -1112,10 +1121,11 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [openedId, openedUpdatedAt, windowFocused, markSeen]);
 
-  /** G: Assigned to me switches between type and status bars, the lists between time groups and none. */
+  /** G: Assigned to me steps through type, status and repository bars, Created by me switches between status and repository, the lists between time groups and none. */
   const toggleGrouping = () => {
     if (!table) void saveSettings({ ...settings, groupByTime: !settings.groupByTime });
-    else if (bucket === "assigned") void saveSettings({ ...settings, tableGrouping: settings.tableGrouping === "status" ? "type" : "status" });
+    else if (bucket === "assigned") setGrouping(ASSIGNED_GROUPINGS[(ASSIGNED_GROUPINGS.indexOf(tableGrouping) + 1) % ASSIGNED_GROUPINGS.length]);
+    else if (bucket === "authored") setGrouping(tableGrouping === "repo" ? "status" : "repo");
   };
 
   useHotkeys(
@@ -1244,8 +1254,9 @@ export default function App() {
           reopenOn={inbox.settings.reopenOn}
           onShowRules={() => setDialog("rules")}
           groups={tableGroups}
-          grouping={inbox.settings.tableGrouping === "status" ? "status" : "type"}
-          onGrouping={(tableGrouping) => void inbox.saveSettings({ ...inbox.settings, tableGrouping })}
+          grouping={tableGrouping}
+          groupings={bucket === "assigned" ? ASSIGNED_GROUPINGS : bucket === "authored" ? AUTHORED_GROUPINGS : undefined}
+          onGrouping={setGrouping}
           collapsed={tableFolded}
           selectedBar={selectedBar}
           onSelectBar={(group) => selection.select(`bar:${group}`)}
@@ -1512,6 +1523,9 @@ export default function App() {
     </div>
   );
 }
+
+const ASSIGNED_GROUPINGS: readonly TableGrouping[] = ["type", "status", "repo"];
+const AUTHORED_GROUPINGS: readonly TableGrouping[] = ["status", "repo"];
 
 /** The list in the view's chosen direction; lists come newest first. */
 function oriented<T>(list: T[], order: SortOrder): T[] {
