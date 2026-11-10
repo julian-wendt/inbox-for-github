@@ -259,7 +259,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Von mir erstellt
 
-- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute, Sterne und Gruppierungsumschalter. Leisten: Nicht zugewiesen, Zugewiesen, Wiedervorlage.
+- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute und Sterne. Umschalter Status/Repo (auch ⌘G). Nach Status: Nicht
+      zugewiesen, Zugewiesen, Wiedervorlage. Nach Repo: eine Leiste je Repository, alphabetisch, Wiedervorlage unten.
 - [ ] „Nicht zugewiesen“: Issues ohne Zuständige und fertige PRs ohne Reviewer; ein Draft-PR
       steht unter „Zugewiesen“.
 - [ ] Rechts in der Zeile nur das Alter („3W“), Tooltip „Eröffnet am …“; kein Avatar. Sortiert nach

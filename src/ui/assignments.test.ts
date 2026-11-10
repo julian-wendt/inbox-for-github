@@ -135,6 +135,11 @@ describe("groupByRepo", () => {
     expect(ids()).toEqual([["repo:octo-org/app", ["new", "old"]], ["repo:octo-org/docs", ["docs"]]]);
     expect(ids("oldest")[0][1]).toEqual(["old", "new"]);
   });
+
+  it("orders the bars across organizations by the full name", () => {
+    const entries = [entry("h", {}, { repo: "octo-org/app" }), entry("l", {}, { repo: "lumen-labs/site" }), entry("a", {}, { repo: "harbor-works/api" })];
+    expect(groupByRepo(entries, (c) => c.item.createdAt).map((g) => g.group)).toEqual(["repo:harbor-works/api", "repo:lumen-labs/site", "repo:octo-org/app"]);
+  });
 });
 
 describe("groupByType", () => {

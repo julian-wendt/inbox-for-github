@@ -6,9 +6,10 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 - **Assigned to me and Created by me can group by repository,** one bar per repository by name,
   for whoever works through one codebase at a time. Follow-up, Blocked and Finished stay at the
-  bottom as in every grouping. The repository bars are not reorderable: names are easy to find,
-  and a saved order per repository would be one more thing to keep. Created by me has its own
-  choice (`authoredGrouping`), since it has no types to share with Assigned to me.
+  bottom as in every grouping. Within a repository bar rows go by the time they show, without
+  the type bars' "furthest along first". The repository bars are not reorderable: names are easy
+  to find, and a saved order per repository would be one more thing to keep. Created by me has
+  its own choice (`authoredGrouping`), since it has no types to share with Assigned to me.
 
 ## 2026-11-06
 
