@@ -216,13 +216,13 @@ export default function App() {
       ),
     [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.statusMap, me],
   );
-  /** The items a view's count stands for, whatever filters narrow its list. */
+  /** The items a view's count stands for, within the repository filter, whatever else narrows its list. */
   const itemsOfView = (view: View): Classified[] => {
-    if (view === "assigned") return groupPlate(inbox.classified, inbox.settings.statusMap, [], me).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
-    if (view === "authored") return groupAuthored(inbox.classified, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
-    if (view === "planned") return inbox.classified.filter((c) => dated(c) !== null);
-    if (view === "snoozed") return inbox.classified.filter(isWaiting);
-    return inbox.classified.filter((c) => c.bucket === view);
+    if (view === "assigned") return groupPlate(inRepos, inbox.settings.statusMap, [], me).filter((g) => isActiveBar(g.group)).flatMap((g) => g.entries);
+    if (view === "authored") return groupAuthored(inRepos, me).filter((g) => g.group !== "later").flatMap((g) => g.entries);
+    if (view === "planned") return inRepos.filter((c) => dated(c) !== null);
+    if (view === "snoozed") return inRepos.filter(isWaiting);
+    return inRepos.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
   const movesUp = inbox.settings.movesUp;
