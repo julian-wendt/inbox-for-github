@@ -148,7 +148,7 @@ export function followEvent(state: Today, id: string, day: string, today: string
 
 /**
  * The calendar links whose item has neither a Today pin nor a plan any more, as item id and event
- * identifier: their events are left over.
+ * identifier: the link is left over (the event stays in the calendar).
  *
  * @example
  *   orphanLinks({ focus: [], planned: [], calendarEvents: { I_1: "E1" } }); // [["I_1", "E1"]]

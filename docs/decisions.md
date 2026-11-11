@@ -2,6 +2,15 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-11-11
+
+- **The calendar is a record of what was done when, so only the user removing a plan deletes its
+  event.** X (single or on marks) and T switching a Today pin off delete it; D, a follow-up, the
+  item closing on GitHub and dropping it from the app end the plan but leave the event, and only
+  the link goes. "My part done" (D) keeps its plan in every view, shared or not. Supersedes the
+  plan-keeping limits of 2026-11-06 (Planned view or lone assignee) and, as far as events go, the
+  2026-10-29 part "deleting it removes the plan … D ends the plan along with the status".
+
 ## 2026-11-10
 
 - **A setting nothing reads is deleted, not kept.** Kept "just in case", dead keys and values

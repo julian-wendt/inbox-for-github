@@ -23,9 +23,11 @@ living in the plan (`planned`, `focus`); the time lives only in the calendar.
 
 - **App to calendar** (`App.tsx`): planning another day or pinning to Today moves the event to
   that day at the same time (`calendar_move`, which keeps title and notes edited in the
-  calendar). Removing the plan, D, a follow-up or closing the item deletes it. Undo moves it
-  back, or creates a new event at the old time, as a deleted one cannot come back. A link whose
-  item has neither pin nor plan any more is deleted along with its event.
+  calendar). Only the user removing the plan deletes it: X, or switching a Today pin off with T.
+  Undo creates a new event at the old time, as a deleted one cannot come back. D, a follow-up,
+  closing the item on GitHub or dropping it end the plan without touching the event: only the link
+  goes, and a link whose item has neither pin nor plan any more is removed alone. The calendar is
+  the record of what was done when. D "my part done" keeps the plan as well.
 - **Calendar to app** (`followCalendar`): at start, on `calendar-changed`, on window focus and
   every five minutes the linked events are read back. The calendar wins: an event on another
   day replans the item (today or earlier brings it into Today), a deleted one removes the plan

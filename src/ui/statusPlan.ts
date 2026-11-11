@@ -83,20 +83,17 @@ export function doneAccess(c: Classified, me: string): DoneAccess {
 }
 
 /**
- * Whether D keeps the item's plan and calendar event instead of ending them: when it sets "my
- * part done" in Planned, or on an assignment the viewer alone is on, in any view, as nobody else
- * carries that work on. The plan goes once the item closes on GitHub (see `keepsPlan`).
+ * Whether D keeps the item's plan and calendar event instead of ending them: whenever it sets "my
+ * part done" or ticks off an update, in any view, as the calendar is the record of what was done
+ * when. The plan goes once the item closes on GitHub (see `keepsPlan`).
  *
- * @param plan       What D does to the item (see `planStatus`).
- * @param inPlanned  Whether the viewer chose it in the Planned view.
+ * @param plan  What D does to the item (see `planStatus`).
  *
  * @example
- *   keepsItsPlan(entry, { do: "hand-off" }, "octocat", false); // true for an issue only octocat is on
+ *   keepsItsPlan({ do: "hand-off" }); // true
  */
-export function keepsItsPlan({ item }: Pick<Classified, "item">, plan: StatusPlan, me: string, inPlanned: boolean): boolean {
-  const handsOff = plan.do === "hand-off" || plan.do === "tick-update";
-  const alone = item.assignees.length > 0 && item.assignees.every((a) => sameLogin(a, me));
-  return handsOff && (inPlanned || alone);
+export function keepsItsPlan(plan: StatusPlan): boolean {
+  return plan.do === "hand-off" || plan.do === "tick-update";
 }
 
 /** Open and in a table: assigned to the viewer, or opened by them. */

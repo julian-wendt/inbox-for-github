@@ -186,7 +186,6 @@ export default function App() {
   const [popup, setPopup] = useState<false | "pointer" | "keys">(false);
   const me = inbox.me ?? "";
   /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
-  const inPlanned = bucket === "planned";
   const doneIn = (c: Classified) => doneAccess(c, me);
   const unreadInboxIds = useMemo(
     () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me))).map((c) => c.item.id)),
@@ -592,10 +591,11 @@ export default function App() {
     ];
   };
   /**
-   * Deletes the events of the items that have one, as one step each; undo puts a new event at
-   * the same time with the same title and links it, since a deleted event cannot come back.
+   * Ends the events of the items that have one, as one step each. With `remove` the event is
+   * deleted and undo puts a new one at the same time with the same title, since a deleted event
+   * cannot come back; without it only the link goes, the event stays, and undo restores the link.
    */
-  const eventEnds = (cs: Classified[]): Step[] =>
+  const eventEnds = (cs: Classified[], remove = true): Step[] =>
     cs.flatMap((c) => {
       let id = inbox.settings.calendarEvents[c.item.id];
       if (!id || !inbox.settings.calendarId) return [];
@@ -604,10 +604,11 @@ export default function App() {
         {
           run: () => {
             linkEvent(c, null);
-            removed = writing(findEvents([id]).then(async ([event]) => (event && (await removeEvent(event.id)), event))).catch(() => undefined);
+            if (remove) removed = writing(findEvents([id]).then(async ([event]) => (event && (await removeEvent(event.id)), event))).catch(() => undefined);
           },
           undo: () =>
             void removed.then(async (event) => {
+              if (!remove) return linkEvent(c, id);
               const saved = event && (await putEvent(eventDraft(c, event.calendarId, event.title, event.start, event.end)));
               if (!saved) return;
               id = saved.id;
@@ -691,7 +692,7 @@ export default function App() {
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
     const files = (c: Classified) => planStatus(c, status, me).do === "file";
-    const keeps = (c: Classified) => keepsItsPlan(c, planStatus(c, status, me), me, inPlanned);
+    const keeps = (c: Classified) => keepsItsPlan(planStatus(c, status, me));
     const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
     const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
@@ -723,13 +724,16 @@ export default function App() {
     const count = waiting.length + unplanned.length;
     const text =
       unplanned.length === 0 ? plural("marks.reminderRemovedOne", "marks.reminderRemoved", count) : waiting.length === 0 ? plural("marks.plansRemovedOne", "marks.plansRemoved", count) : t("marks.whenRemoved", { count });
-    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned)]);
+    bulk(text, [...waiting.map(followUpStep), ...unplanStep(unplanned, true)]);
   };
-  /** Takes the plan or Today pin off the items that have one, as one step for all of them, and deletes their events; none when none has. */
-  const unplanStep = (cs: Classified[]) => {
+  /**
+   * Takes the plan or Today pin off the items that have one, as one step for all of them; none
+   * when none has. Their events are deleted with `remove` (X), else only unlinked and left in the calendar.
+   */
+  const unplanStep = (cs: Classified[], remove = false) => {
     const { focus, planned } = inbox.settings;
     const ids = cs.map((c) => c.item.id).filter((id) => focus.includes(id) || planned.some((p) => p.id === id));
-    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids)), ...eventEnds(cs.filter((c) => ids.includes(c.item.id)))] : [];
+    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids)), ...eventEnds(cs.filter((c) => ids.includes(c.item.id)), remove)] : [];
   };
   /** A time for the marked items: they wait until then. */
   const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), [...open.map((c) => statusStep(c, "snoozed", until)), ...unplanStep(open)]);
@@ -801,7 +805,7 @@ export default function App() {
       return actions.announce(t("toast.filed", { number }), step.undo, step.run);
     }
     // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
-    const ends = status === "done" && !keepsItsPlan(c, plan, me, inPlanned) ? unplanStep([c]) : [];
+    const ends = status === "done" && !keepsItsPlan(plan) ? unplanStep([c]) : [];
     const change = (text: string, run: () => void) => {
       const again = () => (run(), ends.forEach((s) => s.run()));
       again();
@@ -1086,15 +1090,13 @@ export default function App() {
 
   const calendarAccess = useCalendarAccess(settings.calendarId);
 
-  // An event whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes too; judged on the latest settings, not this render's.
+  // A link whose item lost its pin or plan without a step of its own (closed, dropped overnight) goes; the event stays. Judged on the latest settings.
   useEffect(() => {
     if (!ready || !settings.calendarId || orphanLinks(settings).length === 0) return;
-    let orphans: [string, string][] = [];
     void changeSettings((s) => {
-      orphans = orphanLinks(s);
+      const orphans = orphanLinks(s);
       return orphans.length === 0 ? s : { ...s, calendarEvents: Object.fromEntries(Object.entries(s.calendarEvents).filter(([id]) => !orphans.some(([gone]) => gone === id))) };
     });
-    for (const [, event] of orphans) void removeEvent(event).catch(() => undefined);
   }, [ready, settings, changeSettings]);
 
   // The pop-up belongs to its item: when the item leaves the list, it closes instead of showing the next one.

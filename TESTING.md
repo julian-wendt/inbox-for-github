@@ -414,8 +414,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Tabelle), auf seiner Zeile in der Inbox, im Kontextmenü, in ⌘K und „Erledigt“ im
       Detail-Umschalter sind nicht ausgegraut und setzen „Mein Teil erledigt“, ohne „Plan entfernt“.
       Das Item steht unter „Fertig“, Plan und Termin bleiben, auch nach einem Neustart. Neue
-      Aktivität bringt es zurück, schließen auf GitHub nimmt Plan und Termin. Bei einer geteilten
-      Zuweisung nimmt D außerhalb von Geplant den Plan weiter mit; ein eigenes Item bietet D nicht an.
+      Aktivität bringt es zurück, schließen auf GitHub nimmt den Plan, der Termin bleibt. Auch bei einer geteilten
+      Zuweisung behält D den Plan, in jeder Ansicht; ein eigenes Item bietet D nicht an.
 - [ ] Ein „Erledigt“ auf einer Zuweisung aus älteren Versionen steht nach dem Start in „Fertig“.
 
 ## Mehrfachauswahl
@@ -444,7 +444,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] D auf einem geplanten Issue, das mir allein zugewiesen ist, und „Erledigt“ im Detail-Umschalter: Toast „#12 → Mein Teil erledigt“,
       ohne „Plan entfernt“; das Item verlässt Geplant und steht in Mir zugewiesen unter „Erledigt“.
       Plan und Termin im Kalender bleiben, auch am nächsten Morgen. Neue Aktivität bringt es mit
-      seinem Tag zurück nach Geplant; schließen auf GitHub nimmt Plan und Termin. ⌘Z stellt es
+      seinem Tag zurück nach Geplant; schließen auf GitHub nimmt den Plan, der Termin bleibt. ⌘Z stellt es
       zurück. Ein eigenes Item bietet D auch hier nicht an.
 - [ ] Die Seitenleiste zählt alles, was hier steht, nie fett; ein Item, das zugleich in der Inbox
       oder Mir zugewiesen steht, zählt dort weiter.
@@ -480,8 +480,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       nach „Eintragen“, nach „Ändern“ auf eine andere Zeit und nach einem Verschieben im
       Kalender auch die neue. Ein Ganztagstermin zeigt keine Uhrzeit, ein Plan ohne Termin den
       leeren Kalender.
-- [ ] X, D und F löschen den Termin, ⌘Z legt ihn zur alten Zeit neu an. Schließen auf GitHub
-      löscht ihn auch.
+- [ ] X (auch an Markierten) und T zum Abschalten löschen den Termin, ⌘Z legt ihn zur alten Zeit
+      neu an. F und D beenden den Plan, der Termin bleibt im Kalender, nur die Verknüpfung geht
+      (⌘Z stellt sie wieder her); Schließen auf GitHub lässt ihn ebenfalls stehen.
 - [ ] Im Kalender (z. B. Outlook) den Termin auf einen anderen Tag ziehen: nach dem Sync plant die
       App das Item um, mit Hinweis. Den Termin löschen: der Plan geht, das Item steht wieder in der
       Inbox.

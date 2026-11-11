@@ -80,14 +80,9 @@ describe("doneAccess", () => {
 });
 
 describe("keepsItsPlan", () => {
-  const lone = entry({});
-  const shared = entry({ assignees: [ME, "bob"] });
-
-  it("keeps the plan when D sets my part done on a lone assignment in any view, or on any in Planned", () => {
-    expect(keepsItsPlan(lone, { do: "hand-off" }, ME, false)).toBe(true);
-    expect(keepsItsPlan(lone, { do: "tick-update" }, ME, false)).toBe(true);
-    expect(keepsItsPlan(shared, { do: "hand-off" }, ME, true)).toBe(true);
-    expect(keepsItsPlan(shared, { do: "hand-off" }, ME, false)).toBe(false);
-    expect(keepsItsPlan(lone, { do: "set", status: "done" }, ME, true)).toBe(false);
+  it("keeps the plan when D hands off or ticks off an update, shared or not", () => {
+    expect(keepsItsPlan({ do: "hand-off" })).toBe(true);
+    expect(keepsItsPlan({ do: "tick-update" })).toBe(true);
+    expect(keepsItsPlan({ do: "set", status: "done" })).toBe(false);
   });
 });
