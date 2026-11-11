@@ -437,7 +437,7 @@ export default function App() {
 
   const pinnable = isPinnable;
   const toggleFocus = (c: Classified, extra: Step[] = []) => {
-    const focus = inbox.settings.focus.filter((id) => inbox.classified.some((e) => e.item.id === id && pinnable(e)));
+    const { focus } = inbox.settings;
     const on = focus.includes(c.item.id);
     const previous = todayOf(inbox.settings);
     const next: Today = {
