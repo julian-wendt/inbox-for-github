@@ -118,6 +118,8 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
       const typing = e.target instanceof HTMLInputElement;
       const handled = ["Escape", "Enter", ...(typing ? [] : ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])].includes(e.key);
       if (!handled) return;
+      // Enter on a button presses that button; during IME composition it confirms the text.
+      if (e.key === "Enter" && (e.isComposing || (e.target instanceof HTMLElement && e.target.closest("button")))) return;
       e.preventDefault();
       e.stopPropagation();
       if (e.key === "Escape") onClose();

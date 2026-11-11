@@ -1226,7 +1226,7 @@ export default function App() {
       "?": () => setDialog("help"),
       ...Object.fromEntries(views.map((b, i) => [String(i + 1), () => setBucket(b.id)])),
     },
-    dialog === null && !welcome,
+    dialog === null && !welcome && !calendarFor && !pickingDate,
   );
 
   /** Shows an item in its view with every filter cleared, so it cannot be hidden by one. */
