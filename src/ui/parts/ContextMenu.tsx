@@ -30,7 +30,8 @@ export interface MenuEntry {
  * @param x, y      Where the pointer was, in viewport pixels; with `centered`, the menu's middle.
  * @param entries   The menu, top to bottom.
  * @param onClose   Called when the menu should go away, also after an entry ran.
- * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`).
+ * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`),
+ *                  and sets it larger, as it stands on its own like a dialog.
  * @param centerX   Centers the menu on x only, below y (see `keyMenuAt`); implied by `centered`.
  * @param fit       Grows the menu so every hint stays on one line, for the menus a key opens.
  *
@@ -115,7 +116,7 @@ export function ContextMenu(props: { x: number; y: number; entries: MenuEntry[];
   }, []);
 
   return (
-    <div ref={root} className={`context-menu${fit ? " fit" : ""}`} role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
+    <div ref={root} className={`context-menu${fit ? " fit" : ""}${centered ? " centered" : ""}`} role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
       {entries.map((entry, i) => (
         <div key={entry.label} className="menu-slot">
           {entry.divided && <hr />}
