@@ -47,7 +47,8 @@ export function useSelection(ids: string[], header: (id: string) => boolean = ()
     [ids, selected, chosen],
   );
 
-  const replaced = !chosen.none && found < 0 && selected !== null;
+  // A wanted id on its way back is not a vanished one: nothing left the list.
+  const replaced = !chosen.none && !chosen.wanted && found < 0 && selected !== null;
   return { selected, select, move, replaced };
 }
 
