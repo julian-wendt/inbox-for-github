@@ -79,8 +79,10 @@ describe("planStatus", () => {
   describe("in Planned", () => {
     it("acts as the home view: assignment, own item, anything else", () => {
       expect(plan(entry({}), "planned")).toEqual({ do: "hand-off" });
-      expect(plan(entry(own, ["mention"]), "planned")).toEqual({ do: "blocked", why: "own" });
-      expect(plan(entry(own), "planned")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry(own, ["mention"]), "planned")).toEqual({ do: "hand-off" });
+      expect(plan(entry(own), "planned")).toEqual({ do: "hand-off" });
+      expect(plan(entry({ ...own, assignees: [], reasons: ["involved"] }), "planned")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry({ ...own, kind: "pr" }), "planned")).toEqual({ do: "blocked", why: "own" });
       expect(plan(entry(others), "planned")).toEqual({ do: "set", status: "done" });
     });
   });

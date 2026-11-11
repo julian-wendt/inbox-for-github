@@ -58,7 +58,7 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
   if (status !== "done") return { do: "set", status };
   if (view === "done") return { do: "none" };
   if (view === "snoozed") return { do: "clear" };
-  const home = view === "planned" ? (sameLogin(c.item.author, me) ? "authored" : onPlate(c, me) ? "assigned" : null) : view;
+  const home = view === "planned" ? (onPlate(c, me) ? "assigned" : sameLogin(c.item.author, me) ? "authored" : null) : view;
   if (home === "inbox") {
     if (c.asks.includes("update")) return { do: "tick-update" };
     if (c.asks.includes("closed")) return { do: "file" };
