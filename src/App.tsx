@@ -300,9 +300,6 @@ export default function App() {
     [viewGroups, folded, entries],
   );
   const selection = useSelection(ids, isBar);
-  useEffect(() => {
-    reselect.current = selection.select;
-  });
   // A palette jump lands once the target view has rendered; a folded group around it opens first.
   const [reveal, setReveal] = useState<string | null>(null);
   useEffect(() => {
@@ -1162,6 +1159,13 @@ export default function App() {
     setPopup(false);
     if (popup === "pointer") selection.select(null);
   };
+  // An undo reselects its item; an open pop-up belongs to the item it shows, so it closes first.
+  useEffect(() => {
+    reselect.current = (id) => {
+      closePopup();
+      selection.select(id);
+    };
+  });
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
   // In a table a selected row shows nothing of the item; only its pop-up counts as opened.
   const openedId = !table || showPopup ? current?.item.id : undefined;
