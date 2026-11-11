@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.5.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.4.0...v0.5.0) (2026-11-11)
+
+
+### Features
+
+* add a Follow-up view for everything that waits on others ([#64](https://github.com/julian-wendt/inbox-for-github/issues/64)) ([1e09cd6](https://github.com/julian-wendt/inbox-for-github/commit/1e09cd6028e4e5e6545a4aca7d97fc4d00c147fe))
+* add icons for plans, calendar events and follow-ups ([#55](https://github.com/julian-wendt/inbox-for-github/issues/55)) ([21e54fa](https://github.com/julian-wendt/inbox-for-github/commit/21e54faa02f1befa3dc62aa36e6ec06094ba4a8d))
+* bring feedback, thread replies and closings into the inbox ([#69](https://github.com/julian-wendt/inbox-for-github/issues/69)) ([029ec7f](https://github.com/julian-wendt/inbox-for-github/commit/029ec7f14fa4658f5a2ad0f93669c149a7ebbb05))
+* group Assigned to me and Created by me by repository ([#90](https://github.com/julian-wendt/inbox-for-github/issues/90)) ([7a5f966](https://github.com/julian-wendt/inbox-for-github/commit/7a5f96635198bd64b7ffb594e90d97199ef5862f))
+* keep D from finishing own items and lone assignments ([#71](https://github.com/julian-wendt/inbox-for-github/issues/71)) ([1420670](https://github.com/julian-wendt/inbox-for-github/commit/1420670287d2cbf667e940229500476fe07f2ef1))
+* let D mean one thing per view and keep calendar events ([#99](https://github.com/julian-wendt/inbox-for-github/issues/99)) ([3a0d1ee](https://github.com/julian-wendt/inbox-for-github/commit/3a0d1eec0371c391cdb5b3530788533c2955c3ef))
+* let the type bars of Assigned to me be reordered ([#77](https://github.com/julian-wendt/inbox-for-github/issues/77)) ([328ce27](https://github.com/julian-wendt/inbox-for-github/commit/328ce2720135b1a3bb94d379f903bcad773171e0))
+* mark calendar events and let D finish lone assignments ([#84](https://github.com/julian-wendt/inbox-for-github/issues/84)) ([e52d765](https://github.com/julian-wendt/inbox-for-github/commit/e52d76591fb332e8b4abbf2a284d3a33268d0560))
+* mark new settings and give every setting one layout ([#70](https://github.com/julian-wendt/inbox-for-github/issues/70)) ([a9775c3](https://github.com/julian-wendt/inbox-for-github/commit/a9775c37b6906767946d5d8f3d09083f5de25420))
+* refresh in full every 15 min and catch new review requests ([#66](https://github.com/julian-wendt/inbox-for-github/issues/66)) ([a5f9853](https://github.com/julian-wendt/inbox-for-github/commit/a5f9853d371c009a0b4a8da62fbac1882bb1ad68))
+
+
+### Bug Fixes
+
+* align counts, undo, toasts and closed items with single actions ([#104](https://github.com/julian-wendt/inbox-for-github/issues/104)) ([96c7fbd](https://github.com/julian-wendt/inbox-for-github/commit/96c7fbd1639e0fd2fa0f9847331c9ebae7cd2a00))
+* bring finished items back on a new assignment or a reopen ([#102](https://github.com/julian-wendt/inbox-for-github/issues/102)) ([1bc3891](https://github.com/julian-wendt/inbox-for-github/commit/1bc3891ce35dd76d3f85a966744969029959a1b0))
+* centre task list checkboxes on their line of text ([#87](https://github.com/julian-wendt/inbox-for-github/issues/87)) ([66bb45e](https://github.com/julian-wendt/inbox-for-github/commit/66bb45edab8ea371a29a7adb73c0aa58bfa08500))
+* clear dead statuses and stale activity log entries ([#72](https://github.com/julian-wendt/inbox-for-github/issues/72)) ([9d208c6](https://github.com/julian-wendt/inbox-for-github/commit/9d208c6754093d5402f5c61dcc13b2cb49c1d229))
+* color follow-ups and mentions pink, apart from merged purple ([#76](https://github.com/julian-wendt/inbox-for-github/issues/76)) ([b91bf3b](https://github.com/julian-wendt/inbox-for-github/commit/b91bf3bcf4aa7a699bf0871d762e98eb7232c533))
+* date a reopened item by the post that brought it back ([#86](https://github.com/julian-wendt/inbox-for-github/issues/86)) ([de0e70d](https://github.com/julian-wendt/inbox-for-github/commit/de0e70ddf6b1afb4bac15eece6eb3314230c1552))
+* keep a follow-up when unassigning yourself ([#73](https://github.com/julian-wendt/inbox-for-github/issues/73)) ([53b1965](https://github.com/julian-wendt/inbox-for-github/commit/53b1965b920ed6d0ee6c05a4793d61a5a3b96d70))
+* keep a new calendar event linked to its item ([#56](https://github.com/julian-wendt/inbox-for-github/issues/56)) ([13d89ac](https://github.com/julian-wendt/inbox-for-github/commit/13d89ac94096b349827949f28d598f51b27cee15))
+* keep pop-ups, palette, menus and settings to what was asked ([#101](https://github.com/julian-wendt/inbox-for-github/issues/101)) ([2457741](https://github.com/julian-wendt/inbox-for-github/commit/2457741ec5741b40ea66d1fc1ed5666a78bbb689))
+* keep refreshing while the window is in the background ([#85](https://github.com/julian-wendt/inbox-for-github/issues/85)) ([3c0c21f](https://github.com/julian-wendt/inbox-for-github/commit/3c0c21fe3de2ac0c563690c54d420005ee1a87df))
+* keep undo, overlay keys and Today pins on the right item ([#100](https://github.com/julian-wendt/inbox-for-github/issues/100)) ([fc20e38](https://github.com/julian-wendt/inbox-for-github/commit/fc20e383c9e6e3d3019e9ce10ce4425eeb1a1287))
+* make keys act on the selection and the open pop-up ([#91](https://github.com/julian-wendt/inbox-for-github/issues/91)) ([e7b2b12](https://github.com/julian-wendt/inbox-for-github/commit/e7b2b12aab34623954e2ecddc7ff740e3579892b))
+* make the missing calendar access notice stand out ([#60](https://github.com/julian-wendt/inbox-for-github/issues/60)) ([1b1e3b2](https://github.com/julian-wendt/inbox-for-github/commit/1b1e3b28025f6d182877661fe6bc716e9a6778a1))
+* stop keys from acting on the hovered row by default ([#62](https://github.com/julian-wendt/inbox-for-github/issues/62)) ([348a72f](https://github.com/julian-wendt/inbox-for-github/commit/348a72f270b7d1f936313d6bd4291c1888ab9e9a))
+* stop reserving width in the detail's status switch ([#74](https://github.com/julian-wendt/inbox-for-github/issues/74)) ([7a09bb6](https://github.com/julian-wendt/inbox-for-github/commit/7a09bb68f543bcaf3c98bc75319cb9bea7c1b3a5))
+
 ## [0.4.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.3.1...v0.4.0) (2026-10-29)
 
 
