@@ -4,6 +4,14 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-11
 
+- **D on an item of a table first files what asks for you, and only then ends your part.** One
+  predictable rule instead of a case per ask kind: a mention, review request, feedback, thread
+  answer or closing by another is filed ("filed": the ask counts as handled, the item leaves the
+  inbox, its status stays); only "reopened" clears the stored Open. With nothing asking, D on an
+  assignment is "my part done"; on an own item it does nothing. D with an ask means "seen and
+  handled", not "my work is finished". Items of others keep D = done, also with a mention.
+  Supersedes the D entries of 2026-11-06 and 2026-11-02 where an assignment with a mention,
+  review request or only "reopened" ask got "my part done" on D.
 - **The calendar is a record of what was done when, so only the user removing a plan deletes its
   event.** X (single or on marks) and T switching a Today pin off delete it; D, a follow-up, the
   item closing on GitHub and dropping it from the app end the plan but leave the event, and only

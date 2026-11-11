@@ -4,8 +4,8 @@ import { sameLogin } from "../timeline";
 import { onPlate } from "./assignments";
 
 /**
- * Why D changes no status on an item: the viewer opened it ("own"; it ends by closing or merging
- * it on GitHub). D still files what asks on such an item.
+ * Why D has nothing to end on an item without asks: the viewer opened it ("own"; it ends by
+ * closing or merging it on GitHub).
  */
 export type Lock = "own";
 
@@ -21,40 +21,39 @@ export type StatusPlan =
   | { do: "none" };
 
 /**
- * Decides what a status chosen for an item means. "Done" means more where there is more to end:
- * an update is ticked off with a fresh snapshot; an assignment becomes "my part done", which
- * follows its updates and ignores another "done". "Open" on an item whose part is done takes it
- * back into the work.
+ * Decides what a status chosen for an item means. D on an item of the tables (assigned to the
+ * viewer, or opened by them) follows one rule:
  *
- * A locked item (see `lockOf`) never gets "done" or "my part done", in any view. D on it files
- * whatever asks ("file": the "filedAt" setting): the asks go, the item stays where it is. Back
- * from a follow-up or a reopen alone, it clears the stored Open instead ("clear"). Without asks,
- * D does nothing ("blocked"). An own item someone else closed is filed the same way, and so are
- * feedback and thread answers on any item of the tables.
+ * 1. Something asks for the viewer (mention, review request, feedback, thread answer, closing by
+ *    another, ...): D only files it ("file": the "filedAt" setting). The asks go, the item
+ *    leaves the inbox, its status stays. If "reopened" is the only ask, D clears the stored Open
+ *    instead ("clear").
+ * 2. Nothing asks: D ends the viewer's part. An assignment becomes "my part done" ("hand-off"),
+ *    which follows its updates and ignores another D ("none"). An own item gets nothing
+ *    ("blocked"; see `lockOf`), and D is not offered there.
  *
- * An assignment of the viewer alone is not locked: D there means "my part done" for now, as on a
- * shared one, and the item keeps its plan (see `keepsItsPlan`), so nothing is left lying.
+ * An "update" ask is ticked off first ("tick-update"), with a fresh snapshot. "Open" on an item
+ * whose part is done takes it back into the work. An item outside the tables just becomes done.
  *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.
  * @param me      The viewer's login.
  *
  * @example
- *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for an assignment, shared or not
+ *   planStatus(entry, "done", "octocat"); // { do: "file" } for an assignment with a mention
+ *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for the same one after that
  */
 export function planStatus(c: Classified, status: Status, me: string): StatusPlan {
   if (status === "open" && c.updates) return { do: "resume" };
   if (status !== "done") return { do: "set", status };
   if (c.asks.includes("update")) return { do: "tick-update" };
   if (c.updates) return { do: "none" };
-  if (c.asks.includes("closed") || (inTable(c, me) && c.asks.some((ask) => ask === "feedback" || ask === "reply"))) return { do: "file" };
+  if (c.asks.includes("closed")) return { do: "file" };
+  if (!inTable(c, me)) return { do: "set", status };
+  if (c.asks.length > 0) return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
   const lock = lockOf(c, me);
-  if (lock) {
-    if (c.asks.length === 0) return { do: "blocked", why: lock };
-    return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
-  }
-  if (onPlate(c, me)) return { do: "hand-off" };
-  return { do: "set", status };
+  if (lock) return { do: "blocked", why: lock };
+  return onPlate(c, me) ? { do: "hand-off" } : { do: "set", status };
 }
 
 /**
@@ -72,8 +71,8 @@ export function lockOf({ item }: Pick<Classified, "item">, me: string): Lock | n
 export type DoneAccess = "on" | "hidden";
 
 /**
- * How D is offered for an item: as usual while it has something to do, and not at all on an own
- * item without asks (it never applies there).
+ * How D is offered for an item: as usual while it files, hands off or sets something, and not at
+ * all on an own item without asks (it never applies there).
  *
  * @example
  *   doneAccess(entry, "octocat"); // "hidden" for an own pull request without asks

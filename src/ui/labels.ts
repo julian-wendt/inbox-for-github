@@ -228,7 +228,7 @@ export function statusesFor(entry: Pick<Classified, "item">) {
  * @example
  *   statusHint("snoozed"); // "Out of the inbox while you wait for others" (English)
  */
-export function statusHint(id: Status | "handOff"): string {
+export function statusHint(id: Status | "handOff" | "file"): string {
   return t(`hint.status.${id}`);
 }
 

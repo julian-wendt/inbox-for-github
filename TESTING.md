@@ -264,7 +264,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Mit Einstellungen › Regeln › „Feedback auf das, was du erstellt hast“ = „Änderungen
       angefordert“ zählen nur solche Reviews, mit „Aus“ keines. Bots zählen nie.
 - [ ] Ein Beitrag eines anderen auf einer Zuweisung holt sie in die Inbox; D legt ab, ohne „Mein
-      Teil erledigt“. Mit Wiedervorlage bleibt sie in ihrer Leiste wartend und steht zusätzlich in der Inbox.
+      Teil erledigt“; ein zweites D setzt dann „Mein Teil erledigt“. Mit Wiedervorlage bleibt sie in ihrer Leiste wartend und steht zusätzlich in der Inbox.
 - [ ] In einem Review-Thread eines fremden PRs antworten, dann antwortet der Autor: „@alice hat in
       deinem Thread geantwortet“, auch wenn der PR erledigt war. Eine Antwort dort oder D nimmt ihn heraus.
 - [ ] Jemand anderes schließt ein eigenes Issue als „nicht geplant“: „Von @bob geschlossen“ in der
@@ -396,10 +396,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Mein Teil erledigt (Test-Issue)
 
-- [ ] D auf einer offenen Zuweisung: Toast „Mein Teil erledigt“, das Item steht in der Leiste
+- [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
       „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Zeit gleich, nicht mitgezählt),
       zusammen mit Items, die auf dem Board fertig sind; eine eigene Leiste dafür gibt es nicht. ⌘Z
-      nimmt es zurück. Im Kontextmenü heißt D dort „Mein Teil erledigt“.
+      nimmt es zurück. Im Kontextmenü heißt D dort „Mein Teil erledigt“, bei einer Zuweisung mit Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt; erst ein zweites D beendet deinen Teil).
 - [ ] Jemand kommentiert, das Board wechselt den Status (nach der stündlichen Aktualisierung), ein
       PR wird verknüpft oder das Issue geschlossen: das Item steht als „Update: …“ in der Inbox,
       mit Mitteilung. D dort hakt es ab, das Item bleibt in der Leiste (ein geschlossenes verlässt danach die Tabelle); ⌘Z nimmt das Abhaken zurück.

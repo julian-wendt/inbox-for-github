@@ -1026,6 +1026,12 @@ export default function App() {
     setReloading(c.item.id);
     void inbox.reloadItem(c.item.id).finally(() => setReloading(null));
   };
+  /** What D means for the item, for its label and hint: "my part done", filing, or plain Done. */
+  const doneKind = (id: Status, c: Classified): Status | "handOff" | "file" => {
+    if (id !== "done") return id;
+    const { do: kind } = planStatus(c, id, me);
+    return kind === "hand-off" ? "handOff" : kind === "file" ? "file" : id;
+  };
   /** The context menu of one item: the controls it has elsewhere, under the same shortcuts. */
   const menuEntries = (c: Classified): MenuEntry[] => {
     const { item } = c;
@@ -1033,8 +1039,8 @@ export default function App() {
     const statuses: MenuEntry[] = statusesFor(c)
       .filter((s) => !(s.id === "done" && doneIn(c) === "hidden"))
       .map((s) => ({
-      label: s.id === "done" && onPlate(c, me) && !c.updates ? t("action.handOff") : s.title,
-      hint: statusHint(s.id === "done" && onPlate(c, me) && !c.updates ? "handOff" : s.id),
+      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : s.title,
+      hint: statusHint(doneKind(s.id, c)),
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
       checked: c.status === s.id && !(planned && s.id === "open"),

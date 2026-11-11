@@ -19,9 +19,8 @@ function entry(overrides: Partial<Item>, asks?: Classified["asks"]): Classified 
 describe("planStatus", () => {
   const shared = { assignees: [ME, "bob"] };
 
-  it("hands off an assignment shared with others instead of marking it done", () => {
+  it("hands off an assignment shared with others without asks instead of marking it done", () => {
     expect(planStatus(entry(shared), "done", ME)).toEqual({ do: "hand-off" });
-    expect(planStatus(entry(shared, ["review"]), "done", ME)).toEqual({ do: "hand-off" });
   });
 
   it("marks an item done that is not on the viewer's plate", () => {
@@ -45,7 +44,17 @@ describe("planStatus", () => {
 
   it("hands off an assignment the viewer alone is on, as a shared one", () => {
     expect(planStatus(entry({}), "done", ME)).toEqual({ do: "hand-off" });
-    expect(planStatus(entry({}, ["mention"]), "done", ME)).toEqual({ do: "hand-off" });
+  });
+
+  it("files an assignment that asks, and hands it off with the second D", () => {
+    expect(planStatus(entry({}, ["mention"]), "done", ME)).toEqual({ do: "file" });
+    expect(planStatus(entry(shared, ["review"]), "done", ME)).toEqual({ do: "file" });
+    expect(planStatus(entry({}, ["reopened"]), "done", ME)).toEqual({ do: "clear" });
+    expect(planStatus(entry({}, []), "done", ME)).toEqual({ do: "hand-off" });
+  });
+
+  it("sets an item of someone else done, also with a mention", () => {
+    expect(planStatus(entry({ assignees: [], reasons: ["mentioned"] }, ["mention"]), "done", ME)).toEqual({ do: "set", status: "done" });
   });
 
   it("files what asks on a locked item instead", () => {
