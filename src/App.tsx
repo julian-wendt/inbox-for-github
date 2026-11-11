@@ -389,7 +389,7 @@ export default function App() {
   const findable = useMemo(() => inbox.classified.filter((c) => viewOf(c, me) !== null), [inbox.classified, me]);
   // The badge says there is something to do again, or still: unread inbox items and unread assignments, marks by hand included.
   const badgeIds = useMemo(() => new Set([...unreadInboxIds, ...unreadPlateIds]), [unreadInboxIds, unreadPlateIds]);
-  const repos = useMemo(() => repoList(inbox.classified, me), [inbox.classified, me]);
+  const repos = useMemo(() => repoList(inbox.classified, me, inbox.settings.statusMap), [inbox.classified, me, inbox.settings.statusMap]);
 
   const boards = useMemo(() => {
     const byId = new Map<string, { id: string; title: string; values: Set<string> }>();
