@@ -68,12 +68,12 @@ const TRAFFIC_LIGHTS = `(() => {
   document.body.append(lights);
 })()`;
 
-/** The shots of one run: what to press (keys of the app), then the file name. Views follow the keys 1–5. */
+/** The shots of one run: what to press (keys of the app), then the file name. Views follow the keys 1–6 (`VIEWS` in `src/ui/labels.ts`). */
 const SHOTS = [
   { name: "inbox", keys: [{ key: "1" }] },
   { name: "inbox-detail", keys: [{ key: "1" }, ...Array(4).fill({ key: "ArrowDown" })] },
-  { name: "follow-ups", keys: [{ key: "2" }] },
-  { name: "done", keys: [{ key: "3" }] },
+  { name: "follow-ups", keys: [{ key: "3" }] },
+  { name: "done", keys: [{ key: "6" }] },
   { name: "assigned", keys: [{ key: "4" }] },
   { name: "created-by-me", keys: [{ key: "5" }] },
   { name: "help", keys: [{ key: "1" }, { key: "?" }] },
@@ -83,7 +83,7 @@ const SHOTS = [
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const port = 9400 + Math.floor(Math.random() * 400);
 const profile = join(tmpdir(), `demo-screenshots-${process.pid}`);
-const child = spawn(browser, ["--headless=new", "--disable-gpu", "--hide-scrollbars", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `--window-size=${width},${height}`, "about:blank"], { stdio: "ignore" });
+const child = spawn(browser, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--use-mock-keychain", "--no-first-run", "--no-default-browser-check", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `--window-size=${width},${height}`, "about:blank"], { stdio: "ignore" });
 
 try {
   let targets;
