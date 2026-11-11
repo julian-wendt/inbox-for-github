@@ -823,7 +823,7 @@ export default function App() {
       setPopup(false);
       return selection.select(null);
     }
-    selection.select(open[at + 1] ?? open[at - 1] ?? null);
+    if (selection.selected === id) selection.select(open[at + 1] ?? open[at - 1] ?? null);
   };
   const applyStatus = (c: Classified, status: Status, asks?: "keep" | "file") => {
     const { id, number } = c.item;
@@ -852,7 +852,8 @@ export default function App() {
         return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));
       case "tick-update": {
         const filing = fileStep(c);
-        return change(t("toast.updateDone", { number }), bucket === "inbox" ? () => (hand(), filing.run()) : hand);
+        const inInbox = bucket === "inbox";
+        return change(t("toast.updateDone", { number }), inInbox ? () => (hand(), filing.run()) : hand, inInbox ? filing.undo : undefined);
       }
       case "hand-off": {
         moveOn(id);
