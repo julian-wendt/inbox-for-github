@@ -429,6 +429,18 @@ describe("my part done", () => {
     expect(run(closed, { ...done, changedAt: "2026-10-07T00:00:00Z" }).bucket).toBe("involved");
   });
 
+  it("keeps an ask from before the hand-off in the inbox until it is filed", () => {
+    const mentioned = assigned({ comments: [comment("bob", "@me can you look?", 3)] });
+    expect(run(mentioned, done)).toMatchObject({ bucket: "inbox", status: "done", asks: ["mention"] });
+    const filed = withRules(mentioned, MENTIONS_ONLY, done, "2026-10-05T00:00:00Z");
+    expect(filed).toMatchObject({ bucket: "assigned", status: "done", asks: [] });
+  });
+
+  it("keeps an open review request in the inbox after the hand-off", () => {
+    const pr = assigned({ kind: "pr", reasons: ["assigned", "review", "involved"], activities: [{ kind: "review-requested", at: "2026-10-03T00:00:00Z", actor: "alice", reviewer: ME }] });
+    expect(run(pr, done)).toMatchObject({ bucket: "inbox", asks: ["review"] });
+  });
+
   it("no longer counts once the viewer is unassigned: posts are no updates, only mentions bring it back", () => {
     expect(run(item({ reasons: ["involved"], comments: [comment("bob", "update", 5)] }), done)).toMatchObject({ bucket: "involved", asks: [] });
     expect(run(item({ comments: [comment("bob", "@me ping", 5)] }), done).bucket).toBe("inbox");

@@ -125,7 +125,7 @@ export function classify(
   // Items of the tables wait in place: only their date ends it, a mention shows in the inbox besides.
   const inTable = assigned || own;
   if (stored?.status === "done" && stored.handoff) {
-    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules);
+    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, filedAt);
     stored = undefined;
   }
   if (item.closed) {
@@ -221,20 +221,35 @@ export function classify(
 
 /**
  * The viewer's part is done, but they follow the item: it sits in Assigned to me while they stay
- * assigned and it is open, and in the inbox while an update (closing included) or a mention since
- * then waits to be ticked off; closed and ticked off, it shows nowhere. Ticking off (D) stores a
- * fresh handoff, which moves "since".
+ * assigned and it is open, and in the inbox while an ask waits: an update (closing included)
+ * since the hand-off, or what the open path would show (a pending mention, an open review
+ * request, feedback, a thread reply; later ones are updates) until the viewer files it with D (`filedAt`) or answers.
+ * Closed and ticked off, it shows nowhere. Ticking off (D) stores a fresh handoff, which moves
+ * "since" for updates.
  */
-function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[]): Classified {
+function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, filedAt?: string): Classified {
   const since = stored.changedAt;
   const updates = updatesSince(item, me, since, stored.handoff!);
+  const unfiled = (at: string) => at > (filedAt ?? "");
   const pending = pendingMention(item, rules, { me });
-  const mention = pending && pending.at > since ? pending : null;
+  const mention = pending && unfiled(pending.at) ? pending : null;
+  const open = !item.closed;
+  const assigned = item.reasons.includes("assigned");
+  const own = sameLogin(item.author, me);
+  const request = open && item.reasons.includes("review") && !reviewAnswered(item, me) ? lastRequest(item, me) : undefined;
+  const feedbackMode: FeedbackMode = own ? askRules.ownFeedback : assigned && askRules.assignedFeedback ? "any" : "off";
+  const found = open ? feedbackSince(item, me, latest(lastAnswerAt(item, me), filedAt), feedbackMode) : null;
+  const feedback = found && found.at <= since && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
+  const threadAnswer = open && !own && askRules.threadReplies ? threadReply(item, me) : null;
+  const reply = threadAnswer && !feedback && threadAnswer.at <= since && unfiled(threadAnswer.at) && !mentionsOf(item, me).some((m) => m.at === threadAnswer.at) ? threadAnswer : null;
   const asks: Ask[] = [];
   if (updates.length > 0) asks.push("update");
+  if (request && unfiled(request.at)) asks.push("review");
   if (mention) asks.push("mention");
-  const bucket: Bucket = asks.length > 0 ? "inbox" : !item.closed && item.reasons.includes("assigned") ? "assigned" : "involved";
-  return { item, bucket, status: "done", mention, answered: null, asks, statusAt: since, statusReset: false, updates };
+  if (feedback) asks.push("feedback");
+  if (reply) asks.push("reply");
+  const bucket: Bucket = asks.length > 0 ? "inbox" : open && assigned ? "assigned" : "involved";
+  return { item, bucket, status: "done", mention, answered: null, asks, statusAt: since, statusReset: false, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
 }
 
 /** The last time the viewer, or one of their teams, was asked for a review, as the activities record it. */

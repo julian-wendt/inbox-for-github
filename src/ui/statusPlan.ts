@@ -2,6 +2,7 @@ import type { Classified } from "../classify";
 import type { Status } from "../model";
 import { sameLogin } from "../timeline";
 import { onPlate } from "./assignments";
+import type { View } from "./labels";
 
 /**
  * Why D has nothing to end on an item without asks: the viewer opened it ("own"; it ends by
@@ -21,39 +22,55 @@ export type StatusPlan =
   | { do: "none" };
 
 /**
- * Decides what a status chosen for an item means. D on an item of the tables (assigned to the
- * viewer, or opened by them) follows one rule:
+ * Decides what a status chosen for an item means. D means one thing per view, matching what the
+ * view is for:
  *
- * 1. Something asks for the viewer (mention, review request, feedback, thread answer, closing by
- *    another, ...): D only files it ("file": the "filedAt" setting). The asks go, the item
- *    leaves the inbox, its status stays. If "reopened" is the only ask, D clears the stored Open
- *    instead ("clear").
- * 2. Nothing asks: D ends the viewer's part. An assignment becomes "my part done" ("hand-off"),
- *    which follows its updates and ignores another D ("none"). An own item gets nothing
- *    ("blocked"; see `lockOf`), and D is not offered there.
+ * - Inbox (someone wants something from the viewer): D files the item's asks ("file": the
+ *    "filedAt" setting; the asks go, the item leaves the inbox, its status stays). Only a
+ *    "reopened" ask is cleared instead ("clear"). An "update" ask is ticked off ("tick-update")
+ *    and the other asks are filed with it. An item outside the tables (neither assigned to the
+ *    viewer nor opened by them) just becomes done ("set").
+ * - Assigned to me (the viewer's own work): D is "my part done" ("hand-off"), whatever asks the
+ *    item has; those stay in the inbox until filed there. A finished part gets "none".
+ * - Created by me (monitoring): D files asks if there are any, else "blocked", as the item ends
+ *    on GitHub (see `lockOf`).
+ * - Planned: as in the item's home view, an assignment as in Assigned to me, an own item as in
+ *    Created by me, anything else becomes done.
+ * - Follow-up: D ends the follow-up ("clear"); the item returns where it came from.
+ * - Done: "none".
  *
- * An "update" ask is ticked off first ("tick-update"), with a fresh snapshot. "Open" on an item
- * whose part is done takes it back into the work. An item outside the tables just becomes done.
+ * An own item someone else closed files its "closed" ask in any view. "Open" on an item whose
+ * part is done takes it back into the work ("resume").
  *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.
  * @param me      The viewer's login.
+ * @param view    The view the viewer chose it in.
  *
  * @example
- *   planStatus(entry, "done", "octocat"); // { do: "file" } for an assignment with a mention
- *   planStatus(entry, "done", "octocat"); // { do: "hand-off" } for the same one after that
+ *   planStatus(entry, "done", "octocat", "inbox");    // { do: "file" } for an assignment with a mention
+ *   planStatus(entry, "done", "octocat", "assigned"); // { do: "hand-off" } for the same one
  */
-export function planStatus(c: Classified, status: Status, me: string): StatusPlan {
+export function planStatus(c: Classified, status: Status, me: string, view: View): StatusPlan {
   if (status === "open" && c.updates) return { do: "resume" };
   if (status !== "done") return { do: "set", status };
+  if (view === "done") return { do: "none" };
+  if (view === "snoozed") return { do: "clear" };
   if (c.asks.includes("update")) return { do: "tick-update" };
-  if (c.updates) return { do: "none" };
   if (c.asks.includes("closed")) return { do: "file" };
-  if (!inTable(c, me)) return { do: "set", status };
-  if (c.asks.length > 0) return c.asks.every((ask) => ask === "reopened") ? { do: "clear" } : { do: "file" };
-  const lock = lockOf(c, me);
-  if (lock) return { do: "blocked", why: lock };
-  return onPlate(c, me) ? { do: "hand-off" } : { do: "set", status };
+  const home = view === "planned" ? (sameLogin(c.item.author, me) ? "authored" : onPlate(c, me) ? "assigned" : null) : view;
+  const filing = (): StatusPlan => ({ do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" });
+  if (home === "inbox") {
+    if (!inTable(c, me)) return { do: "set", status };
+    return c.asks.length > 0 ? filing() : { do: "none" };
+  }
+  if (home === "assigned" && onPlate(c, me)) return c.updates ? { do: "none" } : { do: "hand-off" };
+  if (home === "authored") {
+    if (c.asks.length > 0) return filing();
+    const lock = lockOf(c, me);
+    if (lock) return { do: "blocked", why: lock };
+  }
+  return { do: "set", status };
 }
 
 /**
@@ -71,14 +88,14 @@ export function lockOf({ item }: Pick<Classified, "item">, me: string): Lock | n
 export type DoneAccess = "on" | "hidden";
 
 /**
- * How D is offered for an item: as usual while it files, hands off or sets something, and not at
- * all on an own item without asks (it never applies there).
+ * How D is offered for an item in a view: as usual while it files, hands off or sets something,
+ * and not at all on an own item without asks (it never applies there).
  *
  * @example
- *   doneAccess(entry, "octocat"); // "hidden" for an own pull request without asks
+ *   doneAccess(entry, "octocat", "authored"); // "hidden" for an own pull request without asks
  */
-export function doneAccess(c: Classified, me: string): DoneAccess {
-  return planStatus(c, "done", me).do === "blocked" ? "hidden" : "on";
+export function doneAccess(c: Classified, me: string, view: View): DoneAccess {
+  return planStatus(c, "done", me, view).do === "blocked" ? "hidden" : "on";
 }
 
 /**

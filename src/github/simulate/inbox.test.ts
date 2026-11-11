@@ -185,19 +185,19 @@ describe("Commenting", () => {
 });
 
 describe("Status and log", () => {
-  it("logs every change: snoozed, done, open", async () => {
+  it("logs every change: done, snoozed, open", async () => {
     const { world, app } = sim;
     const issue = world.issue();
     world.comment(issue, "alice", "@octocat");
     await app.refresh();
 
-    app.snooze(issue);
-    expect(app.viewOf(issue)).toBe("snoozed");
     app.done(issue);
     expect(app.viewOf(issue)).toBe("done");
+    app.snooze(issue);
+    expect(app.viewOf(issue)).toBe("snoozed");
     app.open(issue);
 
-    expect(app.log.get(issue.id)?.map((l) => l.status)).toEqual(["snoozed", "done", "open"]);
+    expect(app.log.get(issue.id)?.map((l) => l.status)).toEqual(["done", "snoozed", "open"]);
   });
 
   it("does nothing for done on a done item, and moves the date of a snoozed one", async () => {

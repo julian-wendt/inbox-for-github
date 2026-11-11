@@ -121,7 +121,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       (↻), Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
       in Hell und Dunkel gut erkennbar.
 - [ ] Item mit F auf Wiedervorlage legen, mit D erledigen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten, sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
-- [ ] D auf einem erledigten Item ändert nichts; F auf einem in Wiedervorlage öffnet die Zeiten,
+- [ ] D in „Erledigt“ ändert nichts; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
 - [ ] ⌃O öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O allein öffnet
       nichts im Browser. Im Kommentarfeld tut ⌃O nichts an der App.
@@ -263,8 +263,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       heraus; D legt ihn ab („#7: abgelegt“), er bleibt in Von mir erstellt, ⌘Z holt ihn zurück.
       Mit Einstellungen › Regeln › „Feedback auf das, was du erstellt hast“ = „Änderungen
       angefordert“ zählen nur solche Reviews, mit „Aus“ keines. Bots zählen nie.
-- [ ] Ein Beitrag eines anderen auf einer Zuweisung holt sie in die Inbox; D legt ab, ohne „Mein
-      Teil erledigt“; ein zweites D setzt dann „Mein Teil erledigt“. Mit Wiedervorlage bleibt sie in ihrer Leiste wartend und steht zusätzlich in der Inbox.
+- [ ] Ein Beitrag eines anderen auf einer Zuweisung holt sie in die Inbox; D in der Inbox legt ab, ohne „Mein
+      Teil erledigt“; D in „Mir zugewiesen“ setzt „Mein Teil erledigt“, auch mit offener Erwähnung (sie bleibt dann in der Inbox, bis D dort sie ablegt). Mit Wiedervorlage bleibt sie in ihrer Leiste wartend und steht zusätzlich in der Inbox.
 - [ ] In einem Review-Thread eines fremden PRs antworten, dann antwortet der Autor: „@alice hat in
       deinem Thread geantwortet“, auch wenn der PR erledigt war. Eine Antwort dort oder D nimmt ihn heraus.
 - [ ] Jemand anderes schließt ein eigenes Issue als „nicht geplant“: „Von @bob geschlossen“ in der
@@ -399,11 +399,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
       „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Zeit gleich, nicht mitgezählt),
       zusammen mit Items, die auf dem Board fertig sind; eine eigene Leiste dafür gibt es nicht. ⌘Z
-      nimmt es zurück. Im Kontextmenü heißt D dort „Mein Teil erledigt“, bei einer Zuweisung mit Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt; erst ein zweites D beendet deinen Teil).
+      nimmt es zurück. Im Kontextmenü heißt D in „Mir zugewiesen“ „Mein Teil erledigt“, in der Inbox bei einer Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt), bei einem Item anderer „Erledigt“. Hat ein Item nach „Mein Teil erledigt“ noch eine offene Erwähnung, steht es in der Inbox; D dort legt sie ab, und es steht wieder in „Mir zugewiesen“.
 - [ ] Jemand kommentiert, das Board wechselt den Status (nach der stündlichen Aktualisierung), ein
       PR wird verknüpft oder das Issue geschlossen: das Item steht als „Update: …“ in der Inbox,
-      mit Mitteilung. D dort hakt es ab, das Item bleibt in der Leiste (ein geschlossenes verlässt danach die Tabelle); ⌘Z nimmt das Abhaken zurück.
-- [ ] O auf einem Item in der Leiste holt es zurück in die Arbeit („wieder in deiner Arbeit“); D tut dort nichts.
+      mit Mitteilung. D in der Inbox hakt es ab und legt weitere Anfragen daran (etwa eine Erwähnung) mit ab, das Item bleibt in der Leiste (ein geschlossenes verlässt danach die Tabelle); ⌘Z nimmt das Abhaken zurück.
+- [ ] O auf einem Item in der Leiste holt es zurück in die Arbeit („wieder in deiner Arbeit“); ein zweites D dort zeigt nur den Hinweis, dass dein Teil schon erledigt ist.
 - [ ] ⌃U „Mich als Zuständigen entfernen“ (auch Kontextmenü, ⌘K): auf GitHub nicht mehr zugewiesen,
       und das Item ist überall raus, auch nicht unter Erledigt; nur eine Erwähnung holt es zurück.
       Ohne WLAN: Hinweis, und du bist wieder zugewiesen, mit dem Status von vorher.

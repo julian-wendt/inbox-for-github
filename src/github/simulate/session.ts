@@ -178,7 +178,7 @@ export class InboxSession {
       if (previous) this.statuses.set(ref.id, previous);
       else this.statuses.delete(ref.id);
     };
-    const plan = planStatus(c, status, this.me);
+    const plan = planStatus(c, status, this.me, viewOf(c, this.me) ?? "inbox");
     switch (plan.do) {
       case "resume":
       case "clear":
@@ -194,6 +194,7 @@ export class InboxSession {
         return;
       case "tick-update":
       case "hand-off":
+        if (plan.do === "tick-update" && c.bucket === "inbox") this.filedAt.set(ref.id, this.world.stamp());
         this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":

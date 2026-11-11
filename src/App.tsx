@@ -186,7 +186,7 @@ export default function App() {
   const [popup, setPopup] = useState<false | "pointer" | "keys">(false);
   const me = inbox.me ?? "";
   /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
-  const doneIn = (c: Classified) => doneAccess(c, me);
+  const doneIn = (c: Classified) => doneAccess(c, me, bucket);
   const unreadInboxIds = useMemo(
     () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me))).map((c) => c.item.id)),
     [inbox.classified, inbox.seen, inbox.unreadMarks, me],
@@ -669,7 +669,7 @@ export default function App() {
   const open = marked.filter((c) => !c.item.closed);
   /** What D or O chooses for one item, as a step with an exact undo; null where it would change nothing, as for a single item. */
   const planStep = (c: Classified, status: Status) => {
-    const plan = planStatus(c, status, me);
+    const plan = planStatus(c, status, me, bucket);
     const previous = inbox.statuses.get(c.item.id);
     const undo = () => void inbox.restoreStatus(c.item.id, previous);
     switch (plan.do) {
@@ -681,8 +681,12 @@ export default function App() {
       case "blocked":
         return null;
       case "tick-update":
-      case "hand-off":
-        return { run: () => void inbox.setStatus(c.item.id, "done", { handoff: snapshotOf(c.item) }), undo };
+      case "hand-off": {
+        const hand = () => void inbox.setStatus(c.item.id, "done", { handoff: snapshotOf(c.item) });
+        if (plan.do !== "tick-update" || bucket !== "inbox") return { run: hand, undo };
+        const filing = fileStep(c);
+        return { run: () => (hand(), filing.run()), undo: () => (filing.undo(), undo()) };
+      }
       case "set":
         return c.status === plan.status ? null : { run: () => void inbox.setStatus(c.item.id, plan.status), undo };
       case "none":
@@ -691,12 +695,12 @@ export default function App() {
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
   const bulkStatus = (status: Status) => {
-    const files = (c: Classified) => planStatus(c, status, me).do === "file";
-    const keeps = (c: Classified) => keepsItsPlan(planStatus(c, status, me));
+    const files = (c: Classified) => planStatus(c, status, me, bucket).do === "file";
+    const keeps = (c: Classified) => keepsItsPlan(planStatus(c, status, me, bucket));
     const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
     const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
-    const blocked = open.filter((c) => planStatus(c, status, me).do === "blocked").length;
+    const blocked = open.filter((c) => planStatus(c, status, me, bucket).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
     const parts = [
       ...(set.length > 0 ? [plural("marks.toastOne", "marks.toast", set.length, { status: t(`status.${status}`) })] : []),
@@ -798,7 +802,7 @@ export default function App() {
   const applyStatus = (c: Classified, status: Status) => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
-    const plan = planStatus(c, status, me);
+    const plan = planStatus(c, status, me, bucket);
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
@@ -819,12 +823,14 @@ export default function App() {
     switch (plan.do) {
       case "resume":
         return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));
-      case "tick-update":
-        return change(t("toast.updateDone", { number }), hand);
+      case "tick-update": {
+        const filing = fileStep(c);
+        return change(t("toast.updateDone", { number }), bucket === "inbox" ? () => (hand(), filing.run()) : hand);
+      }
       case "hand-off":
         return change(t("toast.handedOff", { number }), hand);
       case "clear":
-        return change(t("toast.filed", { number }), () => void inbox.clearStatus(id));
+        return change(t(bucket === "snoozed" ? "toast.reminderRemoved" : "toast.filed", { number }), () => void inbox.clearStatus(id));
       case "blocked":
         return;
       case "set":
@@ -832,7 +838,7 @@ export default function App() {
         if (c.item.closed) return actions.notify(t("closed.noStatus", { number }));
         return change(`#${number} → ${t(`status.${plan.status}`)}`, () => void inbox.setStatus(id, plan.status));
       case "none":
-        return;
+        return c.updates ? actions.notify(t("toast.partAlreadyDone", { number })) : undefined;
     }
   };
   /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
@@ -1027,10 +1033,10 @@ export default function App() {
     void inbox.reloadItem(c.item.id).finally(() => setReloading(null));
   };
   /** What D means for the item, for its label and hint: "my part done", filing, or plain Done. */
-  const doneKind = (id: Status, c: Classified): Status | "handOff" | "file" => {
+  const doneKind = (id: Status, c: Classified): Status | "handOff" | "file" | "clear" => {
     if (id !== "done") return id;
-    const { do: kind } = planStatus(c, id, me);
-    return kind === "hand-off" ? "handOff" : kind === "file" ? "file" : id;
+    const { do: kind } = planStatus(c, id, me, bucket);
+    return kind === "hand-off" ? "handOff" : kind === "file" ? "file" : kind === "clear" ? (bucket === "snoozed" ? "clear" : "file") : id;
   };
   /** The context menu of one item: the controls it has elsewhere, under the same shortcuts. */
   const menuEntries = (c: Classified): MenuEntry[] => {
@@ -1039,7 +1045,7 @@ export default function App() {
     const statuses: MenuEntry[] = statusesFor(c)
       .filter((s) => !(s.id === "done" && doneIn(c) === "hidden"))
       .map((s) => ({
-      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : s.title,
+      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("reminder.remove") : s.title,
       hint: statusHint(doneKind(s.id, c)),
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
