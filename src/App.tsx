@@ -943,7 +943,7 @@ export default function App() {
     else
       actions.announce(
         text,
-        () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true)),
+        () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true, true)),
         () => ids.forEach((id) => classifiedById(id) && assignAll([classifiedById(id)!], true)),
       );
     for (const c of due) {
@@ -970,13 +970,15 @@ export default function App() {
   /**
    * ⌃U: the viewer's part is done and they leave the assignees, here at once and then on GitHub,
    * queued. The item then sorts like any other they are not assigned to: nowhere, until a mention.
-   * A failure puts them back as assignee, with the status they had, and says so.
+   * A failure puts them back as assignee, with the status they had, and says so. With `keepStatus`
+   * (undoing an assignment, which wrote none) the stored status is left alone.
    */
-  const leave = (c: Classified, quiet = false) => {
+  const leave = (c: Classified, quiet = false, keepStatus = false) => {
     if (!leavable(c)) return quiet ? undefined : actions.notify(t("unassign.nothing"));
     const { id, number, assignees, reasons, activities } = c.item;
     const previous = inbox.statuses.get(id);
-    if (leaveClears(previous)) void inbox.clearStatus(id);
+    const cleared = !keepStatus && leaveClears(previous);
+    if (cleared) void inbox.clearStatus(id);
     const at = new Date().toISOString();
     inbox.updateItem(id, (item) => ({
       ...item,
@@ -990,7 +992,7 @@ export default function App() {
       actions.announce(
         text,
         () => {
-          if (previous) void inbox.restoreStatus(id, previous);
+          if (cleared) void inbox.restoreStatus(id, previous);
           const now = classifiedById(id);
           if (now) assignAll([now], true);
         },
@@ -1006,7 +1008,7 @@ export default function App() {
           (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
           (e) => {
             inbox.updateItem(id, (item) => ({ ...item, assignees, reasons, activities }));
-            if (previous) void inbox.restoreStatus(id, previous);
+            if (cleared) void inbox.restoreStatus(id, previous);
             void inbox.logWriteFailure(id, "unassign", String(e));
             actions.notify(t("unassign.failed", { number, error: String(e) }));
           },
@@ -1023,7 +1025,7 @@ export default function App() {
     actions.announce(
       t("unassign.doneMany", { count: due.length }),
       () => {
-        ids.forEach((id) => before.get(id) && void inbox.restoreStatus(id, before.get(id)));
+        ids.forEach((id) => leaveClears(before.get(id)) && void inbox.restoreStatus(id, before.get(id)));
         assignAll(ids.flatMap((id) => classifiedById(id) ?? []), true);
       },
       () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true)),
