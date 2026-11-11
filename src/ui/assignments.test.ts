@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
+import { assignedAt, hasNewActivity, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -242,5 +242,18 @@ describe("withSaved", () => {
   it("completes a saved order with the bars it leaves out", () => {
     expect(withSaved(["a", "b", "c", "d"], ["c", "a"])).toEqual(["b", "c", "a", "d"]);
     expect(withSaved(["a", "b"], ["x"])).toEqual(["a", "b"]);
+  });
+});
+
+describe("hasNewActivity", () => {
+  const comment = (at: string) => ({ comments: [{ author: "bob", body: "news", createdAt: at }] });
+
+  it("counts an item never opened from its assignment or opening", () => {
+    expect(hasNewActivity(entry("a", { statusAt: null }, comment("2026-10-05T00:00:00Z")), new Map(), "me")).toBe(true);
+    expect(hasNewActivity(entry("b", { statusAt: null }, { createdAt: "2026-10-06T00:00:00Z", ...comment("2026-10-05T00:00:00Z") }), new Map(), "me")).toBe(false);
+  });
+
+  it("counts from the last visit when there is one", () => {
+    expect(hasNewActivity(entry("c", {}, comment("2026-10-05T00:00:00Z")), new Map([["c", "2026-10-07T00:00:00Z"]]), "me")).toBe(false);
   });
 });

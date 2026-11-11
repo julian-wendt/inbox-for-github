@@ -288,9 +288,16 @@ export function isNewAssignment(entry: Pick<Classified, "item" | "statusAt">, se
   return !sameLogin(last.actor, me) && (!since || since < last.at);
 }
 
-/** Someone else was active after the viewer last opened the item. */
+/**
+ * Someone else was active after the viewer last opened the item. An item never opened counts from
+ * its last status change, else from when it was assigned to the viewer or opened by them, so news
+ * on it shows as well.
+ *
+ * @example
+ *   hasNewActivity(entry, new Map(), "octocat"); // true when someone commented after the assignment
+ */
 export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, seen: Map<string, string>, me: string): boolean {
-  const since = seen.get(entry.item.id) ?? entry.statusAt;
+  const since = seen.get(entry.item.id) ?? entry.statusAt ?? assignedAt(entry.item, me).at;
   const last = lastOthersActivity(entry.item, me);
   return !!last && !!since && last > since;
 }
