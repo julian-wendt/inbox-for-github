@@ -26,7 +26,7 @@ export function useSelection(ids: string[], header: (id: string) => boolean = ()
   // Remembers where the selection sits, so the next change of the list finds its successor.
   useEffect(() => {
     const index = selected ? ids.indexOf(selected) : -1;
-    if (chosen.none || (chosen.wanted && found < 0) || (selected === chosen.id && (index < 0 || index === chosen.index))) return;
+    if (chosen.none || (chosen.wanted && found < 0) || (selected === chosen.id && !chosen.wanted && (index < 0 || index === chosen.index))) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bookkeeping only; what renders is derived above
     setChosen({ id: selected, index: index >= 0 ? index : chosen.index });
   }, [ids, selected, chosen, found]);
