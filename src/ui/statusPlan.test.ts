@@ -64,10 +64,10 @@ describe("planStatus", () => {
   });
 
   describe("in Created by me", () => {
-    it("files asks if there are any", () => {
-      expect(plan(entry(own, ["mention"]), "authored")).toEqual({ do: "file" });
-      expect(plan(entry({ ...own, kind: "pr", assignees: [] }, ["review"]), "authored")).toEqual({ do: "file" });
-      expect(plan(entry(own, ["reopened"]), "authored")).toEqual({ do: "clear" });
+    it("leaves asks to the inbox", () => {
+      expect(plan(entry(own, ["mention"]), "authored")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry({ ...own, kind: "pr", assignees: [] }, ["review"]), "authored")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry(own, ["reopened"]), "authored")).toEqual({ do: "blocked", why: "own" });
     });
 
     it("changes nothing on an own item without asks", () => {
@@ -79,7 +79,7 @@ describe("planStatus", () => {
   describe("in Planned", () => {
     it("acts as the home view: assignment, own item, anything else", () => {
       expect(plan(entry({}), "planned")).toEqual({ do: "hand-off" });
-      expect(plan(entry(own, ["mention"]), "planned")).toEqual({ do: "file" });
+      expect(plan(entry(own, ["mention"]), "planned")).toEqual({ do: "blocked", why: "own" });
       expect(plan(entry(own), "planned")).toEqual({ do: "blocked", why: "own" });
       expect(plan(entry(others), "planned")).toEqual({ do: "set", status: "done" });
     });
@@ -105,10 +105,11 @@ describe("planStatus", () => {
 });
 
 describe("doneAccess", () => {
-  it("offers D while it does something and hides it on own items without asks", () => {
+  it("offers D while it does something and hides it in Created by me", () => {
     expect(doneAccess(entry({ assignees: [ME, "bob"] }), ME, "assigned")).toBe("on");
     expect(doneAccess(entry({ author: ME, kind: "pr", assignees: [], reasons: ["involved"] }), ME, "authored")).toBe("hidden");
-    expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME, "authored")).toBe("on");
+    expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME, "authored")).toBe("hidden");
+    expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME, "inbox")).toBe("on");
   });
 });
 

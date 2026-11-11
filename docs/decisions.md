@@ -12,8 +12,8 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   other asks with it; an item outside the tables (not assigned to you, not opened by you) becomes
   done. Assigned to me: D is "my part done" whatever asks the item has, and those asks stay in
   the inbox until filed there, so the item shows in both; a second D shows a hint instead of
-  doing nothing. Created by me: D files asks, else it does nothing, as an own item ends on
-  GitHub. Planned: as in the item's home view. Follow-up: D ends the follow-up. Done: nothing. O
+  doing nothing. Created by me: no D at all; its asks are filed in the inbox, and an own item
+  ends on GitHub. Only the inbox files asks, updates and closings by others. Planned: as in the item's home view. Follow-up: D ends the follow-up. Done: nothing. O
   still takes a finished part back into the work. Supersedes the ask-based D rule of this day ("D
   on an item of a table first files what asks for you, and only then ends your part") and the D
   entries of 2026-11-06 and 2026-11-02.

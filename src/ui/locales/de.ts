@@ -260,7 +260,7 @@ export const de: Messages = {
   "keys.grouping": "Gruppierung wechseln: Typ-, Status- oder Repo-Leisten in „Mir zugewiesen“, Status- oder Repo-Leisten in „Von mir erstellt“, Zeitgruppen oder keine in den Listen",
   "keys.snooze": "Wiedervorlage: das Item wartet, in seiner Tabelle, wenn es in einer steht, und kommt zum Datum in die Inbox zurück; dann N nächster Werktag, 1–5 ein Wochentag, W nächste Woche, D Datum wählen, F ohne Datum, X Wiedervorlage entfernen",
   "keys.reminderRemove": "Plan oder Wiedervorlage entfernen, auch eine längst vergangene; bei markierten Items bei allen",
-  "keys.done": "D: Inbox legt ab, was nach dir fragt, Mir zugewiesen beendet deinen Teil, Von mir erstellt legt Anfragen ab, Wiedervorlage beendet die Wiedervorlage, sonst Erledigt",
+  "keys.done": "D: Inbox legt ab, was nach dir fragt, Mir zugewiesen beendet deinen Teil, Von mir erstellt hat kein D, Wiedervorlage beendet die Wiedervorlage, sonst Erledigt",
   "keys.open": "Zurück auf Offen",
   "keys.undo": "Letzte Änderung rückgängig; immer wieder, um die Kette zurückzugehen (die letzten fünfzig)",
   "keys.redo": "Wiederholen, was ⌘Z zurückgenommen hat",

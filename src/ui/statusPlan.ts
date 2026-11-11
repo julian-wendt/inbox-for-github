@@ -28,18 +28,20 @@ export type StatusPlan =
  * - Inbox (someone wants something from the viewer): D files the item's asks ("file": the
  *    "filedAt" setting; the asks go, the item leaves the inbox, its status stays). Only a
  *    "reopened" ask is cleared instead ("clear"). An "update" ask is ticked off ("tick-update")
- *    and the other asks are filed with it. An item outside the tables (neither assigned to the
+ *    and the other asks are filed with it; so is the "closed" ask of an own item someone else
+ *    closed. Only the inbox files asks. An item outside the tables (neither assigned to the
  *    viewer nor opened by them) just becomes done ("set").
  * - Assigned to me (the viewer's own work): D is "my part done" ("hand-off"), whatever asks the
- *    item has; those stay in the inbox until filed there. A finished part gets "none".
- * - Created by me (monitoring): D files asks if there are any, else "blocked", as the item ends
- *    on GitHub (see `lockOf`).
+ *    item has; those stay in the inbox until filed there. A finished part gets "none", also
+ *    with an update waiting in the inbox.
+ * - Created by me (monitoring): no D ("blocked", hidden): asks are filed in the inbox, and the
+ *    item ends on GitHub (see `lockOf`).
  * - Planned: as in the item's home view, an assignment as in Assigned to me, an own item as in
  *    Created by me, anything else becomes done.
  * - Follow-up: D ends the follow-up ("clear"); the item returns where it came from.
  * - Done: "none".
  *
- * An own item someone else closed files its "closed" ask in any view. "Open" on an item whose
+ * "Open" on an item whose
  * part is done takes it back into the work ("resume").
  *
  * @param c       The item as classified.
@@ -56,20 +58,16 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
   if (status !== "done") return { do: "set", status };
   if (view === "done") return { do: "none" };
   if (view === "snoozed") return { do: "clear" };
-  if (c.asks.includes("update")) return { do: "tick-update" };
-  if (c.asks.includes("closed")) return { do: "file" };
   const home = view === "planned" ? (sameLogin(c.item.author, me) ? "authored" : onPlate(c, me) ? "assigned" : null) : view;
-  const filing = (): StatusPlan => ({ do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" });
   if (home === "inbox") {
+    if (c.asks.includes("update")) return { do: "tick-update" };
+    if (c.asks.includes("closed")) return { do: "file" };
     if (!inTable(c, me)) return { do: "set", status };
-    return c.asks.length > 0 ? filing() : { do: "none" };
+    if (c.asks.length === 0) return { do: "none" };
+    return { do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" };
   }
   if (home === "assigned" && onPlate(c, me)) return c.updates ? { do: "none" } : { do: "hand-off" };
-  if (home === "authored") {
-    if (c.asks.length > 0) return filing();
-    const lock = lockOf(c, me);
-    if (lock) return { do: "blocked", why: lock };
-  }
+  if (home === "authored") return { do: "blocked", why: "own" };
   return { do: "set", status };
 }
 
@@ -89,10 +87,10 @@ export type DoneAccess = "on" | "hidden";
 
 /**
  * How D is offered for an item in a view: as usual while it files, hands off or sets something,
- * and not at all on an own item without asks (it never applies there).
+ * and not at all where it never applies (Created by me, and own items in Planned).
  *
  * @example
- *   doneAccess(entry, "octocat", "authored"); // "hidden" for an own pull request without asks
+ *   doneAccess(entry, "octocat", "authored"); // "hidden" for any own item
  */
 export function doneAccess(c: Classified, me: string, view: View): DoneAccess {
   return planStatus(c, "done", me, view).do === "blocked" ? "hidden" : "on";
