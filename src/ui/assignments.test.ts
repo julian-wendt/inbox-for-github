@@ -258,10 +258,10 @@ describe("hasNewActivity", () => {
   });
 });
 
-describe("lastOthersActivity", () => {
-  it("leaves out what the detail does not show, as someone else assigning themselves", () => {
-    const item = entry("a", {}, { author: "me", activities: [{ kind: "assigned", at: "2026-10-05T00:00:00Z", actor: "bob", assignee: "bob" }] }).item;
-    expect(lastOthersActivity(item, "me")).toBeNull();
-    expect(hasNewActivity(entry("a", { statusAt: null }, { author: "me", activities: item.activities }), new Map(), "me")).toBe(false);
+describe("news on own items", () => {
+  it("counts someone taking on an item the viewer opened, and not on others' items, as the detail shows it", () => {
+    const took = { activities: [{ kind: "assigned" as const, at: "2026-10-05T00:00:00Z", actor: "bob", assignee: "bob" }] };
+    expect(lastOthersActivity(entry("a", {}, { author: "me", ...took }).item, "me")).toBe("2026-10-05T00:00:00Z");
+    expect(lastOthersActivity(entry("b", {}, { author: "carol", body: "", ...took }).item, "me")).not.toBe("2026-10-05T00:00:00Z");
   });
 });

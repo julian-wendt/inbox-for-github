@@ -92,7 +92,11 @@ export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: 
     case "assigned":
       icon = UserRound;
       text = !sameLogin(activity.assignee, me)
-        ? tRich("activity.assignedOther", { name: <strong>{activity.assignee}</strong> })
+        ? mine
+          ? tRich("activity.assignedOther", { name: <strong>{activity.assignee}</strong> })
+          : sameLogin(activity.actor, activity.assignee)
+            ? tRich("activity.assignedThemselves", { name: <strong>{activity.actor}</strong> })
+            : tRich("activity.assignedBy", { actor: <strong>{activity.actor}</strong>, name: <strong>{activity.assignee}</strong> })
         : mine
           ? t("activity.assignedSelf")
           : tRich("activity.assigned", { name: <strong>{activity.actor}</strong> });
@@ -100,7 +104,11 @@ export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: 
     case "unassigned":
       icon = UserMinus;
       text = !sameLogin(activity.assignee, me)
-        ? tRich("activity.unassignedOther", { name: <strong>{activity.assignee}</strong> })
+        ? mine
+          ? tRich("activity.unassignedOther", { name: <strong>{activity.assignee}</strong> })
+          : sameLogin(activity.actor, activity.assignee)
+            ? tRich("activity.unassignedThemselves", { name: <strong>{activity.actor}</strong> })
+            : tRich("activity.unassignedBy", { actor: <strong>{activity.actor}</strong>, name: <strong>{activity.assignee}</strong> })
         : mine
           ? t("activity.unassignedSelf")
           : tRich("activity.unassigned", { name: <strong>{activity.actor}</strong> });

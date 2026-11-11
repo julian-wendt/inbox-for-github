@@ -26,7 +26,7 @@ describe("shownActivities", () => {
       { kind: "assigned", at: at(7), actor: "Me", assignee: "dave" },
       { kind: "unassigned", at: at(8), actor: "Me", assignee: "dave" },
     ];
-    expect(shownActivities({ activities }, "me", []).map((s) => s.activity.at)).toEqual([at(2), at(4), at(6), at(7), at(8)]);
+    expect(shownActivities({ activities, author: "alice" }, "me", []).map((s) => s.activity.at)).toEqual([at(2), at(4), at(6), at(7), at(8)]);
   });
 
   it("groups force pushes by one person, and keeps only withdrawn review requests that concern me", () => {
@@ -37,7 +37,7 @@ describe("shownActivities", () => {
       { kind: "review-request-removed", at: at(4), actor: "alice", reviewer: "carol" },
       { kind: "review-request-removed", at: at(5), actor: "alice", reviewer: "me" },
     ];
-    expect(shownActivities({ activities }, "me", []).map((s) => [s.activity.at, s.count])).toEqual([
+    expect(shownActivities({ activities, author: "alice" }, "me", []).map((s) => [s.activity.at, s.count])).toEqual([
       [at(2), 2],
       [at(3), 1],
       [at(5), 1],
@@ -52,7 +52,7 @@ describe("shownActivities", () => {
       { kind: "reviewed", at: at(5), actor: "dave", state: "APPROVED" },
       { kind: "commit", at: at(6) },
     ];
-    const shown = shownActivities({ activities }, "me", [at(3)]);
+    const shown = shownActivities({ activities, author: "alice" }, "me", [at(3)]);
     expect(shown.map((s) => [s.activity.at, s.count])).toEqual([
       [at(2), 2],
       [at(4), 1],
@@ -78,8 +78,8 @@ describe("commit authors", () => {
       { kind: "commit", at: at(3), author: "Alice" },
       { kind: "commit", at: at(4) },
     ];
-    expect(shownActivities({ activities }, "me", [])).toEqual([{ activity: activities[3], count: 4, authors: ["bob", "Alice"] }]);
-    expect(shownActivities({ activities: [{ kind: "commit", at: at(1) }] }, "me", [])[0].authors).toEqual([]);
+    expect(shownActivities({ activities, author: "alice" }, "me", [])).toEqual([{ activity: activities[3], count: 4, authors: ["bob", "Alice"] }]);
+    expect(shownActivities({ activities: [{ kind: "commit", at: at(1) }], author: "alice" }, "me", [])[0].authors).toEqual([]);
   });
 });
 
@@ -94,5 +94,13 @@ describe("shownHistory", () => {
   it("keeps a change when something happened before the next one", () => {
     const history = [change("done", "2026-10-22T10:00:00Z"), change("snoozed", "2026-10-22T13:00:00Z")];
     expect(shownHistory(history, item)).toEqual(history);
+  });
+});
+
+describe("shownActivities on an own item", () => {
+  it("shows who else took it on or left it", () => {
+    const activities = [{ kind: "assigned" as const, at: "2026-10-05T00:00:00Z", actor: "bob", assignee: "bob" }];
+    expect(shownActivities({ activities, author: "me" }, "me", [])).toHaveLength(1);
+    expect(shownActivities({ activities, author: "alice" }, "me", [])).toHaveLength(0);
   });
 });

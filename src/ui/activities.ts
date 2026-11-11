@@ -6,11 +6,14 @@ import { isBot, posts, sameLogin } from "../timeline";
  * Whether the detail's timeline shows an activity: see `shownActivities`. What counts as news
  * (the blue dot, moving up) uses the same test, so news is always something the viewer can see.
  *
+ * @param own  The viewer opened the item: then every assignment shows, as who took it on is what
+ *             Created by me watches for.
+ *
  * @example
- *   isShownActivity({ kind: "assigned", at, actor: "bob", assignee: "bob" }, "octocat"); // false
+ *   isShownActivity({ kind: "assigned", at, actor: "bob", assignee: "bob" }, "octocat", false); // false
  */
-export function isShownActivity(a: Activity, me: string): boolean {
-  if (a.kind === "assigned" || a.kind === "unassigned") return sameLogin(a.assignee, me) || sameLogin(a.actor, me);
+export function isShownActivity(a: Activity, me: string, own: boolean): boolean {
+  if (a.kind === "assigned" || a.kind === "unassigned") return own || sameLogin(a.assignee, me) || sameLogin(a.actor, me);
   if (a.kind === "review-requested" || a.kind === "review-request-removed") return sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:");
   if (a.kind === "reviewed") return !isBot(a.actor);
   return true;
@@ -27,7 +30,7 @@ export interface ShownActivity {
 /**
  * Picks the timeline events worth a line between the posts and groups consecutive commits.
  *
- * Kept: assignments of the viewer and those the viewer made, review requests (made or withdrawn)
+ * Kept: assignments of the viewer and those the viewer made, every assignment on an item the viewer opened, review requests (made or withdrawn)
  * that concern the viewer (a team request counts), reviews without text by people (not bots), state changes, links, transfers, dismissals and
  * commits. A run of commits, or of force pushes by one person, with no other event or post in
  * between becomes one entry dated at its last; a run of commits keeps its authors.
@@ -41,8 +44,9 @@ export interface ShownActivity {
  *   shownActivities(item, "octocat", comments.map((c) => c.at));
  *   // [{ activity: { kind: "commit", at: "…" }, count: 3 }, …]
  */
-export function shownActivities(item: Pick<Item, "activities">, me: string, posts: string[]): ShownActivity[] {
-  const relevant = item.activities.filter((a) => isShownActivity(a, me));
+export function shownActivities(item: Pick<Item, "activities" | "author">, me: string, posts: string[]): ShownActivity[] {
+  const own = sameLogin(item.author, me);
+  const relevant = item.activities.filter((a) => isShownActivity(a, me, own));
   const shown: ShownActivity[] = [];
   for (const activity of relevant) {
     const last = shown.at(-1);
