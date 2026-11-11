@@ -6,7 +6,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 
 ## Key technologies
 
-- **Shell:** Tauri 2 (Rust, `src-tauri/`), commands `gh_token`, `log_write` and `log_reveal`
+- **Shell:** Tauri 2 (Rust, `src-tauri/`), commands `gh_token`, `log_write`, `log_reveal`, `orca`, `orca_activate`, `repo_checkouts`, `system_locale` and the `calendar_*` set (`calendar.rs`)
 - **UI:** React 19, TypeScript, Vite; `motion` for animation, `cmdk` for the palette, `lucide-react` icons
 - **Storage:** SQLite through `@tauri-apps/plugin-sql` (`src/store.ts`)
 - **Tests:** Vitest, unit tests next to the code (`*.test.ts`)

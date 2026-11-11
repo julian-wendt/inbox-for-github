@@ -65,8 +65,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   `pinnedOn`). At its date the stored status becomes "open"
   (automatic, source `auto:snooze-ended`; the log says "follow-up came due"): the item is back
   where its asks put it, and what was answered before asks again (`reopened`) until the viewer
-  replies, D or F; the list shows no mark of it. `followUpOf` gives the date that the bell and
-  chip show, and only while the item waits.
+  replies, D or F; the list shows no mark of it. `followUpOf` gives the date that the
+  chip shows, and only while the item waits.
 - **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
   posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
   tables, answers in a review thread the viewer wrote in on another's pull request, and an own item
@@ -136,8 +136,11 @@ before `Builder::setup` runs. The web view's localStorage (collapsed bars, sort 
 notification permission are not carried over.
 
 `SCHEMA` in `src/store.ts` creates every table in its current shape; `dropLeftovers` removes
-what databases of 0.1.0 builds still hold (`item_reminder`, `item_status.keep_open`, the
-settings `snoozeAuthored` and `orbSeeds`). A new column is added in `Store.open` next to it, as `CONTRIBUTING.md` says.
+what older builds' databases still hold: the table `item_reminder`, the column
+`item_status.keep_open`, the settings keys `snoozeAuthored`, `orbSeeds`, `hoverActs` and
+`calendarTime`, and rewrites the retired values `tableGrouping` "time" and `reopenOn`
+"mention-or-assigned-post". No column has been added since the schema was created; a new one
+would be added with `ALTER TABLE` in `Store.open`, guarded by a `PRAGMA table_info` check.
 
 | Table | Holds |
 |---|---|
@@ -150,7 +153,7 @@ settings `snoozeAuthored` and `orbSeeds`). A new column is added in `Store.open`
 | `item_write_failure` | writes to GitHub that failed (assign, unassign), with the error, for the item's timeline |
 | `item_cache` | the last fetch: viewer, items (JSON), `fetched_at`, `full_at`, `scope` |
 
-Schema changes are additive: new columns are added in `Store.open` when missing.
+Schema changes are additive: a new column would be added in `Store.open` when missing.
 
 ## Browser storage
 

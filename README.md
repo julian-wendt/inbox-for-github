@@ -50,8 +50,8 @@ The app reads GitHub through the GraphQL API, which allows 5000 points per hour 
 
 | Kind | Trigger | Loads | Cost | Misses |
 |---|---|---|---|---|
-| Full reload | start, changed organizations, every hour, ⇧⌘R | every search up to the item limit, with boards | a few hundred points | nothing within the limit |
-| Quick refresh (delta) | ⌘R and automatically, within an hour of the last full reload | the same searches, only items changed since the last refresh, one page of 20 each | about 15–30 points | what leaves an item's `updatedAt` alone, such as board moves, and items that drop out of a search; withdrawn review requests it does see |
+| Full reload | start, changed organizations, every 15 minutes, ⇧⌘R | every search up to the item limit, with boards | a few hundred points | nothing within the limit |
+| Quick refresh (delta) | ⌘R and automatically, within 15 minutes of the last full reload | the same searches, only items changed since the last refresh, one page of 20 each | about 15–30 points | what leaves an item's `updatedAt` alone, such as board moves, and items that drop out of a search; withdrawn review requests it does see |
 | One item | ⌃R | the item by id, with boards | 1–2 points | the reasons only a search knows (a review request), which stay as they were |
 | One view | right click on a view | its items by id, with boards | 19 points per 50 | as ⌃R |
 | Boards only | "Load boards" switched back on | status and sprint of all cached items | about 6 points per 50 | everything but the boards |

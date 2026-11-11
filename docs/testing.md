@@ -9,7 +9,7 @@ that render). There is no browser or DOM environment; tests cover pure logic.
 a pure function first:
 
 - classification and reopening (`classify.test.ts`), review answers, mentions
-- grouping, sorting and time (`timeGroups`, `sortTime`, `snoozeUntil`, `assignments`)
+- grouping, sorting and time (`timeGroups`, `sortTime`, `snooze`, `assignments`)
 - parsing GitHub's responses into the model (`fetch.test.ts`), deltas and cache coverage
   (`delta.test.ts`)
 - formatting helpers (`labels`, `markdownFormat`, `itemLink`), i18n

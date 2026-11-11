@@ -21,7 +21,6 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] Eine Liste ohne Überschrift und ohne Trennlinie: Inbox, Geplant, Wiedervorlage, Mir zugewiesen,
       Von mir erstellt, Erledigt (Tasten 1–6); der Tooltip nennt die Taste.
-      „Beobachtet“ und „Alle“ gibt es nicht mehr.
 - [ ] ⌘K findet nur Items, die in einer Ansicht stehen; ein Sprung landet in deren Ansicht, ein
       eigener zugewiesener PR in „Von mir erstellt“.
 - [ ] Footer zeigt Verbrauchsring, Einstellungen, Fragezeichen; der Radiergummi sitzt in der Überschrift „Nach Repository filtern“.
@@ -39,8 +38,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox und Erledigt Alle → Reviews → Sonstige, sonst
       Alle → Issues → Pull Requests, danach wieder Alle. ⌘G wechselt in „Mir zugewiesen“ zwischen
       Typ, Status und Repo, in „Von mir erstellt“ zwischen Status und Repo, in den Listen die Zeitgruppen an und aus
-      (auch in den Einstellungen sichtbar). Nach Repo: eine Leiste je Repository, alphabetisch; Follow-up, Blockiert
-      und Erledigt bleiben unten. T und G allein schalten nichts mehr um. `/` öffnet die Palette nicht mehr, ⌘K schon.
+      (auch in den Einstellungen sichtbar). Nach Repo: eine Leiste je Repository, alphabetisch; Wiedervorlage, Blockiert
+      und Fertig bleiben unten.
 - [ ] Fragezeichen öffnet die Hilfe.
 - [ ] ⌘R: Icon dreht sich mit kleinem Quadrat. Klick darauf stoppt, die Liste bleibt, unten
       steht wieder „Zuletzt aktualisiert …“.
@@ -62,7 +61,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Klick auf den Ring öffnet die Einstellungen; unter Allgemein derselbe Stand als Balken.
 - [ ] Erster Abruf nach dem Start ist vollständig und teurer; die nächsten (⌘R oder automatisch)
       sind Deltas, etwa 30 Punkte. Zahlen notieren.
-- [ ] Nach etwa einer Stunde kommt wieder ein vollständiger Abruf.
+- [ ] Nach 15 Minuten kommt wieder ein vollständiger Abruf.
 - [ ] Eine Review-Anfrage wird auf GitHub zurückgezogen: nach dem nächsten ⌘R (Delta) ist der PR
       aus der Inbox verschwunden, wenn er dich sonst nicht betrifft; sonst steht er ohne Review-Bitte da.
 - [ ] ⇧⌘R (auch in der Palette und in der Hilfe) lädt sofort vollständig: ein Board-Wechsel
@@ -202,7 +201,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Tasten und Auswahl
 
-- [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus; die Einstellung dazu gibt es nicht mehr.
+- [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus.
 - [ ] Ohne Auswahl (Pop-up per Klick geöffnet und geschlossen, Esc, oder eine Leiste ausgewählt) melden D, F, O, X,
       T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
 - [ ] Einstellungen › Darstellung › Listen › „Tab erreicht Knöpfe“ aus (Standard): Tab und ⇧Tab tun im Hauptfenster
@@ -210,7 +209,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Pop-up zu öffnen. Nach einem Mausklick auf einen Knopf öffnen Enter und Leertaste wieder das Pop-up der Auswahl.
 - [ ] Schalter an, vom Kommentarfeld mit Tab zu „Senden“: Enter sendet. Sortierung anklicken, mit ⌘Tab weg und zurück:
       Enter öffnet das Pop-up der Auswahl, die Sortierung bleibt.
-- [ ] Pop-up per Klick geöffnet, D (Leiste „Erledigt“ eingeklappt): das Pop-up schließt, keine Zeile ist ausgewählt, ein
+- [ ] Pop-up per Klick geöffnet, D (Leiste „Fertig“ eingeklappt): das Pop-up schließt, keine Zeile ist ausgewählt, ein
       zweites D zeigt „Kein Item ausgewählt“. Per Enter geöffnet, D: das Pop-up schließt, die nächste Zeile ist ausgewählt.
 - [ ] Pop-up per Klick geöffnet, dann mit ⇧↓ weiter: Esc schließt es, die Zeile bleibt ausgewählt. Ebenso nach einem
       Sprung aus der Palette (⌘K) bei offenem Pop-up.
@@ -250,7 +249,6 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Review-Anfrage, Erwähnungen Items, in denen du erwähnt wurdest; Zuweisungen nur unter „Alle“.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst
       eine Erwähnung darin holt sie zusätzlich in die Inbox, bis du antwortest.
-- [ ] Kontextmenü, ⌘K und Hilfe bieten „Annehmen“ nicht mehr an.
 - [ ] Listenspalte schmal ziehen: unter etwa 460 px steht statt des Umschalters ein Filter-Menü
       mit der aktuellen Wahl („Alle“, „Reviews · 3“ …) und statt Sortierknopf, Ein-/Ausklappen und
       Liste/Tabelle ein Zahnrad-Menü mit genau diesen Einträgen (Sortierung als Häkchen); unter 340 px
@@ -259,7 +257,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes oder geplantes Item zeigt
       in der Kontextzeile bzw. hinter dem Titel den Kalender mit „Heute“, „Morgen“, dem Wochentag
       dieser Arbeitswoche („Donnerstag“) oder dem Datum („3. Nov.“); es bleibt in seiner Liste.
-      Kein Stern mehr, auch nicht beim Überfahren einer Tabellenzeile. In den Tabellen steht der
+      In den Tabellen steht der
       Tag als blaues Badge hinter dem Titel, das Eröffnungsdatum als graues; das Icon der Zeile
       steht unter dem Pfeil der Leiste.
 - [ ] Jemand anderes kommentiert oder reviewt einen eigenen PR (ohne Erwähnung): er steht in der
@@ -274,13 +272,13 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       deinem Thread geantwortet“, auch wenn der PR erledigt war. Eine Antwort dort oder D nimmt ihn heraus.
 - [ ] Jemand anderes schließt ein eigenes Issue als „nicht geplant“: „Von @bob geschlossen“ in der
       Inbox, bis D. Selbst geschlossen, als erledigt geschlossen oder gemergt kommt es nicht.
-- [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox, Beobachtet und Von mir
+- [ ] Einen Commit in einen eigenen PR pushen: das Item bleibt in Inbox und Von mir
       erstellt an seiner Stelle und zeigt weiter die Zeit der letzten Aktivität anderer. Mit
       Einstellungen › Inbox-Regeln › „Commits“ an rückt es nach oben.
 
 ## Von mir erstellt
 
-- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute und Sterne. Umschalter Status/Repo (auch ⌘G). Nach Status: Nicht
+- [ ] Tabelle wie „Mir zugewiesen“, ohne Heute. Umschalter Status/Repo (auch ⌘G). Nach Status: Nicht
       zugewiesen, Zugewiesen, Wiedervorlage. Nach Repo: eine Leiste je Repository, alphabetisch, Wiedervorlage unten.
 - [ ] „Nicht zugewiesen“: Issues ohne Zuständige und fertige PRs ohne Reviewer; ein Draft-PR
       steht unter „Zugewiesen“.
@@ -290,10 +288,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Mir zugewiesen
 
-- [ ] Umschalter „Typ · Status“ (kein „Zeit“ und „Repo“ mehr; eine gespeicherte Wahl davon zeigt
-      „Typ“). Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Kein Typ, Blockiert (auf dem Board blockiert), Wiedervorlage, ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Kein Typ“
+- [ ] Umschalter „Typ · Status · Repo“. Leisten: Pull Requests, Bug, weitere Typen, Task, Feature, Story, Kein Typ, Blockiert (auf dem Board blockiert), Wiedervorlage, ganz unten Fertig; jede Typ-Leiste mit dem Farbpunkt aus GitHub, „Kein Typ“
       grau, „Fertig“ ohne Punkt. Die Typ-Leisten lassen sich ziehen, Blockiert, Wiedervorlage und Fertig nicht. Jede Status-Leiste hat eine leise Beschreibung hinter der Zahl.
-- [ ] In jeder Typ-Leiste zuerst Review, dann In Arbeit, Backlog, Erledigt; darin nach dem
+- [ ] In jeder Typ-Leiste zuerst In Review, dann In Arbeit, Backlog; darin nach dem
       Zeitpunkt der Zuweisung (Sortierknopf dreht das).
 - [ ] Rechts in der Zeile, wann du zugewiesen wurdest („3D“), Tooltip „bob hat dich am …
       zugewiesen“; hinter dem Titel leise das Eröffnungsdatum („12. Sept.“, früher „Sept. 2025“).
@@ -304,11 +301,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       bis Sonntag), D Datum wählen, X Plan entfernen (auch für ein Item in Heute). D öffnet den
       Datumsdialog ohne Uhrzeit, „Planen für“, ab morgen; heute oder früher lässt den Knopf aus.
       Ein so gewählter Tag trägt im Menü den Haken an „Datum wählen…“. Angeheftete und geplante
-      Items bleiben in ihrer Leiste, mit dem Tag leise hinter dem Titel; keine eigene Leiste
-      „Heute“ oder „Geplant“ mehr.
+      Items bleiben in ihrer Leiste, mit dem Tag leise hinter dem Titel.
 - [ ] F bietet dieselben Tage unter denselben Tasten (N, 1–5, W, D), dazu F Ohne Datum und, wenn
-      das Item eine hat, X Wiedervorlage entfernen (auch eine ohne Datum); „Später heute“ und H
-      gibt es nicht mehr. Ein Tag kommt um die Uhrzeit aus Einstellungen › Allgemein ›
+      das Item eine hat, X Wiedervorlage entfernen (auch eine ohne Datum).
+      Ein Tag kommt um die Uhrzeit aus Einstellungen › Allgemein ›
       „Wiedervorlagen kommen um“ (09:00) zurück; eine geänderte Zeit gilt für die nächste Wahl.
 - [ ] Daten folgen der Region aus Systemeinstellungen › Sprache & Region, auch bei englischer
       App-Sprache: mit Region Deutschland „3. Nov.“ statt „Nov 3“, Zeiten 24-stündig.
@@ -344,18 +340,17 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Was gestern in Heute stand und offen ist, steht morgens noch da, mit dem Chip „Seit gestern“
       (später „Seit Mo“, „Seit 12. Okt.“) hinter dem Titel; Geplantes reiht sich dahinter ein.
       D, P oder T nehmen den Chip weg.
-- [ ] T nimmt auch ein viertes und fünftes Item in Heute auf, ohne Meldung.
 - [ ] „Neu“ steht an Zuweisungen, die du seit der Zuweisung nicht geöffnet hast; nach dem Öffnen
       verschwindet es. Selbst zugewiesene sind nie neu.
 - [ ] Der erste Start nach dem Update lädt einmal vollständig (Issue-Typen), danach wieder Deltas.
-- [ ] Klick auf einen Chip filtert nicht mehr, er öffnet das Item wie die Zeile.
+- [ ] Klick auf einen Chip öffnet das Item wie die Zeile.
 
 ## Tabellenkopf (Mir zugewiesen, Von mir erstellt)
 
 - [ ] In „Eigenschaften“ stehen die Namen bündig, mit und ohne Haken.
 - [ ] „Eigenschaften“ öffnet ein Menü mit allen Attributen (in „Mir zugewiesen“ zuerst
       „Eröffnet“); Haken an und aus, das Menü bleibt offen. Jede Tabelle merkt sich ihre Wahl,
-      auch nach einem Neustart. Die Einstellungen haben nur noch Reihenfolge und Detail-Schalter.
+      auch nach einem Neustart.
 - [ ] Sprint-Menü erscheint, sobald Items der Tabelle in einem Sprint sind: Alle Sprints, Ohne
       Sprint, dann die Sprints, früheste zuerst. Die Wahl gilt je Tabelle; die Tabellen zeigen im Kopf keine Zahl.
 
@@ -393,9 +388,6 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Das × im Chip entfernt die Wiedervorlage, ebenso X auf dem Item (auch Kontextmenü und ⌘K,
       mit Zeiger über der Zeile, bei Markierten für alle); das Item ist dann, als wäre nie etwas
       gesetzt worden. ⌘Z nimmt es zurück. Bei einem Item ohne Datum tut X nichts.
-- [ ] Nach dem Update: bisherige Erinnerungen sind zu Wiedervorlagen mit derselben Zeit geworden
-      (im Protokoll „Wiedervorlage“); ein Item mit Wiedervorlage und Erinnerung behält nur die
-      Wiedervorlage. Eine Einstellung „Zurückstellen in Von mir erstellt“ gibt es nicht mehr.
 - [ ] Items außerhalb der Tabellen (z. B. eine Erwähnung) werden mit F aus der Liste genommen und
       stehen unter „Wiedervorlage“, bis ihre Zeit kommt.
 
@@ -404,10 +396,10 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] D in „Mir zugewiesen“ auf einer Zuweisung mit offener Erwähnung öffnet unter der Zeile ein kleines Menü: Enter („Nur mein Teil“) setzt „Mein Teil erledigt“, die Erwähnung bleibt in der Inbox; D („Offene Anfragen auch ablegen“) tut beides in einem Toast und einem Rückgängig; Esc tut nichts. Ohne offene Anfrage wirkt D sofort. Mit Markierten erscheint das Menü einmal für alle.
 
 - [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
-      „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Zeit gleich, nicht mitgezählt),
+      „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Repo gleich, nicht mitgezählt),
       zusammen mit Items, die auf dem Board fertig sind; eine eigene Leiste dafür gibt es nicht. ⌘Z
       nimmt es zurück. Im Kontextmenü heißt D in „Mir zugewiesen“ „Mein Teil erledigt“, in der Inbox bei einer Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt), bei einem Item anderer „Erledigt“. Hat ein Item nach „Mein Teil erledigt“ noch eine offene Erwähnung, steht es in der Inbox; D dort legt sie ab, und es steht wieder in „Mir zugewiesen“.
-- [ ] Jemand kommentiert, das Board wechselt den Status (nach der stündlichen Aktualisierung), ein
+- [ ] Jemand kommentiert, das Board wechselt den Status (nach dem vollständigen Abruf alle 15 Minuten), ein
       PR wird verknüpft oder das Issue geschlossen: das Item steht als „Update: …“ in der Inbox,
       mit Mitteilung. D in der Inbox hakt es ab und legt weitere Anfragen daran (etwa eine Erwähnung) mit ab, das Item bleibt in der Leiste (ein geschlossenes verlässt danach die Tabelle); ⌘Z nimmt das Abhaken zurück.
 - [ ] O auf einem Item in der Leiste holt es zurück in die Arbeit („wieder in deiner Arbeit“); ein zweites D dort zeigt nur den Hinweis, dass dein Teil schon erledigt ist.
@@ -438,7 +430,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Geplant (Ansicht)
 
-- [ ] Für heute Angeheftetes (Stern) und Geplantes (Kalender), aus allen Views; keine
+- [ ] Für heute Angeheftetes und Geplantes (Kalender), aus allen Views; keine
       Wiedervorlagen (die stehen in der Ansicht Wiedervorlage). Umschalter Alle · Issues ·
       Pull Requests, kein Reviews/Sonstige.
 - [ ] Leisten nach Tag: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne Datum;
@@ -451,7 +443,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       „Donnerstag“ oder einer Wiedervorlage. Übertragenes aus Heute trägt „Seit gestern“ in Rot in
       der Kontextzeile.
 - [ ] D auf einem geplanten Issue, das mir allein zugewiesen ist, und „Erledigt“ im Detail-Umschalter: Toast „#12 → Mein Teil erledigt“,
-      ohne „Plan entfernt“; das Item verlässt Geplant und steht in Mir zugewiesen unter „Erledigt“.
+      ohne „Plan entfernt“; das Item verlässt Geplant und steht in Mir zugewiesen unter „Fertig“.
       Plan und Termin im Kalender bleiben, auch am nächsten Morgen. Neue Aktivität bringt es mit
       seinem Tag zurück nach Geplant; schließen auf GitHub nimmt den Plan, der Termin bleibt. ⌘Z stellt es
       zurück. Ein eigenes Item bietet D auch hier nicht an.
@@ -500,7 +492,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] Jedes Item auf Wiedervorlage, egal woher: aus der Inbox, eine Zuweisung, ein eigenes Item;
       auch eins, das eine Erwähnung seither zusätzlich in die Inbox gebracht hat. Fällige und
-      geschlossene stehen nicht darin. Die Inbox hat unten keine Leiste „Später“ mehr.
+      geschlossene stehen nicht darin.
 - [ ] Leisten nach dem Tag der Rückkehr: Heute, Morgen, Diese Woche, Nächste Woche, Später, Ohne
       Datum; früheste zuerst, der Sortierknopf dreht die datierten. Rechts in der Zeile ↻ und die Zeit.
 - [ ] Das Layout-Menü im Kopf schaltet zwischen Liste mit Detail und Tabelle wie „Mir zugewiesen“
@@ -522,8 +514,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       bei geschlossenem Fenster. ⌘Q beendet die App.
 - [ ] Items mit Wiedervorlage-Datum zeigen rechts in der Zeile statt des Alters, wann sie
       zurückkommen (Uhrzeit heute, Wochentag, sonst Datum); Tooltip „Wiedervorlage Mo., 26. Okt., 09:00“.
-      Keine Glocke in der Zeile.
-- [ ] Im Detail steht bei solchen Items ein Chip mit gelber Uhr, Wochentag, Datum und Uhrzeit (24 h)
+- [ ] Im Detail steht bei solchen Items ein Chip mit rosa Kreispfeil (↻), Wochentag, Datum und Uhrzeit (24 h)
       hinter dem Typ-Icon und einem ×; nach Ablauf ist der Chip weg.
 
 ## Einstellungen
@@ -546,8 +537,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       lumen-labs, harbor-works); ⌘K → „Demo-Modus beenden“ bringt die echten Daten zurück. Mit
       `VITE_DEMO=1 npm run tauri dev` startet die App direkt so, ohne `gh` und ohne dass die echte
       Datenbank angefasst wird.
-- [ ] Jede Ansicht ist gefüllt: Inbox (Erwähnung, Review-Anfrage, Team-Anfrage, Erinnerung an
-      dich selbst, fällige Wiedervorlage, Update zu „Mein Teil erledigt“), Mir zugewiesen (alle
+- [ ] Jede Ansicht ist gefüllt: Inbox (Erwähnung, Review-Anfrage, Team-Anfrage, Selbst-Erwähnung, fällige Wiedervorlage, Update zu „Mein Teil erledigt“), Mir zugewiesen (alle
       Typen, Blockiert, Wiedervorlage, Fertig, ein fremder PR), Von mir erstellt (Entwurf mit Konflikten,
       Wiedervorlage, PR mit Reviews), Wiedervorlage (fünf Items), Erledigt (gemergt, geschlossen,
       beantwortet). Avatare sind farbige Initialen, nichts lädt aus dem Netz.

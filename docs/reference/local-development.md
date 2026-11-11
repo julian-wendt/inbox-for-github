@@ -19,8 +19,8 @@ Vite hot reload keeps component state, which breaks in these cases; stop and sta
 - **New or removed React hooks** in a mounted component (React reports "change in the order of
   Hooks"; the error boundary shows its crash page). "Reload" on that page also works.
 - **A new settings key**, since the running state has no value for it yet.
-- **Store or schema changes** in `src/store.ts`; columns are added in `Store.open`, which only
-  runs at start.
+- **Store or schema changes** in `src/store.ts`; `Store.open` creates tables and runs
+  `dropLeftovers` only at start.
 - **Changes to `src-tauri/`** or `tauri.conf.json`.
 
 Stopping all dev processes:
@@ -46,7 +46,7 @@ classifies without a request.
 `status_log.source` says what caused each status change since 2026-10-25 (older rows are empty):
 the viewer's input within two seconds before it (`key:o`, `key:ctrl+a`, `menu`, `palette`,
 `click`, or `unknown`), or the app's own code path (`auto:reopen`, `auto:snooze-ended`,
-`auto:legacy-done`, `auto:reminder-to-follow-up`), or `settings:reset` for the reset of all statuses
+`auto:legacy-done`, `auto:reassigned`, `auto:locked`), or `settings:reset` for the reset of all statuses
 in the settings. `automatic` is also 1 for an item the viewer
 takes back into the work, so `source` is the one to trust. The last changes, in local time:
 
