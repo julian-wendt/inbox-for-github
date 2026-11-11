@@ -300,6 +300,19 @@ export default function App() {
     [viewGroups, folded, entries],
   );
   const selection = useSelection(ids, isBar);
+  /** Closing the pop-up lets go of a row reached by a click; one reached with the keyboard stays selected, as the cursor to move on from. */
+  const closePopup = () => {
+    setPopup(false);
+    if (popup === "pointer") selection.select(null);
+  };
+  /** An undo reselects its item; an open pop-up belongs to the item it shows, so it closes first. */
+  const takeBack = (id: string) => {
+    closePopup();
+    selection.select(id);
+  };
+  useEffect(() => {
+    reselect.current = takeBack;
+  });
   // A palette jump lands once the target view has rendered; a folded group around it opens first.
   const [reveal, setReveal] = useState<string | null>(null);
   useEffect(() => {
@@ -831,7 +844,7 @@ export default function App() {
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
-      return actions.announce(t("toast.filed", { number }), () => (step.undo(), selection.select(id)), step.run);
+      return actions.announce(t("toast.filed", { number }), () => (step.undo(), takeBack(id)), step.run);
     }
     // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
     const ends = status === "done" && !keepsItsPlan(plan) ? unplanStep([c]) : [];
@@ -840,7 +853,7 @@ export default function App() {
       again();
       actions.announce(
         replacing(text, ends.length > 0 ? endedPlan(c) : null),
-        () => (undoMore?.(), void inbox.restoreStatus(id, previous), ends.forEach((s) => s.undo()), selection.select(id)),
+        () => (undoMore?.(), void inbox.restoreStatus(id, previous), ends.forEach((s) => s.undo()), takeBack(id)),
         again,
       );
     };
@@ -1154,18 +1167,6 @@ export default function App() {
     setPopup("keys");
   };
   const onMarks = marked.length > 0 && !showPopup;
-  /** Closing the pop-up lets go of a row reached by a click; one reached with the keyboard stays selected, as the cursor to move on from. */
-  const closePopup = () => {
-    setPopup(false);
-    if (popup === "pointer") selection.select(null);
-  };
-  // An undo reselects its item; an open pop-up belongs to the item it shows, so it closes first.
-  useEffect(() => {
-    reselect.current = (id) => {
-      closePopup();
-      selection.select(id);
-    };
-  });
   useEffect(() => setLogContext({ view: bucket, popup: showPopup }), [bucket, showPopup]);
   // In a table a selected row shows nothing of the item; only its pop-up counts as opened.
   const openedId = !table || showPopup ? current?.item.id : undefined;
