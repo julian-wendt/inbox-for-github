@@ -460,6 +460,7 @@ export const en = {
   "help.assigned.back": "A mention, a review request or a post by someone else on it shows in the inbox as well, also after your part is done, until you reply or file it with D there.",
   "help.assigned.dated": "Pinned for today (T) or planned (P), an item keeps its bar, with its star or day; Planned lists them by day.",
   "plate.newDot": "New activity since you last looked",
+  "plate.newAssignmentDot": "Newly assigned to you, not opened yet",
   "row.unread": "Unread",
   "detail.sinceLastHere": "New since you were last here",
   "plate.focus": "Today",

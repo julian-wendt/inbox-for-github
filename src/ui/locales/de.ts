@@ -462,6 +462,7 @@ export const de: Messages = {
   "help.assigned.back": "Eine Erwähnung, eine Review-Anfrage oder ein Beitrag von jemand anderem darin steht zusätzlich in der Inbox, auch nachdem dein Teil erledigt ist, bis du antwortest oder es dort mit D ablegst.",
   "help.assigned.dated": "Für heute angeheftet (T) oder geplant (P) bleibt ein Item in seiner Leiste, mit Stern oder Tag; Geplant listet sie nach Tag.",
   "plate.newDot": "Neue Aktivität, seit du zuletzt reingeschaut hast",
+  "plate.newAssignmentDot": "Neu zugewiesen, noch nicht geöffnet",
   "row.unread": "Ungelesen",
   "detail.sinceLastHere": "Neu, seit du zuletzt hier warst",
   "plate.focus": "Heute",

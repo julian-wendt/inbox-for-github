@@ -321,6 +321,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
   const opened = t("table.openedOn", { date: full(item.createdAt) });
   const assignment = assigned ? assignedAt(item, me) : null;
   const assignedTitle = assignment && (assignment.by ? t("table.assignedBy", { name: assignment.by, date: full(assignment.at) }) : t("table.assignedOn", { date: full(assignment.at) }));
+  const dotText = fresh.activity ? "plate.newDot" : fresh.assignment ? "plate.newAssignmentDot" : "row.unread";
   return (
     <div
       className={`table-row${selected ? " selected" : ""}${marked ? " marked" : ""}${fresh.assignment || fresh.activity || fresh.marked ? " unread" : ""}`}
@@ -336,7 +337,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       onContextMenu={onMenu}
       ref={ref}
     >
-      {(fresh.activity || fresh.marked) && <span className="fresh-dot" title={t(fresh.activity ? "plate.newDot" : "row.unread")} aria-label={t(fresh.activity ? "plate.newDot" : "row.unread")} />}
+      {(fresh.activity || fresh.assignment || fresh.marked) && <span className="fresh-dot" title={t(dotText)} aria-label={t(dotText)} />}
       <KindIcon item={item} size={14} status={shownStatus(entry, statusMap)} />
       <span className="table-number">#<Highlight spans={numberSpans(item.number, query)} /></span>
       {fresh.assignment && (
