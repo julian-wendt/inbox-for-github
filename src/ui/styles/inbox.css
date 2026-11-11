@@ -459,10 +459,6 @@
   color: var(--st-open);
 }
 
-.kind-icon.st-accepted {
-  color: var(--st-accepted);
-}
-
 /* The day of a pinned or planned item, before the context text. */
 .row-mark {
   display: inline-flex;

@@ -41,7 +41,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
   if (!followUp) return null;
   const text = reminderText(followUp.at);
   return (
-    <span className="chip reminder-chip" title={t("snooze.reminderAt", { until: text })}>
+    <span className="chip" title={t("snooze.reminderAt", { until: text })}>
       <StatusIcon status="snoozed" size={13} />
       {text}
       {onRemove && (
