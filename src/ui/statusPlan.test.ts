@@ -113,6 +113,12 @@ describe("doneAccess", () => {
     expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME, "authored")).toBe("hidden");
     expect(doneAccess(entry({ author: ME, assignees: [ME] }, ["mention"]), ME, "inbox")).toBe("on");
   });
+
+  it("offers D alone for a closed item whose closing waits in the inbox", () => {
+    const closed = entry({ author: ME, assignees: [], closed: { state: "closed", at: "2026-10-01T00:00:00Z" } }, ["closed"]);
+    expect(doneAccess(closed, ME, "inbox")).toBe("closed");
+    expect(doneAccess({ ...closed, asks: [] }, ME, "inbox")).toBe("on");
+  });
 });
 
 describe("keepsItsPlan", () => {

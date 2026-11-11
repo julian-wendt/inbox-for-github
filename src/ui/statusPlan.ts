@@ -92,18 +92,25 @@ export function lockOf({ item }: Pick<Classified, "item">, me: string): Lock | n
   return !item.closed && sameLogin(item.author, me) ? "own" : null;
 }
 
-/** Whether D is offered for an item: as usual, or not at all. */
-export type DoneAccess = "on" | "hidden";
+/** Whether D is offered for an item: as usual, not at all, or alone for a closed item that waits in the inbox. */
+export type DoneAccess = "on" | "hidden" | "closed";
+
+/** Whether D works on an item closed on GitHub: only where it files the closing or ticks off an update. */
+export function actsOnClosed(plan: StatusPlan): boolean {
+  return plan.do === "file" || plan.do === "tick-update";
+}
 
 /**
  * How D is offered for an item in a view: as usual while it files, hands off or sets something,
- * and not at all where it never applies (Created by me, and own items in Planned).
+ * not at all where it never applies (Created by me, and own items in Planned), and as the only
+ * status of a closed item that waits in the inbox.
  *
  * @example
  *   doneAccess(entry, "octocat", "authored"); // "hidden" for any own item
  */
 export function doneAccess(c: Classified, me: string, view: View): DoneAccess {
-  return planStatus(c, "done", me, view).do === "blocked" ? "hidden" : "on";
+  const plan = planStatus(c, "done", me, view);
+  return plan.do === "blocked" ? "hidden" : c.item.closed && actsOnClosed(plan) ? "closed" : "on";
 }
 
 /**

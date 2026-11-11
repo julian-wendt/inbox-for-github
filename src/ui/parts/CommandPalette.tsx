@@ -28,6 +28,8 @@ interface Props {
   onStatus: (status: Status) => void;
   /** Leaves Done out where the view does not offer it (see `doneAccess`). */
   doneOff?: boolean;
+  /** Done is the only status offered: the item is closed and its closing waits in the inbox. */
+  doneOnly?: boolean;
   onOpenCurrent: () => void;
   /** "Open in Orca", offered while Orca knows the current item's repo. */
   onOrca?: () => void;
@@ -118,7 +120,7 @@ export function CommandPalette(props: Props) {
                     {t("plan.remove")}
                   </Item>
                 )}
-                {statusesFor(props.current)
+                {statusesFor(props.current, props.doneOnly)
                   .filter((s) => !(props.doneOff && s.id === "done"))
                   .map((s) => (
                   <Item key={s.id} onSelect={run(() => (s.id === "snoozed" ? props.onFollowUp() : props.onStatus(s.id)))} icon={<StatusIcon status={s.id} />} keys={s.key} hint={statusHint(s.id)}>

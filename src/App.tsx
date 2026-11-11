@@ -24,7 +24,7 @@ import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
+import { actsOnClosed, doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
@@ -715,7 +715,7 @@ export default function App() {
     const alsoFile = (c: Classified) => asks === "file" && needsAskChoice(c, status, me, bucket);
     const files = (c: Classified) => planStatus(c, status, me, bucket).do === "file";
     const keeps = (c: Classified) => keepsItsPlan(planStatus(c, status, me, bucket));
-    const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status, alsoFile(c)) !== null);
+    const changed = marked.filter((c) => (!c.item.closed || actsOnClosed(planStatus(c, status, me, bucket))) && planStep(c, status, alsoFile(c)) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
     const steps = [...changed.map((c) => planStep(c, status, alsoFile(c))!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me, bucket).do === "blocked").length;
@@ -1089,7 +1089,7 @@ export default function App() {
   const menuEntries = (c: Classified): MenuEntry[] => {
     const { item } = c;
     const planned = dated(c) !== null;
-    const statuses: MenuEntry[] = statusesFor(c)
+    const statuses: MenuEntry[] = statusesFor(c, doneIn(c) === "closed")
       .filter((s) => !(s.id === "done" && doneIn(c) === "hidden"))
       .map((s) => ({
       label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("reminder.remove") : s.title,
@@ -1530,7 +1530,8 @@ export default function App() {
           current={current}
           onClose={() => setDialog(null)}
           onStatus={(s) => current && applyStatus(current, s)}
-          doneOff={!!current && doneIn(current) !== "on"}
+          doneOff={!!current && doneIn(current) === "hidden"}
+          doneOnly={!!current && doneIn(current) === "closed"}
             onUntrack={() => current && untrack(current)}
             unread={!!current && isUnread(current)}
             onToggleRead={() => current && toggleRead([current])}

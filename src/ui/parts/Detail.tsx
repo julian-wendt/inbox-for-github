@@ -65,7 +65,7 @@ interface Props {
   /** Called with the item's id after a reply or state change was posted, to reload it. */
   onReplied: (id: string, change?: StateWrite) => void;
   onStatus: (status: Status) => void;
-  /** Whether the status switch offers Done (see `doneAccess`). */
+  /** Whether the status switch offers Done, or only Done for a closed item (see `doneAccess`). */
   done?: DoneAccess;
   onCopy: (format: LinkFormat) => void;
   onReload: () => void;
@@ -157,13 +157,14 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
           {item.repo} <span className="crumb-sep">/</span> #{item.number}
         </span>
         <div className="header-actions">
-          {item.closed ? (
+          {item.closed && (
             <span className="chip closed-chip" title={t("closed.statusHint")}>
               {t(item.closed.state === "merged" ? "merged.onGitHub" : "closed.onGitHub")}
             </span>
-          ) : (
+          )}
+          {(!item.closed || done === "closed") && (
             <div className="segmented compact status-switch" role="radiogroup" aria-label={t("detail.status")}>
-              {statusesFor(entry)
+              {statusesFor(entry, done === "closed")
                 .filter((s) => !(done === "hidden" && s.id === "done"))
                 .map((s) => [
                 s.id === "snoozed" && (

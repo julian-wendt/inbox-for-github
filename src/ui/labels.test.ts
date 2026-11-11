@@ -108,7 +108,9 @@ describe("statusesFor", () => {
   it("offers no status for an item closed on GitHub", () => {
     const item = { reasons: ["assigned"], closed: null } as unknown as Classified["item"];
     expect(statusesFor({ item }).map((s) => s.id)).toEqual(["open", "snoozed", "done"]);
-    expect(statusesFor({ item: { ...item, closed: { state: "merged", at: "2026-10-01T00:00:00Z" } } })).toEqual([]);
+    const closed = { ...item, closed: { state: "merged" as const, at: "2026-10-01T00:00:00Z" } };
+    expect(statusesFor({ item: closed })).toEqual([]);
+    expect(statusesFor({ item: closed }, true).map((s) => s.id)).toEqual(["done"]);
   });
 });
 

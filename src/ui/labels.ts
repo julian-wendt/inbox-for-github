@@ -216,10 +216,12 @@ export function firstLine(body: string): string {
 
 /**
  * The statuses offered for an item. None for closed or merged items, which sit in Done whatever
- * is stored, so a choice would do nothing.
+ * is stored, so a choice would do nothing; only Done where it files the closing (`closedDone`).
+ *
+ * @param closedDone  D works on this closed item (see `doneAccess`).
  */
-export function statusesFor(entry: Pick<Classified, "item">) {
-  return entry.item.closed ? [] : STATUSES;
+export function statusesFor(entry: Pick<Classified, "item">, closedDone = false) {
+  return entry.item.closed ? (closedDone ? STATUSES.filter((s) => s.id === "done") : []) : STATUSES;
 }
 
 /**
