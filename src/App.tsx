@@ -833,7 +833,7 @@ export default function App() {
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
-      return actions.announce(t("toast.filed", { number }), step.undo, step.run);
+      return actions.announce(t("toast.filed", { number }), () => (step.undo(), selection.select(id)), step.run);
     }
     // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
     const ends = status === "done" && !keepsItsPlan(plan) ? unplanStep([c]) : [];
