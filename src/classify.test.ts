@@ -183,14 +183,6 @@ describe("manual status", () => {
     expect(run(commentedAgain, done(4), undefined, "any-post")).toMatchObject({ status: "open", statusReset: true });
   });
 
-  it("reopens on plain comments only for assigned items in the mixed mode", () => {
-    const mode = "mention-or-assigned-post";
-    expect(run(commentedAgain, done(4), undefined, mode).statusReset).toBe(false);
-    const assigned = item({ reasons: ["assigned"], comments: [comment("bob", "fixed it", 6)] });
-    expect(run(assigned, done(4), undefined, mode)).toMatchObject({ bucket: "assigned", status: "open", statusReset: true });
-    expect(run(mentionedAgain, done(4), undefined, mode).statusReset).toBe(true);
-  });
-
   it("moves snoozed items out of every other bucket", () => {
     const snoozed: StoredStatus = { status: "snoozed", changedAt: "2026-10-04T12:00:00Z" };
     expect(run(item({ reasons: ["assigned"] }), snoozed)).toMatchObject({ bucket: "assigned", status: "snoozed" });
@@ -346,7 +338,7 @@ describe("assignments", () => {
   });
 
   it("stay out of the inbox for posts that do not mention the viewer", () => {
-    expect(run(assigned({ comments: [comment("bob", "progress?", 4)] }), undefined, undefined, "mention-or-assigned-post").bucket).toBe("assigned");
+    expect(run(assigned({ comments: [comment("bob", "progress?", 4)] }), undefined, undefined, "any-post").bucket).toBe("assigned");
   });
 
   it("leave Assigned to me once the viewer is unassigned", () => {

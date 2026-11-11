@@ -85,7 +85,6 @@ export const en = {
 
   "reopen.mention": "when someone mentions you again",
   "reopen.any-post": "when someone else comments or reviews",
-  "reopen.mention-or-assigned-post": "on a new mention, for assigned items on any post by others",
   "explain.comesBack": "Comes back to the inbox {rule}.",
   "explain.waitsHere": "Waits in its list until {until}. A mention still shows it in the inbox; nothing else brings it back early.",
   "explain.waitsHereNoDate": "Waits in its list with no date. A mention still shows it in the inbox; O takes it back.",

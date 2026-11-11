@@ -32,7 +32,6 @@ const comesBack = (reopenOn: Reopen) => t("explain.comesBack", { rule: t(`reopen
  */
 export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dated | null = null): Explanation {
   const { item, mention, answered, asks, status, statusAt, bucket } = entry;
-  const trigger = reopenOn === "mention-or-assigned-post" ? (item.reasons.includes("assigned") ? "any-post" : "mention") : reopenOn;
   const waitsInPlace = status === "snoozed" && (bucket === "assigned" || bucket === "authored" || asks.length > 0);
   const planLine = dated?.kind === "today" ? [t("explain.stillToday")] : dated?.kind === "planned" ? [t("explain.stillPlanned", { day: dayLong(dated.day) })] : [];
 
@@ -91,15 +90,15 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
   }
   if (status === "snoozed") {
     const title = statusAt ? t("explain.snoozedSince", { ago: ago(statusAt) }) : t("status.snoozed");
-    const back = entry.until ? t("explain.snoozedUntil", { until: untilText(entry.until), rule: t(`reopen.${trigger}`) }) : comesBack(trigger);
+    const back = entry.until ? t("explain.snoozedUntil", { until: untilText(entry.until), rule: t(`reopen.${reopenOn}`) }) : comesBack(reopenOn);
     return { tone: "snoozed", title, lines: [back, t("explain.undoHint")] };
   }
   if (status === "done" && !answered && item.reasons.includes("assigned")) {
-    return { tone: "done", title: t("explain.doneStillOpen", { ago: statusAt ? ago(statusAt) : "" }), lines: [t("explain.doneStillOpenHint"), comesBack(trigger)] };
+    return { tone: "done", title: t("explain.doneStillOpen", { ago: statusAt ? ago(statusAt) : "" }), lines: [t("explain.doneStillOpenHint"), comesBack(reopenOn)] };
   }
   if (status === "done" && !answered) {
     const title = statusAt ? t("explain.doneSince", { ago: ago(statusAt) }) : t("status.done");
-    return { tone: "done", title, lines: [t("explain.markedDone"), comesBack(trigger)] };
+    return { tone: "done", title, lines: [t("explain.markedDone"), comesBack(reopenOn)] };
   }
   if (answered === "review") {
     return {

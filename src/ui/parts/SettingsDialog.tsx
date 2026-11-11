@@ -119,7 +119,6 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   useGutter(() => body.current);
   const [draft, setDraft] = useState<Settings>({ ...settings, rules: ruleSwitches(settings.rules) });
   const { orgs, rules, theme, avatars, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
-  const reopenShown = reopenOn === "mention-or-assigned-post" ? "mention" : reopenOn;
   const owners: Org[] = me && memberOrgs.length > 0 ? [{ login: me, name: t("orgs.personal"), avatarUrl: isDemo() ? avatarUrl(me) : `https://github.com/${me}.png` }, ...memberOrgs] : memberOrgs;
   const [chosenOrg, setRepoOrg] = useState<string | null>(null);
   const repoOrg = chosenOrg && orgs.includes(chosenOrg) ? chosenOrg : (orgs[0] ?? "");
@@ -438,8 +437,8 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
 
           {section === "rules" && (
             <>
-              <Field label={t("settings.reopen")} hint={t(`settings.reopen.${reopenShown}Hint`)}>
-                <Choice options={REOPEN} value={reopenShown} label={(id) => t(`settings.reopen.${id}`)} onChange={(next) => change({ reopenOn: next })} />
+              <Field label={t("settings.reopen")} hint={t(`settings.reopen.${reopenOn}Hint`)}>
+                <Choice options={REOPEN} value={reopenOn}label={(id) => t(`settings.reopen.${id}`)} onChange={(next) => change({ reopenOn: next })} />
               </Field>
               <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">

@@ -4,6 +4,15 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-10
 
+- **A setting nothing reads is deleted, not kept.** Kept "just in case", dead keys and values
+  piled up in three forms: stored and unread (`hoverActs`), stored and read as another value
+  (`tableGrouping` "time", `reopenOn` "mention-or-assigned-post"), and filtered on load. Now a
+  dropped key leaves the type and the database at the next start, and a dropped value is rewritten
+  to the one it acted as. Keys are deleted by name, not "every unknown key", because builds of
+  different branches share one database and would delete each other's new settings. The mixed
+  reopen mode had still reopened a done assignment on any post, against its record of 2026-10-25;
+  it now is "mention" in every respect. Supersedes "the stored value stays unused" of this day and
+  of 2026-10-30, and restores "Dead settings keys are deleted, with approval" of 2026-10-24.
 - **Tab reaches the main window's buttons only with a setting, off by default.** Native Mac apps
   walk text fields only unless "Keyboard navigation" is on in the system; the web view walks
   buttons regardless, so the app carries the switch itself (`tabToButtons`). With it on, a button

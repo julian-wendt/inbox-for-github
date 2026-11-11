@@ -177,12 +177,8 @@ export interface Closed {
   at: string;
 }
 
-/**
- * What brings a "Zurückgestellt" or "Erledigt" item back to "Offen"; see `reopens`. The settings
- * no longer offer "mention-or-assigned-post", which acts as "mention" since assignments snooze in
- * their table; stored values stay readable.
- */
-export type Reopen = "mention" | "any-post" | "mention-or-assigned-post";
+/** What brings a follow-up or done item back to open; see `reopens`. */
+export type Reopen = "mention" | "any-post";
 
 /** A manual status. A stored "open" marks an explicit reopen, which counts like a new review request. */
 /** A GitHub organization the viewer belongs to. */

@@ -87,7 +87,6 @@ export const de: Messages = {
 
   "reopen.mention": "bei einer neuen Erwähnung",
   "reopen.any-post": "sobald jemand anderes kommentiert oder reviewt",
-  "reopen.mention-or-assigned-post": "bei einer neuen Erwähnung, bei Zuweisungen schon bei jedem Beitrag anderer",
   "explain.comesBack": "Kommt zurück in die Inbox {rule}.",
   "explain.waitsHere": "Wartet in seiner Liste bis {until}. Eine Erwähnung zeigt es trotzdem in der Inbox; früher holt es sonst nichts zurück.",
   "explain.waitsHereNoDate": "Wartet in seiner Liste ohne Datum. Eine Erwähnung zeigt es trotzdem in der Inbox; mit O holst du es zurück.",

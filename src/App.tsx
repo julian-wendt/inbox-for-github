@@ -171,7 +171,7 @@ export default function App() {
     if (inbox.settings.tableGrouping === "repo") return [...groupByRepo(working, (c) => assignedAt(c.item, inbox.me ?? "").at, order), ...parked];
     return [...groupByType(working, inbox.settings.statusMap, order, inbox.me ?? "", inbox.settings.typeOrder), ...parked];
   }, [plateNewest, sort, inbox.settings.tableGrouping, inbox.settings.statusMap, inbox.settings.typeOrder, inbox.me]);
-  const tableGrouping: TableGrouping = bucket === "authored" ? inbox.settings.authoredGrouping : inbox.settings.tableGrouping === "time" ? "type" : inbox.settings.tableGrouping;
+  const tableGrouping: TableGrouping = bucket === "authored" ? inbox.settings.authoredGrouping : inbox.settings.tableGrouping;
   const setGrouping = (grouping: TableGrouping) =>
     void inbox.saveSettings(bucket === "authored" ? { ...inbox.settings, authoredGrouping: grouping === "repo" ? "repo" : "status" } : { ...inbox.settings, tableGrouping: grouping });
   /** Drag and drop of a bar in Assigned to me: the status bars by status, the type bars by type. */

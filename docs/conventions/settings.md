@@ -21,8 +21,10 @@ take it, so a new key needs no migration.
 
 ## Rules
 
-- Removing or renaming a key is a breaking change: ask first. Stop using it instead; the stored
-  value stays unused.
+- Removing or renaming a key is a breaking change: ask first. Once approved, a key nothing reads
+  leaves `Settings` and `DEFAULT_SETTINGS` and is deleted from the database by name in
+  `dropLeftovers` (`src/store.ts`); a value no longer offered is rewritten there to the value it
+  acted as. No key stays stored and unread.
 - A setting that affects fetching SHOULD be cheap to change: narrowing it filters the cache,
   only widening it fetches (see coverage in [`architecture.md`](../reference/architecture.md#refreshes)).
 - Per-device conveniences that may get lost (collapsed groups, sort direction, sizes) belong in

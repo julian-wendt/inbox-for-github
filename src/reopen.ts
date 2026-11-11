@@ -22,9 +22,7 @@ export function snoozeEnded(stored: StoredStatus | undefined, now = Date.now()):
  * @param stored   The viewer's manual status, if any.
  * @param trigger  What counts as needing the viewer, compared against the status change time:
  *                 - "mention": someone (or the viewer, as a reminder) mentioned the viewer;
- *                 - "any-post": anyone else commented or reviewed;
- *                 - "mention-or-assigned-post": a mention, or any post by someone else on an
- *                   item assigned to the viewer.
+ *                 - "any-post": anyone else commented or reviewed.
  * @returns True when the stored status should be discarded.
  *
  * @example
@@ -35,7 +33,5 @@ export function reopens(item: Item, me: string, stored: StoredStatus | undefined
   if (snoozeEnded(stored, now)) return true;
   const mentioned = mentionsOf(item, me).some((m) => m.at > stored.changedAt);
   if (trigger === "mention") return mentioned;
-  const posted = othersPostedAfter(item, me, stored.changedAt);
-  if (trigger === "any-post") return posted;
-  return mentioned || (item.reasons.includes("assigned") && posted);
+  return othersPostedAfter(item, me, stored.changedAt);
 }

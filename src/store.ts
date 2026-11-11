@@ -86,7 +86,9 @@ const SCHEMA = [
 
 /**
  * Removes what databases of earlier builds still hold and nothing reads any more: the reminders
- * table, the `keep_open` column of `item_status` and the settings `snoozeAuthored` and `orbSeeds`. Does nothing
+ * table, the `keep_open` column of `item_status`, the settings keys the app dropped, and setting
+ * values it no longer offers, rewritten to the value they acted as. The keys are named instead of
+ * deleting every unknown one, since builds of different branches share one database. Does nothing
  * on a database created by `SCHEMA`, so it is safe on every start.
  *
  * @example
@@ -95,7 +97,9 @@ const SCHEMA = [
  */
 async function dropLeftovers(db: Database): Promise<void> {
   await db.execute("DROP TABLE IF EXISTS item_reminder");
-  await db.execute("DELETE FROM settings WHERE key IN ('snoozeAuthored', 'orbSeeds')");
+  await db.execute("DELETE FROM settings WHERE key IN ('snoozeAuthored', 'orbSeeds', 'hoverActs', 'calendarTime')");
+  await db.execute(`UPDATE settings SET value = '"type"' WHERE key = 'tableGrouping' AND value = '"time"'`);
+  await db.execute(`UPDATE settings SET value = '"mention"' WHERE key = 'reopenOn' AND value = '"mention-or-assigned-post"'`);
   const statusColumns = await db.select<{ name: string }[]>("PRAGMA table_info(item_status)");
   if (statusColumns.some((c) => c.name === "keep_open")) await db.execute("ALTER TABLE item_status DROP COLUMN keep_open");
 }
@@ -159,8 +163,8 @@ export interface Settings {
   dockBadge: boolean;
   /** Comments the detail shows before folding older ones away; 0 shows all. */
   recentComments: number;
-  /** The Assigned to me table groups its bars by issue type, work status or repository. "time" is no longer offered and reads as "type". */
-  tableGrouping: "type" | "status" | "time" | "repo";
+  /** The Assigned to me table groups its bars by issue type, work status or repository. */
+  tableGrouping: "type" | "status" | "repo";
   /** The Created by me table groups its bars by who has taken the item on ("status") or by repository. */
   authoredGrouping: "status" | "repo";
   /** The sidebar shows item counts next to the views, and next to the repositories. */
@@ -172,8 +176,6 @@ export interface Settings {
   groupByTime: boolean;
   /** Tab walks the main window's buttons, and Enter and Space press the focused one; off, Tab does nothing there outside a text field. */
   tabToButtons: boolean;
-  /** No longer used: keys once acted on the row under the mouse. The stored value is kept. */
-  hoverActs: boolean;
   /** Where the detail view starts when an item opens. */
   openAt: OpenAt;
   /** How the description card of the detail shows its text; see `DescriptionMode`. */
@@ -240,7 +242,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, hoverActs: false, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent
