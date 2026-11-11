@@ -852,6 +852,7 @@ export const de: Messages = {
   "notify.update": "Update",
   "row.update": "Update: {what}",
   "update.closed": "geschlossen",
+  "update.reopened": "wieder geöffnet",
   "update.merged": "gemergt",
   "update.board": "{board}: {from} → {to}",
   "update.pr": "Pull Request #{number} verknüpft",

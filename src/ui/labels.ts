@@ -163,6 +163,7 @@ export function openedText(at: string, now = new Date()): string {
 export function updateSummary(updates: Update[]): string {
   const parts = updates.flatMap((u) => {
     if (u.kind === "closed") return [t(u.state === "merged" ? "update.merged" : "update.closed")];
+    if (u.kind === "reopened") return [t("update.reopened")];
     if (u.kind === "board") return [t("update.board", { board: u.board, from: u.from ?? "–", to: u.to ?? "–" })];
     if (u.kind === "pr") return [t("update.pr", { number: u.number })];
     return [];

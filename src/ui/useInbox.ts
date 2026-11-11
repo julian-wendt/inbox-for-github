@@ -659,8 +659,10 @@ export function useInbox(): Inbox {
 
   useEffect(() => {
     for (const c of classified) {
+      // A new assignment is a fresh start: no status is left to anchor on.
       // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
-      if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
+      if (c.renewed) void clearStatus(c.item.id, "auto:reassigned");
+      else if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
       if (me && lockedDone(c, statuses.get(c.item.id), me) && !converting.current.has(c.item.id)) {
         converting.current.add(c.item.id);
         void clearStatus(c.item.id, "auto:locked");

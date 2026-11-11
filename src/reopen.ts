@@ -1,5 +1,5 @@
 import type { Item, Reopen, StoredStatus } from "./model";
-import { mentionsOf, othersPostedAfter } from "./timeline";
+import { mentionsOf, othersPostedAfter, sameLogin } from "./timeline";
 
 export const REOPEN_DEFAULT: Reopen = "mention";
 
@@ -14,8 +14,26 @@ export function snoozeEnded(stored: StoredStatus | undefined, now = Date.now()):
 }
 
 /**
+ * Whether someone else assigned the viewer after `since` and the viewer is still assigned. The
+ * viewer assigning themselves is no news to them.
+ *
+ * @example
+ *   assignedAgain(item, "octocat", "2026-10-01T12:00:00Z"); // true after bob assigned octocat anew
+ */
+export function assignedAgain(item: Item, me: string, since: string): boolean {
+  return item.reasons.includes("assigned") && item.activities.some((a) => a.kind === "assigned" && sameLogin(a.assignee, me) && !sameLogin(a.actor, me) && a.at > since);
+}
+
+/** When someone else last reopened the item on GitHub, if they did. */
+export function reopenedByOther(item: Item, me: string): string | null {
+  return item.activities.filter((a) => a.kind === "state" && a.change === "reopened" && !sameLogin(a.actor, me)).at(-1)?.at ?? null;
+}
+
+/**
  * Decides whether a stored "Zurückgestellt" or "Erledigt" falls back to "Offen" because the item
- * needs the viewer again.
+ * needs the viewer again: it was snoozed past its date, someone assigned the viewer anew (see
+ * `assignedAgain`), someone else reopened it on GitHub (see `reopenedByOther`), or the
+ * `trigger` fires.
  *
  * @param item     The item as fetched.
  * @param me       The viewer's login.
@@ -30,7 +48,8 @@ export function snoozeEnded(stored: StoredStatus | undefined, now = Date.now()):
  */
 export function reopens(item: Item, me: string, stored: StoredStatus | undefined, trigger: Reopen, now = Date.now()): boolean {
   if (!stored || stored.status === "open") return false;
-  if (snoozeEnded(stored, now)) return true;
+  if (snoozeEnded(stored, now) || assignedAgain(item, me, stored.changedAt)) return true;
+  if ((reopenedByOther(item, me) ?? "") > stored.changedAt) return true;
   const mentioned = mentionsOf(item, me).some((m) => m.at > stored.changedAt);
   if (trigger === "mention") return mentioned;
   return othersPostedAfter(item, me, stored.changedAt);

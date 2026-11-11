@@ -850,6 +850,7 @@ export const en = {
   "notify.update": "Update",
   "row.update": "Update: {what}",
   "update.closed": "closed",
+  "update.reopened": "reopened",
   "update.merged": "merged",
   "update.board": "{board}: {from} → {to}",
   "update.pr": "pull request #{number} linked",

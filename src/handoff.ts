@@ -6,7 +6,8 @@ export type Update =
   | { kind: "post"; by: string; at: string }
   | { kind: "board"; board: string; from: string | null; to: string | null }
   | { kind: "pr"; number: number }
-  | { kind: "closed"; state: "closed" | "merged"; at: string };
+  | { kind: "closed"; state: "closed" | "merged"; at: string }
+  | { kind: "reopened"; by: string; at: string };
 
 /**
  * How an item looks the moment the viewer's part ends: its status per board and its linked pull
@@ -22,7 +23,8 @@ export function snapshotOf(item: Pick<Item, "boards" | "linkedPrs">): Handoff {
 /**
  * Everything that happened on an item since `since` (when the viewer finished their part, or
  * last ticked off its updates): posts and reviews by others (bots left out), a board status
- * different from the snapshot, a linked pull request not in it, and closing or merging. Boards
+ * different from the snapshot, a linked pull request not in it, closing or merging, and a
+ * reopening by someone else. Boards
  * missing now (e.g. boards not loaded) do not count as a change. Oldest first within each kind.
  *
  * @param since     ISO time the snapshot was taken.
@@ -42,5 +44,6 @@ export function updatesSince(item: Item, me: string, since: string, snapshot: Ha
     .map((b) => ({ kind: "board", board: b.title, from: snapshot.boards[b.id], to: b.status }));
   const prUpdates: Update[] = item.linkedPrs.filter((p) => !snapshot.prs.includes(p.number)).map((p) => ({ kind: "pr", number: p.number }));
   const closed: Update[] = item.closed && item.closed.at > since ? [{ kind: "closed", state: item.closed.state, at: item.closed.at }] : [];
-  return [...closed, ...boardUpdates, ...prUpdates, ...postUpdates];
+  const reopened: Update[] = item.activities.flatMap((a) => (a.kind === "state" && a.change === "reopened" && byOthers(a.actor, a.at) ? [{ kind: "reopened" as const, by: a.actor, at: a.at }] : []));
+  return [...closed, ...reopened, ...boardUpdates, ...prUpdates, ...postUpdates];
 }

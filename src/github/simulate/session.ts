@@ -322,6 +322,11 @@ export class InboxSession {
   /** The automatic writes `useInbox` makes for one classification; true when it wrote. */
   private settle(c: Classified): boolean {
     const { id } = c.item;
+    if (c.renewed) {
+      this.statuses.delete(id);
+      this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:reassigned" }]);
+      return true;
+    }
     if (c.statusReset) {
       this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
       return true;

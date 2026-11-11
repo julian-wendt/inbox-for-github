@@ -565,3 +565,39 @@ describe("feedback, thread replies and closings", () => {
     expect(withRules(closed, {}, undefined, at(4)).bucket).toBe("involved");
   });
 });
+
+describe("a new assignment or a reopen on GitHub", () => {
+  const assigned = (overrides: Partial<Item> = {}) => item({ reasons: ["assigned", "involved"], assignees: ["me"], ...overrides });
+  const assignedBy = (actor: string, day: number) => ({ kind: "assigned" as const, at: `2026-10-${String(day).padStart(2, "0")}T00:00:00Z`, actor, assignee: ME });
+  const reopenedBy = (actor: string, day: number) => ({ kind: "state" as const, at: `2026-10-${String(day).padStart(2, "0")}T00:00:00Z`, actor, change: "reopened" as const });
+  const handoff: StoredStatus = { ...done(4), handoff: { boards: {}, prs: [] } };
+
+  it("resets a done after a later assignment by someone else, and asks the caller to delete it", () => {
+    const result = run(assigned({ activities: [assignedBy("alice", 6)] }), done(4));
+    expect(result).toMatchObject({ bucket: "assigned", status: "open", statusReset: true, renewed: true, statusAt: null });
+  });
+
+  it("keeps a done from after the assignment, and one the viewer made themselves", () => {
+    expect(run(assigned({ activities: [assignedBy("alice", 2)] }), done(4))).toMatchObject({ status: "done", statusReset: false });
+    expect(run(assigned({ activities: [assignedBy(ME, 6)] }), done(4))).toMatchObject({ status: "done", statusReset: false });
+  });
+
+  it("resets a handed-off part when the viewer was assigned anew, not when they were unassigned", () => {
+    expect(run(assigned({ activities: [assignedBy("alice", 6)] }), handoff)).toMatchObject({ bucket: "assigned", status: "open", statusReset: true, renewed: true });
+    expect(run(assigned({ activities: [assignedBy("alice", 2)] }), handoff)).toMatchObject({ status: "done", updates: [], statusReset: false });
+    expect(run(item({ activities: [assignedBy("alice", 6)] }), handoff)).toMatchObject({ statusReset: false });
+  });
+
+  it("brings a finished item back with the reopened ask after a reopen by someone else", () => {
+    const answered = item({ comments: [comment("bob", "@me look", 2), comment(ME, "done", 3)], activities: [reopenedBy("bob", 6)] });
+    expect(run(answered, done(4))).toMatchObject({ bucket: "inbox", asks: ["reopened"], statusReset: true });
+    expect(run(answered, { status: "open", changedAt: "2026-10-07T00:00:00Z" })).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(run(answered, done(7))).toMatchObject({ bucket: "done", asks: [] });
+    expect(run(item({ comments: answered.comments, activities: [reopenedBy(ME, 6)] }), done(4))).toMatchObject({ statusReset: false, asks: [] });
+  });
+
+  it("counts a reopen as an update on a handed-off part", () => {
+    expect(run(assigned({ activities: [reopenedBy("bob", 6)] }), handoff)).toMatchObject({ bucket: "inbox", status: "done", asks: ["update"], updates: [{ kind: "reopened", by: "bob" }] });
+    expect(run(assigned({ activities: [reopenedBy("bob", 3)] }), handoff).updates).toEqual([]);
+  });
+});

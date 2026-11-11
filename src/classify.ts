@@ -1,5 +1,5 @@
 import type { Bucket, Item, Reopen, Status, StoredStatus } from "./model";
-import { REOPEN_DEFAULT, reopens, snoozeEnded } from "./reopen";
+import { assignedAgain, REOPEN_DEFAULT, reopenedByOther, reopens, snoozeEnded } from "./reopen";
 import { pushedSinceReview, reviewAnswered } from "./review";
 import { RULES, type Rule } from "./rules";
 import { closedByOther, feedbackSince, lastAnswerAt, threadReply, type Feedback, type FeedbackMode } from "./feedback";
@@ -61,6 +61,8 @@ export interface Classified {
   closedBy?: string;
   /** The stored status fell back to "Offen" (see `reopens`); the caller should delete it. */
   statusReset: boolean;
+  /** With `statusReset`: a new assignment ended the status, so the caller deletes it instead of writing "Offen". */
+  renewed?: boolean;
 }
 
 /**
@@ -124,7 +126,8 @@ export function classify(
   const own = sameLogin(item.author, me);
   // Items of the tables wait in place: only their date ends it, a mention shows in the inbox besides.
   const inTable = assigned || own;
-  if (stored?.status === "done" && stored.handoff) {
+  const renewed = stored?.status === "done" && !item.closed && assignedAgain(item, me, stored.changedAt);
+  if (stored?.status === "done" && stored.handoff && !renewed) {
     if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, latest(plannedAt, filedAt) ?? undefined);
     stored = undefined;
   }
@@ -151,7 +154,9 @@ export function classify(
   const mention = pendingMention(item, rules, { me });
   const requestedBy = requesterOf(item, me);
   const assignedBy = assignerOf(item, me);
-  const result = { item, mention, statusReset, statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
+  const ghReopen = reopenedByOther(item, me);
+  const reopenedOnGitHub = !!stored && !!ghReopen && ghReopen > (lastReplyAt(item, me) ?? "") && (stored.status === "open" || ghReopen > stored.changedAt);
+  const result = { item, mention, statusReset, ...(renewed && { renewed }), statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   if (effective && tableSnooze) {
     const since = (at: string) => at > effective.changedAt && at > (filedAt ?? "");
@@ -190,10 +195,11 @@ export function classify(
   else if (mentionOpen && !asks.includes("reopened")) asks.push("reopened");
   if (feedback) asks.push("feedback");
   if (reply && (!reopenedAt || reply.at > reopenedAt)) asks.push("reply");
+  if (reopenedOnGitHub && !asks.includes("reopened")) asks.push("reopened");
 
   // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? reopenedAt : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (reopenedAt ?? ghReopen ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
   const seenAt = latest(plannedAt, filedAt);
   const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const parked = fresh.length < asks.length;

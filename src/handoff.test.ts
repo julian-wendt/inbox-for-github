@@ -10,6 +10,7 @@ const item = (overrides: Partial<Item> = {}) =>
     comments: [],
     reviews: [],
     closed: null,
+    activities: [],
     boards: [{ id: "B", title: "Roadmap", status: "Review", sprint: null, fields: [] }],
     linkedPrs: [{ number: 12, url: "", draft: false, author: "me" }],
     ...overrides,
