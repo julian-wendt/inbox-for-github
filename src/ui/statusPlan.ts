@@ -17,7 +17,7 @@ export type StatusPlan =
   | { do: "hand-off" }
   | { do: "clear" }
   | { do: "file" }
-  | { do: "blocked"; why: Lock }
+  | { do: "blocked" }
   | { do: "set"; status: Status }
   | { do: "none" };
 
@@ -66,7 +66,7 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
     return { do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" };
   }
   if (home === "assigned" && onPlate(c, me)) return c.updates ? { do: "none" } : { do: "hand-off" };
-  if (home === "authored") return { do: "blocked", why: "own" };
+  if (home === "authored") return { do: "blocked" };
   return { do: "set", status };
 }
 

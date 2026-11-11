@@ -65,14 +65,14 @@ describe("planStatus", () => {
 
   describe("in Created by me", () => {
     it("leaves asks to the inbox", () => {
-      expect(plan(entry(own, ["mention"]), "authored")).toEqual({ do: "blocked", why: "own" });
-      expect(plan(entry({ ...own, kind: "pr", assignees: [] }, ["review"]), "authored")).toEqual({ do: "blocked", why: "own" });
-      expect(plan(entry(own, ["reopened"]), "authored")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry(own, ["mention"]), "authored")).toEqual({ do: "blocked" });
+      expect(plan(entry({ ...own, kind: "pr", assignees: [] }, ["review"]), "authored")).toEqual({ do: "blocked" });
+      expect(plan(entry(own, ["reopened"]), "authored")).toEqual({ do: "blocked" });
     });
 
     it("changes nothing on an own item without asks", () => {
-      expect(plan(entry({ kind: "pr", author: ME, assignees: [] }), "authored")).toEqual({ do: "blocked", why: "own" });
-      expect(plan(entry({ author: ME, assignees: [ME, "bob"] }), "authored")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry({ kind: "pr", author: ME, assignees: [] }), "authored")).toEqual({ do: "blocked" });
+      expect(plan(entry({ author: ME, assignees: [ME, "bob"] }), "authored")).toEqual({ do: "blocked" });
     });
   });
 
@@ -81,8 +81,8 @@ describe("planStatus", () => {
       expect(plan(entry({}), "planned")).toEqual({ do: "hand-off" });
       expect(plan(entry(own, ["mention"]), "planned")).toEqual({ do: "hand-off" });
       expect(plan(entry(own), "planned")).toEqual({ do: "hand-off" });
-      expect(plan(entry({ ...own, assignees: [], reasons: ["involved"] }), "planned")).toEqual({ do: "blocked", why: "own" });
-      expect(plan(entry({ ...own, kind: "pr" }), "planned")).toEqual({ do: "blocked", why: "own" });
+      expect(plan(entry({ ...own, assignees: [], reasons: ["involved"] }), "planned")).toEqual({ do: "blocked" });
+      expect(plan(entry({ ...own, kind: "pr" }), "planned")).toEqual({ do: "blocked" });
       expect(plan(entry(others), "planned")).toEqual({ do: "set", status: "done" });
     });
   });
