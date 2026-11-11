@@ -720,11 +720,18 @@ export default function App() {
     const steps = [...changed.map((c) => planStep(c, status, alsoFile(c))!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me, bucket).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
-    const [both, plain] = [set.filter(alsoFile), set.filter((c) => !alsoFile(c))];
+    const [both, rest] = [set.filter(alsoFile), set.filter((c) => !alsoFile(c))];
+    const doing = (c: Classified) => planStatus(c, status, me, bucket).do;
+    const [handed, ticked, cleared, plain] = [rest.filter((c) => doing(c) === "hand-off"), rest.filter((c) => doing(c) === "tick-update"), rest.filter((c) => doing(c) === "clear"), rest.filter((c) => !["hand-off", "tick-update", "clear"].includes(doing(c)))];
+    const ended = status === "done" ? set.filter((c) => !keeps(c) && dated(c) !== null).length : 0;
     const parts = [
       ...(plain.length > 0 ? [plural("marks.toastOne", "marks.toast", plain.length, { status: t(`status.${status}`) })] : []),
+      ...(handed.length > 0 ? [plural("marks.handedOffOne", "marks.handedOff", handed.length)] : []),
+      ...(ticked.length > 0 ? [plural("marks.updateDoneOne", "marks.updateDone", ticked.length)] : []),
+      ...(cleared.length > 0 ? [bucket === "snoozed" ? plural("marks.reminderRemovedOne", "marks.reminderRemoved", cleared.length) : plural("marks.filedOne", "marks.filed", cleared.length)] : []),
       ...(both.length > 0 ? [plural("marks.handedFiledOne", "marks.handedFiled", both.length)] : []),
       ...(filed.length > 0 ? [plural("marks.filedOne", "marks.filed", filed.length)] : []),
+      ...(ended > 0 ? [plural("marks.plansRemovedOne", "marks.plansRemoved", ended)] : []),
       ...(blocked > 0 ? [t("marks.blocked", { count: blocked })] : []),
     ];
     bulk(parts.join(" · "), steps);
