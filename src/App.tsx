@@ -1,7 +1,7 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { ghToken } from "./github/token";
 import { assignSelf, setOpen, unassignSelf, type CloseReason } from "./github/comment";
-import { handoffOf } from "./handoff";
+import { snapshotOf } from "./handoff";
 import { queueWrite } from "./github/queue";
 import { sameLogin } from "./timeline";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -697,7 +697,7 @@ export default function App() {
         return null;
       case "tick-update":
       case "hand-off": {
-        const hand = () => void inbox.setStatus(c.item.id, "done", { handoff: handoffOf(c, previous) });
+        const hand = () => void inbox.setStatus(c.item.id, "done", { handoff: snapshotOf(c.item) });
         const filesToo = plan.do === "tick-update" ? bucket === "inbox" : alsoFile && c.asks.length > 0;
         if (!filesToo) return { run: hand, undo };
         const filing = fileStep(c);
@@ -861,7 +861,7 @@ export default function App() {
         again,
       );
     };
-    const hand = () => void inbox.setStatus(id, "done", { handoff: handoffOf(c, previous) });
+    const hand = () => void inbox.setStatus(id, "done", { handoff: snapshotOf(c.item) });
     switch (plan.do) {
       case "resume":
         return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));

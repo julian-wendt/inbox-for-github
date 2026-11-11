@@ -1,6 +1,6 @@
 import { datedOf } from "../../ui/plan";
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
-import { handoffOf, snapshotOf } from "../../handoff";
+import { snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
 import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
@@ -195,7 +195,7 @@ export class InboxSession {
       case "tick-update":
       case "hand-off":
         if (plan.do === "tick-update" && c.bucket === "inbox") this.filedAt.set(ref.id, this.world.stamp());
-        this.write(ref.id, "done", false, { handoff: handoffOf(c, this.statuses.get(ref.id)) });
+        this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":
         if (c.item.closed || (c.status === plan.status && until === undefined)) return;

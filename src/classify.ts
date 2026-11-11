@@ -235,7 +235,6 @@ export function classify(
  */
 function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, seenAt?: string): Classified {
   const since = stored.changedAt;
-  seenAt = latest(seenAt, stored.handoff!.seenUpTo) ?? undefined;
   const updates = updatesSince(item, me, since, stored.handoff!);
   const unfiled = (at: string) => at > (seenAt ?? "");
   const pending = pendingMention(item, rules, { me });
