@@ -4,6 +4,13 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-11
 
+- **A new assignment or a reopen on GitHub brings a finished item back.** Someone wants
+  something from you again, which is what the inbox is for. An assignment by someone else after
+  your "done" or "my part done" deletes that status (a fresh assignment, with its news dot);
+  before, the stored "done" won and `legacyDone` filed the item silently under Finished. A
+  reopen by someone else after it revives a "done" with the "reopened" ask (D clears it) and
+  counts as an update on a handed-off part, like a closing does. Assigning yourself and
+  reopening it yourself do not count.
 - **The news dot counts only activity the detail shows.** An item never opened counts from its
   last status change, else from when it was assigned to you or opened by you; an item that is
   neither shows no dot. On your own items the timeline shows every assignment, so someone taking

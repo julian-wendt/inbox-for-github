@@ -424,6 +424,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Aktivität bringt es zurück, schließen auf GitHub nimmt den Plan, der Termin bleibt. Auch bei einer geteilten
       Zuweisung behält D den Plan, in jeder Ansicht; ein eigenes Item bietet D nicht an.
 - [ ] Ein „Erledigt“ auf einer Zuweisung aus älteren Versionen steht nach dem Start in „Fertig“.
+- [ ] Jemand weist dich einem Item neu zu, das du mit D erledigt hattest (oder dessen Teil fertig war; ggf. erst ausgetragen, dann neu zugewiesen): es steht wieder aktiv in „Mir zugewiesen“, fett, mit Punkt und in der Zahl, nicht unter „Fertig“. Selbst zuweisen (⌃A) tut das nicht.
+- [ ] Jemand anderes öffnet ein erledigtes Item auf GitHub wieder: es steht mit „Wieder offen“ in der Inbox, D legt das ab. Bei „Mein Teil erledigt“ kommt es als Update („wieder geöffnet“). Selbst wieder geöffnet: nichts davon.
 
 ## Mehrfachauswahl
 
