@@ -82,7 +82,8 @@ interface Props {
   /** True on first start: no close button, explanatory intro, an explicit start button. */
   welcome: boolean;
   /** Called with the settings after every change (and on the welcome's start button). */
-  onSave: (settings: Settings) => void;
+  /** Saves the keys the viewer changed; the app puts them on top of its current settings. */
+  onSave: (changes: Partial<Settings>) => void;
   onClose: () => void;
   /** The viewer's organizations, to pick from. */
   memberOrgs: Org[];
@@ -127,7 +128,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   const change = (patch: Partial<Settings>) => {
     const next = { ...draft, ...patch };
     setDraft(next);
-    if (!welcome && next.orgs.length > 0) onSave(next);
+    if (!welcome && next.orgs.length > 0) onSave(patch);
   };
   const setRepoFilter = (org: string, filter?: RepoFilter) => {
     const next = { ...repoFilters };
@@ -157,12 +158,23 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
     onSave({ ...draft, orgs: [...new Set(orgs)] });
   };
 
+  // A field unmounting fires no blur, so what is typed in it is saved before the dialog goes.
+  const folder = useRef<HTMLInputElement>(null);
+  const close = () => {
+    const typed = folder.current?.value.trim();
+    if (typed !== undefined && typed !== draft.repoFolder) change({ repoFolder: typed });
+    onClose();
+  };
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
   useEffect(() => {
     if (welcome) return;
-    const close = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [welcome, onClose]);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [welcome]);
 
   const section = welcome ? "orgs" : active;
 
@@ -171,7 +183,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   }, [welcome, section, seenSettings, onSeen]);
 
   return (
-    <div className="overlay" onMouseDown={welcome ? undefined : onClose}>
+    <div className="overlay" onMouseDown={welcome ? undefined : close}>
       <motion.div
         className={`dialog settings${welcome ? " welcome" : ""}`}
         role="dialog"
@@ -207,7 +219,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
           {!welcome && (
             <div className="settings-head">
               <h3 className="settings-heading">{t(`settings.section.${section}`)}</h3>
-              <button className="icon-btn dialog-close" onClick={onClose} title={t("settings.closeHint")} aria-label={t("settings.close")}>
+              <button className="icon-btn dialog-close" onClick={close} title={t("settings.closeHint")} aria-label={t("settings.close")}>
                 <X size={16} />
               </button>
             </div>
@@ -307,6 +319,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </Field>
               <Field label={t("settings.repoFolder")} hint={t("settings.repoFolderHint")}>
                 <input
+                  ref={folder}
                   key={draft.repoFolder}
                   className="repo-search"
                   defaultValue={draft.repoFolder}

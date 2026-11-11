@@ -1568,7 +1568,7 @@ export default function App() {
         <SettingsDialog
           settings={inbox.settings}
           welcome={welcome}
-          onSave={(s) => void inbox.updateSettings((current) => ({ ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary }))}
+          onSave={(s) => void inbox.updateSettings((current) => ({ ...current, ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary }))}
           onClose={() => setDialog(null)}
           boards={boards}
           memberOrgs={inbox.memberOrgs}
