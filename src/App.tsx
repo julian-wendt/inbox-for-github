@@ -134,6 +134,7 @@ export default function App() {
     setKind("all");
     setSearch(null);
     setMarks(new Set());
+    closePopup();
   };
   // Each table keeps its own sprint filter while the viewer switches views.
   const [sprints, setSprints] = useState<Record<"assigned" | "authored" | "planned" | "snoozed", SprintFilter>>({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
