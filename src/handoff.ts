@@ -1,4 +1,5 @@
-import type { Handoff, Item } from "./model";
+import type { Classified } from "./classify";
+import type { Handoff, Item, StoredStatus } from "./model";
 import { isBot, posts, sameLogin } from "./timeline";
 
 /** What happened on a handed-off item since the viewer's part ended (see `updatesSince`). */
@@ -16,8 +17,23 @@ export type Update =
  * @example
  *   snapshotOf(item); // { boards: { PVT_1: "In progress" }, prs: [12] }
  */
-export function snapshotOf(item: Pick<Item, "boards" | "linkedPrs">): Handoff {
-  return { boards: Object.fromEntries(item.boards.map((b) => [b.id, b.status])), prs: item.linkedPrs.map((p) => p.number) };
+export function snapshotOf(item: Pick<Item, "boards" | "linkedPrs">, seenUpTo?: string): Handoff {
+  return { boards: Object.fromEntries(item.boards.map((b) => [b.id, b.status])), prs: item.linkedPrs.map((p) => p.number), ...(seenUpTo && { seenUpTo }) };
+}
+
+/**
+ * The hand-off D stores on an assignment: `snapshotOf` plus the time up to which asks were seen.
+ * A follow-up hid the asks older than itself, so the hand-off that replaces it keeps that time;
+ * ticking off an update keeps the one of the hand-off it replaces.
+ *
+ * @param c       The item as classified, before the change.
+ * @param stored  The item's stored status, if any.
+ *
+ * @example
+ *   handoffOf(followedUpEntry, stored).seenUpTo; // the follow-up's changedAt
+ */
+export function handoffOf(c: Pick<Classified, "item" | "status" | "statusAt">, stored?: StoredStatus): Handoff {
+  return snapshotOf(c.item, c.status === "snoozed" ? (c.statusAt ?? undefined) : stored?.handoff?.seenUpTo);
 }
 
 /**

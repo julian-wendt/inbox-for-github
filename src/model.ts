@@ -204,6 +204,8 @@ export interface StoredStatus {
 export interface Handoff {
   boards: Record<string, string | null>;
   prs: number[];
+  /** Asks (mentions, review requests, feedback, replies) up to this time (ISO 8601) were seen before the hand-off, e.g. under the follow-up it replaced. */
+  seenUpTo?: string;
 }
 
 /** What a status change may carry besides the status: see `StoredStatus`. */

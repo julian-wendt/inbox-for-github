@@ -596,6 +596,14 @@ describe("a new assignment or a reopen on GitHub", () => {
     expect(run(item({ comments: answered.comments, activities: [reopenedBy(ME, 6)] }), done(4))).toMatchObject({ statusReset: false, asks: [] });
   });
 
+  it("keeps the asks a follow-up hid hidden after the hand-off that replaced it", () => {
+    const mentioned = assigned({ comments: [comment("bob", "@me look", 2)] });
+    const withCutoff: StoredStatus = { ...handoff, handoff: { boards: {}, prs: [], seenUpTo: "2026-10-03T00:00:00Z" } };
+    expect(run(mentioned, handoff)).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+    expect(run(mentioned, withCutoff)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(run(assigned({ comments: [...mentioned.comments, comment("bob", "@me again", 4)] }), { ...withCutoff, changedAt: "2026-10-05T00:00:00Z" })).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+  });
+
   it("counts a reopen as an update on a handed-off part", () => {
     expect(run(assigned({ activities: [reopenedBy("bob", 6)] }), handoff)).toMatchObject({ bucket: "inbox", status: "done", asks: ["update"], updates: [{ kind: "reopened", by: "bob" }] });
     expect(run(assigned({ activities: [reopenedBy("bob", 3)] }), handoff).updates).toEqual([]);
