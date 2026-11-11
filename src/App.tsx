@@ -536,7 +536,15 @@ export default function App() {
     if (day === localDay() ? when?.kind !== "today" : when?.kind !== "planned" || when.day !== day) {
       if (day === localDay()) toggleFocus(c, extra);
       else planFor(c, day, dayText(day), extra);
-    } else extra.forEach((s) => s.run());
+    } else {
+      extra.forEach((s) => s.run());
+      if (extra.length === 0) return;
+      actions.announce(
+        day === localDay() ? t("focus.added", { number: c.item.number }) : t("plan.added", { number: c.item.number, day: dayText(day) }),
+        () => extra.forEach((s) => s.undo()),
+        () => extra.forEach((s) => s.run()),
+      );
+    }
   };
   /** What a new event for the item says in its notes: its reference and link. */
   const eventDraft = (c: Classified, calendarId: string, title: string, start: number, end: number) => ({
