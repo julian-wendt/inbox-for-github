@@ -297,6 +297,8 @@ export const de: Messages = {
   "history.open": "Du hast es wieder geöffnet",
   "history.due": "Wiedervorlage fällig",
   "history.unlocked": "Erledigt zurückgenommen: D erledigt dieses Item nicht mehr",
+  "history.reassigned": "Dir neu zugewiesen: wieder in deiner Arbeit",
+  "history.legacyDone": "Erledigt wurde automatisch zu „Mein Teil erledigt“",
   "history.reopened": "Automatisch wieder geöffnet",
 
   "help.title": "Hilfe",

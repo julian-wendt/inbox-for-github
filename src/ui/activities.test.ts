@@ -8,6 +8,8 @@ const at = (hour: number) => `2026-10-01T${String(hour).padStart(2, "0")}:00:00Z
 describe("historyText", () => {
   it("names a follow-up that came due, and any other automatic reopening", () => {
     expect(historyText({ status: "open", at: at(1), automatic: true, source: "auto:snooze-ended" })).toBe("history.due");
+    expect(historyText({ status: "open", at: at(1), automatic: true, source: "auto:reassigned" })).toBe("history.reassigned");
+    expect(historyText({ status: "done", at: at(1), automatic: true, source: "auto:legacy-done" })).toBe("history.legacyDone");
     expect(historyText({ status: "open", at: at(1), automatic: true, source: "auto:reopen" })).toBe("history.reopened");
     expect(historyText({ status: "open", at: at(1), automatic: true })).toBe("history.reopened");
     expect(historyText({ status: "snoozed", at: at(1), automatic: false })).toBe("history.snoozed");

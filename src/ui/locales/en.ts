@@ -296,6 +296,8 @@ export const en = {
   "history.reopened": "Reopened automatically",
   "history.due": "Follow-up came due",
   "history.unlocked": "Done taken back: D no longer finishes this item",
+  "history.reassigned": "Assigned to you anew: back in your work",
+  "history.legacyDone": "Done became \"my part done\" automatically",
 
   "help.title": "Help",
   "help.tab.rules": "How it sorts",
