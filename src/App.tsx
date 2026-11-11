@@ -809,6 +809,22 @@ export default function App() {
    * ticked off with a fresh snapshot; an assignment of the table becomes
    * "my part done", which follows its updates. "Open" on that takes it back into the work.
    */
+  /**
+   * D moved the item into a parked bar of the same table: the selection goes on to the next open
+   * row instead of following it down, as when an item leaves the list. A pop-up opened by click
+   * closes and leaves nothing selected; one opened by key shows the next row.
+   */
+  const moveOn = (id: string) => {
+    if (!table || !viewGroups) return;
+    const open = viewGroups.filter((g) => !folded(g.group) && isActiveBar(g.group as PlateGroup)).flatMap((g) => g.entries.map((e) => e.item.id));
+    const at = open.indexOf(id);
+    if (at < 0) return;
+    if (popup === "pointer") {
+      setPopup(false);
+      return selection.select(null);
+    }
+    selection.select(open[at + 1] ?? open[at - 1] ?? null);
+  };
   const applyStatus = (c: Classified, status: Status, asks?: "keep" | "file") => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
@@ -839,6 +855,7 @@ export default function App() {
         return change(t("toast.updateDone", { number }), bucket === "inbox" ? () => (hand(), filing.run()) : hand);
       }
       case "hand-off": {
+        moveOn(id);
         if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
         const filing = fileStep(c);
         return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
