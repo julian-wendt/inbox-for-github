@@ -619,7 +619,7 @@ export default function App() {
     });
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : keyMenuAt(c.item.id)) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -813,7 +813,7 @@ export default function App() {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
     const plan = planStatus(c, status, me, bucket);
-    if (!asks && needsAskChoice(c, status, me, bucket)) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...keyMenuAt(id) });
+    if (!asks && needsAskChoice(c, status, me, bucket)) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...paneCenter(), centered: true });
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
