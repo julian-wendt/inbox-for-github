@@ -436,6 +436,15 @@ describe("my part done", () => {
     expect(filed).toMatchObject({ bucket: "assigned", status: "done", asks: [] });
   });
 
+  it("does not bring back a mention the plan already answered, but keeps a later one", () => {
+    const plan = (i: Item) => classify(i, ME, done, ruleSwitches(), "mention", undefined, true, "2026-10-04T00:00:00Z", MENTIONS_ONLY);
+    const before = assigned({ comments: [comment("bob", "@me can you look?", 3)] });
+    expect(plan(before)).toMatchObject({ bucket: "assigned", asks: [] });
+    const after = assigned({ comments: [comment("bob", "@me can you look?", 4), comment("bob", "@me ping", 5)] });
+    expect(plan(after)).toMatchObject({ bucket: "inbox" });
+    expect(plan(after).asks).toContain("mention");
+  });
+
   it("keeps an open review request in the inbox after the hand-off", () => {
     const pr = assigned({ kind: "pr", reasons: ["assigned", "review", "involved"], activities: [{ kind: "review-requested", at: "2026-10-03T00:00:00Z", actor: "alice", reviewer: ME }] });
     expect(run(pr, done)).toMatchObject({ bucket: "inbox", asks: ["review"] });
