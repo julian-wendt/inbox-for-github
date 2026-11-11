@@ -3,7 +3,7 @@ export type Reason = "assigned" | "mentioned" | "review" | "involved";
 
 export type Bucket = "inbox" | "planned" | "assigned" | "involved" | "authored" | "snoozed" | "done";
 
-/** Manual status. "open" is the default; it is stored only after an explicit reopen. */
+/** Manual status. "open" is the default; stored, it marks an explicit reopen, which counts like a new review request. */
 export type Status = "open" | "snoozed" | "done";
 
 export interface Comment {
@@ -180,7 +180,6 @@ export interface Closed {
 /** What brings a follow-up or done item back to open; see `reopens`. */
 export type Reopen = "mention" | "any-post";
 
-/** A manual status. A stored "open" marks an explicit reopen, which counts like a new review request. */
 /** A GitHub organization the viewer belongs to. */
 export interface Org {
   login: string;

@@ -8,7 +8,7 @@ import { isBot, latest, posts, sameLogin } from "./timeline";
  * Requests to a team count as requests to the viewer, since the events do not say which member
  * is meant. Without any request event (e.g. on issues) the result is false.
  *
- * @param reopenedAt  When the viewer set the item back to "Offen" by hand; counts as a request.
+ * @param reopenedAt  When the viewer set the item back to "Open" by hand; counts as a request.
  *
  * @example
  *   reviewAnswered(pr, "octocat"); // true once octocat commented after being asked for a review

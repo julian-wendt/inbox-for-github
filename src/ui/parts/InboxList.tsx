@@ -68,7 +68,7 @@ interface Props {
   timeOf: (entry: Classified) => string;
   /** Ids of the unread items, printed bold with a dot, in the inbox and in Planned. */
   unread: ReadonlySet<string>;
-  /** Why an item has a date, if it has one (see `datedOf`): the rows' star, day and, in Planned, the time at the end follow it. */
+  /** Why an item has a date, if it has one (see `datedOf`): the rows' day and, in Planned, the time at the end follow it. */
   datedOf: (entry: Classified) => Dated | null;
   /** Per pinned item, the day it came into Today; one before `today` marks the row as carried over. */
   pinnedOn: Record<string, string>;

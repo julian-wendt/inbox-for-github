@@ -30,7 +30,7 @@ export function reopenedByOther(item: Item, me: string): string | null {
 }
 
 /**
- * Decides whether a stored "Zurückgestellt" or "Erledigt" falls back to "Offen" because the item
+ * Decides whether a stored "Follow-up" or "Done" falls back to "Open" because the item
  * needs the viewer again: it was snoozed past its date, someone assigned the viewer anew (see
  * `assignedAgain`), someone else reopened it on GitHub (see `reopenedByOther`), or the
  * `trigger` fires.

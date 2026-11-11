@@ -149,7 +149,7 @@ describe("toItem", () => {
     ]);
   });
 
-  it("puts a pull request under Antworten when the mention is in an inline comment", () => {
+  it("puts a pull request under Answered when the mention is in an inline comment", () => {
     const item = toItem(
       rawPr({
         reviewThreads: {

@@ -41,7 +41,7 @@ export interface Inbox {
   settings: Settings;
   classified: Classified[];
   /**
-   * Loads what changed (a delta within an hour of the last full fetch), or with `full` everything,
+   * Loads what changed (a delta within 15 minutes of the last full fetch), or with `full` everything,
    * which also catches what a delta misses. Resolves to true once the items are shown; false when
    * stopped, failed or not run.
    */
@@ -92,23 +92,6 @@ export interface Inbox {
   updateSettings: (change: (current: Settings) => Settings) => Promise<void>;
 }
 
-/**
- * Owns the app state: opens the local store, reads the token from the `gh` CLI, fetches the
- * items for the configured organizations and classifies them with the enabled rules.
- *
- * Statuses that a rule resets are deleted from the store as a side effect, so the reset sticks.
- * At start the last successful fetch comes from the store, so the list shows at once and also
- * without a connection; a failed fetch keeps it and sets `error`. Fetching starts once the store
- * is open and restarts whenever the organization list changes; it
- * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within
- * `FULL_EVERY_MS` (15 minutes) of a full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
- * the closed window, the item limit or switching boards off filters the cached items instead of
- * refetching. A longer closed window loads only the added days, switching boards on only the
- * boards; a higher item limit fetches in full. When GitHub's hourly
- * GraphQL budget runs low, automatic refreshes wait for its reset (`pausedUntil`); ⌘R still works.
- *
- * @returns The current state and the actions the UI may call.
- */
 /** Reloads the boards of all items alone (6 points per 50 items), e.g. after board fields were added to the cache. */
 async function withBoards(token: string, items: Item[], signal: AbortSignal): Promise<Item[]> {
   const boards = await fetchBoards(token, items.map((i) => i.id), signal);
@@ -153,7 +136,6 @@ function logTransfers(before: Item[], fetched: Item[], moves: Map<string, string
   log.debug("transferred", { items: [...moves].map(([from, to]) => `${refOf(before, from)} → ${refOf(fetched, to)}`).join(",") });
 }
 
-/** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
 /**
  * A "done" or "my part done" stored on an item D may no longer finish (see `lockOf`): from before
  * the lock, it would hide open work for good, so the app clears it once.
@@ -162,11 +144,29 @@ function lockedDone(c: Classified, stored: StoredStatus | undefined, viewer: str
   return stored?.status === "done" && lockOf(c, viewer) !== null;
 }
 
+/** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
 function legacyDone(c: Classified, viewer: string): boolean {
   const ownPr = c.item.kind === "pr" && sameLogin(c.item.author, viewer);
   return c.status === "done" && c.answered === null && !c.updates && !c.item.closed && !ownPr && c.item.reasons.includes("assigned");
 }
 
+/**
+ * Owns the app state: opens the local store, reads the token from the `gh` CLI, fetches the
+ * items for the configured organizations and classifies them with the enabled rules.
+ *
+ * Statuses that a rule resets are deleted from the store as a side effect, so the reset sticks.
+ * At start the last successful fetch comes from the store, so the list shows at once and also
+ * without a connection; a failed fetch keeps it and sets `error`. Fetching starts once the store
+ * is open and restarts whenever the organization list changes; it
+ * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within
+ * `FULL_EVERY_MS` (15 minutes) of a full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
+ * the closed window, the item limit or switching boards off filters the cached items instead of
+ * refetching. A longer closed window loads only the added days, switching boards on only the
+ * boards; a higher item limit fetches in full. When GitHub's hourly
+ * GraphQL budget runs low, automatic refreshes wait for its reset (`pausedUntil`); ⌘R still works.
+ *
+ * @returns The current state and the actions the UI may call.
+ */
 export function useInbox(): Inbox {
   const [store, setStore] = useState<Persistence | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);

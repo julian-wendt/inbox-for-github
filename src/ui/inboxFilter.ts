@@ -12,7 +12,7 @@ export const ASK_VIEWS: View[] = ["inbox", "done"];
 
 /**
  * Whether an item passes the switch. In the inbox it follows what keeps the item there: "review"
- * holds pull requests whose review request does (asked, reopened or due) or that got pushes
+ * holds pull requests whose review request does (asked or reopened) or that got pushes
  * since the viewer's review, "mention" everything
  * else. Elsewhere it follows what the item was about: a review request to the viewer, or a
  * mention of them. An item about both shows under both.

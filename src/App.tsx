@@ -816,11 +816,6 @@ export default function App() {
   };
   const openBulkTimes = () => setMenu({ entries: bulkTimes(), fit: true, ...paneCenter(), centered: true });
   /**
-   * A status chosen for an item. "Done" means more where it has more to end: an update is
-   * ticked off with a fresh snapshot; an assignment of the table becomes
-   * "my part done", which follows its updates. "Open" on that takes it back into the work.
-   */
-  /**
    * D moved the item into a parked bar of the same table: the selection goes on to the next open
    * row instead of following it down, as when an item leaves the list. A pop-up opened by click
    * closes and leaves nothing selected; one opened by key shows the next row.
@@ -836,6 +831,11 @@ export default function App() {
     }
     if (selection.selected === id) selection.select(open[at + 1] ?? open[at - 1] ?? null);
   };
+  /**
+   * A status chosen for an item. "Done" means more where it has more to end: an update is
+   * ticked off with a fresh snapshot; an assignment of the table becomes
+   * "my part done", which follows its updates. "Open" on that takes it back into the work.
+   */
   const applyStatus = (c: Classified, status: Status, asks?: "keep" | "file") => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
@@ -904,7 +904,7 @@ export default function App() {
     { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
     { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
   ];
-  /** S on an item: the follow-up choices open below its row, also to move the date. */
+  /** F on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {
     if (c.item.closed) return actions.apply(c, "snoozed");
     setSnoozeMenu({ entry: c, ...keyMenuAt(c.item.id) });
@@ -1180,7 +1180,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [openedId, openedUpdatedAt, windowFocused, markSeen]);
 
-  /** G: Assigned to me steps through type, status and repository bars, Created by me switches between status and repository, the lists between time groups and none. */
+  /** ⌘G: Assigned to me steps through type, status and repository bars, Created by me switches between status and repository, the lists between time groups and none. */
   const toggleGrouping = () => {
     if (!table) void saveSettings({ ...settings, groupByTime: !settings.groupByTime });
     else if (bucket === "assigned") setGrouping(ASSIGNED_GROUPINGS[(ASSIGNED_GROUPINGS.indexOf(tableGrouping) + 1) % ASSIGNED_GROUPINGS.length]);

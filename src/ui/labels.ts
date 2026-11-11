@@ -5,7 +5,6 @@ import { lastReplyAt, sameLogin } from "../timeline";
 import { lastOthersActivity, MOVES_UP_DEFAULT, onPlate, type MovesUp } from "./assignments";
 import { dateLocale, lang, t, type Lang } from "./i18n";
 
-/** Titles are getters, so they follow the language set at render time. */
 /**
  * A sidebar view: a bucket, except "involved". What the viewer merely takes part in (commented,
  * edited, or answered long ago) shows nowhere until a mention, review request or assignment.
@@ -17,6 +16,7 @@ export type View = Exclude<Bucket, "involved">;
  * The sidebar views on keys 1–6, in the order of a day's work: what asks for the viewer, what
  * they planned, what they wait on, their assignments, what they opened, and last what is finished.
  */
+/** Titles are getters, so they follow the language set at render time. */
 export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "snoozed", "assigned", "authored", "done"] as const).map((id) => ({
   id,
   get title() {
@@ -255,7 +255,7 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * - Snoozed: when it comes back, else when you snoozed it.
  * - Done: when it was closed or merged on GitHub; else when you answered (your last reply, or
  *   your last review for a review request); else when you marked it done.
- * - Inbox, Watching and the rest: the pending mention, else the last activity by someone else.
+ * - Inbox and the rest: the pending mention, else the last activity by someone else.
  *   After a reopen (`statusReset`, or a stored Open newer than the mention) the mention from
  *   before it is old news: the last activity by someone else, which reopened it, counts.
  *

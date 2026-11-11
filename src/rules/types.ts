@@ -14,7 +14,7 @@ export interface RuleContext {
  *
  * `pendingMention` decides whether the item belongs in the inbox. It returns the mention
  * that still awaits the viewer, or null. When several enabled rules implement it, the first
- * non-null result wins. When a status falls back to "Offen" is a setting, not a rule; see
+ * non-null result wins. When a status falls back to "Open" is a setting, not a rule; see
  * `reopens`.
  *
  * To add a rule, create a file in this folder exporting a `Rule` and list it in `index.ts`.

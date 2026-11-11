@@ -7,7 +7,7 @@ import { lastReplyAt, latest, mentionsOf, sameLogin, type Mention } from "./time
 import { updatesSince, type Update } from "./handoff";
 
 /**
- * Why an item sits in the inbox; "reopened" is a stored "Offen" that revived an answered
+ * Why an item sits in the inbox; "reopened" is a stored "Open" that revived an answered
  * request, set by the viewer (O) or written when a follow-up date passed, "update"
  * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off,
  * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`),
@@ -45,7 +45,7 @@ export interface Classified {
   statusAt: string | null;
   /** Set for a follow-up with a date: when the item comes back on its own. */
   until?: string;
-  /** Set once the viewer finished their part of it ("Mein Teil erledigt"): what happened since, maybe nothing. */
+  /** Set once the viewer finished their part of it ("My part done"): what happened since, maybe nothing. */
   updates?: Update[];
   /** Who last asked the viewer (or one of their teams) for a review, when the activities say. */
   requestedBy?: string;
@@ -59,9 +59,9 @@ export interface Classified {
   repliedBy?: string;
   /** With the "closed" ask: who closed the viewer's item. */
   closedBy?: string;
-  /** The stored status fell back to "Offen" (see `reopens`); the caller should delete it. */
+  /** The stored status fell back to "Open" (see `reopens`); the caller should delete it. */
   statusReset: boolean;
-  /** With `statusReset`: a new assignment ended the status, so the caller deletes it instead of writing "Offen". */
+  /** With `statusReset`: a new assignment ended the status, so the caller deletes it instead of writing "Open". */
   renewed?: boolean;
 }
 
@@ -73,13 +73,13 @@ export interface Classified {
  *    the handoff no longer counts and the item sorts as if no status were stored.
  * 0b. An item closed or merged on GitHub is "done" when it was for the viewer (a review request
  *    or a mention), whatever the stored status says; other closed items show nowhere.
- * 1. A stored "Zurückgestellt" or "Erledigt" wins, unless `reopens` says the item needs the
+ * 1. A stored "Follow-up" or "Done" wins, unless `reopens` says the item needs the
  *    viewer again, or with `reviewOnCommits` someone else pushed to a pull request the viewer
  *    reviewed since; then it is discarded and `statusReset` is set. An item of the tables
  *    snoozes in place instead: it stays in its table until its date, and a mention since adds it
  *    to the inbox without ending the snooze.
  * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
- *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Offen" (an
+ *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Open" (an
  *    explicit reopen, or the one written when a follow-up date passed) counts as a fresh request:
  *    what was answered before it asks again (`reopened`). With `reviewOnCommits`, a push by someone
  *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
@@ -98,7 +98,7 @@ export interface Classified {
  * @param me        The viewer's login.
  * @param stored    The viewer's manual status for this item, if any.
  * @param switches  Rule id → enabled, as returned by `ruleSwitches`.
- * @param reopenOn  What brings a snoozed or done item back to "Offen" (the "reopenOn" setting).
+ * @param reopenOn  What brings a snoozed or done item back to "Open" (the "reopenOn" setting).
  * @param reviewOnCommits  Pushes by others bring a reviewed pull request back (the "reviewOnCommits" setting).
  * @param plannedAt  When the viewer pinned the item for today or planned it for a day (ISO 8601), if they did
  *                   (the "plannedAt" setting); asks from before then do not put it into the inbox.

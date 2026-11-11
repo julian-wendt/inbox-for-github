@@ -7,7 +7,7 @@ import { unreadInInbox } from "../../ui/unread";
 import { InboxSession } from "./session";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
 
-// Scenarios from TESTING.md: "Inbox", "Kommentieren", "Status und Protokoll", "Wiedervorlage".
+// Scenarios from TESTING.md (German headings): Inbox, commenting, status and log, follow-up.
 const sim = simulation();
 
 describe("Inbox", () => {
@@ -279,7 +279,7 @@ describe("Status and log", () => {
   });
 });
 
-describe("Snoozed until a date (Wiedervorlage)", () => {
+describe("Snoozed until a date (Follow-up)", () => {
   it("ends at its time; an item nobody asked the viewer for shows nowhere again", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "alice" });

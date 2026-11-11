@@ -5,8 +5,8 @@ import { groupAuthored } from "../../ui/authored";
 import { rowContext } from "../../ui/labels";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
 
-// Scenarios from TESTING.md: "Mir zugewiesen", "Mir zuweisen", "Zurückstellen in Mir zugewiesen",
-// "Wiedervorlage", "Mein Teil erledigt", "Von mir erstellt".
+// Scenarios from TESTING.md (German headings): assigned to me, assigning yourself, follow-up in the
+// tables, "My part done", created by me.
 const sim = simulation();
 
 describe("Assigned to me", () => {

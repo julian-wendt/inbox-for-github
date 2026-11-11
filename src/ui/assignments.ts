@@ -10,7 +10,7 @@ import type { SnoozeGroup } from "./timeGroups";
  * A bar in the "Assigned to me" table: the work statuses, "blocked" for what is blocked on its
  * board, "later" for the viewer's follow-ups, and "finished" for what is done but still open on GitHub: done on its board, or the viewer's
  * part done. Assignments not opened yet sit in their work status bar, marked as new in their row;
- * so do those pinned for today or planned for a day, with their star or day (Planned lists them).
+ * so do those pinned for today or planned for a day, with their day (Planned lists them).
  */
 export type PlateGroup = "review" | "progress" | "todo" | "blocked" | "later" | "finished";
 
@@ -159,7 +159,7 @@ export function groupPlate(entries: Classified[], statusMap: StatusMap = {}, ord
  * that follows it by default, so a bar added later lands where it belongs in a saved order.
  *
  * @example
- *   orderBars(["review", "focus", "progress", "todo", "later", "finished"]); // "planned" before "later"
+ *   orderBars(["review", "todo", "later", "finished"]); // + "progress" before "todo", "blocked" before "later"
  */
 export function orderBars(order: PlateGroup[]): PlateGroup[] {
   return withSaved(PLATE_GROUPS, order);

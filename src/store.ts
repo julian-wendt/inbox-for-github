@@ -25,7 +25,7 @@ export interface CachedFetch {
   viewer: Viewer;
   items: Item[];
   fetchedAt: Date;
-  /** The last full fetch; later fetches up to an hour on may be deltas (see `canDelta`). */
+  /** The last full fetch; later fetches within 15 minutes may be deltas (see `canDelta`). */
   fullAt?: Date;
   /** The settings the items were fetched for; other settings need a full fetch. */
   scope?: string;
@@ -129,7 +129,7 @@ export interface Settings {
   repoFilters: Record<string, RepoFilter>;
   /** Organization login → names of the repos where review requests that came only through a team are ignored. */
   directOnly: Record<string, string[]>;
-  /** What brings a "Wartet auf andere" or "Erledigt" item back to "Offen". */
+  /** What brings a "Follow-up" or "Done" item back to "Open". */
   reopenOn: Reopen;
   /** A pull request the viewer reviewed comes back into the inbox when someone else pushes to it (see `pushedSinceReview`). */
   reviewOnCommits: boolean;

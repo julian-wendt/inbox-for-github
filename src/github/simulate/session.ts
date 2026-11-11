@@ -231,7 +231,7 @@ export class InboxSession {
     };
   }
 
-  /** The follow-up date the item waits for, which its bell and chip show; null once it is back. */
+  /** The follow-up date the item waits for, which its chip shows; null once it is back. */
   followUp(ref: Ref): string | null {
     return followUpOf(this.entry(ref))?.at ?? null;
   }

@@ -25,7 +25,7 @@ const TICK_MS = 30_000;
 
 /**
  * Draws attention to what needs the viewer: the dock badge shows the number of unread items in
- * the inbox, falling as the viewer opens them, and a native notification fires for each item
+ * the inbox and unread active assignments, falling as the viewer opens them, and a native notification fires for each item
  * that newly enters it.
  *
  * The first result after app start is the baseline, so a restart does not replay the whole
@@ -41,7 +41,7 @@ const TICK_MS = 30_000;
  * check with a schedule only records the baseline, so enabling it replays nothing.
  *
  * @param classified  The current classification; pass an empty list until the first fetch is done.
- * @param unread      Ids the badge counts: unread inbox items (`unreadInInbox`) and items marked unread by hand.
+ * @param unread      Ids the badge counts: unread inbox items (`unreadInInbox`), unread active assignments and items marked unread by hand.
  * @param notify      What may notify and when (see `NotifyOptions`).
  * @param badge       Show the unread count on the dock icon; off clears it.
  * @param onOpen      Called when the viewer clicks a notification, with its item's id, or null

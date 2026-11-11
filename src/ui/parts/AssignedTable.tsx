@@ -46,7 +46,7 @@ interface Props {
   /** How many items match the search, for the bar. */
   searchCount: number;
   searchRef: RefObject<HTMLInputElement | null>;
-  /** "assigned": Assigned to me, with stars, the new mark and the grouping switch. "authored": Created by me, with the opening time. "planned": Planned by day. "snoozed": Follow-up by the day it comes back. */
+  /** "assigned": Assigned to me, with the new mark and the grouping switch. "authored": Created by me, with the opening time. "planned": Planned by day. "snoozed": Follow-up by the day it comes back. */
   mode: "assigned" | "authored" | "planned" | "snoozed";
   /** Planned: the layout menu in the header, list or table. */
   layout?: Layout;
@@ -79,7 +79,7 @@ interface Props {
   /** The status bar selected with the keyboard, if any. */
   selectedBar: TableGroup | null;
   onSelectBar: (group: TableGroup) => void;
-  /** Why an item has a date, if it has one (see `datedOf`): the star, the day after the title and, in Planned, the time at the end follow it. */
+  /** Why an item has a date, if it has one (see `datedOf`): the day after the title and, in Planned, the time at the end follow it. */
   datedOf: (entry: Classified) => Dated | null;
   /** Per pinned item, the day it came into Today; one before `today` marks the row as carried over. */
   pinnedOn: Record<string, string>;

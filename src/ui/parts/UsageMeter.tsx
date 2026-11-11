@@ -1,16 +1,6 @@
 import type { Budget } from "../../github/client";
 import { dateLocale, t } from "../i18n";
 
-/**
- * GitHub's GraphQL budget as a bar with its numbers: points left of the hourly limit, when it is
- * full again, what the last refresh cost and what the refresh interval adds up to per hour.
- *
- * @param usage           From `useInbox().usage`.
- * @param refreshMinutes  The interval setting, for the hourly estimate; 0 is off.
- *
- * @example
- *   <UsageMeter usage={inbox.usage} refreshMinutes={settings.refreshMinutes} />
- */
 /** The meter's lines as plain text, for the ring's tooltip. */
 function usageText({ budget, lastCost }: Usage, refreshMinutes: number): string[] {
   if (!budget) return [t("usage.unknown")];
@@ -52,6 +42,16 @@ export function UsageRing({ usage, refreshMinutes, onClick }: { usage: Usage; re
   );
 }
 
+/**
+ * GitHub's GraphQL budget as a bar with its numbers: points left of the hourly limit, when it is
+ * full again, what the last refresh cost and what the refresh interval adds up to per hour.
+ *
+ * @param usage           From `useInbox().usage`.
+ * @param refreshMinutes  The interval setting, for the hourly estimate; 0 is off.
+ *
+ * @example
+ *   <UsageMeter usage={inbox.usage} refreshMinutes={settings.refreshMinutes} />
+ */
 export function UsageMeter({ usage, refreshMinutes }: { usage: Usage; refreshMinutes: number }) {
   const { budget, lastCost } = usage;
   if (!budget) return <small>{t("usage.unknown")}</small>;

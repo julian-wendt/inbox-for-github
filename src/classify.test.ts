@@ -369,7 +369,7 @@ describe("snooze with a date", () => {
     expect(classify(mentioned, "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-03T00:00:00Z")).asks).toEqual(["mention"]);
   });
 
-  it("asks again on the stored Offen written at its date where something was answered, until the viewer replies", () => {
+  it("asks again on the stored Open written at its date where something was answered, until the viewer replies", () => {
     const back = { status: "open" as const, changedAt: "2026-10-05T09:01:00Z" };
     const answered = item({ comments: [comment("bob", "@me ping", 2), comment(ME, "sure", 3)] });
     expect(classify(answered, "me", back, ruleSwitches())).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
