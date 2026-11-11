@@ -102,6 +102,11 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
     } else if (inFront || !document.hasFocus()) void send(fresh);
   }, [classified, on, reasons, inFront, delivery]);
 
+  // What was collected before switching off is stale once they are on again.
+  useEffect(() => {
+    if (!on && collected.length > 0) change.current((current) => ({ ...current, collected: [] }));
+  }, [on, collected]);
+
   useEffect(() => {
     if (!on || classified.length === 0) return;
     const now = new Date();
