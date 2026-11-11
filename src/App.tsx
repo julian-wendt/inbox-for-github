@@ -635,11 +635,15 @@ export default function App() {
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
     const entry = { id: c.item.id, repo: c.item.repo, number: c.item.number, title: c.item.title, url: c.item.url, at: new Date().toISOString() };
-    void inbox.updateSettings((s) => ({ ...s, untracked: [...s.untracked, entry] }));
+    const steps = [
+      { run: () => void inbox.updateSettings((s) => ({ ...s, untracked: s.untracked.some((u) => u.id === entry.id) ? s.untracked : [...s.untracked, entry] })), undo: () => void inbox.updateSettings((s) => ({ ...s, untracked: s.untracked.filter((u) => u.id !== entry.id) })) },
+      ...unplanStep([c]),
+    ];
+    for (const step of steps) step.run();
     actions.announce(
       t("untrack.done", { number: c.item.number }),
-      () => void inbox.updateSettings((s) => ({ ...s, untracked: s.untracked.filter((u) => u.id !== entry.id) })),
-      () => void inbox.updateSettings((s) => ({ ...s, untracked: s.untracked.some((u) => u.id === entry.id) ? s.untracked : [...s.untracked, entry] })),
+      () => steps.forEach((step) => step.undo()),
+      () => steps.forEach((step) => step.run()),
     );
   };
 
