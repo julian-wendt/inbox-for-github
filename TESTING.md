@@ -396,6 +396,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 ## Mein Teil erledigt (Test-Issue)
 
+- [ ] D in „Mir zugewiesen“ auf einer Zuweisung mit offener Erwähnung öffnet unter der Zeile ein kleines Menü: Enter („Nur mein Teil“) setzt „Mein Teil erledigt“, die Erwähnung bleibt in der Inbox; D („Offene Anfragen auch ablegen“) tut beides in einem Toast und einem Rückgängig; Esc tut nichts. Ohne offene Anfrage wirkt D sofort. Mit Markierten erscheint das Menü einmal für alle.
+
 - [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
       „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Zeit gleich, nicht mitgezählt),
       zusammen mit Items, die auf dem Board fertig sind; eine eigene Leiste dafür gibt es nicht. ⌘Z

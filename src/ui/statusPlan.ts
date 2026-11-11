@@ -72,6 +72,17 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
 }
 
 /**
+ * Whether D on an item first asks what to do with its open asks: it would hand off ("my part
+ * done"), and asks wait in the inbox. Enter then keeps them, D files them too.
+ *
+ * @example
+ *   needsAskChoice(entry, "done", "octocat", "assigned"); // true for an assignment with a mention
+ */
+export function needsAskChoice(c: Classified, status: Status, me: string, view: View): boolean {
+  return c.asks.length > 0 && planStatus(c, status, me, view).do === "hand-off";
+}
+
+/**
  * Why D may change no status of an open item, if so: the viewer opened it. Null for closed items
  * and everything else.
  *

@@ -24,7 +24,7 @@ import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { doneAccess, keepsItsPlan, planStatus } from "./ui/statusPlan";
+import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
@@ -668,7 +668,7 @@ export default function App() {
   };
   const open = marked.filter((c) => !c.item.closed);
   /** What D or O chooses for one item, as a step with an exact undo; null where it would change nothing, as for a single item. */
-  const planStep = (c: Classified, status: Status) => {
+  const planStep = (c: Classified, status: Status, alsoFile = false) => {
     const plan = planStatus(c, status, me, bucket);
     const previous = inbox.statuses.get(c.item.id);
     const undo = () => void inbox.restoreStatus(c.item.id, previous);
@@ -683,7 +683,8 @@ export default function App() {
       case "tick-update":
       case "hand-off": {
         const hand = () => void inbox.setStatus(c.item.id, "done", { handoff: snapshotOf(c.item) });
-        if (plan.do !== "tick-update" || bucket !== "inbox") return { run: hand, undo };
+        const filesToo = plan.do === "tick-update" ? bucket === "inbox" : alsoFile && c.asks.length > 0;
+        if (!filesToo) return { run: hand, undo };
         const filing = fileStep(c);
         return { run: () => (hand(), filing.run()), undo: () => (filing.undo(), undo()) };
       }
@@ -694,21 +695,30 @@ export default function App() {
     }
   };
   /** D or O on the marked items, each as it would be for the item alone (my part done, ticking off an update, back in the work). */
-  const bulkStatus = (status: Status) => {
+  const bulkStatus = (status: Status, asks?: "keep" | "file") => {
+    if (!asks && marked.some((c) => needsAskChoice(c, status, me, bucket))) return setMenu({ entries: askChoiceEntries((choice) => bulkStatus(status, choice)), fit: true, ...paneCenter(), centered: true });
+    const alsoFile = (c: Classified) => asks === "file" && needsAskChoice(c, status, me, bucket);
     const files = (c: Classified) => planStatus(c, status, me, bucket).do === "file";
     const keeps = (c: Classified) => keepsItsPlan(planStatus(c, status, me, bucket));
-    const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status) !== null);
+    const changed = marked.filter((c) => (!c.item.closed || files(c)) && planStep(c, status, alsoFile(c)) !== null);
     const [filed, set] = [changed.filter(files), changed.filter((c) => !files(c))];
-    const steps = [...changed.map((c) => planStep(c, status)!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
+    const steps = [...changed.map((c) => planStep(c, status, alsoFile(c))!), ...(status === "done" ? unplanStep(set.filter((c) => !keeps(c))) : [])];
     const blocked = open.filter((c) => planStatus(c, status, me, bucket).do === "blocked").length;
     if (steps.length === 0) return blocked > 0 ? actions.notify(t("marks.blocked", { count: blocked })) : undefined;
+    const [both, plain] = [set.filter(alsoFile), set.filter((c) => !alsoFile(c))];
     const parts = [
-      ...(set.length > 0 ? [plural("marks.toastOne", "marks.toast", set.length, { status: t(`status.${status}`) })] : []),
+      ...(plain.length > 0 ? [plural("marks.toastOne", "marks.toast", plain.length, { status: t(`status.${status}`) })] : []),
+      ...(both.length > 0 ? [plural("marks.handedFiledOne", "marks.handedFiled", both.length)] : []),
       ...(filed.length > 0 ? [plural("marks.filedOne", "marks.filed", filed.length)] : []),
       ...(blocked > 0 ? [t("marks.blocked", { count: blocked })] : []),
     ];
     bulk(parts.join(" · "), steps);
   };
+  /** The choice D offers where open asks wait in the inbox: Enter keeps them, D files them with it. */
+  const askChoiceEntries = (choose: (asks: "keep" | "file") => void): MenuEntry[] => [
+    { label: t("askChoice.keep"), hint: t("hint.askChoice.keep"), onSelect: () => choose("keep") },
+    { label: t("askChoice.file"), hint: t("hint.askChoice.file"), keys: "D", onSelect: () => choose("file") },
+  ];
   /** The text for one item or for several: `one` takes no count. */
   const plural = (one: MessageKey, many: MessageKey, count: number, params: Record<string, string | number> = {}) => t(count === 1 ? one : many, { count, ...params });
   const hasFollowUp = (c: Classified) => c.status === "snoozed";
@@ -799,10 +809,11 @@ export default function App() {
    * ticked off with a fresh snapshot; an assignment of the table becomes
    * "my part done", which follows its updates. "Open" on that takes it back into the work.
    */
-  const applyStatus = (c: Classified, status: Status) => {
+  const applyStatus = (c: Classified, status: Status, asks?: "keep" | "file") => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
     const plan = planStatus(c, status, me, bucket);
+    if (!asks && needsAskChoice(c, status, me, bucket)) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...keyMenuAt(id) });
     if (plan.do === "file") {
       const step = fileStep(c);
       step.run();
@@ -810,12 +821,12 @@ export default function App() {
     }
     // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
     const ends = status === "done" && !keepsItsPlan(plan) ? unplanStep([c]) : [];
-    const change = (text: string, run: () => void) => {
+    const change = (text: string, run: () => void, undoMore?: () => void) => {
       const again = () => (run(), ends.forEach((s) => s.run()));
       again();
       actions.announce(
         replacing(text, ends.length > 0 ? endedPlan(c) : null),
-        () => (void inbox.restoreStatus(id, previous), ends.forEach((s) => s.undo()), ends.length > 0 && selection.select(id)),
+        () => (undoMore?.(), void inbox.restoreStatus(id, previous), ends.forEach((s) => s.undo()), ends.length > 0 && selection.select(id)),
         again,
       );
     };
@@ -827,8 +838,11 @@ export default function App() {
         const filing = fileStep(c);
         return change(t("toast.updateDone", { number }), bucket === "inbox" ? () => (hand(), filing.run()) : hand);
       }
-      case "hand-off":
-        return change(t("toast.handedOff", { number }), hand);
+      case "hand-off": {
+        if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
+        const filing = fileStep(c);
+        return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
+      }
       case "clear":
         return change(t(bucket === "snoozed" ? "toast.reminderRemoved" : "toast.filed", { number }), () => void inbox.clearStatus(id));
       case "blocked":

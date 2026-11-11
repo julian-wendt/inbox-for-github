@@ -3,7 +3,7 @@ import { classify, type Classified } from "../classify";
 import type { Item } from "../model";
 import { ruleSwitches } from "../rules";
 import type { View } from "./labels";
-import { doneAccess, keepsItsPlan, planStatus } from "./statusPlan";
+import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./statusPlan";
 
 const ME = "me";
 
@@ -118,5 +118,18 @@ describe("keepsItsPlan", () => {
     expect(keepsItsPlan({ do: "hand-off" })).toBe(true);
     expect(keepsItsPlan({ do: "tick-update" })).toBe(true);
     expect(keepsItsPlan({ do: "set", status: "done" })).toBe(false);
+  });
+});
+
+describe("needsAskChoice", () => {
+  const ask = (c: Classified, view: View) => needsAskChoice(c, "done", ME, view);
+  it("asks where D hands off and asks are open", () => {
+    expect(ask(entry({}, ["mention"]), "assigned")).toBe(true);
+    expect(ask(entry({}, ["mention"]), "planned")).toBe(true);
+  });
+  it("acts at once without asks, outside the hand-off or for other statuses", () => {
+    expect(ask(entry({}), "assigned")).toBe(false);
+    expect(ask(entry({}, ["mention"]), "inbox")).toBe(false);
+    expect(needsAskChoice(entry({}, ["mention"]), "open", ME, "assigned")).toBe(false);
   });
 });

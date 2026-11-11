@@ -16,7 +16,10 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   ends on GitHub. Only the inbox files asks, updates and closings by others. Planned: as in the item's home view. Follow-up: D ends the follow-up. Done: nothing. O
   still takes a finished part back into the work. Supersedes the ask-based D rule of this day ("D
   on an item of a table first files what asks for you, and only then ends your part") and the D
-  entries of 2026-11-06 and 2026-11-02.
+  entries of 2026-11-06 and 2026-11-02. D on an assignment with open asks asks first, like F: Enter
+  is "only my part" (the asks stay in the inbox), D also files them, Esc does nothing. The inbox
+  stays the place where asks are handled, but D D clears both in one go; with marks the choice is
+  asked once for all.
 - **D on an item of a table first files what asks for you, and only then ends your part.** One
   predictable rule instead of a case per ask kind: a mention, review request, feedback, thread
   answer or closing by another is filed ("filed": the ask counts as handled, the item leaves the
