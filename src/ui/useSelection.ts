@@ -8,8 +8,8 @@ import { useCallback, useEffect, useState } from "react";
  * to the top. That successor is chosen in the same render the list changes in, so whatever shows
  * the selection (the detail, its pop-up) never sees a frame without one.
  *
- * An id selected before it is in the list (a restored item that is still on its way back) is kept
- * as wanted and selected once it appears; the successor stands in meanwhile.
+ * An id chosen with `select` stays wanted until it is in the list, since the caller's list may be
+ * a render behind (a restored item is still on its way back); the successor stands in meanwhile.
  *
  * @param ids     The selectable ids in order.
  * @param header  Ids that only head a group (e.g. "bar:…"); a vanished item is followed by the
@@ -32,7 +32,7 @@ export function useSelection(ids: string[], header: (id: string) => boolean = ()
   }, [ids, selected, chosen, found]);
 
   const select = useCallback(
-    (id: string | null) => setChosen((current) => (id ? { id, index: Math.max(0, ids.indexOf(id)), wanted: !ids.includes(id) } : { id: null, index: current.index, none: true })),
+    (id: string | null) => setChosen((current) => (id ? { id, index: Math.max(0, ids.indexOf(id)), wanted: true } : { id: null, index: current.index, none: true })),
     [ids],
   );
 
