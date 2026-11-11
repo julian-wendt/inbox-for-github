@@ -8,6 +8,9 @@ import { useCallback, useEffect, useState } from "react";
  * to the top. That successor is chosen in the same render the list changes in, so whatever shows
  * the selection (the detail, its pop-up) never sees a frame without one.
  *
+ * An id selected before it is in the list (a restored item that is still on its way back) is kept
+ * as wanted and selected once it appears; the successor stands in meanwhile.
+ *
  * @param ids     The selectable ids in order.
  * @param header  Ids that only head a group (e.g. "bar:…"); a vanished item is followed by the
  *                next item, not by a header, so an open detail stays open.
@@ -16,20 +19,20 @@ import { useCallback, useEffect, useState } from "react";
  *   selected id is a successor standing in for one that left the list.
  */
 export function useSelection(ids: string[], header: (id: string) => boolean = () => false) {
-  const [chosen, setChosen] = useState<{ id: string | null; index: number; none?: boolean }>({ id: ids[0] ?? null, index: 0 });
+  const [chosen, setChosen] = useState<{ id: string | null; index: number; none?: boolean; wanted?: boolean }>({ id: ids[0] ?? null, index: 0 });
   const found = chosen.id ? ids.indexOf(chosen.id) : -1;
   const selected = chosen.none ? null : found >= 0 ? chosen.id : successor(ids, chosen, header);
 
   // Remembers where the selection sits, so the next change of the list finds its successor.
   useEffect(() => {
     const index = selected ? ids.indexOf(selected) : -1;
-    if (chosen.none || (selected === chosen.id && (index < 0 || index === chosen.index))) return;
+    if (chosen.none || (chosen.wanted && found < 0) || (selected === chosen.id && (index < 0 || index === chosen.index))) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bookkeeping only; what renders is derived above
     setChosen({ id: selected, index: index >= 0 ? index : chosen.index });
-  }, [ids, selected, chosen]);
+  }, [ids, selected, chosen, found]);
 
   const select = useCallback(
-    (id: string | null) => setChosen((current) => (id ? { id, index: Math.max(0, ids.indexOf(id)) } : { id: null, index: current.index, none: true })),
+    (id: string | null) => setChosen((current) => (id ? { id, index: Math.max(0, ids.indexOf(id)), wanted: !ids.includes(id) } : { id: null, index: current.index, none: true })),
     [ids],
   );
 
