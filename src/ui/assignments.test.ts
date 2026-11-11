@@ -253,6 +253,10 @@ describe("hasNewActivity", () => {
     expect(hasNewActivity(entry("b", { statusAt: null }, { createdAt: "2026-10-06T00:00:00Z", ...comment("2026-10-05T00:00:00Z") }), new Map(), "me")).toBe(false);
   });
 
+  it("shows no news on a never-opened item that was never assigned to the viewer", () => {
+    expect(hasNewActivity(entry("p", { statusAt: null }, { reasons: ["mentioned"], ...comment("2026-10-05T00:00:00Z") }), new Map(), "me")).toBe(false);
+  });
+
   it("counts from the last visit when there is one", () => {
     expect(hasNewActivity(entry("c", {}, comment("2026-10-05T00:00:00Z")), new Map([["c", "2026-10-07T00:00:00Z"]]), "me")).toBe(false);
   });
