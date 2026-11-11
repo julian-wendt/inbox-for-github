@@ -438,7 +438,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
           {section === "rules" && (
             <>
               <Field label={t("settings.reopen")} hint={t(`settings.reopen.${reopenOn}Hint`)}>
-                <Choice options={REOPEN} value={reopenOn}label={(id) => t(`settings.reopen.${id}`)} onChange={(next) => change({ reopenOn: next })} />
+                <Choice options={REOPEN} value={reopenOn} label={(id) => t(`settings.reopen.${id}`)} onChange={(next) => change({ reopenOn: next })} />
               </Field>
               <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">

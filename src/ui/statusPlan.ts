@@ -26,23 +26,22 @@ export type StatusPlan =
  * view is for:
  *
  * - Inbox (someone wants something from the viewer): D files the item's asks ("file": the
- *    "filedAt" setting; the asks go, the item leaves the inbox, its status stays). Only a
- *    "reopened" ask is cleared instead ("clear"). An "update" ask is ticked off ("tick-update")
- *    and the other asks are filed with it; so is the "closed" ask of an own item someone else
- *    closed. Only the inbox files asks. An item outside the tables (neither assigned to the
- *    viewer nor opened by them) just becomes done ("set").
+ *   "filedAt" setting; the asks go, the item leaves the inbox, its status stays). Only a
+ *   "reopened" ask is cleared instead ("clear"). An "update" ask is ticked off ("tick-update")
+ *   and the other asks are filed with it; so is the "closed" ask of an own item someone else
+ *   closed. Only the inbox files asks. An item outside the tables (neither assigned to the
+ *   viewer nor opened by them) just becomes done ("set").
  * - Assigned to me (the viewer's own work): D is "my part done" ("hand-off"), whatever asks the
- *    item has; those stay in the inbox until filed there. A finished part gets "none", also
- *    with an update waiting in the inbox.
+ *   item has; those stay in the inbox until filed there. A finished part gets "none", also
+ *   with an update waiting in the inbox.
  * - Created by me (monitoring): no D ("blocked", hidden): asks are filed in the inbox, and the
- *    item ends on GitHub (see `lockOf`).
+ *   item ends on GitHub (see `lockOf`).
  * - Planned: as in the item's home view, an assignment as in Assigned to me, an own item as in
- *    Created by me, anything else becomes done.
+ *   Created by me, anything else becomes done.
  * - Follow-up: D ends the follow-up ("clear"); the item returns where it came from.
  * - Done: "none".
  *
- * "Open" on an item whose
- * part is done takes it back into the work ("resume").
+ * "Open" on an item whose part is done takes it back into the work ("resume").
  *
  * @param c       The item as classified.
  * @param status  The status the viewer chose.

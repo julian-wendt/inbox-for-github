@@ -383,8 +383,7 @@
   color: var(--text-muted);
 }
 
-/* Above the overlays (30), so it stays sharp over the pop-up detail and dialogs; under menus (40). */
-/* Centered over the list and detail, or the table: the window right of the sidebar. */
+/* Centered right of the sidebar; above the overlays (30), under menus (40). */
 .toast {
   position: fixed;
   bottom: 20px;

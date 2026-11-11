@@ -228,6 +228,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       das Badge am Dock sinkt um eins. Das Badge zählt nur, was wieder oder noch zu tun ist: ungelesene Inbox-Items und ungelesene Zuweisungen (ohne die Leisten Blockiert, Wiedervorlage und Fertig); ein mit U markiertes Item in Wiedervorlage oder Erledigt zählt nicht. Ein neuer Beitrag eines anderen macht sie wieder fett.
       Die Zeit zählt nur bei vorderem Fenster: zu einer anderen App wechseln stoppt sie und
       beginnt beim Zurückkommen von vorn; schnelles Durchblättern mit ↑/↓ liest nichts.
+- [ ] Punkt für Neues: Ein nie geöffnetes Item mit einem Beitrag nach der Zuweisung oder Eröffnung
+      hat den blauen Punkt, eines ohne Zuweisung an dich (Geplant) nie; eine neue Zuweisung
+      zeigt ihn auch, der Tooltip nennt den Grund. Nur was der Verlauf im Detail zeigt, zählt.
+- [ ] Bei einem Item, das du eröffnet hast, zeigt der Verlauf jede Zuweisung („bob hat sich
+      zugewiesen“, „alice hat bob zugewiesen“); eine Zuweisung durch andere macht den Punkt an.
 - [ ] Ansicht in der Seitenleiste samt Zahl ist fett, solange sie Ungelesenes hat; Geplant,
       Erledigt und Von mir erstellt nie.
 - [ ] U oder R auf einem gelesenen Item macht es ungelesen (fett, Badge +1), auch direkt nach dem Öffnen;
@@ -281,7 +286,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       steht unter „Zugewiesen“.
 - [ ] Rechts in der Zeile nur das Alter („3W“), Tooltip „Eröffnet am …“; kein Avatar. Sortiert nach
       Eröffnung, der Sortierknopf dreht das.
-- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. D erledigt dort nichts: auf einem eigenen PR, einem eigenen Issue ohne weiteren Zuständigen oder ohne dich als Zuständigen sagt eine Meldung, dass es auf GitHub noch offen ist (schließen oder mergen dort, oder F). Hat ein eigenes Issue außer dir einen weiteren Zuständigen, wird D zu „Mein Teil erledigt“. Ein wieder geöffnetes eigenes Item legt D ab, ohne es zu verstecken. Mit Markierten überspringt D diese und nennt, wie viele.
+- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. Hier gibt es kein D: weder Zeile, Kontextmenü noch ⌘K bieten es an, ein eigener PR oder ein eigenes Issue endet auf GitHub (schließen oder mergen dort, oder F). Was nach dir fragt (Erwähnung, Feedback, Wiedereröffnung), legst du in der Inbox mit D ab. Mit Markierten überspringt D diese Items und nennt, wie viele.
 
 ## Mir zugewiesen
 
@@ -572,6 +577,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       `docs/reference/orca.md`).
 - [ ] Ein Repo, das erst in Orca hinzugefügt wird, bekommt den Eintrag spätestens eine Minute
       nach dem Zurückwechseln in die App.
+
+## Hinweise und Menüs
+
+- [ ] Der Hinweis (Toast) steht mittig über Liste und Detail beziehungsweise der Tabelle, rechts der Seitenleiste, nicht mittig im Fenster.
+- [ ] Die Menüs (Status, Plan, Wiedervorlage, Rückfrage bei D) sind größer und stehen mittig im Bereich rechts der Seitenleiste.
 
 ## Hilfe und Token
 

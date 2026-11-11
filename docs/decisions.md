@@ -4,6 +4,10 @@ Short records of product decisions whose reason is not obvious from the code. Ne
 
 ## 2026-11-11
 
+- **The news dot counts only activity the detail shows.** An item never opened counts from its
+  last status change, else from when it was assigned to you or opened by you; an item that is
+  neither shows no dot. On your own items the timeline shows every assignment, so someone taking
+  one on counts as news.
 - **D means one thing per view.** The views have different intents: the inbox is where someone
   wants something from you, Assigned to me is your own work (a review request there is only a
   review), Created by me is monitoring whether your items move. D follows the intent. Inbox: D
@@ -13,21 +17,15 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   done. Assigned to me: D is "my part done" whatever asks the item has, and those asks stay in
   the inbox until filed there, so the item shows in both; a second D shows a hint instead of
   doing nothing. Created by me: no D at all; its asks are filed in the inbox, and an own item
-  ends on GitHub. Only the inbox files asks, updates and closings by others. Planned: as in the item's home view. Follow-up: D ends the follow-up. Done: nothing. O
-  still takes a finished part back into the work. Supersedes the ask-based D rule of this day ("D
+  ends on GitHub. Only the inbox files asks, updates and closings by others. Planned: as in the
+  item's home view. Follow-up: D ends the follow-up. Done: nothing. O still takes a finished part back into the work. Supersedes the ask-based D rule of this day ("D
   on an item of a table first files what asks for you, and only then ends your part") and the D
   entries of 2026-11-06 and 2026-11-02. D on an assignment with open asks asks first, like F: Enter
   is "only my part" (the asks stay in the inbox), D also files them, Esc does nothing. The inbox
   stays the place where asks are handled, but D D clears both in one go; with marks the choice is
   asked once for all.
-- **D on an item of a table first files what asks for you, and only then ends your part.** One
-  predictable rule instead of a case per ask kind: a mention, review request, feedback, thread
-  answer or closing by another is filed ("filed": the ask counts as handled, the item leaves the
-  inbox, its status stays); only "reopened" clears the stored Open. With nothing asking, D on an
-  assignment is "my part done"; on an own item it does nothing. D with an ask means "seen and
-  handled", not "my work is finished". Items of others keep D = done, also with a mention.
-  Supersedes the D entries of 2026-11-06 and 2026-11-02 where an assignment with a mention,
-  review request or only "reopened" ask got "my part done" on D.
+- **D on an item of a table first files what asks for you, and only then ends your part.**
+  Replaced the same day by "D means one thing per view" above.
 - **The calendar is a record of what was done when, so only the user removing a plan deletes its
   event.** X (single or on marks) and T switching a Today pin off delete it; D, a follow-up, the
   item closing on GitHub and dropping it from the app end the plan but leave the event, and only
