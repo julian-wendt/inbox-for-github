@@ -1,6 +1,6 @@
 import { Command } from "cmdk";
 import { motion } from "motion/react";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Classified } from "../../classify";
 import type { Status } from "../../model";
 import { t } from "../i18n";
@@ -70,6 +70,17 @@ interface Props {
 export function CommandPalette(props: Props) {
   const list = useRef<HTMLDivElement>(null);
   useGutter(() => list.current);
+  const { onClose } = props;
+  // In the capture phase on the window, so Esc closes only the palette, wherever the focus is, and never reaches the app's own Esc.
+  useEffect(() => {
+    const close = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", close, true);
+    return () => window.removeEventListener("keydown", close, true);
+  }, [onClose]);
   const run = (action: () => void) => () => {
     noteInput("palette");
     props.onClose();
@@ -85,7 +96,7 @@ export function CommandPalette(props: Props) {
         transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <Command loop onKeyDown={(e) => e.key === "Escape" && props.onClose()}>
+        <Command loop>
           <Command.Input autoFocus placeholder={t("palette.placeholder")} onValueChange={() => list.current?.scrollTo({ top: 0 })} />
           <Command.List ref={list}>
             <Command.Empty>{t("palette.empty")}</Command.Empty>
