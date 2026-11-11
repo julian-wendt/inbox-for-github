@@ -2,6 +2,20 @@ import type { Activity, Item, StatusChange } from "../model";
 import type { MessageKey } from "./i18n";
 import { isBot, posts, sameLogin } from "../timeline";
 
+/**
+ * Whether the detail's timeline shows an activity: see `shownActivities`. What counts as news
+ * (the blue dot, moving up) uses the same test, so news is always something the viewer can see.
+ *
+ * @example
+ *   isShownActivity({ kind: "assigned", at, actor: "bob", assignee: "bob" }, "octocat"); // false
+ */
+export function isShownActivity(a: Activity, me: string): boolean {
+  if (a.kind === "assigned" || a.kind === "unassigned") return sameLogin(a.assignee, me) || sameLogin(a.actor, me);
+  if (a.kind === "review-requested" || a.kind === "review-request-removed") return sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:");
+  if (a.kind === "reviewed") return !isBot(a.actor);
+  return true;
+}
+
 /** An activity to show, with how many commits it stands for when it groups several. */
 export interface ShownActivity {
   activity: Activity;
@@ -28,12 +42,7 @@ export interface ShownActivity {
  *   // [{ activity: { kind: "commit", at: "…" }, count: 3 }, …]
  */
 export function shownActivities(item: Pick<Item, "activities">, me: string, posts: string[]): ShownActivity[] {
-  const relevant = item.activities.filter((a) => {
-    if (a.kind === "assigned" || a.kind === "unassigned") return sameLogin(a.assignee, me) || sameLogin(a.actor, me);
-    if (a.kind === "review-requested" || a.kind === "review-request-removed") return sameLogin(a.reviewer, me) || a.reviewer.startsWith("team:");
-    if (a.kind === "reviewed") return !isBot(a.actor);
-    return true;
-  });
+  const relevant = item.activities.filter((a) => isShownActivity(a, me));
   const shown: ShownActivity[] = [];
   for (const activity of relevant) {
     const last = shown.at(-1);

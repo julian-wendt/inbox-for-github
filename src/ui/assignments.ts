@@ -1,6 +1,7 @@
 import type { Classified } from "../classify";
 import type { Item, Status, StoredStatus } from "../model";
 import { isBot, latest, posts, sameLogin } from "../timeline";
+import { isShownActivity } from "./activities";
 import { workStatus, type StatusMap } from "../workStatus";
 import type { AuthoredGroup } from "./authored";
 import type { SnoozeGroup } from "./timeGroups";
@@ -120,6 +121,7 @@ export const MOVES_UP_DEFAULT: MovesUp = { commits: false, events: true, bots: f
 export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MOVES_UP_DEFAULT): string | null {
   const byOther = (login: string) => !sameLogin(login, me) && (counted.bots || !isBot(login));
   const counts = (a: Item["activities"][number]) => {
+    if (!isShownActivity(a, me)) return false;
     if (a.kind === "commit") return counted.commits;
     return byOther(a.actor) && (a.kind === "reviewed" || counted.events);
   };

@@ -257,3 +257,11 @@ describe("hasNewActivity", () => {
     expect(hasNewActivity(entry("c", {}, comment("2026-10-05T00:00:00Z")), new Map([["c", "2026-10-07T00:00:00Z"]]), "me")).toBe(false);
   });
 });
+
+describe("lastOthersActivity", () => {
+  it("leaves out what the detail does not show, as someone else assigning themselves", () => {
+    const item = entry("a", {}, { author: "me", activities: [{ kind: "assigned", at: "2026-10-05T00:00:00Z", actor: "bob", assignee: "bob" }] }).item;
+    expect(lastOthersActivity(item, "me")).toBeNull();
+    expect(hasNewActivity(entry("a", { statusAt: null }, { author: "me", activities: item.activities }), new Map(), "me")).toBe(false);
+  });
+});
