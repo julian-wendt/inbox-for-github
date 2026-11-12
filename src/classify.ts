@@ -66,6 +66,8 @@ export interface Classified {
   postedBy?: string;
   /** When each ask in `asks` came up, where it has a time (board moves and new pull requests have none); see `newestAsk`. */
   asked: Partial<Record<Ask, string>>;
+  /** The ask that brought the item back after the viewer had handled it, for its history; none for O, which the history has already. */
+  back?: { ask: Ask; at: string };
 }
 
 /**
@@ -162,7 +164,8 @@ export function classify(
   if (item.closed) {
     const closer = own && askRules.ownClosed ? closedByOther(item, me) : null;
     if (closer && closer.at > (handledUntil ?? "")) {
-      return { item, mention: null, statusAt: stored?.changedAt ?? null, bucket: "inbox", status: "done", answered: null, asks: ["closed"], asked: { closed: closer.at }, closedBy: closer.by };
+      const back = handledUntil ? { back: { ask: "closed" as const, at: closer.at } } : {};
+      return { item, mention: null, statusAt: stored?.changedAt ?? null, bucket: "inbox", status: "done", answered: null, asks: ["closed"], asked: { closed: closer.at }, closedBy: closer.by, ...back };
     }
     const forMe = item.reasons.includes("review") || mentionsOf(item, me).length > 0;
     return { item, mention: null, statusAt: stored?.changedAt ?? null, bucket: forMe ? "done" : "involved", status: "done", answered: null, asks: [], asked: {} };
@@ -217,8 +220,10 @@ export function classify(
   const shown = { ...(parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result), asked };
 
   if (fresh.length > 0) {
+    const newest = newestAsk({ asks: fresh.filter((ask) => ask !== "opened"), asked });
     return {
       ...shown,
+      ...(handled && newest && newest.at > handled && { back: newest }),
       bucket: "inbox",
       status: waiting ? "snoozed" : "open",
       answered: null,
@@ -276,7 +281,9 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   const bucket: Bucket = asks.length > 0 ? "inbox" : open && assigned ? "assigned" : "involved";
   const waits = open && stored.status === "snoozed" && !snoozeEnded(stored, now);
   const asked = timesOf(asks, (ask) => (ask === "update" ? updatedAt : ask === "review" ? request?.at : ask === "mention" ? mention?.at : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : ask === "due" ? dueAt : undefined));
-  return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), mention, answered: null, asks, asked, statusAt: since, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
+  // Asks from before the hand-off were there already; only news and a due follow-up bring it back.
+  const back = newestAsk({ asks: asks.filter((ask) => ask === "update" || ask === "due"), asked });
+  return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), mention, answered: null, asks, asked, ...(back && { back }), statusAt: since, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
 }
 
 /** The last time the viewer, or one of their teams, was asked for a review, as the activities record it. */

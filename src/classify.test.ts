@@ -169,8 +169,9 @@ describe("manual status", () => {
     comments: [comment("alice", "@me q", 2), comment("bob", "fixed it", 6)],
   });
 
-  it("brings a done item into the inbox on a later mention, without a write", () => {
-    expect(run(mentionedAgain, done(4))).toMatchObject({ bucket: "inbox", status: "open", asks: ["mention"] });
+  it("brings a done item into the inbox on a later mention, without a write, and names it as what brought it back", () => {
+    expect(run(mentionedAgain, done(4))).toMatchObject({ bucket: "inbox", status: "open", asks: ["mention"], back: { ask: "mention", at: "2026-10-06T00:00:00Z" } });
+    expect(run(mentionedAgain).back).toBeUndefined();
   });
 
   it("keeps done for mentions before the status change", () => {

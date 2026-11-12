@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupByType, isNewAssignment, assignedAt } from "../../ui/assignments";
-import { historyText } from "../../ui/activities";
+import { backChange, historyText } from "../../ui/activities";
 import { groupAuthored } from "../../ui/authored";
 import { rowContext } from "../../ui/labels";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
@@ -474,7 +474,7 @@ describe("Follow-ups", () => {
     expect(label).not.toMatch(/snooze|follow|reminder|ended|due/i);
   });
 
-  it("writes nothing to the item's log when the follow-up comes due", async () => {
+  it("writes nothing to the item's log when the follow-up comes due, and names it in the history", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
     await app.refresh();
@@ -484,6 +484,9 @@ describe("Follow-ups", () => {
     app.classified();
 
     expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed"]);
+    expect(historyText(backChange(app.entry(issue))!)).toBe("history.back.due");
+    app.done(issue);
+    expect(backChange(app.entry(issue))).toBeNull();
   });
 
   it("files the returned item with D without finishing it: it leaves the inbox and stays in its table", async () => {

@@ -1,3 +1,4 @@
+import type { Ask, Classified } from "../classify";
 import type { Activity, Item, StatusChange } from "../model";
 import type { MessageKey } from "./i18n";
 import { isBot, posts, sameLogin } from "../timeline";
@@ -73,11 +74,37 @@ function sameRun(a: Activity, b: Activity): boolean {
  * @example
  *   historyText({ status: "done", at: "…", automatic: false }); // "history.done" → "You marked it as done"
  *   historyText({ status: "open", at: "…", automatic: true, source: "auto:snooze-ended" }); // "history.due" → "Follow-up came due"
+ *   historyText(backChange(entry)!); // "history.back.mention" → "Back in the inbox: a new mention"
  */
 export function historyText(change: StatusChange): MessageKey {
   if (!change.automatic) return `history.${change.status}`;
-  const auto: Record<string, MessageKey> = { "auto:snooze-ended": "history.due", "auto:locked": "history.unlocked", "auto:reassigned": "history.reassigned", "auto:legacy-done": "history.legacyDone" };
+  const auto: Record<string, MessageKey> = { "auto:snooze-ended": "history.due", "auto:locked": "history.unlocked", "auto:reassigned": "history.reassigned", "auto:legacy-done": "history.legacyDone", ...BACK };
   return auto[change.source ?? ""] ?? "history.reopened";
+}
+
+const BACK: Record<`back:${Exclude<Ask, "opened">}`, MessageKey> = {
+  "back:mention": "history.back.mention",
+  "back:review": "history.back.review",
+  "back:commits": "history.back.commits",
+  "back:feedback": "history.back.feedback",
+  "back:reply": "history.back.reply",
+  "back:reopened": "history.back.reopened",
+  "back:post": "history.back.post",
+  "back:due": "history.back.due",
+  "back:update": "history.back.update",
+  "back:closed": "history.back.closed",
+};
+
+/**
+ * The line the history shows for the ask that brought an item back into the inbox (see
+ * `Classified.back`), at that ask's time. Nothing is stored for it: it follows the
+ * classification, so it goes once the ask is handled.
+ *
+ * @example
+ *   backChange(entry); // { status: "open", at: "2026-11-10T09:00:00Z", automatic: true, source: "back:due" }
+ */
+export function backChange({ back }: Pick<Classified, "back">): StatusChange | null {
+  return back ? { status: "open", at: back.at, automatic: true, source: `back:${back.ask}` } : null;
 }
 
 /**
