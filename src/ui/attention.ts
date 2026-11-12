@@ -27,6 +27,9 @@ export function arrivals(classified: Classified[], known: ReadonlyMap<string, st
 
 const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
 
+/** The bar at the top of the inbox that holds the items that ring (see `ringing`); its fold state is stored as "inbox:ringing". */
+export const RINGING_GROUP = "ringing";
+
 /**
  * Whether an item's follow-up rings: "Remind me" is on and it asks as due (see `Classified.notify`).
  *

@@ -10,6 +10,7 @@ import { VIEWS, type View } from "./ui/labels";
 import { datedOf } from "./ui/plan";
 import { doneAccess } from "./ui/statusPlan";
 import { inDoneBar } from "./ui/doneBar";
+import { dueReminders, ringing } from "./ui/attention";
 
 // Walks the table in docs/reference/behaviour.md, one describe per rule.
 const ME = "octocat";
@@ -666,6 +667,72 @@ describe("rule 7: news by someone else makes an item unread; an unassignment is 
     { situation: "someone else assigns another person: news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.assign(i, "alice", "carol"))).toBe(true) },
     { situation: "someone else removes another assignee: no news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.unassign(i, "alice", "bob"))).toBe(false) },
     { situation: "someone else removes me: no news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.unassign(i, "alice", ME))).toBe(false) },
+  ]);
+});
+
+describe("rule 8: a follow-up with Remind me rings once when it comes due and stands in the Reminders bar", () => {
+  /** An own pull request reviewed by bob, waiting a day for a follow-up, with or without Remind me. */
+  async function waitingOnReview(world: GitHubSimulator, app: InboxSession, notify: boolean): Promise<Ref> {
+    const pr = world.pullRequest({ author: ME });
+    world.requestReview(pr, ME, "bob");
+    await app.refresh();
+    app.snooze(pr, later(world, DAY), notify);
+    return pr;
+  }
+  walk([
+    {
+      situation: "an own pull request with Remind me: waits in Created by me, then rings in the inbox",
+      run: async (world, app) => {
+        const pr = await waitingOnReview(world, app, true);
+        expect(ringing(app.entry(pr))).toBe(false);
+        expect(viewsOf(app.entry(pr))).toEqual(["snoozed", "authored"]);
+        world.advance(2 * DAY);
+        expect(ringing(app.entry(pr))).toBe(true);
+        expect(viewsOf(app.entry(pr))).toEqual(["inbox", "authored"]);
+      },
+    },
+    {
+      situation: "a plain follow-up comes due quietly",
+      run: async (world, app) => {
+        const pr = await waitingOnReview(world, app, false);
+        world.advance(2 * DAY);
+        expect(app.entry(pr).asks).toEqual(["due"]);
+        expect(ringing(app.entry(pr))).toBe(false);
+      },
+    },
+    {
+      situation: "it notifies once, and at start only when it came due after the last fetch",
+      run: async (world, app) => {
+        const pr = await waitingOnReview(world, app, true);
+        const lastFetch = world.now.toISOString();
+        world.advance(2 * DAY);
+        const now = [app.entry(pr)];
+        expect(dueReminders(now, null, lastFetch)).toHaveLength(1);
+        expect(dueReminders(now, null, world.now.toISOString())).toHaveLength(0);
+        expect(dueReminders(now, new Set([pr.id]), null)).toHaveLength(0);
+      },
+    },
+    {
+      situation: "D files it: out of the inbox and the bar, into the Done bar",
+      run: async (world, app) => {
+        const pr = await waitingOnReview(world, app, true);
+        world.advance(2 * DAY);
+        app.done(pr);
+        expect(ringing(app.entry(pr))).toBe(false);
+        expect(viewsOf(app.entry(pr))).toEqual(["authored", "done"]);
+      },
+    },
+    {
+      situation: "Later sets the follow-up anew, with Remind me",
+      run: async (world, app) => {
+        const pr = await waitingOnReview(world, app, true);
+        world.advance(2 * DAY);
+        app.snooze(pr, later(world, HOUR), true);
+        expect(app.entry(pr)).toMatchObject({ status: "snoozed", notify: true, asks: [] });
+        world.advance(2 * HOUR);
+        expect(ringing(app.entry(pr))).toBe(true);
+      },
+    },
   ]);
 });
 

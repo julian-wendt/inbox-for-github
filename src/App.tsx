@@ -58,6 +58,7 @@ import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
 import { DONE_GROUP, handledAt, inDoneBar } from "./ui/doneBar";
+import { RINGING_GROUP, ringing } from "./ui/attention";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -299,9 +300,13 @@ export default function App() {
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
     if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
     const bar = doneRows.length > 0 ? [{ group: DONE_GROUP, heading: t("bucket.done"), entries: doneRows }] : [];
-    if (inbox.settings.groupByTime) return [...groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
-    // Without time groups the rows stand under no bar ("") and only the Done bar's under theirs.
-    return bar.length > 0 ? [{ group: "", heading: "", entries: listed }, ...bar] : undefined;
+    const ringingRows = bucket === "inbox" ? listed.filter(ringing) : [];
+    const top = ringingRows.length > 0 ? [{ group: RINGING_GROUP, heading: t("inbox.ringingBar"), entries: ringingRows }] : [];
+    const rest = top.length > 0 ? listed.filter((c) => !ringing(c)) : listed;
+    if (inbox.settings.groupByTime) return [...top, ...groupByTime(rest, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
+    // Without time groups the rows stand under no bar (""), or under the view's name below the Reminders bar.
+    const main = top.length === 0 ? [{ group: "", heading: "", entries: rest }] : rest.length > 0 ? [{ group: "rest", heading: t("bucket.inbox"), entries: rest }] : [];
+    return top.length > 0 || bar.length > 0 ? [...top, ...main, ...bar] : undefined;
   }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Planned stays open in the inbox.

@@ -128,6 +128,8 @@ export const en = {
   "help.inbox.post": "With \"Any post\", a post by someone else on an item you handled: until you reply or file it with D.",
   "help.inbox.opened": "Open again with O: until you answer it.",
   "help.inbox.doneBar": "Done bar at the bottom: what you answered or filed with D in the last {days} days; closed items for the days set under Settings → General. A new ask brings it back up.",
+  "inbox.ringingBar": "Reminders",
+  "inbox.ringingBarHint": "Follow-ups with Remind me that came due, until you reply or file them with D",
   "inbox.doneBarHint": "Handled in the last {days} days, until something new asks for you",
   "help.inbox.commits": "New commits by others on a pull request you reviewed: until you review or comment again.",
   "help.inbox.feedback": "Feedback by others on what you opened or what is assigned to you: until you reply or file it with D.",

@@ -130,6 +130,8 @@ export const de: Messages = {
   "help.inbox.post": "Mit „Jeder Beitrag“ ein Beitrag von jemand anderem zu einem Item, das du erledigt hast: bis du antwortest oder es mit D ablegst.",
   "help.inbox.opened": "Mit O wieder offen: bis du antwortest.",
   "help.inbox.doneBar": "Leiste „Erledigt“ unten: was du in den letzten {days} Tagen beantwortet oder mit D abgelegt hast; Geschlossenes so viele Tage wie unter Einstellungen → Allgemein. Eine neue Anfrage holt es wieder nach oben.",
+  "inbox.ringingBar": "Erinnerungen",
+  "inbox.ringingBarHint": "Fällige Wiedervorlagen mit Erinnern, bis du antwortest oder sie mit D ablegst",
   "inbox.doneBarHint": "In den letzten {days} Tagen erledigt, bis etwas Neues nach dir fragt",
   "help.inbox.commits": "Neue Commits anderer in einem Pull Request, den du reviewt hast: bis du wieder reviewst oder kommentierst.",
   "help.inbox.feedback": "Feedback anderer auf das, was du eröffnet hast oder was dir zugewiesen ist: bis du antwortest oder es mit D ablegst.",
