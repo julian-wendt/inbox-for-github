@@ -110,8 +110,8 @@ function timesOf(asks: Ask[], at: (ask: Ask) => string | undefined): Partial<Rec
  *    written by older versions) counts as a fresh request: what was answered before it asks again
  *    (`opened`), and what was pending asks again at its time, handled-until or not; so does a
  *    due follow-up. A reopen on GitHub by someone else asks (`reopened`) on an item that was for
- *    the viewer (a mention, a review request, an item of the tables) when it is newer than
- *    handled-until and the viewer's last reply. With `reviewOnCommits`, a push by someone else
+ *    the viewer (a mention, a review request, an item of the tables) once the viewer handled or
+ *    answered it, when it is newer than handled-until and the viewer's last reply. With `reviewOnCommits`, a push by someone else
  *    since the viewer's last review or comment asks again (`commits`). With `reopenOn`
  *    "any-post", a post by someone else newer than handled-until and the viewer's last reply asks
  *    (`post`) outside the tables. An assignment alone is no such ask.
@@ -158,7 +158,8 @@ export function classify(
   const inTable = assigned || own;
   const handedOff = !!stored?.handoff && stored.status !== "open";
   // A new assignment by someone else starts the work anew; a follow-up stays (rule 2).
-  const renewed = !!stored && (stored.status === "done" || handedOff) && assignedAgain(item, me, stored.changedAt);
+  // A closed item keeps its hand-off, so its closing still asks as news.
+  const renewed = !!stored && (stored.status === "done" || handedOff) && !item.closed && assignedAgain(item, me, stored.changedAt);
   if (stored && handedOff && !renewed && (assigned || item.closed)) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil, now);
   if (stored && (handedOff || renewed)) stored = stored.status === "snoozed" ? { status: "snoozed", changedAt: stored.changedAt, ...(stored.until && { until: stored.until }) } : undefined;
   if (item.closed) {
@@ -191,11 +192,12 @@ export function classify(
   const assignedBy = assignerOf(item, me);
   const reviewed = item.reasons.includes("review");
   const mentioned = mentionsOf(item, me).length > 0;
-  const answeredAt = latest(handled, lastReplyAt(item, me)) ?? "";
-  const reopen = reviewed || mentioned || inTable ? reopenedByOther(item, me) : null;
-  const ghReopen = reopen && reopen.at > answeredAt ? reopen : null;
+  const answeredAt = latest(handled, lastReplyAt(item, me));
+  // Only after the viewer handled or answered the item, so old reopens do not flood the inbox.
+  const reopen = answeredAt && (reviewed || mentioned || inTable) ? reopenedByOther(item, me) : null;
+  const ghReopen = reopen && reopen.at > answeredAt! ? reopen : null;
   const posted = reopenOn === "any-post" && !inTable && handled ? lastPostByOthers(item, me) : null;
-  const newPost = posted && posted.at > answeredAt && posted.at !== mention?.at ? posted : null;
+  const newPost = posted && posted.at > answeredAt! && posted.at !== mention?.at ? posted : null;
   const statusAt = passed ? stored!.until! : (stored?.changedAt ?? null);
   const result = { item, mention, statusAt, ...(waiting && stored!.until && { until: stored!.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 

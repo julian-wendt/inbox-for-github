@@ -216,11 +216,11 @@ export interface WriteFailure {
   error: string;
 }
 
-/** One entry of an item's status history: a key press by the viewer, or the app reopening it. */
+/** One entry of an item's status history: a key press by the viewer, or a repair or (in old rows) a reopening by the app. */
 export interface StatusChange {
   status: Status;
   at: string;
   automatic: boolean;
-  /** What caused the change, e.g. "auto:snooze-ended" for a follow-up that came due; unset in old rows. */
+  /** What caused the change, e.g. "key:d" or "auto:locked"; "auto:snooze-ended" and "auto:reopen" are only read from old rows; unset in older ones. */
   source?: string;
 }
