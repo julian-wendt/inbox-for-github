@@ -647,6 +647,14 @@ describe("a new assignment or a reopen on GitHub", () => {
     expect(run(item({ reasons: ["involved"], comments: [comment(ME, "noted", 3)], activities: [reopenedBy("bob", 6)] })).asks).toEqual([]);
   });
 
+  it("asks on a reopen only once the viewer handled or answered the item, and only when newer", () => {
+    const reopened = assigned({ activities: [reopenedBy("bob", 6)] });
+    expect(run(reopened)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(withRules(reopened, MENTIONS_ONLY, undefined, "2026-10-05T00:00:00Z")).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(withRules(reopened, MENTIONS_ONLY, undefined, "2026-10-07T00:00:00Z")).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(run(item({ kind: "pr", reasons: ["review"], reviewRequests: [{ reviewer: ME, at: "2026-10-02T00:00:00Z" }], activities: [reopenedBy("bob", 6)] })).asks).toEqual(["review"]);
+  });
+
   it("counts a reopen as an update on a handed-off part", () => {
     expect(run(assigned({ activities: [reopenedBy("bob", 6)] }), handoff)).toMatchObject({ bucket: "inbox", status: "done", asks: ["update"], updates: [{ kind: "reopened", by: "bob" }] });
     expect(run(assigned({ activities: [reopenedBy("bob", 3)] }), handoff).updates).toEqual([]);

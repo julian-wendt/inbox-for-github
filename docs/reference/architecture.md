@@ -105,8 +105,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Returns** are asks with a time (`Classified.asked`), compared with handled-until and the time
   of a stored follow-up or of a done older builds stored; nothing is written to bring an item
   back. Besides the asks above: `opened` (the viewer's O, a stored Open, also one older builds
-  wrote), `reopened` (someone else reopened it on GitHub, on an item that was for the viewer,
-  newer than handled-until and the viewer's last reply), `post` (with "reopenOn" "any-post", a
+  wrote), `reopened` (someone else reopened it on GitHub, on an item that was for the viewer and
+  that they handled or answered, newer than handled-until and their last reply), `post` (with "reopenOn" "any-post", a
   post by someone else outside the tables, newer than both) and `due`. `newestAsk` gives the ask
   the row is dated by and the explanation names first; `back` the one that brought a handled
   item back, which the detail's history shows at its time (`backChange`), with nothing stored.
