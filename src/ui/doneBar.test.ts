@@ -114,6 +114,33 @@ describe("handledAt", () => {
     expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
     expect(at(app, issue)).toBeNull();
   });
+
+  it("is null while the closing of a finished part assigned anew asks as news", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: [ME] });
+    await app.refresh();
+    app.done(issue);
+    world.advance(HOUR);
+    world.unassign(issue, "alice", ME);
+    world.assign(issue, "alice", ME);
+    world.advance(HOUR);
+    world.close(issue, "alice");
+    await app.refresh();
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["update"] });
+    expect(at(app, issue)).toBeNull();
+  });
+
+  it("is null for an assignment reopened before the viewer ever handled it", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: [ME] });
+    world.close(issue, "bob");
+    world.advance(HOUR);
+    world.reopen(issue, "bob");
+    await app.refresh();
+    expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(at(app, issue)).toBeNull();
+    expect(app.views().done).not.toContain(issue.id);
+  });
 });
 
 describe("inDoneBar", () => {
