@@ -268,7 +268,7 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
         await app.comment(issue, "Will do.");
         app.snooze(issue, later(world, DAY));
         world.advance(2 * DAY);
-        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
       },
     },
     {
@@ -277,7 +277,7 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
         const issue = await mentioned(world, app);
         app.snooze(issue, later(world, DAY));
         world.advance(2 * DAY);
-        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due", "mention"] });
       },
     },
   ]);
@@ -617,7 +617,6 @@ describe("answered questions", () => {
   walk([
     {
       situation: "a due follow-up on an assignment comes into the inbox",
-      diverges: "#108: it ends in its table without an ask",
       run: async (world, app) => {
         const issue = world.issue({ assignees: [ME] });
         await app.refresh();
@@ -628,7 +627,6 @@ describe("answered questions", () => {
     },
     {
       situation: "a due follow-up on an assignment whose part is done comes into the inbox",
-      diverges: "#108: it goes back to my part done without an ask",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         app.snooze(issue, later(world, DAY));

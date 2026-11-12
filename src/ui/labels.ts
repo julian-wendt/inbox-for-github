@@ -257,8 +257,8 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * - Snoozed: when it comes back, else when you snoozed it.
  * - Done: when it was closed or merged on GitHub; else when you answered (your last reply, or
  *   your last review for a review request); else when you marked it done.
- * - Inbox and the rest: the newest ask (see `newestAsk`) when it is a mention, else the last
- *   activity by someone else, which the other asks are made of. A mention older than another ask
+ * - Inbox and the rest: the newest ask (see `newestAsk`) when it is a mention or a due
+ *   follow-up, else the last activity by someone else, which the other asks are made of. A mention older than another ask
  *   is old news.
  *
  * Wherever a view's own moment is missing, the last activity by someone else stands in, and
@@ -287,5 +287,5 @@ export function sortTime(c: Classified, me: string, movesUp: MovesUp = MOVES_UP_
     return c.statusAt ?? activity();
   }
   const newest = newestAsk(c);
-  return newest?.ask === "mention" ? newest.at : activity();
+  return newest?.ask === "mention" || newest?.ask === "due" ? newest.at : activity();
 }

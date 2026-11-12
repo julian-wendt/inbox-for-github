@@ -45,6 +45,13 @@ function item(overrides: Partial<Item> = {}): Item {
 const why = (i: Item, stored?: StoredStatus) => explain(classify(i, ME, stored, ruleSwitches()), "mention");
 
 describe("explain", () => {
+  it("names a due follow-up first, before what it asks again", () => {
+    const mentioned = item({ reasons: ["mentioned"], comments: [comment("bob", "@me can you check?", 1)] });
+    const result = explain(classify(mentioned, ME, { status: "snoozed", changedAt: at(2), until: at(3) }, ruleSwitches(), "mention", Date.parse(at(4))), "mention");
+    expect(result.lines[0]).toMatch(/^Deine Wiedervorlage ist .* fällig geworden/);
+    expect(result.lines[1]).toMatch(/^@bob hat dich .* erwähnt/);
+  });
+
   it("lists every open ask of an inbox item, the newest first", () => {
     const result = why(
       item({

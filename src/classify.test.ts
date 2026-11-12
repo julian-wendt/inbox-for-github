@@ -350,7 +350,7 @@ describe("snooze with a date", () => {
 
   it("comes back once the date has passed, and not before", () => {
     expect(classify(item(), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-04T00:00:00Z")).bucket).toBe("snoozed");
-    expect(classify(item(), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z"))).toMatchObject({ bucket: "involved", status: "open" });
+    expect(classify(item(), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z"))).toMatchObject({ bucket: "inbox", status: "open", asks: ["due"], asked: { due: snoozed.until } });
   });
 
   it("still comes back earlier for a mention", () => {
@@ -358,9 +358,12 @@ describe("snooze with a date", () => {
     expect(classify(mentioned, "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-03T00:00:00Z"))).toMatchObject({ bucket: "inbox", status: "snoozed", until: snoozed.until });
   });
 
-  it("ends at its date without an ask of its own; an item nobody asked for is back where it was", () => {
-    const result = classify(item({ reasons: ["involved"] }), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z"));
-    expect(result).toMatchObject({ bucket: "involved", status: "open", asks: [] });
+  it("asks as due at its date, also on an item nobody asked for, until the viewer handles it or replies", () => {
+    const due = Date.parse("2026-10-05T09:01:00Z");
+    const result = classify(item({ reasons: ["involved"] }), "me", snoozed, ruleSwitches(), "mention", due);
+    expect(result).toMatchObject({ bucket: "inbox", status: "open", asks: ["due"] });
+    expect(classify(item({ reasons: ["involved"] }), "me", snoozed, ruleSwitches(), "mention", due, true, "2026-10-05T09:00:30Z")).toMatchObject({ bucket: "involved", asks: [] });
+    expect(classify(item({ reasons: ["involved"], comments: [comment(ME, "looked", 6)] }), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-07T00:00:00Z")).asks).toEqual([]);
   });
 
   it("comes back as a mention when one arrives before the date", () => {
@@ -385,7 +388,7 @@ describe("snoozing in the tables", () => {
 
   it("keeps an assignment in its table, snoozed, until its date", () => {
     expect(classify(assigned(), ME, snoozed, ruleSwitches(), "mention", at("2026-10-05T00:00:00Z"))).toMatchObject({ bucket: "assigned", status: "snoozed", asks: [] });
-    expect(classify(assigned(), ME, snoozed, ruleSwitches(), "mention", at("2026-10-09T09:01:00Z"))).toMatchObject({ bucket: "assigned", status: "open", asks: [] });
+    expect(classify(assigned(), ME, snoozed, ruleSwitches(), "mention", at("2026-10-09T09:01:00Z"))).toMatchObject({ bucket: "inbox", status: "open", asks: ["due"] });
   });
 
   it("adds a later mention or post to the inbox but stays snoozed", () => {
@@ -400,7 +403,7 @@ describe("snoozing in the tables", () => {
     expect(classify(own, ME, snoozed, ruleSwitches(), "mention", at("2026-10-07T00:00:00Z"))).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["mention"] });
     const quiet = item({ author: ME, reasons: ["involved"] });
     expect(classify(quiet, ME, snoozed, ruleSwitches(), "mention", at("2026-10-07T00:00:00Z"))).toMatchObject({ bucket: "authored", status: "snoozed", asks: [] });
-    expect(classify(quiet, ME, snoozed, ruleSwitches(), "mention", at("2026-10-09T09:01:00Z"))).toMatchObject({ bucket: "authored", status: "open", asks: [] });
+    expect(classify(quiet, ME, snoozed, ruleSwitches(), "mention", at("2026-10-09T09:01:00Z"))).toMatchObject({ bucket: "inbox", status: "open", asks: ["due"] });
   });
 });
 
@@ -463,10 +466,12 @@ describe("my part done", () => {
       expect(at(assigned(), { ...waiting, until: undefined }, 8)).toMatchObject({ status: "snoozed", updates: [] });
     });
 
-    it("is done again after its date, with nothing to write", () => {
+    it("is done again after its date, with nothing to write, and asks as due until filed", () => {
       const due = at(assigned(), waiting, 11);
-      expect(due).toMatchObject({ bucket: "assigned", status: "done", updates: [] });
+      expect(due).toMatchObject({ bucket: "inbox", status: "done", updates: [], asks: ["due"] });
       expect(due.until).toBeUndefined();
+      const filed = classify(assigned(), ME, waiting, ruleSwitches(), "mention", Date.parse("2026-10-11T00:00:00Z"), true, "2026-10-10T09:00:00Z", MENTIONS_ONLY);
+      expect(filed).toMatchObject({ bucket: "assigned", status: "done", asks: [] });
     });
 
     it("shows news as an update while it waits", () => {

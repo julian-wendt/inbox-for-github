@@ -306,7 +306,7 @@ describe("My part done", () => {
 });
 
 describe("Snoozing on the plate", () => {
-  it("keeps a snoozed assignment on the plate and in Follow-up, and back at work at its date", async () => {
+  it("keeps a snoozed assignment on the plate and in Follow-up, and in the inbox at its date", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     await app.refresh();
@@ -318,7 +318,7 @@ describe("Snoozing on the plate", () => {
     expect(app.views().planned).not.toContain(issue.id);
     world.advance(3 * MINUTE);
     expect(app.views().snoozed).not.toContain(issue.id);
-    expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
     expect(app.statuses.get(issue.id)).toMatchObject({ status: "snoozed" });
     expect(app.onPlate(issue)).toBe(true);
   });
@@ -456,9 +456,9 @@ describe("Follow-ups", () => {
 
     world.advance(2 * HOUR);
 
-    expect(app.views().inbox).not.toContain(issue.id);
+    expect(app.views().inbox).toContain(issue.id);
     expect(app.views().authored).toContain(issue.id);
-    expect(app.entry(issue).asks).toEqual([]);
+    expect(app.entry(issue).asks).toEqual(["due"]);
     expect(app.followUp(issue)).toBeNull();
   });
 
@@ -495,13 +495,13 @@ describe("Follow-ups", () => {
     await app.refresh();
     app.snooze(issue, inAnHour(world));
     world.advance(2 * HOUR);
-    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
 
     app.done(issue);
 
     expect(app.views().inbox).not.toContain(issue.id);
     expect(app.views().authored).toContain(issue.id);
-    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.entry(issue).asks).toEqual([]);
   });
 
   it("takes the date off with X and puts it back with undo", async () => {

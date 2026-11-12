@@ -8,14 +8,14 @@ import { updatesSince, type Update } from "./handoff";
 
 /**
  * Why an item sits in the inbox; "reopened" is a stored "Open" that revived an answered
- * request, set by the viewer (O) or written when a follow-up date passed, "update"
+ * request, set by the viewer (O), "due" a follow-up whose date passed, "update"
  * news on an item whose part the viewer finished (see `updatesSince`), until they tick it off,
  * "commits" a push by someone else to a pull request the viewer reviewed (see `pushedSinceReview`),
  * "feedback" a post or review by someone else on an item of the viewer's tables (see `feedbackSince`),
  * "reply" an answer in a review thread the viewer wrote in (see `threadReply`), and "closed" an own
  * item someone else closed without merging (see `closedByOther`).
  */
-export type Ask = "update" | "review" | "commits" | "mention" | "reopened" | "feedback" | "reply" | "closed";
+export type Ask = "update" | "review" | "commits" | "mention" | "reopened" | "feedback" | "reply" | "closed" | "due";
 
 /** Which further asks bring an item into the inbox (the settings of the same names). */
 export interface AskRules {
@@ -97,11 +97,12 @@ function timesOf(asks: Ask[], at: (ask: Ask) => string | undefined): Partial<Rec
  *    its list ("snoozed"), or in its table; an ask since adds it to the inbox and the follow-up
  *    keeps waiting. A "done" stored before D only filed counts like handled-until at its time.
  *    A new assignment by someone else drops a finished part, and keeps a follow-up.
- * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
+ * 2. Otherwise the item goes to the inbox while someone waits for an answer: a follow-up came due
+ *    (`due`, at its date, until the viewer handles it or replies), a review request is
  *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Open" (O, or one
  *    written by older versions) counts as a fresh request: what was answered before it asks again
- *    (`reopened`), and what was pending asks again at its time, handled-until or not. A follow-up
- *    whose date passed does the same at its date. With `reviewOnCommits`, a push by someone else
+ *    (`reopened`), and what was pending asks again at its time, handled-until or not; so does a
+ *    due follow-up. With `reviewOnCommits`, a push by someone else
  *    since the viewer's last review or comment asks again (`commits`). With `reopenOn`
  *    "any-post", a post by someone else newer than handled-until asks again (`reopened`) outside
  *    the tables. An assignment alone is no such ask.
@@ -161,11 +162,13 @@ export function classify(
   }
   const passed = snoozeEnded(stored, now);
   const waiting = stored?.status === "snoozed" && !passed;
-  const reopenedAt = stored?.status === "open" ? stored.changedAt : passed ? stored!.until : undefined;
+  const reopenedAt = stored?.status === "open" ? stored.changedAt : undefined;
   // A stored follow-up or done handled the item when it was set, as handled-until does.
   const handled = stored && stored.status !== "open" ? (latest(handledUntil, stored.changedAt) ?? undefined) : handledUntil;
-  // A reopen newer than handled-until asks again what was pending (rule 2), so nothing is cut off.
-  const seenAt = reopenedAt && reopenedAt > (handled ?? "") ? undefined : handled;
+  // The viewer's own reply answers a due follow-up, as D does.
+  const dueAt = passed && stored!.until! > (latest(handled, lastReplyAt(item, me)) ?? "") ? stored!.until : undefined;
+  // A reopen or a due follow-up newer than handled-until asks again what was pending (rule 2), so nothing is cut off.
+  const seenAt = (reopenedAt && reopenedAt > (handled ?? "")) || dueAt ? undefined : handled;
   const pushed = reviewOnCommits ? pushedSinceReview(item, me) : null;
   const threadAnswer = !own && askRules.threadReplies ? threadReply(item, me) : null;
   const feedbackMode: FeedbackMode = own ? askRules.ownFeedback : assigned && askRules.assignedFeedback ? "any" : "off";
@@ -186,7 +189,7 @@ export function classify(
   const mentioned = mentionsOf(item, me).length > 0;
   const reviewOpen = reviewed && !reviewAnswered(item, me, reopenedAt);
   const mentionOpen = mention !== null || (mentioned && !!reopenedAt && (lastReplyAt(item, me) ?? "") <= reopenedAt);
-  const asks: Ask[] = [];
+  const asks: Ask[] = dueAt ? ["due"] : [];
   if (reviewOpen) asks.push(reopenedAt && reviewAnswered(item, me) ? "reopened" : "review");
   else if (pushed) asks.push("commits");
   if (mention) asks.push("mention");
@@ -200,7 +203,7 @@ export function classify(
 
   // Handled-until answers what came before it; an ask of unknown time counts as handled.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (latest(reopenedAt ?? ghReopen, newPost) ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (latest(reopenedAt ?? ghReopen, newPost) ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : ask === "due" ? dueAt : undefined;
   const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const asked = timesOf(fresh, askedAt);
   const parked = fresh.length < asks.length;
@@ -236,7 +239,7 @@ export function classify(
  * request, feedback, a thread reply; later ones are updates) until the viewer files it with D or plans it (`seenAt`, as in the open path) or answers.
  * Closed and ticked off, it shows nowhere. Ticking off (D) stores a fresh handoff, which moves
  * "since" for updates. Stored as "snoozed", it also waits for a follow-up while open and before
- * the date; after the date it is "done" again, with no write needed.
+ * the date; after the date it is "done" again, with no write needed, and asks (`due`) until filed.
  */
 function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, seenAt: string | undefined, now: number): Classified {
   const since = stored.changedAt;
@@ -253,7 +256,8 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   const feedback = found && found.at <= since && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
   const threadAnswer = open && !own && askRules.threadReplies ? threadReply(item, me) : null;
   const reply = threadAnswer && !feedback && threadAnswer.at <= since && unfiled(threadAnswer.at) && !mentionsOf(item, me).some((m) => m.at === threadAnswer.at) ? threadAnswer : null;
-  const asks: Ask[] = [];
+  const dueAt = open && snoozeEnded(stored, now) && unfiled(stored.until!) && stored.until! > (lastReplyAt(item, me) ?? "") ? stored.until : undefined;
+  const asks: Ask[] = dueAt ? ["due"] : [];
   const updatedAt = updates.flatMap((u) => ("at" in u ? [u.at] : [])).sort().at(-1);
   if (updates.length > 0) asks.push("update");
   if (request && unfiled(request.at)) asks.push("review");
@@ -262,7 +266,7 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   if (reply) asks.push("reply");
   const bucket: Bucket = asks.length > 0 ? "inbox" : open && assigned ? "assigned" : "involved";
   const waits = open && stored.status === "snoozed" && !snoozeEnded(stored, now);
-  const asked = timesOf(asks, (ask) => (ask === "update" ? updatedAt : ask === "review" ? request?.at : ask === "mention" ? mention?.at : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined));
+  const asked = timesOf(asks, (ask) => (ask === "update" ? updatedAt : ask === "review" ? request?.at : ask === "mention" ? mention?.at : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : ask === "due" ? dueAt : undefined));
   return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), mention, answered: null, asks, asked, statusAt: since, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
 }
 

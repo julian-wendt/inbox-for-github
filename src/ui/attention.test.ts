@@ -23,7 +23,8 @@ describe("arrivals", () => {
   it("lets an item that only asks again come back without a notification", () => {
     const back = entry("I_2", { asks: ["reopened"] });
     const asked = entry("I_3", { asks: ["reopened", "mention"] });
-    expect(arrivals([back, asked], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
+    const due = entry("I_4", { asks: ["due"] });
+    expect(arrivals([back, asked, due], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
   it("notifies again when an item already in the inbox gets a new ask", () => {
     const before = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-05T00:00:00Z", excerpt: "", self: false } });
