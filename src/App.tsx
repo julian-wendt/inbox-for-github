@@ -1359,7 +1359,7 @@ export default function App() {
           sprint={sprints[bucket]}
           sprints={bucket === "assigned" ? plateSprints : bucket === "planned" ? plannedSprints : bucket === "snoozed" ? followUpSprints : authoredSprints}
           layout={byReturn ? layout : undefined}
-          onLayout={setLayout}
+          onLayout={(next) => (closePopup(), setLayout(next))}
           onSprint={(filter) => setSprints((current) => ({ ...current, [bucket]: filter }))}
           onToggleAll={(fold) => bars.setAll(tableGroups.map((g) => barKey(g.group)), fold)}
           hiddenBoards={inbox.settings.hiddenBoards}
@@ -1402,7 +1402,7 @@ export default function App() {
           pinnedOn={inbox.settings.pinnedOn}
           today={today}
           layout={byReturn ? layout : undefined}
-          onLayout={setLayout}
+          onLayout={(next) => (closePopup(), setLayout(next))}
           onMenu={openMenu}
           counts={counts}
           onJump={setBucket}
