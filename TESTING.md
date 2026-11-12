@@ -20,9 +20,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 ## Sidebar
 
 - [ ] Eine Liste ohne Überschrift und ohne Trennlinie: Inbox, Geplant, Wiedervorlage, Mir zugewiesen,
-      Von mir erstellt, Erledigt (Tasten 1–6); der Tooltip nennt die Taste.
+      Von mir erstellt (Tasten 1–5); der Tooltip nennt die Taste. Erledigt ist keine Ansicht mehr,
+      sondern die Leiste „Erledigt“ unten in der Inbox; 6 tut nichts.
 - [ ] ⌘K findet nur Items, die in einer Ansicht stehen; ein Sprung landet in deren Ansicht, ein
-      eigener zugewiesener PR in „Von mir erstellt“.
+      eigener zugewiesener PR in „Von mir erstellt“, ein Item der Leiste „Erledigt“ in der Inbox, und die
+      zugeklappte Leiste geht dabei auf. Ebenso der Klick auf eine Mitteilung.
 - [ ] Footer zeigt Verbrauchsring, Einstellungen, Fragezeichen; der Radiergummi sitzt in der Überschrift „Nach Repository filtern“.
 - [ ] Der Radiergummi erscheint nur, wenn ein Repo gewählt ist; Klick setzt es zurück. ⌘K → „Filter
       zurücksetzen“ setzt alle Filter zurück (Repos, Issues/Pull Requests, Sonstige/Reviews, Sprint).
@@ -35,7 +37,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       beim zuletzt gewählten Item weiter.
 - [ ] Die Zahlen an den Ansichten folgen dem Repo-Filter und passen dann zur Liste; Issues/Pull Requests,
       Sonstige/Reviews und Sprint ändern sie nicht. Der Kopf der Liste zeigt keine Zahl neben dem Titel.
-- [ ] ⌘T schaltet den Filter im Kopf weiter: in Inbox und Erledigt Alle → Reviews → Sonstige, sonst
+- [ ] ⌘T schaltet den Filter im Kopf weiter: in der Inbox Alle → Reviews → Sonstige, sonst
       Alle → Issues → Pull Requests, danach wieder Alle. ⌘G wechselt in „Mir zugewiesen“ zwischen
       Typ, Status und Repo, in „Von mir erstellt“ zwischen Status und Repo, in den Listen die Zeitgruppen an und aus
       (auch in den Einstellungen sichtbar). Nach Repo: eine Leiste je Repository, alphabetisch; Wiedervorlage, Blockiert
@@ -119,8 +121,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Die Status tragen Icons statt farbiger Ringe: Offen ein grauer Ring, Wiedervorlage ein pinker Kreispfeil
       (↻), Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
       in Hell und Dunkel gut erkennbar.
-- [ ] Item mit F auf Wiedervorlage legen, mit D erledigen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten, sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
-- [ ] D in „Erledigt“ ändert nichts; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
+- [ ] Item mit F auf Wiedervorlage legen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten (D auf einem Item anderer legt es nur ab und schreibt keine), sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
+- [ ] Eine Wiedervorlage, deren Datum vorbei ist, auch auf einer Zuweisung: das Item steht in der Inbox („Deine Wiedervorlage ist … fällig geworden“, als erste Zeile der Erklärung), im Verlauf „Zurück in der Inbox: deine Wiedervorlage ist fällig“, und es kommt keine Benachrichtigung. D legt es ab, die Verlaufszeile verschwindet; ins Protokoll wird nichts geschrieben.
+- [ ] D auf einer Zeile der Leiste „Erledigt“ ändert nichts und fehlt im Menü; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
 - [ ] ⌃O öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O allein öffnet
       nichts im Browser. Im Kommentarfeld tut ⌃O nichts an der App.
@@ -137,7 +140,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       einschließlich dieser zurück (Toast „N Änderungen“) oder macht sie wieder.
 - [ ] ⌘Z macht die letzte Änderung rückgängig, ohne Protokollzeile. Im Kommentar- oder Notizfeld
       nimmt ⌘Z dagegen das Getippte zurück, nicht den Status.
-- [ ] Nach D per Taste, „Erledigt“ im Kontextmenü, in ⌘K und per Klick im Detail steht in
+- [ ] Nach D auf einer Zuweisung in „Mir zugewiesen“ per Taste, im Kontextmenü, in ⌘K und per Klick im Detail steht in
       `status_log.source` der Reihe nach `key:d`, `menu`, `palette`, `click` (Abfrage in
       `docs/reference/local-development.md`).
 - [ ] Einstellungen › Allgemein › „Alle Status zurücksetzen…“ fragt mit der Anzahl nach; danach
@@ -235,6 +238,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] U oder R auf einem gelesenen Item macht es ungelesen (fett, Badge +1), auch direkt nach dem Öffnen;
       U erneut oder späteres Öffnen macht es gelesen. Auch im
       Kontextmenü (dort mit der Taste R) und in ⌘K („Als ungelesen/gelesen markieren“).
+- [ ] P, T und F auf einem geöffneten Item (Detail der Liste, Pop-up einer Tabelle) machen es
+      sofort gelesen, ⌘Z macht es wieder ungelesen. Eine Tabellenzeile, die nur ausgewählt ist,
+      bleibt ungelesen, ebenso ein Item, das du mit U ungelesen markiert hast.
 
 ## Inbox
 
@@ -243,15 +249,25 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       eine neue Auswahl (Pfeiltasten, Klick) scrollt zu ihr. Gilt ebenso für Mir zugewiesen
       und Von mir erstellt, und für ausgewählte Gruppenleisten.
 - [ ] Umschalter „Alle · Reviews · Sonstige“ statt Issues/Pull Requests, mit Anzahl neben Reviews und Sonstige („Sonstige“ ist alles, was keine Review-Anfrage ist, also auch wieder Geöffnetes und Updates). Ein PR mit Review-Anfrage und offener Erwähnung steht unter beiden.
-- [ ] Erledigt hat denselben Umschalter: Reviews sind PRs mit deiner
+- [ ] Die Leiste „Erledigt“ folgt demselben Umschalter und der Suche: Reviews sind PRs mit deiner
       Review-Anfrage, Erwähnungen Items, in denen du erwähnt wurdest; Zuweisungen nur unter „Alle“.
+      Die Zahlen am Umschalter, in der Seitenleiste und am Dock zählen sie nicht mit.
+- [ ] Leiste „Erledigt“ ganz unten in der Inbox, zugeklappt, mit Zahl und Tooltip „In den letzten
+      7 Tagen erledigt, bis etwas Neues nach dir fragt“: was du beantwortet oder mit D abgelegt hast
+      (auch ein PR mit Antwort in deinem Thread ohne Erwähnung und eine abgelegte Erwähnung auf einer Zuweisung),
+      Geschlossenes für dich so lange wie unter Einstellungen → Allgemein. Ihre Zeilen sind nie fett
+      und zeigen, wann du sie erledigt hast, das Neueste oben. Klick klappt sie auf, ↑/↓ erreicht sie,
+      Enter oder Leertaste klappt sie; der Zustand bleibt nach einem Neustart. Fragt nichts mehr, steht
+      „Gerade braucht dich nichts.“ über der Leiste.
+- [ ] D auf einer Zeile der Inbox bei offener Leiste: die Auswahl geht zur nächsten offenen Zeile,
+      auf der letzten zur vorigen; das Item steht oben in der Leiste.
 - [ ] Eine neue Zuweisung erscheint nicht in der Inbox, sondern direkt in „Mir zugewiesen“; erst
       eine Erwähnung darin holt sie zusätzlich in die Inbox, bis du antwortest.
 - [ ] Listenspalte schmal ziehen: unter etwa 460 px steht statt des Umschalters ein Filter-Menü
       mit der aktuellen Wahl („Alle“, „Reviews · 3“ …) und statt Sortierknopf, Ein-/Ausklappen und
       Liste/Tabelle ein Zahnrad-Menü mit genau diesen Einträgen (Sortierung als Häkchen); unter 340 px
       zeigt das Filter-Menü nur sein Icon. Titel und Glühbirne bleiben immer, die Controls stehen
-      in jeder Breite rechtsbündig; breiter gezogen kommt alles zurück. Gilt in Inbox, Geplant (Liste) und Erledigt.
+      in jeder Breite rechtsbündig; breiter gezogen kommt alles zurück. Gilt in Inbox und Geplant (Liste).
 - [ ] T und P wirken auch hier und in Von mir erstellt: ein angeheftetes oder geplantes Item zeigt
       in der Kontextzeile bzw. hinter dem Titel den Kalender mit „Heute“, „Morgen“, dem Wochentag
       dieser Arbeitswoche („Donnerstag“) oder dem Datum („3. Nov.“); es bleibt in seiner Liste.
@@ -315,7 +331,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Ein geplantes Item, nur erwähnt: eine neue Erwähnung bringt es in die Inbox, es bleibt in
       Geplant. Darauf antworten nimmt es aus der Inbox, es bleibt geplant für seinen Tag (nicht
       Erledigt). P zeigt in der Inbox oben „Plan für Donnerstag behalten“ (K): das Item verlässt
-      die Inbox, ohne Antwort. D erledigt es und nimmt den Plan weg (⌘Z bringt beides zurück).
+      die Inbox, ohne Antwort. D legt es ab, ohne Status, und nimmt den Plan weg (⌘Z bringt beides zurück).
+      X statt D nimmt nur den Plan weg: die Erwähnung, die der Plan erledigt hat, kommt nicht wieder.
       Auf GitHub schließen: nach der nächsten Aktualisierung ist der Plan weg, nicht erst morgen.
       In der App schließen und mit ⌘Z zurücknehmen: das Item ist wieder offen und geplant wie zuvor.
 - [ ] Ein neuer Kommentar ohne Erwähnung auf einem geplanten Item: keine Inbox, in Geplant (Liste)
@@ -380,9 +397,13 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Mit Datum in zwei Minuten: zur Zeit steht das Item wieder in seiner Arbeitsleiste, ohne
       Mitteilung und ohne Chip; im Protokoll steht „Wiedervorlage fällig“. War darin eine Erwähnung
       oder ein Review schon beantwortet, steht es zusätzlich als „wieder offen“ in der Inbox, bis
-      du antwortest, D oder F drückst.
+      du antwortest, D oder F drückst. Eine bei F noch offene Erwähnung steht wieder als Erwähnung
+      in der Inbox, auch eine, die du vor F mit D abgelegt hattest.
 - [ ] Eine Erwähnung auf einem Item in Wiedervorlage: sie steht in der Inbox, das Item bleibt in
       „Wiedervorlage“ (Leiste und Ansicht). Andere Beiträge holen es nicht zurück, auch nicht mit „Jeder Beitrag“.
+- [ ] Einstellungen › „Erledigte Items und Wiedervorlagen zurückholen bei“ = „Jeder Beitrag“: ein
+      mit D abgelegtes oder geplantes Item anderer kommt bei einem Kommentar von jemand anderem als
+      „wieder offen“ in die Inbox; mit „Erwähnung“ nicht.
 - [ ] Das × im Chip entfernt die Wiedervorlage, ebenso X auf dem Item (auch Kontextmenü und ⌘K,
       mit Zeiger über der Zeile); das Item ist dann, als wäre nie etwas
       gesetzt worden. ⌘Z nimmt es zurück. Bei einem Item ohne Datum tut X nichts.
@@ -396,17 +417,17 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
       „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Repo gleich, nicht mitgezählt),
       zusammen mit Items, die auf dem Board fertig sind; eine eigene Leiste dafür gibt es nicht. ⌘Z
-      nimmt es zurück. Im Kontextmenü heißt D in „Mir zugewiesen“ „Mein Teil erledigt“, in der Inbox bei einer Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt), bei einem Item anderer „Erledigt“. Hat ein Item nach „Mein Teil erledigt“ noch eine offene Erwähnung, steht es in der Inbox; D dort legt sie ab, und es steht wieder in „Mir zugewiesen“.
+      nimmt es zurück. Im Kontextmenü heißt D in „Mir zugewiesen“ „Mein Teil erledigt“, in der Inbox bei einer Erwähnung, Review-Anfrage oder Feedback „Ablegen“ (Toast „abgelegt“, der Status bleibt), bei einem Item anderer ebenso; ein „Erledigt“ wird dort nicht mehr gespeichert. Hat ein Item nach „Mein Teil erledigt“ noch eine offene Erwähnung, steht es in der Inbox; D dort legt sie ab, und es steht wieder in „Mir zugewiesen“.
 - [ ] Jemand kommentiert, das Board wechselt den Status (nach dem vollständigen Abruf alle 15 Minuten), ein
       PR wird verknüpft oder das Issue geschlossen: das Item steht als „Update: …“ in der Inbox,
       mit Mitteilung. D in der Inbox hakt es ab und legt weitere Anfragen daran (etwa eine Erwähnung) mit ab, das Item bleibt in der Leiste (ein geschlossenes verlässt danach die Tabelle); ⌘Z nimmt das Abhaken zurück.
 - [ ] O auf einem Item in der Leiste holt es zurück in die Arbeit („wieder in deiner Arbeit“); ein zweites D dort zeigt nur den Hinweis, dass dein Teil schon erledigt ist.
 - [ ] ⌃U „Mich als Zuständigen entfernen“ (auch Kontextmenü, ⌘K): auf GitHub nicht mehr zugewiesen,
-      und das Item ist überall raus, auch nicht unter Erledigt; nur eine Erwähnung holt es zurück.
+      und das Item ist überall raus, auch nicht in der Leiste „Erledigt“; nur eine Erwähnung holt es zurück.
       Ohne WLAN: Hinweis, und du bist wieder zugewiesen, mit dem Status von vorher.
-- [ ] Ein zugewiesenes Issue wird geschlossen: es erscheint nicht unter Erledigt (war dein Teil
-      erledigt, kommt das Schließen einmal als Update). Geschlossene Items mit Erwähnung oder
-      Review-Anfrage stehen weiter unter Erledigt.
+- [ ] Ein zugewiesenes Issue wird geschlossen: es erscheint nicht in der Leiste „Erledigt“ (war dein Teil
+      erledigt, kommt das Schließen einmal als Update; nach D darauf steht es dort). Geschlossene Items mit
+      Erwähnung oder Review-Anfrage stehen in der Leiste „Erledigt“.
 - [ ] Ein Issue, das mir allein zugewiesen ist, mit Plan und Termin: D in Mir zugewiesen (Liste und
       Tabelle), auf seiner Zeile in der Inbox, im Kontextmenü, in ⌘K und „Erledigt“ im
       Detail-Umschalter sind nicht ausgegraut und setzen „Mein Teil erledigt“, ohne „Plan entfernt“.

@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ASK_RULES_DEFAULT, classify, type Classified } from "./classify";
-import { REOPEN_DEFAULT } from "./reopen";
-import { ruleSwitches } from "./rules";
+import type { Classified } from "./classify";
 import type { InboxSession } from "./github/simulate/session";
 import { DAY, HOUR, MINUTE, simulation } from "./github/simulate/vitest";
 import type { GitHubSimulator, Ref } from "./github/simulate/world";
@@ -9,8 +7,9 @@ import { isNewAssignment, onPlate } from "./ui/assignments";
 import { isOwnOpen } from "./ui/authored";
 import { isWaiting } from "./ui/followUp";
 import { VIEWS, type View } from "./ui/labels";
-import { datedOf, unplan } from "./ui/plan";
+import { datedOf } from "./ui/plan";
 import { doneAccess } from "./ui/statusPlan";
+import { inDoneBar } from "./ui/doneBar";
 
 // Walks the table in docs/reference/behaviour.md, one describe per rule.
 const ME = "octocat";
@@ -30,23 +29,19 @@ function walk(rows: Row[]): void {
   }
 }
 
-/** Every view the entry shows in, in sidebar order; `pinned` puts it on Today, as T does. */
-function viewsOf(c: Classified, pinned = false): View[] {
-  const shows: Record<View, boolean> = {
+/** Every view the entry shows in, in sidebar order with the session's pins and plans, then "done" for the inbox's Done bar. */
+function viewsOf(c: Classified): (View | "done")[] {
+  const { focus, planned: plans } = sim.app.today;
+  const planned = datedOf(c, focus, plans) !== null;
+  const shows: Record<View | "done", boolean> = {
     inbox: c.bucket === "inbox",
-    planned: datedOf(c, pinned ? [c.item.id] : [], []) !== null,
+    planned,
     snoozed: isWaiting(c),
     assigned: onPlate(c, ME),
     authored: isOwnOpen(c, ME),
-    done: c.bucket === "done",
+    done: inDoneBar(c, sim.app.handledUntil.get(c.item.id), ME, sim.world.now.getTime(), planned),
   };
-  return VIEWS.map((v) => v.id).filter((v) => shows[v]);
-}
-
-/** The entry pinned for today since `plannedAt`, classified as `useInbox` does; the session has no plans. */
-function pinned(app: InboxSession, ref: Ref, plannedAt: string): Classified {
-  const item = app.items.find((i) => i.id === ref.id)!;
-  return classify(item, ME, app.statuses.get(ref.id), ruleSwitches(), REOPEN_DEFAULT, app.world.now.getTime(), true, plannedAt, ASK_RULES_DEFAULT, app.filedAt.get(ref.id));
+  return [...VIEWS.map((v) => v.id), "done" as const].filter((v) => shows[v]);
 }
 
 const later = (world: GitHubSimulator, ms: number) => new Date(world.now.getTime() + ms).toISOString();
@@ -144,7 +139,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a review request after D",
-      diverges: "#108: a new request does not lift the done D stored",
       run: async (world, app) => {
         const pr = world.pullRequest();
         world.requestReview(pr, "alice", ME);
@@ -171,7 +165,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reply in my review thread after D",
-      diverges: "#108: the Open written on the reset is newer than the reply, which then no longer asks",
       run: async (world, app) => {
         const pr = world.pullRequest();
         world.review(pr, ME, "COMMENTED", { inline: [{ path: "a.ts", line: 1, body: "Why?" }] });
@@ -238,7 +231,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reopen by someone else after D asks alone; the mention D handled stays handled",
-      diverges: "#108: the reset drops what D handled, and the mention asks again",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.done(issue);
@@ -251,7 +243,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reopen by someone else after my answer",
-      diverges: "#108: a reopen asks only where a status is stored",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         await app.comment(issue, "Will do.");
@@ -278,7 +269,16 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
         await app.comment(issue, "Will do.");
         app.snooze(issue, later(world, DAY));
         world.advance(2 * DAY);
-        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
+      },
+    },
+    {
+      situation: "a due follow-up on a pending mention, although F handled it",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.snooze(issue, later(world, DAY));
+        world.advance(2 * DAY);
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due", "mention"] });
       },
     },
   ]);
@@ -296,7 +296,6 @@ describe("rule 3: D on someone else's item files it; there is no stored done for
     },
     {
       situation: "D in the inbox stores no done",
-      diverges: "#106: it stores a done instead of filing",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.done(issue);
@@ -310,7 +309,7 @@ describe("rule 3: D on someone else's item files it; there is no stored done for
         const issue = await mentioned(world, app, { assignees: [ME] });
         app.done(issue);
         expect(app.statuses.get(issue.id)).toBeUndefined();
-        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned", "done"]);
       },
     },
   ]);
@@ -320,7 +319,6 @@ describe("rule 3, closed items", () => {
   walk([
     {
       situation: "D on a closed item with news in the inbox sets handled-until and writes no done",
-      diverges: "#106: it writes a stored done again (tick-update)",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         world.comment(issue, "alice", "Shipped.");
@@ -349,14 +347,12 @@ describe("rule 4: the Done bar shows what was handled in the last N days and has
     },
     {
       situation: "Done is a bar, not a view of the sidebar",
-      diverges: "#109: Done is still one of the views",
       run: () => {
         expect(VIEWS.map((v) => v.id)).not.toContain("done");
       },
     },
     {
       situation: "a mention filed with D on an assignment is in Done",
-      diverges: "#109: filed asks show in no Done view",
       run: async (world, app) => {
         const issue = await mentioned(world, app, { assignees: [ME] });
         app.done(issue);
@@ -365,12 +361,24 @@ describe("rule 4: the Done bar shows what was handled in the last N days and has
     },
     {
       situation: "what was handled more than 7 days ago leaves Done",
-      diverges: "#109: Done keeps it for good",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         await app.comment(issue, "Will do.");
         world.advance(8 * DAY);
         expect(viewsOf(app.entry(issue))).not.toContain("done");
+      },
+    },
+    {
+      situation: "a thread reply filed with D, with no mention or review request, is in Done",
+      run: async (world, app) => {
+        const pr = world.pullRequest();
+        world.review(pr, ME, "COMMENTED", { inline: [{ path: "a.ts", line: 1, body: "Why?" }] });
+        await app.refresh();
+        world.advance(HOUR);
+        world.replyInThread(pr, 0, "alice", "Because of the cache.");
+        await refetch(world, app, pr);
+        app.done(pr);
+        expect(viewsOf(app.entry(pr))).toEqual(["done"]);
       },
     },
     {
@@ -408,18 +416,131 @@ describe("rule 5: a follow-up is a when, not a status", () => {
     },
     {
       situation: "F on an assignment whose part is done keeps my part done",
-      diverges: "#107: the follow-up replaces the hand-off",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         app.snooze(issue, later(world, 3 * DAY));
         expect(viewsOf(app.entry(issue))).toContain("snoozed");
-        expect(app.statuses.get(issue.id)?.status).toBe("done");
+        expect(app.entry(issue).updates).toEqual([]);
         expect(app.statuses.get(issue.id)?.handoff).toBeDefined();
       },
     },
     {
+      situation: "F on news after my part done handles the news; the part stays done",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+        app.snooze(issue, later(world, 3 * DAY));
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+        expect(app.entry(issue).updates).toEqual([]);
+      },
+    },
+    {
+      situation: "news while a finished part waits is an update in the inbox",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        world.advance(HOUR);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "snoozed", "assigned"]);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+      },
+    },
+    {
+      situation: "a finished part whose follow-up came due is my part done again, not open",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, DAY));
+        world.advance(2 * DAY);
+        expect(viewsOf(app.entry(issue))).not.toContain("snoozed");
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+      },
+    },
+    {
+      situation: "F with no date again on a finished part that waits without one writes nothing",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, "");
+        const before = app.statuses.get(issue.id);
+        const logged = app.log.get(issue.id)?.length;
+        world.advance(HOUR);
+        app.snooze(issue, "");
+        expect(app.statuses.get(issue.id)).toBe(before);
+        expect(app.log.get(issue.id)?.length).toBe(logged);
+      },
+    },
+    {
+      situation: "T and P on a finished part that waits do nothing: no plan, the follow-up stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        const before = app.statuses.get(issue.id);
+        app.pin(issue);
+        app.plan(issue, later(world, 2 * DAY).slice(0, 10));
+        expect(app.today).toMatchObject({ focus: [], planned: [] });
+        expect(app.statuses.get(issue.id)).toEqual(before);
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+      },
+    },
+    {
+      situation: "leaving an assignment whose part is done keeps its follow-up",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        await app.leave(issue);
+        expect(viewsOf(app.entry(issue))).toContain("snoozed");
+      },
+    },
+    {
+      situation: "X on a finished part that waits gives back my part done; handled-until stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        const handled = app.handledUntil.get(issue.id);
+        world.advance(HOUR);
+        app.clearFollowUp(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+        expect(app.handledUntil.get(issue.id)).toBe(handled);
+      },
+    },
+    {
+      situation: "news while a finished part waited stays an update after X",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        world.advance(HOUR);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        app.clearFollowUp(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+      },
+    },
+    {
+      situation: "D in Follow-up on a finished part ends the follow-up; my part stays done",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.choose(issue, "done", undefined, "snoozed");
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+      },
+    },
+    {
+      situation: "O on a finished part that waits opens the work; the follow-up stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.open(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+        expect(app.entry(issue).updates).toBeUndefined();
+      },
+    },
+    {
       situation: "X takes off the follow-up only; the asks F handled stay out of the inbox",
-      diverges: "#107: X drops the status, and the mention asks again",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.snooze(issue, later(world, 3 * DAY));
@@ -431,26 +552,59 @@ describe("rule 5: a follow-up is a when, not a status", () => {
 });
 
 describe("rule 5, one when", () => {
+  const nextDay = (world: GitHubSimulator) => later(world, 2 * DAY).slice(0, 10);
+
   walk([
     {
-      situation: "unplan clears the day plan that F replaces, and the item then only waits",
+      situation: "F on a pinned item takes it off Today; it only waits",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
-        const at = world.stamp();
-        const day = at.slice(0, 10);
-        const today = { focus: [issue.id], focusDay: day, planned: [], pinnedOn: { [issue.id]: day }, plannedAt: { [issue.id]: at } };
-        expect(unplan(today, [issue.id])).toEqual({ focus: [], focusDay: day, planned: [], pinnedOn: {}, plannedAt: {} });
+        app.pin(issue);
         app.snooze(issue, later(world, 3 * DAY));
         expect(viewsOf(app.entry(issue))).toEqual(["snoozed"]);
+        expect(app.today.focus).not.toContain(issue.id);
       },
     },
     {
-      situation: "clearing the follow-up leaves only the plan",
+      situation: "F on a planned item ends the plan; it only waits",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.plan(issue, nextDay(world));
+        app.snooze(issue, later(world, 3 * DAY));
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed"]);
+        expect(app.today.planned).toEqual([]);
+      },
+    },
+    {
+      situation: "T on a follow-up ends it; the item is on Today only",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.snooze(issue, later(world, 3 * DAY));
+        app.pin(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["planned"]);
+        expect(app.statuses.get(issue.id)).toBeUndefined();
+      },
+    },
+    {
+      situation: "P on a follow-up of an assignment ends it: planned and open work in Assigned to me",
+      run: async (world, app) => {
+        const issue = world.issue({ assignees: [ME] });
+        await app.refresh();
+        app.snooze(issue, later(world, 3 * DAY));
+        app.plan(issue, nextDay(world));
+        expect(viewsOf(app.entry(issue))).toEqual(["planned", "assigned"]);
+        expect(app.entry(issue).status).toBe("open");
+      },
+    },
+    {
+      situation: "X after F takes off the follow-up; the plan F replaced stays gone",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.pin(issue);
+        app.snooze(issue, later(world, 3 * DAY));
         app.clearFollowUp(issue);
-        expect(viewsOf(pinned(app, issue, world.stamp()), true)).toEqual(["planned"]);
+        expect(viewsOf(app.entry(issue))).not.toContain("planned");
+        expect(viewsOf(app.entry(issue))).not.toContain("snoozed");
       },
     },
   ]);
@@ -462,25 +616,27 @@ describe("rule 6: planning and a follow-up count as handled and as seen", () => 
       situation: "T after a mention: out of the inbox, into Planned",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
-        expect(viewsOf(pinned(app, issue, world.stamp()), true)).toEqual(["planned"]);
+        app.pin(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["planned"]);
       },
     },
     {
       situation: "T on an assignment: out of the inbox, in Planned and Assigned to me",
       run: async (world, app) => {
         const issue = await mentioned(world, app, { assignees: [ME] });
-        expect(viewsOf(pinned(app, issue, world.stamp()), true)).toEqual(["planned", "assigned"]);
+        app.pin(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["planned", "assigned"]);
       },
     },
     {
       situation: "a mention after T asks again",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
-        const at = world.stamp();
+        app.pin(issue);
         world.advance(HOUR);
         world.comment(issue, "bob", "@octocat and now?");
         await refetch(world, app, issue);
-        expect(viewsOf(pinned(app, issue, at), true)).toEqual(["inbox", "planned"]);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "planned"]);
       },
     },
     {
@@ -498,10 +654,18 @@ describe("answered questions", () => {
   walk([
     {
       situation: "a due follow-up on an assignment comes into the inbox",
-      diverges: "#108: it ends in its table without an ask",
       run: async (world, app) => {
         const issue = world.issue({ assignees: [ME] });
         await app.refresh();
+        app.snooze(issue, later(world, DAY));
+        world.advance(2 * DAY);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);
+      },
+    },
+    {
+      situation: "a due follow-up on an assignment whose part is done comes into the inbox",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
         app.snooze(issue, later(world, DAY));
         world.advance(2 * DAY);
         expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);

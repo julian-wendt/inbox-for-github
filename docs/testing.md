@@ -35,7 +35,7 @@ app does and keeps statuses in maps instead of SQLite.
 
 ```ts
 const sim = simulation();                                   // vitest.ts: fresh world and session per test
-it("files an answered mention under Done", async () => {
+it("files an answered mention in the Done bar", async () => {
   const issue = sim.world.issue();
   sim.world.comment(issue, "alice", "@octocat could you look?");
   await sim.app.refresh();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupByType, isNewAssignment, assignedAt } from "../../ui/assignments";
-import { historyText } from "../../ui/activities";
+import { backChange, historyText } from "../../ui/activities";
 import { groupAuthored } from "../../ui/authored";
 import { rowContext } from "../../ui/labels";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
@@ -229,7 +229,7 @@ describe("My part done", () => {
     expect(app.entry(issue).asks).toEqual(["update"]);
   });
 
-  it("shows a closed assignment nowhere once the closing was ticked off, and never under Done", async () => {
+  it("shows a closed assignment only in the Done bar once the closing was ticked off", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
@@ -239,7 +239,9 @@ describe("My part done", () => {
     await app.reload(issue);
     app.done(issue);
 
-    for (const ids of Object.values(app.views())) expect(ids).not.toContain(issue.id);
+    const { done, ...views } = app.views();
+    expect(done).toContain(issue.id);
+    for (const ids of Object.values(views)) expect(ids).not.toContain(issue.id);
   });
 
   it("files a closed assignment under Done only when it also mentioned the viewer", async () => {
@@ -306,7 +308,7 @@ describe("My part done", () => {
 });
 
 describe("Snoozing on the plate", () => {
-  it("keeps a snoozed assignment on the plate and in Follow-up, and back at work at its date", async () => {
+  it("keeps a snoozed assignment on the plate and in Follow-up, and in the inbox at its date", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat"] });
     await app.refresh();
@@ -318,8 +320,8 @@ describe("Snoozing on the plate", () => {
     expect(app.views().planned).not.toContain(issue.id);
     world.advance(3 * MINUTE);
     expect(app.views().snoozed).not.toContain(issue.id);
-    expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
-    expect(app.statuses.get(issue.id)).toMatchObject({ status: "open" });
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
+    expect(app.statuses.get(issue.id)).toMatchObject({ status: "snoozed" });
     expect(app.onPlate(issue)).toBe(true);
   });
 
@@ -456,9 +458,9 @@ describe("Follow-ups", () => {
 
     world.advance(2 * HOUR);
 
-    expect(app.views().inbox).not.toContain(issue.id);
+    expect(app.views().inbox).toContain(issue.id);
     expect(app.views().authored).toContain(issue.id);
-    expect(app.entry(issue).asks).toEqual([]);
+    expect(app.entry(issue).asks).toEqual(["due"]);
     expect(app.followUp(issue)).toBeNull();
   });
 
@@ -474,7 +476,7 @@ describe("Follow-ups", () => {
     expect(label).not.toMatch(/snooze|follow|reminder|ended|due/i);
   });
 
-  it("leaves a line in the item's log when the follow-up comes due", async () => {
+  it("writes nothing to the item's log when the follow-up comes due, and names it in the history", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
     await app.refresh();
@@ -483,7 +485,10 @@ describe("Follow-ups", () => {
 
     app.classified();
 
-    expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed", "history.due"]);
+    expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed"]);
+    expect(historyText(backChange(app.entry(issue))!)).toBe("history.back.due");
+    app.done(issue);
+    expect(backChange(app.entry(issue))).toBeNull();
   });
 
   it("files the returned item with D without finishing it: it leaves the inbox and stays in its table", async () => {
@@ -495,13 +500,13 @@ describe("Follow-ups", () => {
     await app.refresh();
     app.snooze(issue, inAnHour(world));
     world.advance(2 * HOUR);
-    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["due"] });
 
     app.done(issue);
 
     expect(app.views().inbox).not.toContain(issue.id);
     expect(app.views().authored).toContain(issue.id);
-    expect(app.statuses.has(issue.id)).toBe(false);
+    expect(app.entry(issue).asks).toEqual([]);
   });
 
   it("takes the date off with X and puts it back with undo", async () => {

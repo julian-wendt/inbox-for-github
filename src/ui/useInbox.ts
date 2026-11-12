@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
-import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
@@ -10,7 +9,7 @@ import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
 import { sameLogin } from "../timeline";
-import type { Item, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
+import type { Handoff, Item, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
 import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
@@ -63,6 +62,12 @@ export interface Inbox {
    * marked unread after that time stays unread, so a pending "seen" timer cannot undo the mark.
    */
   markSeen: (nodeId: string, openedAt?: string) => Promise<void>;
+  /** Item id → the time up to which the viewer handled the item's asks (D, P, T, F set it). */
+  handledUntil: ReadonlyMap<string, string>;
+  /** The time the classification is as of, in milliseconds; it ticks every minute. */
+  now: number;
+  /** Sets an item's handled-until, or removes it with null; for an undo that restores none. */
+  setHandledUntil: (nodeId: string, at: string | null) => Promise<void>;
   /** Items the viewer marked unread by hand, with when, until they open them again. */
   unreadMarks: ReadonlyMap<string, string>;
   markUnread: (nodeId: string) => Promise<void>;
@@ -79,6 +84,10 @@ export interface Inbox {
   resetStatuses: () => Promise<number>;
   /** Puts back a stored status exactly as it was, or none; for undoing a change with extras. */
   restoreStatus: (nodeId: string, previous: StoredStatus | undefined) => Promise<void>;
+  /** Takes the follow-up off an item; a finished part stays done (see `Store.endFollowUp`). */
+  endFollowUp: (nodeId: string) => Promise<void>;
+  /** Replaces the hand-off snapshot of a stored "my part done", keeping its time and log. */
+  setHandoff: (nodeId: string, handoff: Handoff) => Promise<void>;
   /** The classification as of now, for code that runs later (an undo) and must not see the render that scheduled it. */
   classifiedNow: () => Classified[];
   /** The stored statuses per item id. */
@@ -167,6 +176,7 @@ export function useInbox(): Inbox {
   const [statusLog, setStatusLog] = useState<Map<string, StatusChange[]>>(new Map());
   const [seen, setSeen] = useState<Map<string, string>>(new Map());
   const [unreadMarks, setUnreadMarks] = useState<Map<string, string>>(new Map());
+  const [handledUntil, setHandledUntilMap] = useState<Map<string, string>>(new Map());
   const [notes, setNotes] = useState<Map<string, string>>(new Map());
   const [items, setItems] = useState<Item[]>([]);
   const [me, setMe] = useState<string | null>(null);
@@ -231,6 +241,7 @@ export function useInbox(): Inbox {
         setStatusLog((current) => movedLists(current, moves));
         setSeen((current) => movedKeys(current, moves));
         setUnreadMarks((current) => movedKeys(current, moves));
+        setHandledUntilMap((current) => movedKeys(current, moves));
         setNotes((current) => movedKeys(current, moves));
         setWriteFailures((current) => movedLists(current, moves));
       };
@@ -267,6 +278,7 @@ export function useInbox(): Inbox {
       setStatusLog(await opened.statusLog());
       setSeen(await opened.seen());
       setUnreadMarks(await opened.unreadMarks());
+      setHandledUntilMap(await opened.handledUntil());
       setNotes(await opened.notes());
       const cached = await opened.cachedFetch();
       log.debug("cache loaded", { items: cached?.items.length ?? 0, fetchedAt: cached?.fetchedAt.toISOString(), fullAt: cached?.fullAt?.toISOString(), scope: cached?.scope });
@@ -567,15 +579,14 @@ export function useInbox(): Inbox {
     if (!me) return [];
     const switches = ruleSwitches(settings.rules);
     const untracked = new Set(settings.untracked.map((u) => u.id));
-    // A plan counts while the item is pinned or planned; a time left behind by a dropped pin does not.
     const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
     // The cache may hold more than the settings ask for (see `Coverage`); show only that.
     return withinClosedWindow(items, settings.closedDays)
       .filter((item) => repoVisible(item.repo, settings.repoFilters) && !untracked.has(item.id))
       .map((item) => directOnly(item, me, settings.directOnly))
       .map((item) => (settings.loadBoards ? item : { ...item, boards: [] }))
-      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits, dated.has(item.id) ? settings.plannedAt[item.id] : undefined, askRules, settings.filedAt[item.id]));
-  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, askRules, settings.filedAt, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, settings.plannedAt, now]);
+      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits, handledUntil.get(item.id), askRules, dated.has(item.id)));
+  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, askRules, handledUntil, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, now]);
 
   const writeStatus = useCallback(
     async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource()) => {
@@ -622,6 +633,7 @@ export function useInbox(): Inbox {
     const cleared = await store.resetStatuses(undefined, "settings:reset");
     log.debug("statuses reset", { count: cleared.size, source: "settings:reset" });
     setStatuses(new Map());
+    setHandledUntilMap(new Map());
     setStatusLog((current) => {
       const next = new Map(current);
       for (const [id, change] of cleared) next.set(id, [...(next.get(id) ?? []), change]);
@@ -629,6 +641,51 @@ export function useInbox(): Inbox {
     });
     return cleared.size;
   }, [store]);
+
+  const setHandledUntil = useCallback(
+    async (nodeId: string, at: string | null) => {
+      if (!store) return;
+      await store.setHandledUntil(nodeId, at);
+      setHandledUntilMap((current) => {
+        const next = new Map(current);
+        if (at === null) next.delete(nodeId);
+        else next.set(nodeId, at);
+        return next;
+      });
+    },
+    [store],
+  );
+
+  /** Takes the follow-up off an item at the viewer's request; a finished part stays done (see `Store.endFollowUp`). */
+  const endFollowUp = useCallback(
+    async (nodeId: string) => {
+      if (!store) return;
+      const source = manualSource();
+      const { stored, change } = await store.endFollowUp(nodeId, undefined, source);
+      logChange(nodeId, stored, `endFollowUp:${source}`);
+      setStatuses((current) => {
+        const next = new Map(current);
+        if (stored) next.set(nodeId, stored);
+        else next.delete(nodeId);
+        return next;
+      });
+      setStatusLog((current) => new Map(current).set(nodeId, [...(current.get(nodeId) ?? []), change]));
+    },
+    [store, logChange],
+  );
+
+  /** Swaps the hand-off snapshot of a stored "my part done", keeping its time (see `Store.setHandoff`). */
+  const setHandoff = useCallback(
+    async (nodeId: string, handoff: Handoff) => {
+      if (!store) return;
+      await store.setHandoff(nodeId, handoff);
+      setStatuses((current) => {
+        const stored = current.get(nodeId);
+        return stored ? new Map(current).set(nodeId, { ...stored, handoff }) : current;
+      });
+    },
+    [store],
+  );
 
   /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
   const restoreStatus = useCallback(
@@ -651,10 +708,6 @@ export function useInbox(): Inbox {
 
   useEffect(() => {
     for (const c of classified) {
-      // A new assignment is a fresh start: no status is left to anchor on.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
-      if (c.renewed) void clearStatus(c.item.id, "auto:reassigned");
-      else if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
       if (me && lockedDone(c, statuses.get(c.item.id), me) && !converting.current.has(c.item.id)) {
         converting.current.add(c.item.id);
         void clearStatus(c.item.id, "auto:locked");
@@ -664,7 +717,7 @@ export function useInbox(): Inbox {
         void writeStatus(c.item.id, "done", true, { handoff: snapshotOf(c.item) }, "auto:legacy-done");
       }
     }
-  }, [classified, writeStatus, clearStatus, me, statuses, now]);
+  }, [classified, writeStatus, clearStatus, me, statuses]);
 
   const latestClassified = useRef(classified);
   useEffect(() => {
@@ -675,7 +728,7 @@ export function useInbox(): Inbox {
   const logged = useRef(new Map<string, string>());
   useEffect(() => {
     for (const c of classified) {
-      const why = `${c.bucket} asks=${c.asks.join("+") || "none"} status=${c.status} answered=${c.answered ?? "no"}${c.statusReset ? " reset" : ""}`;
+      const why = `${c.bucket} asks=${c.asks.join("+") || "none"} status=${c.status} answered=${c.answered ?? "no"}`;
       if (logged.current.get(c.item.id) === why) continue;
       logged.current.set(c.item.id, why);
       log.verbose("classify", { item: ref(c.item), why, reasons: c.item.reasons.join("+"), title: c.item.title });
@@ -736,7 +789,12 @@ export function useInbox(): Inbox {
     setStatus,
     clearStatus,
     resetStatuses,
+    handledUntil,
+    now,
+    setHandledUntil,
     restoreStatus,
+    endFollowUp,
+    setHandoff,
     statuses,
     writeFailures,
     logWriteFailure,

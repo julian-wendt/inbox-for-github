@@ -1,4 +1,4 @@
-import type { Handoff, Item } from "./model";
+import type { Handoff, Item, StoredStatus } from "./model";
 import { isBot, posts, sameLogin } from "./timeline";
 
 /** What happened on a handed-off item since the viewer's part ended (see `updatesSince`). */
@@ -25,9 +25,11 @@ export function snapshotOf(item: Pick<Item, "boards" | "linkedPrs">): Handoff {
  * last ticked off its updates): posts and reviews by others (bots left out), a board status
  * different from the snapshot, a linked pull request not in it, closing or merging, and a
  * reopening by someone else. Boards
- * missing now (e.g. boards not loaded) do not count as a change. Oldest first within each kind.
+ * missing now (e.g. boards not loaded) do not count as a change, nor do boards and pull requests
+ * of an item that was closed by `since`: nothing writes a fresh snapshot for it. Oldest first
+ * within each kind.
  *
- * @param since     ISO time the snapshot was taken.
+ * @param since     ISO time the snapshot was taken, or the item's handled-until when that is later.
  * @param snapshot  From `snapshotOf` at that time.
  *
  * @example
@@ -39,11 +41,24 @@ export function updatesSince(item: Item, me: string, since: string, snapshot: Ha
     .filter((p) => byOthers(p.by, p.at))
     .sort((a, b) => a.at.localeCompare(b.at))
     .map((p) => ({ kind: "post", ...p }));
-  const boardUpdates: Update[] = item.boards
+  const settled = !!item.closed && item.closed.at <= since;
+  const boardUpdates: Update[] = settled ? [] : item.boards
     .filter((b) => b.id in snapshot.boards && snapshot.boards[b.id] !== b.status)
     .map((b) => ({ kind: "board", board: b.title, from: snapshot.boards[b.id], to: b.status }));
-  const prUpdates: Update[] = item.linkedPrs.filter((p) => !snapshot.prs.includes(p.number)).map((p) => ({ kind: "pr", number: p.number }));
+  const prUpdates: Update[] = settled ? [] : item.linkedPrs.filter((p) => !snapshot.prs.includes(p.number)).map((p) => ({ kind: "pr", number: p.number }));
   const closed: Update[] = item.closed && item.closed.at > since ? [{ kind: "closed", state: item.closed.state, at: item.closed.at }] : [];
   const reopened: Update[] = item.activities.flatMap((a) => (a.kind === "state" && a.change === "reopened" && byOthers(a.actor, a.at) ? [{ kind: "reopened" as const, by: a.actor, at: a.at }] : []));
   return [...closed, ...reopened, ...boardUpdates, ...prUpdates, ...postUpdates];
+}
+
+/**
+ * What is left of a stored status once its follow-up is taken off (X or D in Follow-up): a
+ * finished part stays done with its time and snapshot, so news since then still counts; anything
+ * else leaves nothing.
+ *
+ * @example
+ *   afterFollowUp({ status: "snoozed", changedAt: "2026-11-02T10:00:00Z", handoff }); // { status: "done", changedAt: "2026-11-02T10:00:00Z", handoff }
+ */
+export function afterFollowUp(stored: StoredStatus | undefined): StoredStatus | undefined {
+  return stored?.handoff ? { status: "done", changedAt: stored.changedAt, handoff: stored.handoff } : undefined;
 }

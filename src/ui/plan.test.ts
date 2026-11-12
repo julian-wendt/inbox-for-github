@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, eventText, withEvent, isPinnable, keepsPlan, dayChoices, followEvent, orphanLinks, retouch, rollOver, setPlan, unplan, type Today } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, eventText, withEvent, isPinnable, keepsPlan, dayChoices, followEvent, orphanLinks, retouch, rollOver, setPlan, unplan, withPin, withPlan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -168,6 +168,7 @@ describe("datedOf", () => {
   it("lets T and P take a follow-up, which they end", () => {
     expect(isPinnable(open("a", "snoozed"))).toBe(true);
     expect(isPinnable(open("a", "done"))).toBe(false);
+    expect(isPinnable({ ...open("a", "snoozed"), updates: [] })).toBe(false);
   });
 });
 
@@ -235,6 +236,19 @@ describe("unplan", () => {
   it("takes the pins, plans and times of the items, and leaves the rest and the day", () => {
     const before = state(["a", "b"], "2026-10-28", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-28", b: "2026-10-27" }, { a: "t1", b: "t2", c: "t3" });
     expect(unplan(before, ["a", "c"])).toEqual({ focus: ["b"], focusDay: "2026-10-28", planned: [], pinnedOn: { b: "2026-10-27" }, plannedAt: { b: "t2" } });
+  });
+});
+
+describe("withPin and withPlan", () => {
+  const before = state(["a"], "2026-10-27", [{ id: "c", day: "2026-10-29" }], { a: "2026-10-27" }, { a: "t1", c: "t3" });
+
+  it("pins an item for the day, out of its plan, and moves Today to that day", () => {
+    expect(withPin(before, "c", "2026-10-28", "t4")).toEqual({ focus: ["a", "c"], focusDay: "2026-10-28", planned: [], pinnedOn: { a: "2026-10-27", c: "2026-10-28" }, plannedAt: { a: "t1", c: "t4" } });
+  });
+
+  it("plans an item for a day, out of the pins, and takes a plan off with null", () => {
+    expect(withPlan(before, "a", "2026-10-30", "t4")).toEqual({ focus: [], focusDay: "2026-10-27", planned: [{ id: "c", day: "2026-10-29" }, { id: "a", day: "2026-10-30" }], pinnedOn: {}, plannedAt: { a: "t4", c: "t3" } });
+    expect(withPlan(before, "c", null, "t4")).toEqual({ focus: ["a"], focusDay: "2026-10-27", planned: [], pinnedOn: { a: "2026-10-27" }, plannedAt: { a: "t1" } });
   });
 });
 

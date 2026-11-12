@@ -177,7 +177,7 @@ export interface Closed {
   at: string;
 }
 
-/** What brings a follow-up or done item back to open; see `reopens`. */
+/** What else brings a handled item back into the inbox: "any-post" makes any post by someone else an ask (see `classify`). */
 export type Reopen = "mention" | "any-post";
 
 /** A GitHub organization the viewer belongs to. */
@@ -192,7 +192,7 @@ export interface StoredStatus {
   changedAt: string;
   /** Snoozed until this time (ISO 8601); it comes back then, or earlier by the "reopenOn" setting. */
   until?: string;
-  /** With "done": the viewer's part of an assignment ended; what happens after it is an update for them. */
+  /** With "done", or "snoozed" while a follow-up waits: the viewer's part of an assignment ended; what happens after it is an update for them. */
   handoff?: Handoff;
 }
 

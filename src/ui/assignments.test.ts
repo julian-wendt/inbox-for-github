@@ -13,7 +13,7 @@ function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<It
     answered: null,
     asks: [],
     statusAt: "2026-10-20T00:00:00Z",
-    statusReset: false,
+    asked: {},
     ...overrides,
   };
 }
