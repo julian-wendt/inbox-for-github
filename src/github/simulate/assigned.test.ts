@@ -229,7 +229,7 @@ describe("My part done", () => {
     expect(app.entry(issue).asks).toEqual(["update"]);
   });
 
-  it("shows a closed assignment only in the Done bar once the closing was ticked off", async () => {
+  it("shows a closed assignment nowhere once the closing was ticked off, not even in the Done bar", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: ["octocat", "alice"] });
     await app.refresh();
@@ -239,9 +239,7 @@ describe("My part done", () => {
     await app.reload(issue);
     app.done(issue);
 
-    const { done, ...views } = app.views();
-    expect(done).toContain(issue.id);
-    for (const ids of Object.values(views)) expect(ids).not.toContain(issue.id);
+    for (const ids of Object.values(app.views())) expect(ids).not.toContain(issue.id);
   });
 
   it("files a closed assignment under Done only when it also mentioned the viewer", async () => {

@@ -176,4 +176,19 @@ describe("inDoneBar", () => {
     world.advance(20 * DAY);
     expect(inBar(app, issue)).toBe(true);
   });
+
+  it("leaves out a finished part whose closing was ticked off, once it is no longer for the viewer", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: [ME] });
+    await app.refresh();
+    app.done(issue);
+    world.advance(HOUR);
+    world.close(issue, "alice");
+    await app.refresh();
+    expect(app.entry(issue).asks).toEqual(["update"]);
+    app.done(issue);
+    world.advance(20 * DAY);
+    expect(app.entry(issue).bucket).toBe("involved");
+    expect(inBar(app, issue)).toBe(false);
+  });
 });
