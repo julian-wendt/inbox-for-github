@@ -5,7 +5,7 @@ import { ruleSwitches } from "./rules";
 import type { InboxSession } from "./github/simulate/session";
 import { DAY, HOUR, MINUTE, simulation } from "./github/simulate/vitest";
 import type { GitHubSimulator, Ref } from "./github/simulate/world";
-import { onPlate } from "./ui/assignments";
+import { isNewAssignment, onPlate } from "./ui/assignments";
 import { isOwnOpen } from "./ui/authored";
 import { isWaiting } from "./ui/followUp";
 import { VIEWS, type View } from "./ui/labels";
@@ -198,14 +198,27 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
       },
     },
     {
-      situation: "a new assignment after my part done",
-      diverges: "#108: it clears the status and goes to Assigned to me, not the inbox",
+      situation: "a new assignment is no ask: new work in Assigned to me, with its dot",
+      run: async (world, app) => {
+        const issue = world.issue();
+        world.assign(issue, "bob", ME);
+        await app.refresh();
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(isNewAssignment(app.entry(issue), new Map(), ME)).toBe(true);
+      },
+    },
+    {
+      situation: "a new assignment after my part done: new work in Assigned to me, with its dot",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
+        const seen = new Map([[issue.id, world.stamp()]]);
+        world.advance(HOUR);
         world.unassign(issue, "bob", ME);
         world.assign(issue, "bob", ME);
         await refetch(world, app, issue);
-        expect(app.entry(issue).bucket).toBe("inbox");
+        expect(app.entry(issue)).toMatchObject({ status: "open" });
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(isNewAssignment(app.entry(issue), seen, ME)).toBe(true);
       },
     },
     {
@@ -219,6 +232,19 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
         await refetch(world, app, issue);
         expect(app.entry(issue).bucket).toBe("inbox");
         expect(app.entry(issue).asks).toContain("reopened");
+      },
+    },
+    {
+      situation: "a reopen by someone else after D asks alone; the mention D handled stays handled",
+      diverges: "#108: the reset drops what D handled, and the mention asks again",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.done(issue);
+        world.advance(HOUR);
+        world.close(issue, "alice");
+        world.reopen(issue, "bob");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).asks).toEqual(["reopened"]);
       },
     },
     {
