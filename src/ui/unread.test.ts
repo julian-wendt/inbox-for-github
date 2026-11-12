@@ -55,12 +55,23 @@ describe("unreadInInbox with the movesUp setting", () => {
 
 describe("unreadAssignment", () => {
   it("does not count a new assignment outside Assigned to me, where the row shows none", () => {
-    expect(unreadAssignment(entry({ bucket: "authored", asks: [] }, { reasons: ["assigned"] }), new Map(), "me")).toBe(false);
+    expect(unreadAssignment(entry({ bucket: "authored", asks: [] }, { reasons: ["assigned"] }), new Map(), "me", false)).toBe(false);
+  });
+
+  it("counts a new assignment where the view draws it, whatever the item's bucket", () => {
+    const assigned = { reasons: ["assigned" as const], activities: [{ kind: "assigned" as const, at: "2026-10-22T09:00:00Z", actor: "alice", assignee: "me" }] };
+    expect(unreadAssignment(entry({ bucket: "inbox", asks: [] }, assigned), new Map(), "me", true)).toBe(true);
+    expect(unreadAssignment(entry({ bucket: "snoozed", asks: [] }, assigned), new Map(), "me", true)).toBe(true);
+  });
+
+  it("does not count it in Planned or Follow-up, which draw no such mark", () => {
+    const assigned = { reasons: ["assigned" as const], activities: [{ kind: "assigned" as const, at: "2026-10-22T09:00:00Z", actor: "alice", assignee: "me" }] };
+    expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map(), "me", false)).toBe(false);
   });
 
   it("counts a new assignment as unread until opened", () => {
     const assigned = { reasons: ["assigned" as const], activities: [{ kind: "assigned" as const, at: "2026-10-22T09:00:00Z", actor: "alice", assignee: "me" }] };
-    expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map(), "me")).toBe(true);
-    expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map([["I_1", "2026-10-22T10:00:00Z"]]), "me")).toBe(false);
+    expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map(), "me", true)).toBe(true);
+    expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map([["I_1", "2026-10-22T10:00:00Z"]]), "me", true)).toBe(false);
   });
 });
