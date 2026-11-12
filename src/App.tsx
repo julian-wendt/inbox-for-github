@@ -47,7 +47,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { assignedAt, withAssignees, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
+import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -645,7 +645,7 @@ export default function App() {
     });
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries(c), fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ entries: planEntries, of: c.item.id, fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -667,7 +667,10 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries: MenuEntry[]; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ entries: MenuEntry[] | ((c: Classified) => MenuEntry[]); of?: string; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  /** A menu of one item is built from the item as it is now, not as it was when the menu opened. */
+  const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of) : undefined;
+  const menuEntriesNow = !menu ? null : typeof menu.entries !== "function" ? menu.entries : menuItem ? menu.entries(menuItem) : null;
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
@@ -941,7 +944,7 @@ export default function App() {
     const several = marks.has(entry.item.id) && marked.length > 1;
     if (!several) clearMarks();
     selection.select(entry.item.id);
-    setMenu({ entries: several ? bulkEntries() : menuEntries(entry), x: e.clientX, y: e.clientY });
+    setMenu({ ...(several ? { entries: bulkEntries() } : { entries: menuEntries, of: entry.item.id }), x: e.clientX, y: e.clientY });
   };
   const copy = (text: string) =>
     navigator.clipboard.writeText(text).then(
@@ -969,15 +972,16 @@ export default function App() {
         () => ids.forEach((id) => classifiedById(id) && assignAll([classifiedById(id)!], true)),
       );
     for (const c of due) {
-      const { id, number, assignees, reasons, activities } = c.item;
-      inbox.updateItem(id, (item) => withSelfAssigned(item, me, new Date().toISOString()));
+      const { id, number, assignees, reasons } = c.item;
+      const at = new Date().toISOString();
+      inbox.updateItem(id, (item) => withSelfAssigned(item, me, at));
       void queueWrite(() =>
         ghToken()
           .then((token) => assignSelf(token, id))
           .then(
             (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
             (e) => {
-              inbox.updateItem(id, (item) => ({ ...item, assignees, reasons, activities }));
+              inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
               void inbox.logWriteFailure(id, "assign", String(e));
               actions.notify(t("assign.failed", { number, error: String(e) }));
             },
@@ -997,7 +1001,7 @@ export default function App() {
    */
   const leave = (c: Classified, quiet = false, keepStatus = false) => {
     if (!leavable(c)) return quiet ? undefined : actions.notify(t("unassign.nothing"));
-    const { id, number, assignees, reasons, activities } = c.item;
+    const { id, number, assignees, reasons } = c.item;
     const previous = inbox.statuses.get(id);
     const cleared = !keepStatus && leaveClears(previous);
     if (cleared) void inbox.clearStatus(id);
@@ -1029,7 +1033,7 @@ export default function App() {
         .then(
           (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
           (e) => {
-            inbox.updateItem(id, (item) => ({ ...item, assignees, reasons, activities }));
+            inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
             if (cleared) void inbox.restoreStatus(id, previous);
             void inbox.logWriteFailure(id, "unassign", String(e));
             actions.notify(t("unassign.failed", { number, error: String(e) }));
@@ -1524,9 +1528,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menu.entries} onClose={() => setMenu(null)} />}
+      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => setMenu(null)} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) ?? snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
       )}
       {calendarFor && (
         <CalendarDay

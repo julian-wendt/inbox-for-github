@@ -256,6 +256,17 @@ export function withSelfAssigned(item: Item, me: string, at: string): Item {
 }
 
 /**
+ * The item with a failed self-(un)assignment taken back: the assignees and reasons from before,
+ * and only the local event made at `at` removed from the activities, so ones that came in since stay.
+ *
+ * @example
+ *   withoutLocalEvent(item, { assignees: [], reasons: [] }, "2026-10-28T09:00:00Z");
+ */
+export function withoutLocalEvent(item: Item, before: Pick<Item, "assignees" | "reasons">, at: string): Item {
+  return { ...item, assignees: before.assignees, reasons: before.reasons, activities: item.activities.filter((a) => !((a.kind === "assigned" || a.kind === "unassigned") && a.at === at)) };
+}
+
+/**
  * The item with GitHub's assignees after a write, and the reason "assigned" to match, so it is
  * in Assigned to me exactly when the viewer is among them, whatever a refresh in between left.
  *

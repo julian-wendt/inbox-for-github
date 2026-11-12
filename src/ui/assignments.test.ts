@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, hasNewActivity, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
+import { assignedAt, hasNewActivity, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, withoutLocalEvent, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -179,6 +179,18 @@ describe("withSelfAssigned", () => {
     expect(assigned.reasons).toEqual(["involved", "assigned"]);
     expect(isNewAssignment({ item: assigned, statusAt: null }, new Map(), "me")).toBe(false);
     expect(withSelfAssigned(assigned, "me", "2026-10-25T11:00:00Z")).toBe(assigned);
+  });
+});
+
+describe("withoutLocalEvent", () => {
+  it("takes back the local event and keeps activities that came in meanwhile", () => {
+    const before = entry("a", {}, { assignees: ["bob"], reasons: ["involved"], activities: [] }).item;
+    const assigned = withSelfAssigned(before, "me", "2026-10-25T10:00:00Z");
+    const later = { ...assigned, activities: [...assigned.activities, { kind: "assigned" as const, at: "2026-10-25T10:05:00Z", actor: "bob", assignee: "carol" }] };
+    const back = withoutLocalEvent(later, before, "2026-10-25T10:00:00Z");
+    expect(back.assignees).toEqual(["bob"]);
+    expect(back.reasons).toEqual(["involved"]);
+    expect(back.activities.map((a) => a.at)).toEqual(["2026-10-25T10:05:00Z"]);
   });
 });
 

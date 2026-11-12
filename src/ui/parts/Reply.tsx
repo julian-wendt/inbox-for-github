@@ -45,6 +45,9 @@ const SHORTCUTS: Record<string, Format> = { b: "bold", i: "italic", e: "code", k
 /** Unsent text per item id; lives as long as the app, so switching items keeps a draft. */
 const drafts = new Map<string, string>();
 
+/** Items whose reply is on its way; the box of another visit to the item must not send the same draft again. */
+const inFlight = new Set<string>();
+
 /**
  * Composer for a plain comment on the item, modeled on GitHub's comment box: Write and Preview
  * tabs, a Markdown toolbar (also ⌘B, ⌘I, ⌘E, ⌘K while typing), and a green Comment button.
@@ -89,7 +92,8 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
   };
 
   const send = async (state?: { action: "close" | "reopen"; reason?: CloseReason }) => {
-    if ((!text.trim() && !state) || sending) return;
+    if ((!text.trim() && !state) || sending || inFlight.has(itemId)) return;
+    inFlight.add(itemId);
     setSending(true);
     setError(null);
     let posted = false;
@@ -108,6 +112,7 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
       // The comment is on GitHub even though the state change failed; show it.
       if (posted) onSent();
     } finally {
+      inFlight.delete(itemId);
       setSending(false);
     }
   };
