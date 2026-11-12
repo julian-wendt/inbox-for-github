@@ -1187,7 +1187,12 @@ export default function App() {
       const next = change({ collected: s.notifyCollected, lastSummary: s.notifyLastSummary });
       return { ...s, notifyCollected: next.collected, notifyLastSummary: next.lastSummary };
     });
-  useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending);
+  const laterNotified = (itemId: string, until: string) => {
+    const entry = inbox.classified.find((c) => c.item.id === itemId);
+    if (entry) followUp(entry, until, true);
+  };
+  const reminderOptions = { since: inbox.fetchedAt, workdays: inbox.settings.workdays, followUpTime: inbox.settings.followUpTime, onLater: laterNotified };
+  useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending, reminderOptions);
 
   const orbLogins = useOrbLogins();
   const { orbLooks } = inbox.settings;

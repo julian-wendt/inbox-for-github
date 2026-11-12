@@ -288,6 +288,9 @@ export const en = {
   "notify.summaryReason.feedback": "Feedback",
   "notify.summaryReason.reminder": "Self-mentions",
   "notify.summaryReason.update": "Updates",
+  "notify.due": "Your follow-up is due",
+  "notify.later.hour": "In 1 hour",
+  "notify.later.afternoon": "This afternoon",
   "notify.open": "Open",
 
   "history.done": "You marked it as done",
@@ -357,7 +360,7 @@ export const en = {
   "help.basics.token": "The app signs in with the GitHub CLI (gh auth login). It writes to GitHub only when you send a comment, close or reopen an item, or assign or remove yourself (⌃A).",
   "help.basics.why": "The light bulb at the top of the detail view explains why an item is in its view and what moves it on.",
   "help.basics.filter": "Click a repository in the sidebar to show only its items; once one is picked, click others to add them, and the eraser next to \"Repositories\" shows all again. The switch above the list narrows to issues or pull requests, and the search field (⌘F) to titles and numbers.",
-  "help.basics.attention": "The red badge on the app icon counts the unread items in your inbox, across all repositories the app loads (set under Settings → Repositories), except untracked ones. The numbers next to the views count every item the same way: what you pick in the sidebar or a view's header (repositories, Issues/Pull Requests, Mentions/Reviews, sprint) only narrows the list and the number in its header. Each item that newly enters the inbox also sends a notification; one that only comes back, because its follow-up date came or you reopened it, returns quietly. Badge and notifications can be switched off under Settings → Notifications.",
+  "help.basics.attention": "The red badge on the app icon counts the unread items in your inbox, across all repositories the app loads (set under Settings → Repositories), except untracked ones. The numbers next to the views count every item the same way: what you pick in the sidebar or a view's header (repositories, Issues/Pull Requests, Mentions/Reviews, sprint) only narrows the list and the number in its header. Each item that newly enters the inbox also sends a notification; one that only comes back, because its follow-up date came or you reopened it, returns quietly, unless you set the follow-up with Remind me (R in the F menu): then it notifies once, with choices to remind you later. Badge and notifications can be switched off under Settings → Notifications.",
   "help.basics.local.title": "Your statuses",
   "help.basics.history.title": "History",
   "help.basics.token.title": "GitHub access",

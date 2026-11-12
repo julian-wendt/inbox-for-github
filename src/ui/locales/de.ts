@@ -290,6 +290,9 @@ export const de: Messages = {
   "notify.summaryReason.feedback": "Feedback",
   "notify.summaryReason.reminder": "Selbst-Erwähnungen",
   "notify.summaryReason.update": "Aktualisierungen",
+  "notify.due": "Deine Wiedervorlage ist fällig",
+  "notify.later.hour": "In 1 Stunde",
+  "notify.later.afternoon": "Heute Nachmittag",
   "notify.open": "Öffnen",
 
   "history.done": "Du hast es als erledigt markiert",
@@ -359,7 +362,7 @@ export const de: Messages = {
   "help.basics.token": "Die App meldet sich über die GitHub CLI an (gh auth login). Sie schreibt nur auf GitHub, wenn du einen Kommentar sendest, ein Item schließt oder wieder öffnest, oder dich selbst zuweist oder entfernst (⌃A).",
   "help.basics.why": "Die Glühbirne oben in der Detailansicht erklärt, warum ein Item in seinem Bereich ist und was es weiterbewegt.",
   "help.basics.filter": "Ein Klick auf ein Repository in der Sidebar zeigt nur dessen Items; ist eines gewählt, fügt ein Klick auf weitere sie hinzu, und der Radiergummi neben „Repositories“ zeigt wieder alle. Der Schalter über der Liste grenzt auf Issues oder Pull Requests ein, das Suchfeld (⌘F) auf Titel und Nummern.",
-  "help.basics.attention": "Das rote Badge am App-Icon zählt die ungelesenen Items in deiner Inbox, über alle Repositories, die die App lädt (einstellbar unter Einstellungen → Repositories), ohne nicht verfolgte. Die Zahlen an den Ansichten zählen alle Items genauso: Was du in der Sidebar oder im Kopf einer Ansicht auswählst (Repositories, Issues/Pull Requests, Erwähnungen/Reviews, Sprint), grenzt nur die Liste und die Zahl in ihrem Kopf ein. Jedes Item, das neu in die Inbox kommt, meldet sich außerdem mit einer Benachrichtigung; eins, das nur zurückkommt, weil seine Wiedervorlage fällig ist oder du es wieder geöffnet hast, kehrt still zurück. Badge und Benachrichtigungen schaltest du unter Einstellungen → Mitteilungen ab.",
+  "help.basics.attention": "Das rote Badge am App-Icon zählt die ungelesenen Items in deiner Inbox, über alle Repositories, die die App lädt (einstellbar unter Einstellungen → Repositories), ohne nicht verfolgte. Die Zahlen an den Ansichten zählen alle Items genauso: Was du in der Sidebar oder im Kopf einer Ansicht auswählst (Repositories, Issues/Pull Requests, Erwähnungen/Reviews, Sprint), grenzt nur die Liste und die Zahl in ihrem Kopf ein. Jedes Item, das neu in die Inbox kommt, meldet sich außerdem mit einer Benachrichtigung; eins, das nur zurückkommt, weil seine Wiedervorlage fällig ist oder du es wieder geöffnet hast, kehrt still zurück, außer du hast die Wiedervorlage mit Erinnern gesetzt (R im F-Menü): dann meldet sie sich einmal, mit Optionen, dich später erneut zu erinnern. Badge und Benachrichtigungen schaltest du unter Einstellungen → Mitteilungen ab.",
   "help.basics.local.title": "Deine Status",
   "help.basics.history.title": "Verlauf",
   "help.basics.token.title": "Zugriff auf GitHub",

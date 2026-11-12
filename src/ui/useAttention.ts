@@ -2,7 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { isPermissionGranted, onAction, registerActionTypes, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { useEffect, useRef, useState } from "react";
 import type { Classified } from "../classify";
-import { arrivals, askKey, notificationTitle, notifies, notifyReason, type NotifyReason } from "./attention";
+import { arrivals, askKey, dueReminders, laterChoices, notificationTitle, notifies, notifyReason, ringing, type Later, type NotifyReason } from "./attention";
 import { notifiesLive, summarize, summaryDue, type Delivery } from "./delivery";
 import { t } from "./i18n";
 
@@ -12,6 +12,16 @@ export interface NotifyOptions {
   reasons: Partial<Record<NotifyReason, boolean>>;
   inFront: boolean;
   delivery: Delivery;
+}
+
+/** What a due reminder needs: the last fetch before start, the settings its "Later" choices follow, and what a choice does. */
+export interface ReminderOptions {
+  /** The last fetch's time, read only with the first result, where it is the cached fetch's: reminders due since then ring at start. */
+  since: Date | null;
+  workdays: readonly number[];
+  followUpTime: string;
+  /** Sets the item's follow-up anew, with "Remind me", at `until` (ISO 8601). */
+  onLater: (itemId: string, until: string) => void;
 }
 
 /** What waits for its summary: the collected item ids and when the last summary went out (ISO 8601). */
@@ -40,6 +50,11 @@ const TICK_MS = 30_000;
  * in the inbox that is. Switching to "immediately" sends what was collected at once. The first
  * check with a schedule only records the baseline, so enabling it replays nothing.
  *
+ * A follow-up with "Remind me" that comes due rings on its own (`dueReminders`), once, with the
+ * main switch as its only condition: the viewer asked for it, so neither the reason switches,
+ * `delivery` nor `inFront` hold it back. Its notification offers "Later" choices
+ * (`laterChoices`) that set the follow-up anew through `reminders.onLater`.
+ *
  * @param classified  The current classification; pass an empty list until the first fetch is done.
  * @param unread      Ids the badge counts: unread inbox items (`unreadInInbox`), unread active assignments and items marked unread by hand.
  * @param notify      What may notify and when (see `NotifyOptions`).
@@ -49,20 +64,24 @@ const TICK_MS = 30_000;
  * @param pending     What is collected for the next summary, as stored.
  * @param onPending   Called with a function that turns the stored `Pending` into the next one;
  *                    a function, so two changes in one tick do not overwrite each other.
+ * @param reminders   What due reminders need (see `ReminderOptions`).
  *
  * @example
- *   useAttention(inbox.classified, unreadIds, { on: true, reasons: { review: false }, inFront: false, delivery }, true, (id) => show(id), pending, (change) => store(change(pending)));
+ *   useAttention(inbox.classified, unreadIds, { on: true, reasons: { review: false }, inFront: false, delivery }, true, (id) => show(id), pending, (change) => store(change(pending)), { since: inbox.fetchedAt, workdays, followUpTime, onLater });
  */
-export function useAttention(classified: Classified[], unread: ReadonlySet<string>, notify: NotifyOptions, badge: boolean, onOpen: (itemId: string | null) => void, pending: Pending, onPending: (change: (current: Pending) => Pending) => void): void {
+export function useAttention(classified: Classified[], unread: ReadonlySet<string>, notify: NotifyOptions, badge: boolean, onOpen: (itemId: string | null) => void, pending: Pending, onPending: (change: (current: Pending) => Pending) => void, reminders: ReminderOptions): void {
   const known = useRef<Map<string, string> | null>(null);
+  const rang = useRef<Set<string> | null>(null);
   const { on, reasons, inFront, delivery } = notify;
   const { collected, lastSummary } = pending;
   const open = useRef(onOpen);
   const change = useRef(onPending);
+  const remind = useRef(reminders);
   useEffect(() => {
     open.current = onOpen;
     change.current = onPending;
-  }, [onOpen, onPending]);
+    remind.current = reminders;
+  }, [onOpen, onPending, reminders]);
   const latest = useRef({ on, delivery, collected, lastSummary });
   useEffect(() => {
     latest.current = { on, delivery, collected, lastSummary };
@@ -82,6 +101,9 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
     const listener = onAction(({ actionId, notification }) => {
       const itemId = notification?.extra?.itemId;
       if (actionId === "tap" || actionId === OPEN_ACTION) open.current(typeof itemId === "string" ? itemId : null);
+      // The hour counts from the click; the days were named when it went out.
+      const later = actionId === "later-hour" ? new Date(Date.now() + 3_600_000).toISOString() : notification?.extra?.[actionId];
+      if (typeof itemId === "string" && actionId.startsWith("later-") && typeof later === "string") remind.current.onLater(itemId, later);
     });
     return () => void listener.then((l) => l.unregister());
   }, []);
@@ -93,7 +115,11 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
 
   useEffect(() => {
     if (classified.length === 0) return;
-    const fresh = arrivals(classified, known.current).filter((c) => notifies(notifyReason(c), reasons));
+    const { since, workdays, followUpTime } = remind.current;
+    const due = dueReminders(classified, rang.current, since?.toISOString() ?? null);
+    rang.current = new Set(classified.filter(ringing).map((c) => c.item.id));
+    if (on && due.length > 0) void sendReminders(due, laterChoices(new Date(), workdays, followUpTime));
+    const fresh = arrivals(classified, known.current).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
     known.current = new Map(classified.filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
     if (!on || fresh.length === 0) return;
     if (!notifiesLive(delivery, new Date())) {
@@ -136,6 +162,18 @@ async function send(entries: Classified[]): Promise<void> {
     sendNotification({ title: notificationTitle(entry), body: `${item.repo.split("/")[1]}#${item.number} ${item.title}`, actionTypeId: OPEN_TYPE, extra: { itemId: item.id } });
   }
   if (entries.length > 3) sendNotification({ title: "Inbox for GitHub", body: t(entries.length === 4 ? "notify.moreOne" : "notify.more", { count: entries.length - 3 }), actionTypeId: OPEN_TYPE });
+}
+
+/** The action type of a due reminder: "Open" first, which a click on macOS's "Options" button reports, then the "Later" choices. */
+const REMINDER_TYPE = "reminder";
+
+async function sendReminders(entries: Classified[], later: Later[]): Promise<void> {
+  if (!(await isPermissionGranted()) && (await requestPermission()) !== "granted") return;
+  await registerActionTypes([{ id: REMINDER_TYPE, actions: [{ id: OPEN_ACTION, title: t("notify.open") }, ...later.map(({ id, title }) => ({ id, title }))] }]);
+  const untils = Object.fromEntries(later.map(({ id, until }) => [id, until]));
+  for (const { item } of entries) {
+    sendNotification({ title: t("notify.due"), body: `${item.repo.split("/")[1]}#${item.number} ${item.title}`, actionTypeId: REMINDER_TYPE, extra: { itemId: item.id, ...untils } });
+  }
 }
 
 async function sendSummary(entries: Classified[]): Promise<void> {

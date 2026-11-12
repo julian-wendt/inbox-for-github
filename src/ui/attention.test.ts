@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { arrivals, askKey, notificationTitle, notifies, notifyReason } from "./attention";
+import { arrivals, askKey, dueReminders, laterChoices, notificationTitle, notifies, notifyReason } from "./attention";
 import { setLang } from "./i18n";
 
 setLang("en");
@@ -65,5 +65,36 @@ describe("notifyReason", () => {
   it("lets every reason notify unless switched off", () => {
     expect(notifies("review", {})).toBe(true);
     expect(notifies("review", { review: false })).toBe(false);
+  });
+});
+
+describe("dueReminders", () => {
+  const due = (id: string, at: string, notify = true) => entry(id, { asks: ["due"], asked: { due: at }, ...(notify && { notify: true as const }) });
+  const items = [due("I_1", "2026-11-12T08:00:00Z"), due("I_2", "2026-11-13T08:00:00Z"), due("I_3", "2026-11-13T08:00:00Z", false), entry("I_4", { notify: true })];
+
+  it("rings at start only what came due since the last fetch, and nothing without a cache", () => {
+    expect(dueReminders(items, null, "2026-11-12T17:00:00Z").map((c) => c.item.id)).toEqual(["I_2"]);
+    expect(dueReminders(items, null, null)).toEqual([]);
+  });
+
+  it("rings afterwards what newly rings, once, and never a plain due follow-up or one still waiting", () => {
+    expect(dueReminders(items, new Set(["I_1"]), null).map((c) => c.item.id)).toEqual(["I_2"]);
+    expect(dueReminders(items, new Set(["I_1", "I_2"]), null)).toEqual([]);
+  });
+});
+
+describe("laterChoices", () => {
+  const ids = (now: Date) => laterChoices(now, [1, 2, 3, 4, 5], "09:00").map((l) => [l.id, l.title, new Date(l.until).toString().slice(0, 21)]);
+
+  it("offers an hour, this afternoon before 14:00, and the next workday at the follow-up time", () => {
+    expect(ids(new Date(2026, 10, 13, 9, 30))).toEqual([
+      ["later-hour", "In 1 hour", "Fri Nov 13 2026 10:30"],
+      ["later-afternoon", "This afternoon", "Fri Nov 13 2026 14:00"],
+      ["later-workday", "Next workday", "Mon Nov 16 2026 09:00"],
+    ]);
+  });
+
+  it("drops this afternoon from 14:00 on", () => {
+    expect(ids(new Date(2026, 10, 12, 14, 0)).map(([id]) => id)).toEqual(["later-hour", "later-workday"]);
   });
 });
