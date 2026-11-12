@@ -33,6 +33,8 @@ const comesBack = (reopenOn: Reopen) => t("explain.comesBack", { rule: t(`reopen
 export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dated | null = null): Explanation {
   const { item, mention, answered, asks, status, statusAt, bucket } = entry;
   const waitsInPlace = status === "snoozed" && (bucket === "assigned" || bucket === "authored" || asks.length > 0);
+  // O on a finished part takes back the work, not the follow-up.
+  const stillWaiting = entry.until ? t("explain.stillWaiting", { until: untilText(entry.until) }) : t(entry.updates ? "explain.handedOffWaitsNoDate" : "explain.stillWaitingNoDate");
   const planLine = dated?.kind === "today" ? [t("explain.stillToday")] : dated?.kind === "planned" ? [t("explain.stillPlanned", { day: dayLong(dated.day) })] : [];
 
   // In the inbox the asks say why, whatever else is stored: a follow-up that waits in place, a part that is done.
@@ -59,14 +61,15 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
             : t("explain.mention", { name: mention!.by, ago: agoInSentence(mention!.at) });
       }
     });
-    if (waitsInPlace) lines.push(entry.until ? t("explain.stillWaiting", { until: untilText(entry.until) }) : t("explain.stillWaitingNoDate"));
+    if (waitsInPlace) lines.push(stillWaiting);
     lines.push(...planLine);
     const reminderOnly = asks.length === 1 && mention?.self;
     return { tone: reminderOnly ? "reminder" : "inbox", title: t("explain.inboxTitle"), lines };
   }
 
   if (entry.updates) {
-    return { tone: bucket === "assigned" ? "assigned" : "done", title: t("explain.handedOffTitle"), lines: [t("explain.handedOff"), t("explain.handedOffBack")] };
+    const waits = status === "snoozed" ? [stillWaiting] : [];
+    return { tone: bucket === "assigned" ? "assigned" : "done", title: t("explain.handedOffTitle"), lines: [t("explain.handedOff"), t("explain.handedOffBack"), ...waits] };
   }
   if (item.closed) {
     const title = t(item.closed.state === "merged" ? "explain.mergedSince" : "explain.closedSince", { ago: ago(item.closed.at) });

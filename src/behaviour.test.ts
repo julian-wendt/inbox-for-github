@@ -413,13 +413,55 @@ describe("rule 5: a follow-up is a when, not a status", () => {
     },
     {
       situation: "F on an assignment whose part is done keeps my part done",
-      diverges: "#107: the follow-up replaces the hand-off",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         app.snooze(issue, later(world, 3 * DAY));
         expect(viewsOf(app.entry(issue))).toContain("snoozed");
-        expect(app.statuses.get(issue.id)?.status).toBe("done");
+        expect(app.entry(issue).updates).toEqual([]);
         expect(app.statuses.get(issue.id)?.handoff).toBeDefined();
+      },
+    },
+    {
+      situation: "F on news after my part done handles the news; the part stays done",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+        app.snooze(issue, later(world, 3 * DAY));
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+        expect(app.entry(issue).updates).toEqual([]);
+      },
+    },
+    {
+      situation: "news while a finished part waits is an update in the inbox",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        world.advance(HOUR);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "snoozed", "assigned"]);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+      },
+    },
+    {
+      situation: "a finished part whose follow-up came due is my part done again, not open",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, DAY));
+        world.advance(2 * DAY);
+        expect(viewsOf(app.entry(issue))).not.toContain("snoozed");
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+      },
+    },
+    {
+      situation: "leaving an assignment whose part is done keeps its follow-up",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        await app.leave(issue);
+        expect(viewsOf(app.entry(issue))).toContain("snoozed");
       },
     },
     {
@@ -506,6 +548,16 @@ describe("answered questions", () => {
       run: async (world, app) => {
         const issue = world.issue({ assignees: [ME] });
         await app.refresh();
+        app.snooze(issue, later(world, DAY));
+        world.advance(2 * DAY);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);
+      },
+    },
+    {
+      situation: "a due follow-up on an assignment whose part is done comes into the inbox",
+      diverges: "#108: it goes back to my part done without an ask",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
         app.snooze(issue, later(world, DAY));
         world.advance(2 * DAY);
         expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);

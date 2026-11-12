@@ -63,6 +63,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   request changes no longer count. D there files the news and, on an open item, refreshes the
   snapshot (`setHandoff`, keeping the status time); a closed item gets no write. Open (O) in the
   bar clears the status. `restoreStatus` undoes exactly.
+- **A follow-up on a finished part** keeps the part done: F stores "snoozed" with a fresh
+  `handoff` (`followUpExtra`), so the item waits in Follow-up and stays in the bar `finished`.
+  `classify` reads it as "snoozed" while open and before its date, and as "done" after, with no
+  write. Unassigned, only the follow-up counts.
 - **Repairs at start:** `Store.repairStatusLog` drops log entries at the end of an item's
   history that no stored status stands behind (`staleLogRows`), so the activity log never shows
   "marked as done" for an open item. A "done" stored on an item D may no longer finish
@@ -94,7 +98,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   answering it takes it out again without ending the plan. D and closing on GitHub end it. Each
   morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
   follow-up, F ends a plan or pin (`unplan`).
-- Unassigned, the handoff no longer counts: the item sorts as if no status were stored.
+- Unassigned, the handoff no longer counts: the item sorts as if no status, or only its follow-up, were stored.
 - A closed or merged item is in Done when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
 - A stored status falls back to `open` when its trigger fires (`reopens` in `src/reopen.ts`):

@@ -192,7 +192,7 @@ export interface StoredStatus {
   changedAt: string;
   /** Snoozed until this time (ISO 8601); it comes back then, or earlier by the "reopenOn" setting. */
   until?: string;
-  /** With "done": the viewer's part of an assignment ended; what happens after it is an update for them. */
+  /** With "done", or "snoozed" while a follow-up waits: the viewer's part of an assignment ended; what happens after it is an update for them. */
   handoff?: Handoff;
 }
 

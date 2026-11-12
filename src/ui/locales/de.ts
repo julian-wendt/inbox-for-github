@@ -90,6 +90,7 @@ export const de: Messages = {
   "explain.waitsHereNoDate": "Wartet in seiner Liste ohne Datum. Eine Erwähnung zeigt es trotzdem in der Inbox; mit O holst du es zurück.",
   "explain.stillWaiting": "Seine Wiedervorlage bleibt bis {until} bestehen.",
   "explain.stillWaitingNoDate": "Seine Wiedervorlage bleibt bestehen; mit O holst du es zurück.",
+  "explain.handedOffWaitsNoDate": "Seine Wiedervorlage bleibt ohne Datum bestehen; mit X nimmst du sie weg.",
   "explain.snoozedSince": "Wiedervorlage seit {ago}",
   "explain.doneSince": "Erledigt {ago}",
   "explain.undoHint": "Mit O holst du es sofort zurück.",

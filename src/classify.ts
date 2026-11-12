@@ -68,9 +68,10 @@ export interface Classified {
 /**
  * Sorts one item into a bucket, applying the enabled rules. Pure: nothing is fetched or written.
  *
- * 0. An item whose part the viewer finished (a stored "done" with a handoff) goes its own way
- *    while they stay assigned or it closes, see `classifyHandedOff`; once they are unassigned,
- *    the handoff no longer counts and the item sorts as if no status were stored.
+ * 0. An item whose part the viewer finished (a handoff, stored with "done", or with "snoozed"
+ *    while it also waits for a follow-up) goes its own way while they stay assigned or it
+ *    closes, see `classifyHandedOff`; once they are unassigned, the handoff no longer counts and
+ *    the item sorts as if only its follow-up, if any, were stored.
  * 0b. An item closed or merged on GitHub is "done" when it was for the viewer (a review request
  *    or a mention), whatever the stored status says; other closed items show nowhere.
  * 1. A stored "Follow-up" or "Done" wins, unless `reopens` says the item needs the
@@ -128,10 +129,11 @@ export function classify(
   const own = sameLogin(item.author, me);
   // Items of the tables wait in place: only their date ends it, a mention shows in the inbox besides.
   const inTable = assigned || own;
-  const renewed = stored?.status === "done" && !item.closed && assignedAgain(item, me, stored.changedAt);
-  if (stored?.status === "done" && stored.handoff && !renewed) {
-    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil);
-    stored = undefined;
+  const handedOff = !!stored?.handoff && stored.status !== "open";
+  const renewed = !!stored && (stored.status === "done" || handedOff) && !item.closed && assignedAgain(item, me, stored.changedAt);
+  if (stored && handedOff && !renewed) {
+    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil, now);
+    stored = stored.status === "snoozed" ? { status: "snoozed", changedAt: stored.changedAt, ...(stored.until && { until: stored.until }) } : undefined;
   }
   if (item.closed) {
     const closer = own && askRules.ownClosed ? closedByOther(item, me) : null;
@@ -239,9 +241,10 @@ export function classify(
  * since the hand-off, or what the open path would show (a pending mention, an open review
  * request, feedback, a thread reply; later ones are updates) until the viewer files it with D or plans it (`seenAt`, as in the open path) or answers.
  * Closed and ticked off, it shows nowhere. Ticking off (D) stores a fresh handoff, which moves
- * "since" for updates.
+ * "since" for updates. Stored as "snoozed", it also waits for a follow-up while open and before
+ * the date; after the date it is "done" again, with no write needed.
  */
-function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, seenAt?: string): Classified {
+function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, seenAt: string | undefined, now: number): Classified {
   const since = stored.changedAt;
   const updates = updatesSince(item, me, latest(since, seenAt) ?? since, stored.handoff!);
   const unfiled = (at: string) => at > (seenAt ?? "");
@@ -263,7 +266,8 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   if (feedback) asks.push("feedback");
   if (reply) asks.push("reply");
   const bucket: Bucket = asks.length > 0 ? "inbox" : open && assigned ? "assigned" : "involved";
-  return { item, bucket, status: "done", mention, answered: null, asks, statusAt: since, statusReset: false, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
+  const waits = open && stored.status === "snoozed" && !snoozeEnded(stored, now);
+  return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), mention, answered: null, asks, statusAt: since, statusReset: false, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
 }
 
 /** The last time the viewer, or one of their teams, was asked for a review, as the activities record it. */

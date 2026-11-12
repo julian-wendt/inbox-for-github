@@ -168,6 +168,7 @@ describe("datedOf", () => {
   it("lets T and P take a follow-up, which they end", () => {
     expect(isPinnable(open("a", "snoozed"))).toBe(true);
     expect(isPinnable(open("a", "done"))).toBe(false);
+    expect(isPinnable({ ...open("a", "snoozed"), updates: [] })).toBe(false);
   });
 });
 

@@ -7,7 +7,7 @@ import { sameLogin } from "./timeline";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Classified } from "./classify";
 import { handledStep } from "./handledUntil";
-import type { Status, StatusChange, WriteFailure } from "./model";
+import type { Status, StatusChange, StatusExtra, WriteFailure } from "./model";
 import { setLang, t, type MessageKey } from "./ui/i18n";
 import { itemLink, statusHint, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
 import { covers, setCovered } from "./rules/directOnly";
@@ -23,7 +23,7 @@ import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEve
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
-import { isWaiting } from "./ui/followUp";
+import { followUpExtra, isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
@@ -684,9 +684,9 @@ export default function App() {
   const handled = (c: Classified, at = new Date().toISOString()) => handledStep(c.item.id, inbox.handledUntil.get(c.item.id), at, inbox.setHandledUntil);
   /** P, T and F mark the item seen while it is open, as a step (see `seenStep`). */
   const seenOnOpen = (c: Classified) => seenStep(c.item.id, openedId, { seen: inbox.seen.get(c.item.id), mark: inbox.unreadMarks.get(c.item.id) }, inbox.markSeen, inbox.restoreRead);
-  const statusStep = (c: Classified, status: Status, until?: string) => {
+  const statusStep = (c: Classified, status: Status, extra: StatusExtra = {}) => {
     const previous = inbox.statuses.get(c.item.id);
-    return { run: () => void inbox.setStatus(c.item.id, status, until ? { until } : {}), undo: () => void inbox.restoreStatus(c.item.id, previous) };
+    return { run: () => void inbox.setStatus(c.item.id, status, extra), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
   /** The choice D offers where open asks wait in the inbox: Enter keeps them, D files them with it. */
   const askChoiceEntries = (choose: (asks: "keep" | "file") => void): MenuEntry[] => [
@@ -826,14 +826,12 @@ export default function App() {
   };
   /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
   const followUp = (c: Classified, until: string) => {
-    const steps = unplanStep([c]);
-    if (steps.length === 0) return actions.apply(c, "snoozed", until, [handled(c), ...seenOnOpen(c)]);
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
-    steps.push(statusStep(c, "snoozed", until), handled(c), ...seenOnOpen(c));
+    const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until)), handled(c), ...seenOnOpen(c)];
     for (const s of steps) s.run();
     actions.announce(
       replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),
-      () => steps.forEach((s) => s.undo()),
+      () => (steps.forEach((s) => s.undo()), takeBack(c.item.id)),
       () => steps.forEach((s) => s.run()),
     );
   };

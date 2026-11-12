@@ -88,6 +88,7 @@ export const en = {
   "explain.waitsHereNoDate": "Waits in its list with no date. A mention still shows it in the inbox; O takes it back.",
   "explain.stillWaiting": "Its follow-up stays in place until {until}.",
   "explain.stillWaitingNoDate": "Its follow-up stays in place; O takes it back.",
+  "explain.handedOffWaitsNoDate": "Its follow-up stays in place with no date; X takes it off.",
   "explain.snoozedSince": "Follow-up set {ago}",
   "explain.doneSince": "Done {ago}",
   "explain.undoHint": "Press O to bring it back right away.",

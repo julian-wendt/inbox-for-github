@@ -454,6 +454,32 @@ describe("my part done", () => {
     expect(run(item({ reasons: ["involved"], comments: [comment("bob", "update", 5)] }), done)).toMatchObject({ bucket: "involved", asks: [] });
     expect(run(item({ comments: [comment("bob", "@me ping", 5)] }), done).bucket).toBe("inbox");
   });
+
+  describe("with a follow-up", () => {
+    const waiting: StoredStatus = { ...done, status: "snoozed", until: "2026-10-10T08:00:00Z" };
+    const at = (i: Item, stored: StoredStatus, day: number) => classify(i, ME, stored, ruleSwitches(), "mention", Date.parse(`2026-10-${day}T00:00:00Z`), true, undefined, MENTIONS_ONLY);
+
+    it("waits and keeps the part done", () => {
+      expect(at(assigned(), waiting, 8)).toMatchObject({ bucket: "assigned", status: "snoozed", until: waiting.until, updates: [], statusReset: false });
+      expect(at(assigned(), { ...waiting, until: undefined }, 8)).toMatchObject({ status: "snoozed", updates: [] });
+    });
+
+    it("is done again after its date, with nothing to write", () => {
+      const due = at(assigned(), waiting, 11);
+      expect(due).toMatchObject({ bucket: "assigned", status: "done", updates: [], statusReset: false });
+      expect(due.until).toBeUndefined();
+    });
+
+    it("shows news as an update while it waits", () => {
+      expect(at(assigned({ comments: [comment("bob", "merged the fix", 5)] }), waiting, 8)).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["update"] });
+    });
+
+    it("keeps only the follow-up once the viewer is unassigned", () => {
+      const left = at(item({ reasons: ["involved"] }), waiting, 8);
+      expect(left).toMatchObject({ status: "snoozed", until: waiting.until });
+      expect(left.updates).toBeUndefined();
+    });
+  });
 });
 
 describe("planned items", () => {

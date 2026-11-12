@@ -230,9 +230,9 @@ export function dayLong(day: string): string {
   return dateOf(day).toLocaleDateString(dateLocale(), { dateStyle: "full" });
 }
 
-/** Whether T and P take the item: open on GitHub and not done here; a follow-up ends when they do. */
-export function isPinnable(entry: Pick<Classified, "status" | "item">): boolean {
-  return entry.status !== "done" && !entry.item.closed;
+/** Whether T and P take the item: open on GitHub, not done here and its part not done, also while it waits; a follow-up ends when they do. */
+export function isPinnable(entry: Pick<Classified, "status" | "item" | "updates">): boolean {
+  return entry.status !== "done" && entry.updates === undefined && !entry.item.closed;
 }
 
 /**

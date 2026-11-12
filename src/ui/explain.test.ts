@@ -110,6 +110,13 @@ describe("explain, where the inbox and a stored status meet", () => {
     expect(result.lines[0]).toMatch(/^Seit dein Teil erledigt ist/);
   });
 
+  it("says a finished part that waits for a follow-up still waits, and that X takes it off", () => {
+    const waiting: StoredStatus = { status: "snoozed", changedAt: at(4), handoff: { boards: {}, prs: [] } };
+    const result = why(item({ reasons: ["assigned", "involved"], assignees: [ME] }), waiting);
+    expect(result.title).toBe("Mein Teil erledigt");
+    expect(result.lines.at(-1)).toMatch(/mit X nimmst du sie weg/);
+  });
+
   it("puts an own pull request that is assigned to the viewer under Created by me", () => {
     const own = item({ kind: "pr", author: ME, reasons: ["assigned", "involved"], assignees: [ME] });
     expect(explain(classify(own, ME, undefined, ruleSwitches()), "mention", ME).tone).toBe("authored");

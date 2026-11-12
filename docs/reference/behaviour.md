@@ -76,11 +76,9 @@ its issue.
 
 - The App wiring of F calling `unplan` and of T and P calling `followUpEnds` is not covered by the
   tests yet; #107 adds a real test for both.
-- [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
-  item whose part is done replaces the hand-off.
 - [#108](https://github.com/julian-wendt/inbox-for-github/issues/108) returns only through asks:
   a reopen by someone else asks only where a status is stored or the item was handled; a due
-  follow-up on a table item ends without an ask.
+  follow-up on a table item ends without an ask, also one whose part is done.
 - [#109](https://github.com/julian-wendt/inbox-for-github/issues/109) the Done bar: Done is still
   a view, without asks filed on assignments and with no limit of days; an item D filed that has
   no mention or review request shows in no Done view (the case comes with #109).

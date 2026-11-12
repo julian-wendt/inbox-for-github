@@ -10,7 +10,7 @@ import { leaveClears, onPlate, withAssignees, withSelfAssigned } from "../../ui/
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
-import { followUpOf, isWaiting } from "../../ui/followUp";
+import { followUpExtra, followUpOf, isWaiting } from "../../ui/followUp";
 import { lockedDone, planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
@@ -210,7 +210,7 @@ export class InboxSession {
         break;
       case "set":
         if (c.item.closed || (c.status === plan.status && until === undefined)) return;
-        this.write(ref.id, plan.status, false, until ? { until } : {});
+        this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "") : {});
         if (plan.status !== "open") this.handledUntil.set(ref.id, this.world.stamp());
         break;
       case "none":
