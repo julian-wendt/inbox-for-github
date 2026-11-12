@@ -85,6 +85,7 @@ const SEEN_AFTER_MS = 2500;
 
 /** No calendar links while no calendar is chosen; one object, so `dated` keeps its identity. */
 const NO_LINKS: Record<string, string> = {};
+const LAUNCHED_AT = Date.now();
 
 /** A change with its undo, as the toasts take them. */
 type Step = { run: () => void; undo: () => void };
@@ -1057,15 +1058,15 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [ready, settings, saveSettings, classified, me]);
 
-  // Once a day GitHub is asked about pinned or planned items not loaded; only those it no longer resolves lose their plan (`dropGone`).
-  const { reloadItems } = inbox;
+  // Once per launch and day, after this launch's first refresh, GitHub is asked about pinned or planned items not loaded (`dropGone`).
+  const { reloadItems, loading, fetchedAt } = inbox;
   const goneChecked = useRef("");
   useEffect(() => {
-    if (!ready || classified.length === 0 || goneChecked.current === today) return;
+    if (!ready || loading || !fetchedAt || fetchedAt.getTime() < LAUNCHED_AT || goneChecked.current === today) return;
     goneChecked.current = today;
     const unloaded = [...settings.focus, ...settings.planned.map((p) => p.id)].filter((id) => !classified.some((c) => c.item.id === id));
     if (unloaded.length > 0) void reloadItems(unloaded);
-  }, [ready, today, settings, classified, reloadItems]);
+  }, [ready, loading, fetchedAt, today, settings, classified, reloadItems]);
 
   // A plan of an item closed on GitHub goes at once, not with the next day.
   const changeSettings = inbox.updateSettings;

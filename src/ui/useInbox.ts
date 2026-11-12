@@ -187,6 +187,7 @@ export function useInbox(): Inbox {
   const [myName, setMyName] = useState<string | null>(null);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const [missing, setMissing] = useState<Scope[]>([]);
+  const lacking = useRef<Scope[] | null>(null);
   const [paused, setPaused] = useState<Date | null>(null);
   const [usage, setUsage] = useState<Inbox["usage"]>({ budget: null, lastCost: null });
   const pausedRef = useRef<Date | null>(null);
@@ -262,7 +263,10 @@ export function useInbox(): Inbox {
       if (!store) return () => undefined;
       await store.moveItems(moves);
       const moved = movedSettings(latestSettings.current, moves, items);
-      if (moved !== latestSettings.current) await store.saveSettings(moved);
+      if (moved !== latestSettings.current) {
+        latestSettings.current = moved;
+        await store.saveSettings(moved);
+      }
       return () => {
         setSettings((current) => movedSettings(current, moves, items));
         setStatuses((current) => movedKeys(current, moves));
@@ -329,9 +333,9 @@ export function useInbox(): Inbox {
       const token = await ghToken();
       void tokenScopes(token).then(
         (scopes) => {
-          const lacking = missingScopes(scopes);
-          log.debug("token scopes", { known: scopes !== null, missing: lacking.join(",") || "none" });
-          setMissing(lacking);
+          lacking.current = missingScopes(scopes);
+          log.debug("token scopes", { known: scopes !== null, missing: lacking.current.join(",") || "none" });
+          setMissing(lacking.current);
         },
         () => undefined,
       );
@@ -498,14 +502,15 @@ export function useInbox(): Inbox {
    * Handles items GitHub no longer resolves and no cached item turned out to be their transferred
    * copy: a refresh first, which finds an issue transferred to a place not cached yet and carries
    * its state over, then what is still cached under these ids goes, and so do their pins and
-   * plans (a calendar link follows as an orphan, see `orphanLinks`).
+   * plans (a calendar link follows as an orphan, see `orphanLinks`). Plans stay while the token's
+   * scopes are unknown or lacking, since GitHub then answers `NOT_FOUND` for private items too.
    * A refresh that fails or is stopped keeps them, so a later one can still pair them.
    */
   const dropGone = useCallback(
     async (ids: string[]) => {
       log.debug("items gone", { ids: ids.join(",") });
       if (!(await refresh())) return;
-      await updateSettings((s) => ({ ...s, ...unplan(todayOf(s), ids) }));
+      if (lacking.current?.length === 0) await updateSettings((s) => ({ ...s, ...unplan(todayOf(s), ids) }));
       const last = lastFetch.current;
       const gone = new Set(ids);
       if (!store || !last?.items.some((item) => gone.has(item.id))) return;
