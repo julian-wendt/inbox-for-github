@@ -25,7 +25,7 @@ import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
 import { isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
-import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
+import { doneAccess, keepsItsPlan, needsAskChoice, planStatus, type Place } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
 import { Bell, CalendarDays, Code, Ellipsis, ExternalLink, Hash, Link, Mail, MailOpen, RefreshCw, UserCheck, UserMinus, UserPlus, X } from "lucide-react";
 import { CommandPalette } from "./ui/parts/CommandPalette";
@@ -57,6 +57,7 @@ import { useSeenSettings } from "./ui/useSeenSettings";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
+import { DONE_GROUP, handledAt, inDoneBar } from "./ui/doneBar";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -117,7 +118,7 @@ export default function App() {
   const inRepos = useMemo(() => inbox.classified.filter((c) => repoFilter.length === 0 || repoFilter.includes(c.item.repo)), [inbox.classified, repoFilter]);
   const scoped = useMemo(() => inRepos.filter((c) => kind === "all" || c.item.kind === kind), [inRepos, kind]);
   const inboxAll = useMemo(() => inRepos.filter((c) => c.bucket === "inbox"), [inRepos]);
-  // Inbox, Snoozed and Done switch between mentions and reviews instead of Issues/Pull Requests.
+  // The inbox, its Done bar included, switches between mentions and reviews instead of Issues/Pull Requests.
   const asking = ASK_VIEWS.includes(bucket);
   const askBase = useMemo(() => (asking ? inRepos.filter((c) => c.bucket === bucket) : []), [asking, inRepos, bucket]);
   const askCounts = useMemo(
@@ -151,7 +152,7 @@ export default function App() {
   );
   const plateSprints = useMemo(() => sprintChoices(plateAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [plateAll, hidden]);
   const plateNewest = useMemo(() => filterGroups(bySprint(plateAll, sprints.assigned, plateSprints), query), [plateAll, sprints.assigned, plateSprints, bySprint, query]);
-  const bars = useCollapsed("assigned-collapsed", ["blocked", "later", "finished"], ["blocked"]);
+  const bars = useCollapsed("assigned-collapsed", ["blocked", "later", "finished", `inbox:${DONE_GROUP}`], ["blocked", `inbox:${DONE_GROUP}`]);
   const sort = useSortOrders();
   const authoredAll = useMemo(() => groupAuthored(scoped, inbox.me ?? "", sort.of("authored")), [scoped, inbox.me, sort]);
   const authoredSprints = useMemo(() => sprintChoices(authoredAll.flatMap((g) => g.entries.map((c) => c.item)), hidden), [authoredAll, hidden]);
@@ -185,8 +186,6 @@ export default function App() {
   /** The detail pop-up of the tables: closed, or how its row was reached, by a click or with the keyboard. */
   const [popup, setPopup] = useState<false | "pointer" | "keys">(false);
   const me = inbox.me ?? "";
-  /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
-  const doneIn = (c: Classified) => doneAccess(c, me, bucket);
   const unreadInboxIds = useMemo(
     () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
     [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
@@ -238,6 +237,19 @@ export default function App() {
   const links = inbox.settings.calendarId ? inbox.settings.calendarEvents : NO_LINKS;
   const dated = useCallback((c: Classified) => withEvent(datedOf(c, focus, plans, today), links[c.item.id], starts), [focus, plans, today, links, starts]);
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
+  const doneIds = useMemo(
+    () => new Set(inbox.classified.filter((c) => inDoneBar(c, inbox.handledUntil.get(c.item.id), me, inbox.now, datedOf(c, focus, plans, today) !== null)).map((c) => c.item.id)),
+    [inbox.classified, inbox.handledUntil, me, inbox.now, focus, plans, today],
+  );
+  /** Where a status is chosen for an item: its row in the inbox's Done bar, or the current view. */
+  const place = (c: Classified): Place => (bucket === "inbox" && doneIds.has(c.item.id) ? "done" : bucket);
+  /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
+  const doneIn = (c: Classified) => doneAccess(c, me, place(c));
+  // Rows of the Done bar show when they were handled; every other row its own time (`sortTime`).
+  const listTime = useCallback(
+    (c: Classified) => (doneIds.has(c.item.id) ? (handledAt(c, inbox.handledUntil.get(c.item.id), me) ?? "") : rowTime(c)),
+    [doneIds, inbox.handledUntil, me, rowTime],
+  );
   // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
   const unreadPlannedIds = useMemo(
     () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, false, inbox.settings.movesUp))).map((c) => c.item.id)),
@@ -278,15 +290,21 @@ export default function App() {
           : oriented(sortByRecency((asking ? askBase.filter((c) => matchesAsk(c, ask, me)) : scoped.filter((c) => c.bucket === bucket)).filter((c) => matchesText(c.item, query)), rowTime), sort.of(bucket)),
     [scoped, askBase, asking, ask, query, me, bucket, byReturn, table, sort, rowTime, byReturnGroups],
   );
+  const doneRows = useMemo(
+    () => (bucket === "inbox" ? oriented(sortByRecency(scoped.filter((c) => doneIds.has(c.item.id) && matchesAsk(c, ask, me) && matchesText(c.item, query)), listTime), sort.of(bucket)) : []),
+    [bucket, scoped, doneIds, ask, me, query, listTime, sort],
+  );
   const timeGroups = useMemo(() => {
     if (table) return undefined;
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
     if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
-    if (inbox.settings.groupByTime) return groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) }));
-    return undefined;
-  }, [bucket, byReturn, table, listed, byReturnGroups, inbox.settings.groupByTime, sort, rowTime]);
+    const bar = doneRows.length > 0 ? [{ group: DONE_GROUP, heading: t("bucket.done"), entries: doneRows }] : [];
+    if (inbox.settings.groupByTime) return [...groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
+    // Without time groups the rows stand under no bar ("") and only the Done bar's under theirs.
+    return bar.length > 0 ? [{ group: "", heading: "", entries: listed }, ...bar] : undefined;
+  }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
-  // Lists remember their folded groups per view, so "Today" folded in Done stays open in the inbox.
+  // Lists remember their folded groups per view, so "Today" folded in Planned stays open in the inbox.
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : bucket === "snoozed" ? followUpTable : authored;
   const viewGroups: { group: string; entries: Classified[] }[] | undefined = table ? tableGroups : timeGroups;
   const barKey = useCallback((group: string) => (bucket === "assigned" ? group : `${bucket}:${group}`), [bucket]);
@@ -353,26 +371,24 @@ export default function App() {
   );
 
   const counts = useMemo(
-    () =>
-      ({ ...countBy(scoped, (c) => c.bucket), inbox: inboxAll.length, planned: plannedAll.length, snoozed: followUpAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }) as Record<View, number>,
-    [scoped, inboxAll, plannedAll, followUpAll, plateAll, authoredAll],
+    (): Record<View, number> => ({ inbox: inboxAll.length, planned: plannedAll.length, snoozed: followUpAll.length, assigned: plateCount(plateAll), authored: authoredCount(authoredAll) }),
+    [inboxAll, plannedAll, followUpAll, plateAll, authoredAll],
   );
   // The picked repos narrow the sidebar's counts like the list; the other filters do not.
-  const viewCounts = useMemo(() => {
+  const viewCounts = useMemo((): Record<View, number> => {
     const all = inRepos;
     return {
-      ...countBy(all, (c) => c.bucket),
       inbox: all.filter((c) => c.bucket === "inbox").length,
       planned: all.filter((c) => datedOf(c, focus, plans, today) !== null).length,
       snoozed: all.filter(isWaiting).length,
       assigned: plateCount(groupPlate(all, inbox.settings.statusMap, [], me)),
       authored: authoredCount(groupAuthored(all, me)),
-    } as Record<View, number>;
+    };
   }, [inRepos, focus, inbox.settings.statusMap, plans, today, me]);
-  const findable = useMemo(() => inbox.classified.filter((c) => viewOf(c, me) !== null), [inbox.classified, me]);
+  const findable = useMemo(() => inbox.classified.filter((c) => viewOf(c, me, doneIds.has(c.item.id)) !== null), [inbox.classified, me, doneIds]);
   // The badge says there is something to do again, or still: unread inbox items and unread assignments, marks by hand included.
   const badgeIds = useMemo(() => new Set([...unreadInboxIds, ...unreadPlateIds]), [unreadInboxIds, unreadPlateIds]);
-  const repos = useMemo(() => repoList(inbox.classified, me, inbox.settings.statusMap), [inbox.classified, me, inbox.settings.statusMap]);
+  const repos = useMemo(() => repoList(inbox.classified, me, inbox.settings.statusMap, (c) => doneIds.has(c.item.id)), [inbox.classified, me, inbox.settings.statusMap, doneIds]);
 
   const boards = useMemo(() => {
     const byId = new Map<string, { id: string; title: string; values: Set<string> }>();
@@ -771,8 +787,8 @@ export default function App() {
   const applyStatus = (c: Classified, status: Status, asks?: "keep" | "file") => {
     const { id, number } = c.item;
     const previous = inbox.statuses.get(id);
-    const plan = planStatus(c, status, me, bucket);
-    if (!asks && needsAskChoice(c, status, me, bucket)) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...paneCenter(), centered: true });
+    const plan = planStatus(c, status, me, place(c));
+    if (!asks && needsAskChoice(c, status, me, place(c))) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...paneCenter(), centered: true });
     if (plan.do === "file" || plan.do === "tick-update") {
       const ticking = plan.do === "tick-update";
       // Ticking off an open item also takes a fresh snapshot, so board and pull request changes count from now.
@@ -998,7 +1014,7 @@ export default function App() {
   /** What D means for the item, for its label and hint: "my part done", filing, or plain Done. */
   const doneKind = (id: Status, c: Classified): Status | "handOff" | "file" | "clear" => {
     if (id !== "done") return id;
-    const { do: kind } = planStatus(c, id, me, bucket);
+    const { do: kind } = planStatus(c, id, me, place(c));
     return kind === "hand-off" ? "handOff" : kind === "file" ? "file" : kind === "clear" ? (bucket === "snoozed" ? "clear" : "file") : id;
   };
   /** The context menu of one item: the controls it has elsewhere, under the same shortcuts. */
@@ -1157,7 +1173,7 @@ export default function App() {
     setSprints({ assigned: "all", authored: "all", planned: "all", snoozed: "all" });
     if (kind !== "all" && kind !== c.item.kind) setKind("all");
     setAsk("all");
-    setBucket(viewOf(c, me) ?? "inbox");
+    setBucket(viewOf(c, me, doneIds.has(c.item.id)) ?? "inbox");
     setReveal(c.item.id);
     keyboardOwnsPopup();
   };
@@ -1274,7 +1290,7 @@ export default function App() {
         />
       ) : (
         <InboxList
-          timeOf={rowTime}
+          timeOf={listTime}
           unread={bucket === "planned" ? unreadPlannedIds : bucket === "snoozed" ? unreadFollowUpIds : unreadInboxIds}
           datedOf={dated}
           pinnedOn={inbox.settings.pinnedOn}
@@ -1503,11 +1519,5 @@ function oriented<T>(list: T[], order: SortOrder): T[] {
 
 function sortByRecency(entries: Classified[], timeOf: (c: Classified) => string): Classified[] {
   return [...entries].sort((a, b) => timeOf(b).localeCompare(timeOf(a)));
-}
-
-function countBy<T>(list: T[], key: (t: T) => string): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const entry of list) counts[key(entry)] = (counts[key(entry)] ?? 0) + 1;
-  return counts;
 }
 

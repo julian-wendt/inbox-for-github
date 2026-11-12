@@ -6,18 +6,19 @@ import { lastOthersActivity, MOVES_UP_DEFAULT, onPlate, type MovesUp } from "./a
 import { dateLocale, lang, t, type Lang } from "./i18n";
 
 /**
- * A sidebar view: a bucket, except "involved". What the viewer merely takes part in (commented,
- * edited, or answered long ago) shows nowhere until a mention, review request or assignment.
+ * A sidebar view: a bucket, except "involved" and "done". What the viewer merely takes part in
+ * (commented, edited, or answered long ago) shows nowhere until a mention, review request or
+ * assignment; what they handled lately shows in the Done bar of the inbox (see `inDoneBar`).
  * "snoozed" is the Follow-up view, which lists every follow-up that waits, whatever its bucket.
  */
-export type View = Exclude<Bucket, "involved">;
+export type View = Exclude<Bucket, "involved" | "done">;
 
 /**
- * The sidebar views on keys 1–6, in the order of a day's work: what asks for the viewer, what
- * they planned, what they wait on, their assignments, what they opened, and last what is finished.
+ * The sidebar views on keys 1–5, in the order of a day's work: what asks for the viewer, what
+ * they planned, what they wait on, their assignments, and what they opened. Titles are getters,
+ * so they follow the language set at render time.
  */
-/** Titles are getters, so they follow the language set at render time. */
-export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "snoozed", "assigned", "authored", "done"] as const).map((id) => ({
+export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned", "snoozed", "assigned", "authored"] as const).map((id) => ({
   id,
   get title() {
     return t(`bucket.${id}`);
@@ -26,13 +27,16 @@ export const VIEWS: { id: View; readonly title: string }[] = (["inbox", "planned
 
 /**
  * The view an item shows in, for jumping to it from the palette, or null when it shows in none.
- * Mostly its bucket; the viewer's own pull requests assigned to them live in Created by me.
+ * Mostly its bucket; the viewer's own pull requests assigned to them live in Created by me, and
+ * an item outside the tables and the inbox shows only in the inbox's Done bar, if at all.
+ *
+ * @param inBar  The item sits in the Done bar (see `inDoneBar`).
  *
  * @example
  *   viewOf(entry, "octocat"); // "assigned"
  */
-export function viewOf(entry: Classified, me: string): View | null {
-  if (entry.bucket === "involved") return null;
+export function viewOf(entry: Classified, me: string, inBar = false): View | null {
+  if (entry.bucket === "involved" || entry.bucket === "done") return inBar ? "inbox" : null;
   if (entry.bucket === "assigned" && !onPlate(entry, me)) return sameLogin(entry.item.author, me) ? "authored" : null;
   return entry.bucket;
 }

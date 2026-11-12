@@ -32,10 +32,10 @@ function walk(rows: Row[]): void {
   }
 }
 
-/** Every view the entry shows in, in sidebar order; `pinned` puts it on Today, as T does. */
-function viewsOf(c: Classified, pinned = false): View[] {
+/** Every view the entry shows in, in sidebar order, then "done" for the inbox's Done bar; `pinned` puts it on Today, as T does. */
+function viewsOf(c: Classified, pinned = false): (View | "done")[] {
   const planned = datedOf(c, pinned ? [c.item.id] : [], []) !== null;
-  const shows: Record<View, boolean> = {
+  const shows: Record<View | "done", boolean> = {
     inbox: c.bucket === "inbox",
     planned,
     snoozed: isWaiting(c),
@@ -43,7 +43,7 @@ function viewsOf(c: Classified, pinned = false): View[] {
     authored: isOwnOpen(c, ME),
     done: inDoneBar(c, sim.app.handledUntil.get(c.item.id), ME, sim.world.now.getTime(), planned),
   };
-  return VIEWS.map((v) => v.id).filter((v) => shows[v]);
+  return [...VIEWS.map((v) => v.id), "done" as const].filter((v) => shows[v]);
 }
 
 /** The entry pinned for today at `plannedAt` (T sets handled-until), classified as `useInbox` does; the session has no plans. */
@@ -356,7 +356,6 @@ describe("rule 4: the Done bar shows what was handled in the last N days and has
     },
     {
       situation: "Done is a bar, not a view of the sidebar",
-      diverges: "#109: Done is still one of the views",
       run: () => {
         expect(VIEWS.map((v) => v.id)).not.toContain("done");
       },

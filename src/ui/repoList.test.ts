@@ -13,8 +13,9 @@ describe("repoList", () => {
     expect(list).toEqual([["o/b", 2], ["o/a", 1]]);
   });
 
-  it("keeps a repo whose only item sits in Follow-ups or Done, with a count of 0", () => {
-    const list = repoList([entry("o/a", "inbox"), entry("o/b", "snoozed"), entry("o/c", "done")], "me");
+  it("keeps a repo whose only item sits in Follow-ups or the Done bar, with a count of 0", () => {
+    const inBar = entry("o/c", "done");
+    const list = repoList([entry("o/a", "inbox"), entry("o/b", "snoozed"), inBar, entry("o/d", "done")], "me", {}, (c) => c === inBar);
     expect(list).toEqual([["o/a", 1], ["o/b", 0], ["o/c", 0]]);
   });
 

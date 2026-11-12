@@ -157,8 +157,8 @@ describe("views", () => {
   const entry = (bucket: Classified["bucket"], item: Partial<Item> = {}) =>
     ({ bucket, status: "open", item: { kind: "issue", author: "alice", closed: null, reasons: ["assigned"], ...item } }) as Classified;
 
-  it("offers six views, without Watching and All", () => {
-    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "snoozed", "assigned", "authored", "done"]);
+  it("offers five views, without Watching, All and Done", () => {
+    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "snoozed", "assigned", "authored"]);
   });
 
   it("finds an item's view, none for what the viewer merely takes part in", () => {
@@ -167,6 +167,13 @@ describe("views", () => {
     expect(viewOf(entry("involved", { reasons: ["involved"] }), "me")).toBeNull();
     expect(viewOf(entry("assigned"), "me")).toBe("assigned");
     expect(viewOf(entry("assigned", { kind: "pr", author: "me" }), "me")).toBe("authored");
+  });
+
+  it("finds an item of the Done bar in the inbox, and nowhere once it left the bar", () => {
+    expect(viewOf(entry("done"), "me", true)).toBe("inbox");
+    expect(viewOf(entry("involved", { reasons: ["involved"] }), "me", true)).toBe("inbox");
+    expect(viewOf(entry("done"), "me")).toBeNull();
+    expect(viewOf(entry("assigned"), "me", true)).toBe("assigned");
   });
 });
 

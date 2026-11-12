@@ -65,6 +65,8 @@ export interface Inbox {
   markSeen: (nodeId: string, openedAt?: string) => Promise<void>;
   /** Item id → the time up to which the viewer handled the item's asks (D, P, T, F set it). */
   handledUntil: ReadonlyMap<string, string>;
+  /** The time the classification is as of, in milliseconds; it ticks every minute. */
+  now: number;
   /** Sets an item's handled-until, or removes it with null; for an undo that restores none. */
   setHandledUntil: (nodeId: string, at: string | null) => Promise<void>;
   /** Items the viewer marked unread by hand, with when, until they open them again. */
@@ -772,6 +774,7 @@ export function useInbox(): Inbox {
     clearStatus,
     resetStatuses,
     handledUntil,
+    now,
     setHandledUntil,
     restoreStatus,
     setHandoff,

@@ -6,6 +6,7 @@ import type { Reopen } from "../../model";
 import { t } from "../i18n";
 import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
+import { DONE_GROUP } from "../doneBar";
 import { rowWhen } from "../followUp";
 import type { Dated } from "../plan";
 import type { Layout } from "../useViewLayout";
@@ -35,7 +36,7 @@ interface Props {
   onShowRules: () => void;
   entries: Classified[];
   kind: KindFilter;
-  /** The mentions/reviews switch of the Inbox, Snoozed and Done, shown there instead of the kind; with the items each choice holds. */
+  /** The mentions/reviews switch of the Inbox, shown there instead of the kind; with the items each choice holds. */
   ask: AskFilter;
   askCounts: Record<AskFilter, number>;
   onAsk: (ask: AskFilter) => void;
@@ -86,7 +87,8 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
 
   const anyOpen = (timeGroups ?? []).some((g) => g.group && !folded(g.group));
   const groups = timeGroups ?? [{ group: "", heading: "", entries }];
-  const idle = groups.every((g) => g.entries.length === 0);
+  // The Done bar alone leaves the view empty: its rows ask for nothing.
+  const idle = groups.every((g) => g.group === DONE_GROUP || g.entries.length === 0);
   const anyRows = groups.some((g) => g.entries.length > 0);
 
   const { body, shown, moving } = useSearchDock(search !== null);
@@ -193,6 +195,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                           className={`bar${selectedGroup === group ? " selected" : ""}`}
                           aria-expanded={!folded(group)}
                           onClick={() => onToggleGroup(group)}
+                          title={group === DONE_GROUP ? t("inbox.doneBarHint") : undefined}
                           data-bar={group}
                         >
                           <ChevronRight size={14} className="bar-chevron" />

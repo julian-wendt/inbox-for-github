@@ -280,7 +280,7 @@ describe("Status and log", () => {
 });
 
 describe("Snoozed until a date (Follow-up)", () => {
-  it("ends at its time; an item nobody asked the viewer for shows nowhere again", async () => {
+  it("ends at its time; an item nobody asked the viewer for shows only in the Done bar, as F handled it", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "alice" });
     world.comment(issue, "octocat", "I will watch this.");
@@ -296,7 +296,7 @@ describe("Snoozed until a date (Follow-up)", () => {
 
     expect(back).toMatchObject({ bucket: "involved", asks: [] });
     expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:snooze-ended" });
-    expect(app.viewOf(issue)).toBeNull();
+    expect(app.viewOf(issue)).toBe("done");
   });
 
   it("brings an answered mention back at its time, asking again until the viewer replies", async () => {

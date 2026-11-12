@@ -5,6 +5,9 @@ import { isWaiting } from "./followUp";
 /** How many days the Done bar keeps an open item after it was handled; fixed, no setting. */
 export const DONE_DAYS = 7;
 
+/** The Done bar's group in the inbox list; its fold state is stored as "inbox:done". */
+export const DONE_GROUP = "done";
+
 const DAY_MS = 86_400_000;
 
 /**
