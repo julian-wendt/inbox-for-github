@@ -67,27 +67,30 @@ export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Date
 
 /**
  * Whether F with `until` would change nothing: the item already waits for the same date, or
- * without one for "", and no ask waits that F would handle. F then writes nothing, so neither the
+ * without one for "", with "Remind me" as `notify` says, and no ask waits that F would handle. F then writes nothing, so neither the
  * status time nor the hand-off snapshot moves.
  *
- * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ * @param until   The follow-up date (ISO 8601), or "" for one without a date.
+ * @param notify  "Remind me" is on; it counts only with a date.
  *
  * @example
  *   followUpUnchanged(waitingWithoutDate, ""); // true while nothing asks
  */
-export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks">, until: string): boolean {
-  return isWaiting(entry) && (entry.until ?? "") === until && entry.asks.length === 0;
+export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks" | "notify">, until: string, notify = false): boolean {
+  return isWaiting(entry) && (entry.until ?? "") === until && !!entry.notify === (notify && !!until) && entry.asks.length === 0;
 }
 
 /**
- * What F stores besides "snoozed": the date, if any, and on an item whose part is done a fresh
- * hand-off snapshot, so the part stays done and F ticks off its news like any other ask.
+ * What F stores besides "snoozed": the date, if any, "Remind me" with a date, and on an item whose
+ * part is done a fresh hand-off snapshot, so the part stays done and F ticks off its news like any
+ * other ask.
  *
- * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ * @param until   The follow-up date (ISO 8601), or "" for one without a date.
+ * @param notify  "Remind me": the follow-up notifies when it comes due; dropped without a date.
  *
  * @example
- *   followUpExtra(handedOff, "2026-11-16T08:00:00Z"); // { until: "2026-11-16T08:00:00Z", handoff: { boards: {…}, prs: [] } }
+ *   followUpExtra(handedOff, "2026-11-16T08:00:00Z", true); // { until: "2026-11-16T08:00:00Z", notify: true, handoff: { boards: {…}, prs: [] } }
  */
-export function followUpExtra(entry: Pick<Classified, "item" | "updates">, until: string): StatusExtra {
-  return { ...(until && { until }), ...(entry.updates && { handoff: snapshotOf(entry.item) }) };
+export function followUpExtra(entry: Pick<Classified, "item" | "updates">, until: string, notify = false): StatusExtra {
+  return { ...(until && { until }), ...(until && notify && { notify: true }), ...(entry.updates && { handoff: snapshotOf(entry.item) }) };
 }

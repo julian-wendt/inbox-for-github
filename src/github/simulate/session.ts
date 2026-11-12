@@ -174,7 +174,7 @@ export class InboxSession {
   }
 
   /** D or O or a snooze choice, as `App.applyStatus` carries it out, in the item's view or in `view`. */
-  choose(ref: Ref, status: Status, until?: string, view?: View): void {
+  choose(ref: Ref, status: Status, until?: string, view?: View, notify = false): void {
     const c = this.entry(ref);
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
@@ -192,7 +192,7 @@ export class InboxSession {
     const plan = planStatus(c, status, this.me, shown);
     switch (plan.do) {
       case "resume":
-        if (c.status === "snoozed") this.write(ref.id, "snoozed", false, c.until ? { until: c.until } : {});
+        if (c.status === "snoozed") this.write(ref.id, "snoozed", false, c.until ? { until: c.until, ...(c.notify && { notify: true }) } : {});
         else this.statuses.delete(ref.id);
         break;
       case "clear":
@@ -218,8 +218,8 @@ export class InboxSession {
         this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":
-        if (c.item.closed || (c.status === plan.status && until === undefined) || (plan.status === "snoozed" && followUpUnchanged(c, until ?? ""))) return;
-        this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "") : {});
+        if (c.item.closed || (c.status === plan.status && until === undefined) || (plan.status === "snoozed" && followUpUnchanged(c, until ?? "", notify))) return;
+        this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "", notify) : {});
         if (plan.status !== "open") this.handledUntil.set(ref.id, this.world.stamp());
         // F, as `App.followUp`: an item has one when.
         if (plan.status === "snoozed") this.today = unplan(this.today, [ref.id]);
@@ -248,9 +248,9 @@ export class InboxSession {
     this.when(ref, (at) => withPlan(this.today, ref.id, day, at));
   }
 
-  /** F with a time (or without): the item waits for a follow-up, in place if it belongs to a table. */
-  snooze(ref: Ref, until?: string): void {
-    this.choose(ref, "snoozed", until);
+  /** F with a time (or without), with "Remind me" as `notify`: the item waits for a follow-up, in place if it belongs to a table. */
+  snooze(ref: Ref, until?: string, notify = false): void {
+    this.choose(ref, "snoozed", until, undefined, notify);
   }
 
   /** X or the × in the chip: takes the follow-up off; a finished part stays done. */

@@ -90,6 +90,11 @@ describe("followUpExtra", () => {
   it("keeps a part that is done, with a fresh snapshot", () => {
     expect(followUpExtra({ item: boarded, updates: [] }, "")).toEqual({ handoff: { boards: { PVT_1: "In review" }, prs: [] } });
   });
+
+  it("stores Remind me only with a date", () => {
+    expect(followUpExtra({ item }, ahead, true)).toEqual({ until: ahead, notify: true });
+    expect(followUpExtra({ item }, "", true)).toEqual({});
+  });
 });
 
 describe("followUpUnchanged", () => {
@@ -105,5 +110,12 @@ describe("followUpUnchanged", () => {
     expect(followUpUnchanged(entry(waiting()), ahead)).toBe(false);
     expect(followUpUnchanged(entry(), "")).toBe(false);
     expect(followUpUnchanged(entry(waiting(), [{ author: "bob", body: "@me ping", createdAt: "2026-10-10T00:00:00Z" }]), "")).toBe(false);
+  });
+
+  it("counts Remind me as part of the follow-up, but not without a date", () => {
+    expect(followUpUnchanged(entry({ ...waiting(ahead), notify: true }), ahead, true)).toBe(true);
+    expect(followUpUnchanged(entry(waiting(ahead)), ahead, true)).toBe(false);
+    expect(followUpUnchanged(entry({ ...waiting(ahead), notify: true }), ahead)).toBe(false);
+    expect(followUpUnchanged(entry(waiting()), "", true)).toBe(true);
   });
 });

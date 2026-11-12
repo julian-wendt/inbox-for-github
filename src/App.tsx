@@ -807,7 +807,7 @@ export default function App() {
     switch (plan.do) {
       case "resume":
         // The work opens again; a follow-up stays, as work and when are apart.
-        return change(t("toast.resumed", { number }), () => void (c.status === "snoozed" ? inbox.setStatus(id, "snoozed", c.until ? { until: c.until } : {}) : inbox.clearStatus(id)));
+        return change(t("toast.resumed", { number }), () => void (c.status === "snoozed" ? inbox.setStatus(id, "snoozed", c.until ? { until: c.until, ...(c.notify && { notify: true }) } : {}) : inbox.clearStatus(id)));
       case "hand-off": {
         moveOn(id);
         if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
