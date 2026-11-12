@@ -99,8 +99,7 @@ question, and D follows that intent (2026-11-11); the table of views is in
   neither the status time nor the snapshot moves.
 - **One follow-up, no reminders** (2026-10-24). "Snooze" and "reminder" were two ways to say
   "bring this back at a date", and an item could carry both. The follow-up has a date or none. A
-  passed date brings the item back as an ask, with its own notification; one that passed while the
-  app was closed notifies at the next start. Where an item waits follows from where it lives:
+  passed date brings the item back as an ask, quietly. Where an item waits follows from where it lives:
   assignments and own items stay in their table (bar Follow-up, with Blocked on its own), others
   leave their list.
 - **Follow-up has its own view** (2026-11-02). A follow-up is also how to check back on work
@@ -173,8 +172,9 @@ returns only through an ask newer than its handled-until. The reasons:
   (filing and setting handled-until are the same thing). Earlier: five cutoffs decided what was
   new (`filedAt`, `plannedAt`, a stored done, the start of a follow-up, the hand-off time); they
   stay readable, and the migration carries a stored done over. X keeps handled-until, so the asks
-  a plan or follow-up handled stay handled. "Reset statuses" also clears it. On a tick-off of a
-  hand-off with updates only the snapshot is refreshed; a closed item gets no write.
+  a plan or follow-up handled stay handled. "Reset statuses" also clears it. A tick-off of a
+  hand-off with updates still sets handled-until; the snapshot refresh is its only status-row
+  write, and a closed item gets none.
 - **P, T and F count as handled and, when the item is open** (the list's detail or a table's
   pop-up), **as seen.** A table row that is only selected stays unread, and so does an item marked
   unread by hand.
@@ -231,8 +231,7 @@ returns only through an ask newer than its handled-until. The reasons:
 - **One bar for what is done but still open.** "Finished" at the bottom of Assigned to me holds
   both items done on their board and those whose part the viewer finished (described as still
   open on GitHub); two bars for nearly the same meant guessing. Only the latter follow their
-  updates into the inbox. It is in every grouping, like Today on top, and there is no switch for
-  it.
+  updates into the inbox. It is in every grouping, and there is no switch for it.
 - **"My part done" follows the item.** Every update since (posts by others, board moves, linked
   pull requests, closing) lands in the inbox until ticked off. ⌃U removes the viewer as
   assignee on GitHub; then the item is out everywhere, like any other they are not
