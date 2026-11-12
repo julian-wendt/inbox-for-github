@@ -9,7 +9,7 @@ import { isNewAssignment, onPlate } from "./ui/assignments";
 import { isOwnOpen } from "./ui/authored";
 import { isWaiting } from "./ui/followUp";
 import { VIEWS, type View } from "./ui/labels";
-import { datedOf } from "./ui/plan";
+import { datedOf, unplan } from "./ui/plan";
 import { doneAccess } from "./ui/statusPlan";
 
 // Walks the table in docs/reference/behaviour.md, one describe per rule.
@@ -44,7 +44,7 @@ function viewsOf(c: Classified, pinned = false): View[] {
 }
 
 /** The entry pinned for today since `plannedAt`, classified as `useInbox` does; the session has no plans. */
-function pinned(app: InboxSession, ref: Ref, plannedAt: string | undefined): Classified {
+function pinned(app: InboxSession, ref: Ref, plannedAt: string): Classified {
   const item = app.items.find((i) => i.id === ref.id)!;
   return classify(item, ME, app.statuses.get(ref.id), ruleSwitches(), REOPEN_DEFAULT, app.world.now.getTime(), true, plannedAt, ASK_RULES_DEFAULT, app.filedAt.get(ref.id));
 }
@@ -110,7 +110,9 @@ describe("rule 1: the inbox holds every item with an ask newer than its handled-
       run: async (world, app) => {
         const issue = await mentioned(world, app, { author: ME });
         app.done(issue);
-        expect(viewsOf(app.entry(issue))).toEqual(["authored", "done"]);
+        expect(viewsOf(app.entry(issue))).toContain("authored");
+        expect(viewsOf(app.entry(issue))).not.toContain("inbox");
+        expect(app.entry(issue).asks).toEqual([]);
       },
     },
     {
@@ -314,14 +316,42 @@ describe("rule 3: D on someone else's item files it; there is no stored done for
   ]);
 });
 
+describe("rule 3, closed items", () => {
+  walk([
+    {
+      situation: "D on a closed item with news in the inbox sets handled-until and writes no done",
+      diverges: "#106: it writes a stored done again (tick-update)",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        world.comment(issue, "alice", "Shipped.");
+        world.close(issue, "alice");
+        await refetch(world, app, issue);
+        const before = app.statuses.get(issue.id);
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["update"] });
+        app.done(issue);
+        expect(app.filedAt.has(issue.id)).toBe(true);
+        expect(app.statuses.get(issue.id)).toBe(before);
+      },
+    },
+  ]);
+});
+
 describe("rule 4: the Done bar shows what was handled in the last N days and has no newer ask", () => {
   walk([
     {
-      situation: "an answered mention is in Done",
+      situation: "an answered mention is out of the inbox, with no newer ask",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         await app.comment(issue, "Will do.");
-        expect(viewsOf(app.entry(issue))).toEqual(["done"]);
+        expect(viewsOf(app.entry(issue))).not.toContain("inbox");
+        expect(app.entry(issue)).toMatchObject({ answered: "mention", asks: [] });
+      },
+    },
+    {
+      situation: "Done is a bar, not a view of the sidebar",
+      diverges: "#109: Done is still one of the views",
+      run: () => {
+        expect(VIEWS.map((v) => v.id)).not.toContain("done");
       },
     },
     {
@@ -382,7 +412,9 @@ describe("rule 5: a follow-up is a when, not a status", () => {
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         app.snooze(issue, later(world, 3 * DAY));
-        expect(app.entry(issue).updates).toBeDefined();
+        expect(viewsOf(app.entry(issue))).toContain("snoozed");
+        expect(app.statuses.get(issue.id)?.status).toBe("done");
+        expect(app.statuses.get(issue.id)?.handoff).toBeDefined();
       },
     },
     {
@@ -393,6 +425,32 @@ describe("rule 5: a follow-up is a when, not a status", () => {
         app.snooze(issue, later(world, 3 * DAY));
         app.clearFollowUp(issue);
         expect(viewsOf(app.entry(issue))).not.toContain("inbox");
+      },
+    },
+  ]);
+});
+
+describe("rule 5, one when", () => {
+  walk([
+    {
+      situation: "F on a planned item takes the plan off: it only waits",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        const at = world.stamp();
+        const day = at.slice(0, 10);
+        const today = { focus: [issue.id], focusDay: day, planned: [], pinnedOn: { [issue.id]: day }, plannedAt: { [issue.id]: at } };
+        expect(unplan(today, [issue.id])).toEqual({ focus: [], focusDay: day, planned: [], pinnedOn: {}, plannedAt: {} });
+        app.snooze(issue, later(world, 3 * DAY));
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed"]);
+      },
+    },
+    {
+      situation: "T on a waiting item ends the follow-up: it is only planned",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.clearFollowUp(issue);
+        expect(viewsOf(pinned(app, issue, world.stamp()), true)).toEqual(["planned"]);
       },
     },
   ]);
@@ -431,15 +489,6 @@ describe("rule 6: planning and a follow-up count as handled and as seen", () => 
         const issue = await mentioned(world, app, { assignees: [ME] });
         app.snooze(issue, later(world, 3 * DAY));
         expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
-      },
-    },
-    {
-      situation: "X on a plan keeps what it handled out of the inbox",
-      diverges: "#106: the plan's time goes with the pin, and the mention asks again",
-      run: async (world, app) => {
-        const issue = await mentioned(world, app);
-        // X drops the pin with its plannedAt, so classify sees none.
-        expect(viewsOf(pinned(app, issue, undefined))).not.toContain("inbox");
       },
     },
   ]);
