@@ -258,6 +258,24 @@ export function withSelfAssigned(item: Item, me: string, at: string): Item {
 }
 
 /**
+ * The item as it looks once the viewer left the assignees: without them and the reason
+ * "assigned", with an unassignment event by themselves. An item they are not assigned to stays
+ * as it is, so the change can be put onto a fetch that already shows it.
+ *
+ * @example
+ *   withSelfUnassigned(item, "octocat", new Date().toISOString());
+ */
+export function withSelfUnassigned(item: Item, me: string, at: string): Item {
+  if (!item.assignees.some((a) => sameLogin(a, me))) return item;
+  return {
+    ...item,
+    assignees: item.assignees.filter((a) => !sameLogin(a, me)),
+    reasons: item.reasons.filter((r) => r !== "assigned"),
+    activities: [...item.activities, { kind: "unassigned", at, actor: me, assignee: me }],
+  };
+}
+
+/**
  * The item with a failed self-(un)assignment taken back: the assignees and reasons from before,
  * and only the local event made at `at` removed from the activities, so ones that came in since stay.
  *

@@ -48,7 +48,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
+import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, withSelfUnassigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, todayOf, unplan, withEvent, withPin, withPlan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -886,8 +886,7 @@ export default function App() {
         () => classifiedById(id) && assignMe(classifiedById(id)!, true),
       );
     const at = new Date().toISOString();
-    inbox.updateItem(id, (item) => withSelfAssigned(item, me, at));
-    void queueWrite(() =>
+    const write = queueWrite(() =>
       ghToken()
         .then((token) => assignSelf(token, id))
         .then(
@@ -899,6 +898,7 @@ export default function App() {
           },
         ),
     );
+    inbox.updateItem(id, (item) => withSelfAssigned(item, me, at), write);
   };
   /** The item as classified right now; an undo that runs later must not see the list of the render that made it. */
   const classifiedById = (id: string) => inbox.classifiedNow().find((e) => e.item.id === id);
@@ -916,12 +916,6 @@ export default function App() {
     const cleared = !keepStatus && leaveClears(previous);
     if (cleared) void inbox.clearStatus(id);
     const at = new Date().toISOString();
-    inbox.updateItem(id, (item) => ({
-      ...item,
-      assignees: item.assignees.filter((a) => !sameLogin(a, me)),
-      reasons: item.reasons.filter((r) => r !== "assigned"),
-      activities: [...item.activities, { kind: "unassigned", at, actor: me, assignee: me }],
-    }));
     const text = t("unassign.done", { number });
     if (quiet) actions.notify(text);
     else
@@ -937,7 +931,7 @@ export default function App() {
           if (now) leave(now, true);
         },
       );
-    void queueWrite(() =>
+    const write = queueWrite(() =>
       ghToken()
         .then((token) => unassignSelf(token, id))
         .then(
@@ -950,6 +944,7 @@ export default function App() {
           },
         ),
     );
+    inbox.updateItem(id, (item) => withSelfUnassigned(item, me, at), write);
   };
   /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   const replied = (id: string, change?: StateWrite) => {

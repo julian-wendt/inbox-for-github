@@ -29,6 +29,29 @@ export function mergeDelta(previous: Item[], changed: Item[], closedDays: number
   return withinClosedWindow([...byId.values()], closedDays, now);
 }
 
+/** A local change to one item, made at once for a write to GitHub that has not returned yet. */
+export interface PendingChange {
+  id: string;
+  change: (item: Item) => Item;
+}
+
+/**
+ * Puts the local changes of writes still pending onto items just fetched or reloaded, in the
+ * order they were made, so a fetch that ran before GitHub had the write does not take them back.
+ * Each change must leave an item alone that already shows it (see `withSelfAssigned`).
+ *
+ * @param items    The items as fetched and merged.
+ * @param pending  The changes whose write has not settled yet.
+ * @returns The items with the changes on; the same array when none is pending.
+ *
+ * @example
+ *   withPending(merged, [{ id: "I_1", change: (item) => withSelfAssigned(item, "octocat", at) }]);
+ */
+export function withPending(items: Item[], pending: readonly PendingChange[]): Item[] {
+  if (pending.length === 0) return items;
+  return items.map((item) => pending.reduce((it, p) => (p.id === item.id ? p.change(it) : it), item));
+}
+
 /**
  * Takes back the review requests GitHub no longer has: an open item with the reason "review"
  * whose id is not among `requested` loses that reason, and one left without any reason leaves,

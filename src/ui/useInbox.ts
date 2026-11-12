@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
+import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withPending, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage, type PendingChange } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -52,8 +52,11 @@ export interface Inbox {
   reloadItem: (id: string) => Promise<void>;
   /** Reloads many items in few requests; resolves to how many came back. Those GitHub no longer resolves leave the cache, like in `reloadItem`. */
   reloadItems: (ids: string[]) => Promise<number>;
-  /** Changes one item locally and in the cache, e.g. right after a write to GitHub. */
-  updateItem: (id: string, change: (item: Item) => Item) => void;
+  /**
+   * Changes one item locally and in the cache, e.g. right after a write to GitHub. With `until`
+   * (the queued write), a fetch or reload that lands before it settles keeps the change.
+   */
+  updateItem: (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => void;
   /** Item id → its status history, oldest first. */
   statusLog: Map<string, StatusChange[]>;
   /** Item id → when the viewer last opened it. */
@@ -204,6 +207,7 @@ export function useInbox(): Inbox {
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
   const lastFetch = useRef<CachedFetch | null>(null);
+  const pending = useRef<PendingChange[]>([]);
   const storedStatuses = useRef(statuses);
   useEffect(() => {
     storedStatuses.current = statuses;
@@ -373,7 +377,7 @@ export function useInbox(): Inbox {
       const fetchedAt = new Date();
       const result: CachedFetch = {
         viewer: { ...viewer, avatar },
-        items,
+        items: withPending(items, pending.current),
         fetchedAt,
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
@@ -469,11 +473,19 @@ export function useInbox(): Inbox {
     setLoading(false);
   }, []);
 
-  /** Changes one cached item locally, e.g. right after a write, until the next fetch has it from GitHub. */
+  /** Changes one cached item locally, e.g. right after a write, until the next fetch has it from GitHub; with `until`, fetches put it back on until that write settles (see `withPending`). */
   const updateItem = useCallback(
-    (id: string, change: (item: Item) => Item) => {
+    (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => {
       const last = lastFetch.current;
       if (!store || !last) return;
+      if (until) {
+        const entry = { id, change };
+        pending.current = [...pending.current, entry];
+        const settle = () => {
+          pending.current = pending.current.filter((e) => e !== entry);
+        };
+        void until.then(settle, settle);
+      }
       const next = { ...last, items: last.items.map((item) => (item.id === id ? change(item) : item)) };
       lastFetch.current = next;
       setItems(next.items);
@@ -523,7 +535,7 @@ export function useInbox(): Inbox {
       if (moves.size > 0) logTransfers(last.items, fresh, moves);
       const showMoved = moves.size > 0 ? await carryOver(moves, fresh) : null;
       const current = lastFetch.current ?? last;
-      const next = { ...current, items: mergeReloaded(current.items, fresh, moves) };
+      const next = { ...current, items: withPending(mergeReloaded(current.items, fresh, moves), pending.current) };
       lastFetch.current = next;
       showMoved?.();
       setItems(next.items);
