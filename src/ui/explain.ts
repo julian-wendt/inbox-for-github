@@ -1,4 +1,4 @@
-import type { Classified } from "../classify";
+import { newestAsk, type Classified } from "../classify";
 import type { Reopen } from "../model";
 import { DONE_DAYS } from "./doneBar";
 import { t } from "./i18n";
@@ -34,11 +34,15 @@ const comesBack = (reopenOn: Reopen) => t("explain.comesBack", { rule: t(`reopen
 export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dated | null = null): Explanation {
   const { item, mention, answered, asks, status, statusAt, bucket } = entry;
   const waitsInPlace = status === "snoozed" && (bucket === "assigned" || bucket === "authored" || asks.length > 0);
+  // O on a finished part takes back the work, not the follow-up.
+  const stillWaiting = entry.until ? t("explain.stillWaiting", { until: untilText(entry.until) }) : t(entry.updates ? "explain.handedOffWaitsNoDate" : "explain.stillWaitingNoDate");
   const planLine = dated?.kind === "today" ? [t("explain.stillToday")] : dated?.kind === "planned" ? [t("explain.stillPlanned", { day: dayLong(dated.day) })] : [];
 
   // In the inbox the asks say why, whatever else is stored: a follow-up that waits in place, a part that is done.
   if (asks.length > 0) {
-    const lines = asks.map((ask) => {
+    // The newest ask first: it is the one the row is dated by.
+    const newest = newestAsk(entry)?.ask;
+    const lines = (newest ? [newest, ...asks.filter((ask) => ask !== newest)] : asks).map((ask) => {
       switch (ask) {
         case "update":
           return t("explain.update", { what: updateSummary(entry.updates ?? []) });
@@ -46,28 +50,35 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
           return t("explain.review");
         case "commits":
           return t("explain.commits");
+        case "opened":
+          return t("explain.opened", { ago: agoInSentence(entry.asked.opened ?? "") });
         case "reopened":
-          return t("explain.reopened", { ago: statusAt ? agoInSentence(statusAt) : "" });
+          return t("explain.reopened", { name: entry.reopenedBy ?? "", ago: agoInSentence(entry.asked.reopened ?? "") });
+        case "post":
+          return t("explain.post", { name: entry.postedBy ?? "", ago: agoInSentence(entry.asked.post ?? "") });
         case "feedback":
           return t(`explain.feedback.${entry.feedback!.kind}`, { name: entry.feedback!.by, ago: agoInSentence(entry.feedback!.at) });
         case "reply":
           return t("explain.reply", { name: entry.repliedBy ?? "" });
         case "closed":
           return t("explain.closedByOther", { name: entry.closedBy ?? "" });
+        case "due":
+          return t("explain.due", { ago: agoInSentence(entry.asked.due ?? "") });
         case "mention":
           return mention!.self
             ? t("explain.reminder", { ago: agoInSentence(mention!.at) })
             : t("explain.mention", { name: mention!.by, ago: agoInSentence(mention!.at) });
       }
     });
-    if (waitsInPlace) lines.push(entry.until ? t("explain.stillWaiting", { until: untilText(entry.until) }) : t("explain.stillWaitingNoDate"));
+    if (waitsInPlace) lines.push(stillWaiting);
     lines.push(...planLine);
     const reminderOnly = asks.length === 1 && mention?.self;
     return { tone: reminderOnly ? "reminder" : "inbox", title: t("explain.inboxTitle"), lines };
   }
 
   if (entry.updates) {
-    return { tone: bucket === "assigned" ? "assigned" : "done", title: t("explain.handedOffTitle"), lines: [t("explain.handedOff"), t("explain.handedOffBack")] };
+    const waits = status === "snoozed" ? [stillWaiting] : [];
+    return { tone: bucket === "assigned" ? "assigned" : "done", title: t("explain.handedOffTitle"), lines: [t("explain.handedOff"), t("explain.handedOffBack"), ...waits] };
   }
   if (item.closed) {
     const title = t(item.closed.state === "merged" ? "explain.mergedSince" : "explain.closedSince", { ago: ago(item.closed.at) });
@@ -137,7 +148,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
-        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.feedback"), t("help.inbox.reply"), t("help.inbox.closed"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.doneBar", { days: DONE_DAYS })],
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.feedback"), t("help.inbox.reply"), t("help.inbox.closed"), t("help.inbox.update"), t("help.inbox.due"), t("help.inbox.reopened"), t("help.inbox.post"), t("help.inbox.opened"), t("help.inbox.doneBar", { days: DONE_DAYS })],
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back"), t("help.assigned.dated")] };

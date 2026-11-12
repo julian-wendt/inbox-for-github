@@ -1,4 +1,6 @@
 import type { Classified } from "../classify";
+import { snapshotOf } from "../handoff";
+import type { StatusExtra } from "../model";
 import { t } from "./i18n";
 import { datedText, type Dated } from "./plan";
 import { reminderText, untilShort } from "./snooze";
@@ -61,4 +63,31 @@ export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Date
   if (planned && dated) return { ...datedText(dated, now), icon: dated.kind === "planned" ? "plan" : undefined };
   const followUp = followUpWhen(entry, now);
   return followUp && { ...followUp, icon: "followUp" };
+}
+
+/**
+ * Whether F with `until` would change nothing: the item already waits for the same date, or
+ * without one for "", and no ask waits that F would handle. F then writes nothing, so neither the
+ * status time nor the hand-off snapshot moves.
+ *
+ * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ *
+ * @example
+ *   followUpUnchanged(waitingWithoutDate, ""); // true while nothing asks
+ */
+export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks">, until: string): boolean {
+  return isWaiting(entry) && (entry.until ?? "") === until && entry.asks.length === 0;
+}
+
+/**
+ * What F stores besides "snoozed": the date, if any, and on an item whose part is done a fresh
+ * hand-off snapshot, so the part stays done and F ticks off its news like any other ask.
+ *
+ * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ *
+ * @example
+ *   followUpExtra(handedOff, "2026-11-16T08:00:00Z"); // { until: "2026-11-16T08:00:00Z", handoff: { boards: {…}, prs: [] } }
+ */
+export function followUpExtra(entry: Pick<Classified, "item" | "updates">, until: string): StatusExtra {
+  return { ...(until && { until }), ...(entry.updates && { handoff: snapshotOf(entry.item) }) };
 }

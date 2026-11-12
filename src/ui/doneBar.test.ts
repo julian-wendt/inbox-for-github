@@ -73,6 +73,47 @@ describe("handledAt", () => {
     app.snooze(waiting, new Date(world.now.getTime() + DAY).toISOString());
     expect([at(app, asking), at(app, waiting)]).toEqual([null, null]);
   });
+
+  it("is null for a waiting item an ask brought into the inbox", async () => {
+    const { world, app } = sim;
+    const issue = world.issue();
+    world.comment(issue, "alice", "@octocat could you look?");
+    await app.refresh();
+    app.snooze(issue, new Date(world.now.getTime() + 3 * DAY).toISOString());
+    world.advance(HOUR);
+    world.comment(issue, "bob", "@octocat and this?");
+    world.advance(MINUTE);
+    await app.reload(issue);
+    expect(app.entry(issue)).toMatchObject({ bucket: "inbox", status: "snoozed" });
+    expect(at(app, issue)).toBeNull();
+  });
+
+  it("takes a past-due follow-up filed with D, which no longer waits", async () => {
+    const { world, app } = sim;
+    const issue = world.issue();
+    world.comment(issue, "alice", "@octocat could you look?");
+    await app.refresh();
+    app.snooze(issue, new Date(world.now.getTime() + DAY).toISOString());
+    world.advance(2 * DAY);
+    expect(app.entry(issue).asks).toContain("due");
+    app.done(issue);
+    expect(app.entry(issue).status).not.toBe("snoozed");
+    expect(at(app, issue)).toBe(app.handledUntil.get(issue.id));
+  });
+
+  it("is null for my part done, waiting or not; it stays in the bar Finished", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ assignees: [ME] });
+    await app.refresh();
+    app.done(issue);
+    world.advance(HOUR);
+    app.snooze(issue, new Date(world.now.getTime() + DAY).toISOString());
+    expect(app.entry(issue)).toMatchObject({ status: "snoozed", updates: [] });
+    expect(at(app, issue)).toBeNull();
+    app.clearFollowUp(issue);
+    expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+    expect(at(app, issue)).toBeNull();
+  });
 });
 
 describe("inDoneBar", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Activity } from "../model";
 import type { Item } from "../model";
-import { historyText, shownActivities, shownHistory } from "./activities";
+import { backChange, historyText, shownActivities, shownHistory } from "./activities";
 
 const at = (hour: number) => `2026-10-01T${String(hour).padStart(2, "0")}:00:00Z`;
 
@@ -13,6 +13,12 @@ describe("historyText", () => {
     expect(historyText({ status: "open", at: at(1), automatic: true, source: "auto:reopen" })).toBe("history.reopened");
     expect(historyText({ status: "open", at: at(1), automatic: true })).toBe("history.reopened");
     expect(historyText({ status: "snoozed", at: at(1), automatic: false })).toBe("history.snoozed");
+  });
+
+  it("names the ask that brought an item back, at its time, without a stored row", () => {
+    expect(backChange({ back: { ask: "due", at: at(2) } })).toEqual({ status: "open", at: at(2), automatic: true, source: "back:due" });
+    expect(historyText(backChange({ back: { ask: "reopened", at: at(2) } })!)).toBe("history.back.reopened");
+    expect(backChange({})).toBeNull();
   });
 });
 

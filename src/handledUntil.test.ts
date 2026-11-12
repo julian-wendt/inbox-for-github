@@ -78,21 +78,19 @@ describe("the derived time keeps every item where it was", () => {
     { name: "my part done, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("done", 4, { handoff }), before: view("inbox", "done", ["mention"]) },
     { name: "my part done, mention filed", item: item({ ...assigned, comments: [mention(3)] }), status: stored("done", 4, { handoff }), filedAt: day(5), before: view("assigned", "done") },
     { name: "my part done, mention after a plan", item: item({ ...assigned, comments: [mention(6)] }), status: stored("done", 4, { handoff }), plannedAt: day(5), dated: true, before: view("inbox", "done", ["update", "mention"]) },
-    { name: "a due follow-up, mention before it", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]) },
-    { name: "a due follow-up on an answered mention", item: item({ comments: [mention(3), answer(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["reopened"]) },
-    { name: "a due follow-up on an assignment, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]) },
-    { name: "a due follow-up on an assignment, nothing pending", item: item({ assignees: [ME], reasons: ["assigned"] }), status: stored("snoozed", 4, { until: day(10) }), before: view("assigned", "open") },
-    // Intended: the due follow-up asks again what was pending, also what D filed before F.
-    { name: "a due follow-up after D on an assignment", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 6, { until: day(10) }), filedAt: day(4), before: view("assigned", "open"), changes: view("inbox", "open", ["mention"]) },
+    // Intended: a due follow-up asks itself, on any item, and asks again what was pending, also what D filed before F.
+    { name: "a due follow-up, mention before it", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]), changes: view("inbox", "open", ["due", "mention"]) },
+    { name: "a due follow-up on an answered mention", item: item({ comments: [mention(3), answer(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["reopened"]), changes: view("inbox", "open", ["due"]) },
+    { name: "a due follow-up on an assignment, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]), changes: view("inbox", "open", ["due", "mention"]) },
+    { name: "a due follow-up on an assignment, nothing pending", item: item({ assignees: [ME], reasons: ["assigned"] }), status: stored("snoozed", 4, { until: day(10) }), before: view("assigned", "open"), changes: view("inbox", "open", ["due"]) },
+    { name: "a due follow-up after D on an assignment", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 6, { until: day(10) }), filedAt: day(4), before: view("assigned", "open"), changes: view("inbox", "open", ["due", "mention"]) },
   ];
 
   for (const s of scenarios) {
     it(s.changes ? `${s.name} (changes on purpose)` : s.name, () => {
       const handled = deriveHandledUntil({ statuses: new Map(s.status ? [[s.item.id, s.status]] : []), filedAt: s.filedAt ? { [s.item.id]: s.filedAt } : {}, plannedAt: s.plannedAt ? { [s.item.id]: s.plannedAt } : {}, dated: new Set(s.dated ? [s.item.id] : []) }).get(s.item.id);
       const run = (status?: StoredStatus) => classify(s.item, ME, status, ruleSwitches(), "mention", NOW, true, handled, ASK_RULES_DEFAULT, !!s.dated);
-      let after = run(s.status);
-      // What the hook writes back on a reset, before the next pass.
-      if (after.statusReset) after = run(after.renewed ? undefined : { status: "open", changedAt: new Date(NOW).toISOString() });
+      const after = run(s.status);
       expect({ bucket: after.bucket, status: after.status, asks: after.asks }).toEqual(s.changes ?? s.before);
     });
   }

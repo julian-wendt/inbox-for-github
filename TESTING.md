@@ -122,6 +122,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       (↻), Erledigt ein grüner Haken; so im Detail-Umschalter, im Kontextmenü, in ⌘K und im Protokoll,
       in Hell und Dunkel gut erkennbar.
 - [ ] Item mit F auf Wiedervorlage legen, mit O wieder öffnen: jedes Mal eine Zeile in den Aktivitäten (D auf einem Item anderer legt es nur ab und schreibt keine), sobald dazwischen etwas passiert ist (ein Beitrag, ein Review, ein Ereignis); ein Status, der gleich ersetzt wird, gilt als Korrektur und fehlt dort.
+- [ ] Eine Wiedervorlage, deren Datum vorbei ist, auch auf einer Zuweisung: das Item steht in der Inbox („Deine Wiedervorlage ist … fällig geworden“, als erste Zeile der Erklärung), im Verlauf „Zurück in der Inbox: deine Wiedervorlage ist fällig“, und es kommt keine Benachrichtigung. D legt es ab, die Verlaufszeile verschwindet; ins Protokoll wird nichts geschrieben.
 - [ ] D auf einer Zeile der Leiste „Erledigt“ ändert nichts und fehlt im Menü; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
 - [ ] ⌃O öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O allein öffnet

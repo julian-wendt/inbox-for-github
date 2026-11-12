@@ -31,7 +31,7 @@ describe("the demo world", () => {
     expect(session.entry(refs.installNote).mention?.self).toBe(true);
     expect(session.entry(refs.csvExport).asks).toContain("review");
     expect(session.entry(refs.dateFns).asks).toContain("review");
-    expect(session.entry(refs.tooltip).asks).toEqual(["reopened"]);
+    expect(session.entry(refs.tooltip).asks).toEqual(["due"]);
     expect(session.entry(refs.rounding).asks).toEqual(["update"]);
   });
 

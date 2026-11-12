@@ -45,8 +45,8 @@ classifies without a request.
 
 `status_log.source` says what caused each status change since 2026-10-25 (older rows are empty):
 the viewer's input within two seconds before it (`key:o`, `key:ctrl+a`, `menu`, `palette`,
-`click`, or `unknown`), or the app's own code path (`auto:reopen`, `auto:snooze-ended`,
-`auto:legacy-done`, `auto:reassigned`, `auto:locked`), or `settings:reset` for the reset of all statuses
+`click`, or `unknown`), or the app's own code path (`auto:legacy-done`, `auto:locked`; older rows
+also `auto:reopen`, `auto:snooze-ended`, `auto:reassigned`), or `settings:reset` for the reset of all statuses
 in the settings. `automatic` is also 1 for an item the viewer
 takes back into the work, so `source` is the one to trust. The last changes, in local time:
 

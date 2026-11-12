@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
-import { snoozeEnded } from "../reopen";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
@@ -85,6 +84,8 @@ export interface Inbox {
   resetStatuses: () => Promise<number>;
   /** Puts back a stored status exactly as it was, or none; for undoing a change with extras. */
   restoreStatus: (nodeId: string, previous: StoredStatus | undefined) => Promise<void>;
+  /** Takes the follow-up off an item; a finished part stays done (see `Store.endFollowUp`). */
+  endFollowUp: (nodeId: string) => Promise<void>;
   /** Replaces the hand-off snapshot of a stored "my part done", keeping its time and log. */
   setHandoff: (nodeId: string, handoff: Handoff) => Promise<void>;
   /** The classification as of now, for code that runs later (an undo) and must not see the render that scheduled it. */
@@ -655,6 +656,24 @@ export function useInbox(): Inbox {
     [store],
   );
 
+  /** Takes the follow-up off an item at the viewer's request; a finished part stays done (see `Store.endFollowUp`). */
+  const endFollowUp = useCallback(
+    async (nodeId: string) => {
+      if (!store) return;
+      const source = manualSource();
+      const { stored, change } = await store.endFollowUp(nodeId, undefined, source);
+      logChange(nodeId, stored, `endFollowUp:${source}`);
+      setStatuses((current) => {
+        const next = new Map(current);
+        if (stored) next.set(nodeId, stored);
+        else next.delete(nodeId);
+        return next;
+      });
+      setStatusLog((current) => new Map(current).set(nodeId, [...(current.get(nodeId) ?? []), change]));
+    },
+    [store, logChange],
+  );
+
   /** Swaps the hand-off snapshot of a stored "my part done", keeping its time (see `Store.setHandoff`). */
   const setHandoff = useCallback(
     async (nodeId: string, handoff: Handoff) => {
@@ -689,10 +708,6 @@ export function useInbox(): Inbox {
 
   useEffect(() => {
     for (const c of classified) {
-      // A new assignment is a fresh start: no status is left to anchor on.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- writes the store first; state follows only after that await
-      if (c.renewed) void clearStatus(c.item.id, "auto:reassigned");
-      else if (c.statusReset) void writeStatus(c.item.id, "open", true, {}, snoozeEnded(statuses.get(c.item.id), now) ? "auto:snooze-ended" : "auto:reopen");
       if (me && lockedDone(c, statuses.get(c.item.id), me) && !converting.current.has(c.item.id)) {
         converting.current.add(c.item.id);
         void clearStatus(c.item.id, "auto:locked");
@@ -702,7 +717,7 @@ export function useInbox(): Inbox {
         void writeStatus(c.item.id, "done", true, { handoff: snapshotOf(c.item) }, "auto:legacy-done");
       }
     }
-  }, [classified, writeStatus, clearStatus, me, statuses, now]);
+  }, [classified, writeStatus, clearStatus, me, statuses]);
 
   const latestClassified = useRef(classified);
   useEffect(() => {
@@ -713,7 +728,7 @@ export function useInbox(): Inbox {
   const logged = useRef(new Map<string, string>());
   useEffect(() => {
     for (const c of classified) {
-      const why = `${c.bucket} asks=${c.asks.join("+") || "none"} status=${c.status} answered=${c.answered ?? "no"}${c.statusReset ? " reset" : ""}`;
+      const why = `${c.bucket} asks=${c.asks.join("+") || "none"} status=${c.status} answered=${c.answered ?? "no"}`;
       if (logged.current.get(c.item.id) === why) continue;
       logged.current.set(c.item.id, why);
       log.verbose("classify", { item: ref(c.item), why, reasons: c.item.reasons.join("+"), title: c.item.title });
@@ -778,6 +793,7 @@ export function useInbox(): Inbox {
     now,
     setHandledUntil,
     restoreStatus,
+    endFollowUp,
     setHandoff,
     statuses,
     writeFailures,

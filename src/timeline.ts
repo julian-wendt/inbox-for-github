@@ -78,14 +78,10 @@ export function lastReplyAt(item: Item, me: string): string | null {
   return replies.at(-1)?.at ?? null;
 }
 
-/** When a person other than `me` last posted, if anyone did; bots do not count. */
-export function lastPostByOthers(item: Item, me: string): string | null {
-  return posts(item).filter((post) => !sameLogin(post.author, me) && !isBot(post.author)).at(-1)?.at ?? null;
-}
-
-/** True when a person other than `me` posted after `since`; bots do not count. */
-export function othersPostedAfter(item: Item, me: string, since: string): boolean {
-  return (lastPostByOthers(item, me) ?? "") > since;
+/** When a person other than `me` last posted, and who, if anyone did; bots do not count. */
+export function lastPostByOthers(item: Item, me: string): { at: string; by: string } | null {
+  const last = posts(item).filter((post) => !sameLogin(post.author, me) && !isBot(post.author)).at(-1);
+  return last ? { at: last.at, by: last.author } : null;
 }
 
 /** Bot logins carry GitHub's "[bot]" suffix, added by `toItem`. */

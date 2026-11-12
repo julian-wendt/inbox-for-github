@@ -16,9 +16,10 @@ const DAY_MS = 86_400_000;
  * When the viewer last handled an item that asks for nothing now: the latest of its handled-until
  * (D, P, T, F), the closing of a closed item that was for them, the time of a "done" stored before
  * handled-until existed, and, outside the tables, their last reply if they were mentioned and
- * their last review if they were asked for one. Null while the item asks (it is in the inbox) or
- * waits for a follow-up, and when none of these exist. Own and assigned items, "my part done"
- * included, count only through handled-until, so working on them does not keep them in the bar.
+ * their last review if they were asked for one. Null while the item asks (it is in the inbox),
+ * waits for a follow-up (a past-due one no longer waits), sits in the bar Finished of Assigned to
+ * me as "my part done", and when none of these exist. Other own and assigned items count only
+ * through handled-until, so working on them does not keep them in the bar.
  *
  * @param c             The item as classified.
  * @param handledUntil  Its handled-until (`useInbox().handledUntil`), if any.
@@ -29,7 +30,7 @@ const DAY_MS = 86_400_000;
  *   handledAt(answeredMention, undefined, "octocat"); // the time of octocat's reply
  */
 export function handledAt(c: Classified, handledUntil: string | undefined, me: string): string | null {
-  if (c.bucket === "inbox" || isWaiting(c)) return null;
+  if (c.bucket === "inbox" || isWaiting(c) || (c.updates && onPlate(c, me))) return null;
   const { item } = c;
   // Not `c.bucket`: an own issue whose mention was answered is "done" there, yet in Created by me.
   const outsideTables = !onPlate(c, me) && !isOwnOpen(c, me);
