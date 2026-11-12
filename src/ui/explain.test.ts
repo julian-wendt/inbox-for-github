@@ -142,5 +142,6 @@ describe("bucketHelp", () => {
       expect(bucketHelp(view, "mention").points.length).toBeGreaterThan(0);
     }
     expect(bucketHelp("snoozed", "any-post").points[0]).toMatch(/jemand anderes kommentiert/);
+    expect(bucketHelp("inbox", "mention").points.at(-1)).toMatch(/in den letzten 7 Tagen/);
   });
 });

@@ -1,5 +1,6 @@
 import type { Classified } from "../classify";
 import type { Reopen } from "../model";
+import { DONE_DAYS } from "./doneBar";
 import { t } from "./i18n";
 import { ago, agoInSentence, updateSummary, type View } from "./labels";
 import { sameLogin } from "../timeline";
@@ -136,7 +137,7 @@ export function bucketHelp(view: View, reopenOn: Reopen): { lead: string; points
     case "inbox":
       return {
         lead: t("help.inbox.lead"),
-        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.feedback"), t("help.inbox.reply"), t("help.inbox.closed"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.doneBar")],
+        points: [t("help.inbox.mention"), t("help.inbox.review"), t("help.inbox.commits"), t("help.inbox.feedback"), t("help.inbox.reply"), t("help.inbox.closed"), t("help.inbox.update"), t("help.inbox.reopened"), t("help.inbox.doneBar", { days: DONE_DAYS })],
       };
     case "assigned":
       return { lead: t("help.assigned.lead"), points: [t("help.assigned.leaves"), t("help.assigned.back"), t("help.assigned.dated")] };

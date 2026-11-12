@@ -6,7 +6,7 @@ import type { Reopen } from "../../model";
 import { t } from "../i18n";
 import { ASK_FILTERS, ASK_VIEWS, type AskFilter } from "../inboxFilter";
 import { KINDS, type KindFilter, type View } from "../labels";
-import { DONE_GROUP } from "../doneBar";
+import { DONE_DAYS, DONE_GROUP } from "../doneBar";
 import { rowWhen } from "../followUp";
 import type { Dated } from "../plan";
 import type { Layout } from "../useViewLayout";
@@ -195,7 +195,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                           className={`bar${selectedGroup === group ? " selected" : ""}`}
                           aria-expanded={!folded(group)}
                           onClick={() => onToggleGroup(group)}
-                          title={group === DONE_GROUP ? t("inbox.doneBarHint") : undefined}
+                          title={group === DONE_GROUP ? t("inbox.doneBarHint", { days: DONE_DAYS }) : undefined}
                           data-bar={group}
                         >
                           <ChevronRight size={14} className="bar-chevron" />
