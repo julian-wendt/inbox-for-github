@@ -25,7 +25,8 @@ follow-up, **O** open.
 
 Independent of each other:
 
-- **Handled until**: one time. D in the inbox, P, T and F set it to now.
+- **Handled until**: one time. D in the inbox (and on someone else's item in Planned), P, T and
+  F set it to now; X leaves it.
 - **Work**, only for items assigned to me: open, or my part done.
 - **When**: nothing, today, a day, waits until a date, or waits without a date.
 
@@ -34,8 +35,11 @@ Independent of each other:
 1. The inbox holds every item with an ask newer than its handled-until.
 2. Everything that brings an item back is an ask with a time: a mention, a review request,
    feedback, a reply in my review thread, new commits after my review, a reopen, news after my
-   part done, a follow-up that is due. A new assignment is no ask: it brings the item back as new
-   work in Assigned to me, with its dot, also after my part done.
+   part done, a follow-up that is due, and with "Bring back on: Any post" any post by someone else
+   on an item outside the tables. A due follow-up asks again what was pending, though F handled
+   it, also an ask D had filed before F; what was answered asks as a reopen. A new assignment is
+   no ask: it brings the item back as new work in Assigned to me, with its dot, also after my
+   part done.
 3. D on someone else's item files it: it sets handled-until; there is no stored "done" for it.
 4. The Done bar shows what was handled in the last 7 days and has no newer ask; a fixed number,
    not `closedDays`, with no setting. The bar opens by click and on a jump to an item in it; no key
@@ -43,7 +47,9 @@ Independent of each other:
 5. A follow-up is a *when*, not a status: F and X leave the work fact alone, X leaves
    handled-until alone. An item has one when: the newer of plan and follow-up replaces the
    other.
-6. Planning (P, T) and a follow-up (F) count as handled and as seen.
+6. Planning (P, T) and a follow-up (F) count as handled and, when the item is open (the list's
+   detail or a table's pop-up), as seen. A table row that is only selected stays unread, and so
+   does an item marked unread by hand.
 
 ## Situations
 
@@ -76,4 +82,5 @@ its issue.
   a reopen by someone else asks only where a status is stored or the item was handled; a due
   follow-up on a table item ends without an ask.
 - [#109](https://github.com/julian-wendt/inbox-for-github/issues/109) the Done bar: Done is still
-  a view, without asks filed on assignments and with no limit of days.
+  a view, without asks filed on assignments and with no limit of days; an item D filed that has
+  no mention or review request shows in no Done view (the case comes with #109).
