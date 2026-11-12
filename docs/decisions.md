@@ -12,6 +12,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   a view stays: it acts on a view's items, not on a selection. Supersedes the marks parts of
   2026-11-11 ("D means one thing per view", the calendar record) and "An open pop-up owns the
   keys" of 2026-11-10, which is removed.
+- **An own issue assigned to the viewer is their work, and D there is kept.** In Assigned to me
+  D is "my part done" as on any assignment; in Created by me it is only watched. `lockedDone` no
+  longer clears that hand-off. Own pull requests and own items not assigned to the viewer stay
+  locked. Supersedes "own items stay locked" of 2026-11-06 and "D never finishes an own item or
+  one assigned to you alone" of 2026-11-02 for own issues assigned to the viewer.
 
 ## 2026-11-11
 

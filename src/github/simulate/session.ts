@@ -11,7 +11,7 @@ import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf, isWaiting } from "../../ui/followUp";
-import { lockOf, planStatus } from "../../ui/statusPlan";
+import { lockedDone, planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
@@ -331,7 +331,7 @@ export class InboxSession {
       this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
       return true;
     }
-    if (this.statuses.get(id)?.status === "done" && lockOf(c, this.me) !== null) {
+    if (lockedDone(c, this.statuses.get(id), this.me)) {
       this.statuses.delete(id);
       this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:locked" }]);
       return true;

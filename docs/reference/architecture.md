@@ -55,7 +55,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Repairs at start:** `Store.repairStatusLog` drops log entries at the end of an item's
   history that no stored status stands behind (`staleLogRows`), so the activity log never shows
   "marked as done" for an open item. A "done" stored on an item D may no longer finish
-  (`lockOf`: one the viewer opened) is cleared once (source `auto:locked`).
+  (`lockOf`: one the viewer opened) is cleared once (source `auto:locked`), except the
+  hand-off on an own issue assigned to the viewer (`lockedDone` in `statusPlan.ts`).
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
   table, in the bar `later` ("Follow-up"; board-blocked items have their own bar `blocked`); only its date ends it (no "reopenOn"), and a
