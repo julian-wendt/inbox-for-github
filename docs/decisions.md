@@ -14,8 +14,8 @@ question, and D follows that intent (2026-11-11); the table of views is in
 
 - **Inbox:** who wants something from me. **Assigned to me:** my own work; a review request alone
   is only a review and stays in the inbox. **Created by me:** are my items moving; watched, never
-  finished here. **Planned**, **Follow-up** and **Done** answer "when" and "what is finished"
-  (below).
+  finished here. **Planned** and **Follow-up** answer "when" (below). What was
+  handled is no view: it is the Done bar of the inbox (below). The five views sit on keys 1–5.
 - Commenting on or editing an issue matters only once a mention or assignment follows, so there
   are no Watching and All views. Mentions are not split into questions and notes: guessing from a
   "?" would be unreliable.
@@ -44,7 +44,8 @@ question, and D follows that intent (2026-11-11); the table of views is in
   Only the inbox files asks, updates and closings by others. Assigned to me has "my part done",
   also while the viewer is the only assignee: the item moves to the bar Finished, keeps its plan
   and calendar event, and follows its updates. Created by me has no D. A second D on a part
-  already done shows a hint; O takes the part back into the work. On an assignment with open asks
+  already done shows a hint; O takes the part back into the work. D is not offered on a row of the
+  Done bar: the item is handled already. On an assignment with open asks
   D asks first, like F: Enter is "only my part" (the asks stay in the inbox), D also files them,
   Esc does nothing.
 - **No multi-select; every key acts on one item** (2026-11-12). The bulk paths held most of the
@@ -91,8 +92,11 @@ question, and D follows that intent (2026-11-11); the table of views is in
   lands in Today on its day, a follow-up is back in the inbox at its date or on a new ask. The
   "due" state and its notification went: coming back is enough, nothing needs to stick or ring.
 - **An item has one when** (2026-11-12, #107). The newer of a plan and a follow-up replaces the
-  other; an item is never planned and waiting at the same time. Earlier: P and T removed a
-  follow-up and F a plan, in the app's wiring only.
+  other; an item is never planned and waiting at the same time. A follow-up on a finished part
+  is a when too: F keeps "my part done", X and D in Follow-up end the follow-up back into that
+  state, and O opens the work again and keeps the follow-up. P and T never apply to a finished
+  part. F that changes nothing (same date, or none again, with no ask waiting) is a no-op, so
+  neither the status time nor the snapshot moves.
 - **One follow-up, no reminders** (2026-10-24). "Snooze" and "reminder" were two ways to say
   "bring this back at a date", and an item could carry both. The follow-up has a date or none. A
   passed date brings the item back as an ask, with its own notification; one that passed while the
@@ -112,7 +116,7 @@ question, and D follows that intent (2026-11-11); the table of views is in
   let a plan that did not fit miss its day without a word. Each morning everything planned for
   the day moves in; what was not finished stays, marked since when, so leftovers are dealt with
   (D, P or T) instead of vanishing quietly.
-- **T and P take any open item in any view,** not only assignments: a mention can be answered on
+- **T and P take any open item in any view,** not only assignments (never a finished part): a mention can be answered on
   Thursday too. Elsewhere than Assigned to me the row shows its day or the Today mark.
 - **A plan holds until its day.** Answering an ask that brought a planned item into the inbox
   only answers the ask: the item stays in Planned, so a reply cannot cost the plan. Closing on
@@ -144,24 +148,41 @@ question, and D follows that intent (2026-11-11); the table of views is in
 How items return is in [`behaviour.md`](reference/behaviour.md) (rules 1, 2, 3 and 6): an item
 returns only through an ask newer than its handled-until. The reasons:
 
+- **Items come back only through asks with a time** (2026-11-12, #108). A mention, review
+  request, feedback, thread reply, new commits, a reopen on GitHub by someone else, news after my
+  part done, a due follow-up and, with "Any post", a post by someone else are asks with a time.
+  An item is in the inbox while one is newer than handled-until; nothing is written to bring it
+  back. Earlier: a reset wrote an Open or ended the follow-up (`auto:snooze-ended`), so row,
+  explanation and history could name different asks. Now they follow the newest ask, and every
+  return gets a history line that is derived, not stored (`history.back.*`).
+- **The ask kinds:** `opened` (O, a manual ask), `reopened` (a reopen on GitHub, with who),
+  `post` ("Any post", with who) and `due` (a follow-up whose date passed). A due follow-up, a
+  reopen, O and "Any post" return quietly, without a notification.
+- **A reopen on GitHub asks only on items that were for the viewer** (a mention, a review
+  request, a table item) **and that the viewer handled or answered,** newer than handled-until and
+  the last reply. Old reopens on items never handled stay quiet. Assigning yourself and reopening
+  it yourself do not count.
+- **A due follow-up asks on any item,** table items and finished parts included, and asks again
+  what was pending when F handled it, also an ask D had filed before F. It asks until the viewer
+  replies or files it (D). Rows of past-due follow-ups stay as they are.
+- **An ask does not end a follow-up outside a table:** the item shows in the inbox and keeps
+  waiting in Follow-up.
 - **Handled-until is its own fact** (2026-11-12, #106). It lives in the table `item_handled`, not
-  in `item_status`: most filed items have no status row, and an `open` row reads as a reopen. D no
-  longer stores a done on someone else's item; with "reopen on any post" such an item comes back
-  only through asks. D on a closed item waiting in the inbox also sets it: filing and setting
-  handled-until are the same thing. The migration carries over the time of a stored done on an own
-  item. `filedAt` and `plannedAt` stay readable. "Reset statuses" also clears it. On a tick-off of
-  a hand-off with updates only the snapshot is refreshed; a closed item gets no write.
+  in `item_status`: most filed items have no status row, and an `open` row reads as a reopen. D
+  files someone else's item instead of storing a done, also on a closed item waiting in the inbox
+  (filing and setting handled-until are the same thing). Earlier: five cutoffs decided what was
+  new (`filedAt`, `plannedAt`, a stored done, the start of a follow-up, the hand-off time); they
+  stay readable, and the migration carries a stored done over. X keeps handled-until, so the asks
+  a plan or follow-up handled stay handled. "Reset statuses" also clears it. On a tick-off of a
+  hand-off with updates only the snapshot is refreshed; a closed item gets no write.
 - **P, T and F count as handled and, when the item is open** (the list's detail or a table's
-  pop-up), **as seen** (2026-11-12). A table row that is only selected stays unread. A due
-  follow-up is an ask, so F sets handled-until and the asks before it do not bring the item back
-  when the follow-up is due.
-- **A new assignment is not an ask** (2026-11-12, confirming 2026-11-11). Someone wants something
-  from you again, which is what the app is for, so it brings the item back as new work in
-  Assigned to me with its dot, also after "my part done" or "done". Earlier: a stored done won
-  over a fresh assignment and `legacyDone` filed the item silently under Finished.
-- **A reopen by someone else brings a finished item back** (2026-11-11). It revives a "done"
-  with the "reopened" ask (D clears it) and counts as an update on a handed-off part, like a
-  closing does. Assigning yourself and reopening it yourself do not count.
+  pop-up), **as seen.** A table row that is only selected stays unread, and so does an item marked
+  unread by hand.
+- **A new assignment is not an ask, and writes nothing** (2026-11-12, confirming 2026-11-11).
+  Someone wants something from you again, which is what the app is for, so it brings the item
+  back as new work in Assigned to me with its dot, also after "my part done" or "done". It drops
+  a finished part and keeps a follow-up. Earlier: it cleared the whole row, follow-up included,
+  and a stored done won over a fresh assignment.
 - **Feedback, thread answers and closings by others ask for you** (2026-11-02). A post or review
   by someone else on an item you opened or that is assigned to you, an answer in a review thread
   you wrote in on someone else's pull request, and your own item closed by someone else without
@@ -178,10 +199,11 @@ returns only through an ask newer than its handled-until. The reasons:
   label ("New commits") under the Reviews filter. Only the commit author is known, not the
   pusher, so commits without a linked GitHub user count as nobody's; a force push by someone else
   counts the same, since after a rebase the commits keep their old dates.
-- **"Reopen on" offers mention or any post.** The third choice, "any post if assigned", stopped
-  doing anything once assignments finished as "my part done"; a stored value acts as "mention".
-  With "Any post" (2026-11-12), any post by someone else newer than handled-until is an ask; its
-  label changes, since there is no stored done anymore.
+- **"Bring back on" offers mention or any post.** The third choice, "any post if assigned",
+  stopped doing anything once assignments finished as "my part done"; a stored value acts as
+  "mention". With "Any post" (2026-11-12), any post by someone else on an item outside the
+  tables, newer than handled-until, is an ask. The setting key `reopenOn` stays; only the label
+  changed, since there is no stored done anymore.
 - **"Self-mention" for mentioning yourself,** so that "reminder" is not a second word for a
   follow-up.
 - **A repo shows "All updates" or "Only addressed to me".** In repos where others review, a
@@ -194,12 +216,18 @@ returns only through an ask newer than its handled-until. The reasons:
 
 ## The Done bar
 
-- **Done holds what was for the viewer** (2026-10-24, 2026-11-12 #109). Closed assignments and
-  closed items they merely took part in show nowhere; Done keeps answered mentions and reviews
-  and items filed from the inbox. It is a bar at the bottom of the inbox, not a view, showing what
-  was handled in the last 7 days and has no newer ask. N is fixed at 7 days, with no setting for
-  now, and it is not `closedDays`. No key opens the bar; it opens by click and on a jump to an
-  item in it. Earlier: Done was a view with no limit of days.
+- **Done is a bar of the inbox, not a view** (2026-11-12, #109). What the viewer handled is a
+  look back, not a place to work from, so it is the inbox's last folded group instead of a view
+  competing in the sidebar. It holds what was handled in the last `DONE_DAYS` (7) days and asks
+  for nothing: handled-until (D, P, T, F), the closing of an item for them, and, outside Assigned
+  to me and Created by me, the viewer's reply to a mention or review; working on an own or
+  assigned item does not keep it in the bar. Planned and waiting items stay in their own views.
+  The 7 days are fixed, without a setting; closed items keep `closedDays`, which already decides
+  how long they are loaded, and closed items that were not for the viewer show nowhere. The bar
+  opens by click and on a jump to an item in it; no key of its own opens it. Counts, the badge
+  and unread leave it out, so it never calls for attention. D in the inbox moves on to the next
+  open item instead of following the item down into the bar. Earlier: Done was a view with no
+  limit of days.
 - **One bar for what is done but still open.** "Finished" at the bottom of Assigned to me holds
   both items done on their board and those whose part the viewer finished (described as still
   open on GitHub); two bars for nearly the same meant guessing. Only the latter follow their
