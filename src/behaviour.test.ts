@@ -448,6 +448,19 @@ describe("rule 5: a follow-up is a when, not a status", () => {
       },
     },
     {
+      situation: "T and P on a finished part that waits do nothing: no plan, the follow-up stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        const before = app.statuses.get(issue.id);
+        app.pin(issue);
+        app.plan(issue, later(world, 2 * DAY).slice(0, 10));
+        expect(app.today).toMatchObject({ focus: [], planned: [] });
+        expect(app.statuses.get(issue.id)).toEqual(before);
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+      },
+    },
+    {
       situation: "leaving an assignment whose part is done keeps its follow-up",
       run: async (world, app) => {
         const issue = await handedOff(world, app);

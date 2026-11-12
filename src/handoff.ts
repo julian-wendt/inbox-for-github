@@ -52,7 +52,7 @@ export function updatesSince(item: Item, me: string, since: string, snapshot: Ha
 }
 
 /**
- * What is left of a stored status once its follow-up is taken off (X, D in Follow-up, P or T): a
+ * What is left of a stored status once its follow-up is taken off (X or D in Follow-up): a
  * finished part stays done with its time and snapshot, so news since then still counts; anything
  * else leaves nothing.
  *

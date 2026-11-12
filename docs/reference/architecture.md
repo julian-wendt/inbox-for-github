@@ -66,9 +66,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **A follow-up on a finished part** keeps the part done: F stores "snoozed" with a fresh
   `handoff` (`followUpExtra`), so the item waits in Follow-up and stays in the bar `finished`.
   `classify` reads it as "snoozed" while open and before its date, and as "done" after, with no
-  write. X, D in Follow-up, P and T take the follow-up off with `Store.endFollowUp`: the part goes
-  back to "done" with its time and snapshot (`afterFollowUp`), so news from the wait still counts.
-  Open (O) opens the work again and keeps the follow-up. Unassigned, only the follow-up counts.
+  write. X and D in Follow-up take the follow-up off with `Store.endFollowUp`: the part goes back
+  to "done" with its time and snapshot (`afterFollowUp`), so news from the wait still counts. P
+  and T do not take a finished part (`isPinnable`), also while it waits. Open (O) opens the work
+  again and keeps the follow-up. Unassigned, only the follow-up counts.
 - **Repairs at start:** `Store.repairStatusLog` drops log entries at the end of an item's
   history that no stored status stands behind (`staleLogRows`), so the activity log never shows
   "marked as done" for an open item. A "done" stored on an item D may no longer finish
