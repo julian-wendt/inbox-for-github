@@ -620,7 +620,7 @@ export default function App() {
     });
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ entries: planEntries, of: c.item.id, fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ of: { id: c.item.id, kind: "plan" }, fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -642,14 +642,13 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries: MenuEntry[] | ((c: Classified) => MenuEntry[]); of?: string; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ entries?: MenuEntry[]; of?: { id: string; kind: "item" | "plan" }; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
   /** A menu of one item is built from the item as it is now, not as it was when the menu opened. */
-  const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of) : undefined;
-  const menuEntriesNow = !menu ? null : typeof menu.entries !== "function" ? menu.entries : menuItem ? menu.entries(menuItem) : null;
+  const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of?.id) : undefined;
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const snoozeItem = snoozeMenu ? inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) : undefined;
   // An item that left the list takes its menu along, so the menu cannot come back with it.
-  if (menu && !menuEntriesNow) setMenu(null);
+  if (menu?.of && !menuItem) setMenu(null);
   if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
   const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
@@ -834,7 +833,7 @@ export default function App() {
   const openMenu = (entry: Classified, e: React.MouseEvent) => {
     e.preventDefault();
     selection.select(entry.item.id);
-    setMenu({ entries: menuEntries, of: entry.item.id, x: e.clientX, y: e.clientY });
+    setMenu({ of: { id: entry.item.id, kind: "item" as const }, x: e.clientX, y: e.clientY });
   };
   const copy = (text: string) =>
     navigator.clipboard.writeText(text).then(
@@ -1167,6 +1166,7 @@ export default function App() {
     void updateSettings((current) => ({ ...current, orbLooks: assignLooks(orbLogins, current.orbLooks) }));
   }, [inboxReady, updateSettings, orbLogins, orbLooks]);
 
+  const menuEntriesNow = menu?.entries ?? (menu?.of && menuItem ? (menu.of.kind === "plan" ? planEntries : menuEntries)(menuItem) : null);
   if (!inbox.ready) return <div className="boot" data-tauri-drag-region />;
 
   return (
