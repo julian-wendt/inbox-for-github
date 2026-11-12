@@ -13,12 +13,12 @@ export type HelpTab = "guide" | "rules" | "keys" | "basics";
 const TABS: HelpTab[] = ["guide", "rules", "keys", "basics"];
 
 /** The guide's views in reading order, each with the keys it explains; the Done bar is no view. */
-const GUIDE: { id: "inbox" | "assigned" | "authored" | "planned" | "snoozed" | "done"; keys: ("d" | "f" | "pt" | "x")[]; enter?: "list" | "table" }[] = [
+const GUIDE: { id: "inbox" | "assigned" | "authored" | "planned" | "snoozed" | "done"; keys: ("d" | "f" | "pt" | "x")[]; enter?: "list" | "table" | "both" }[] = [
   { id: "inbox", keys: ["d", "f", "pt", "x"], enter: "list" },
   { id: "assigned", keys: ["d", "f", "pt", "x"], enter: "table" },
   { id: "authored", keys: ["d", "f", "pt", "x"], enter: "table" },
-  { id: "planned", keys: ["d", "f", "pt", "x"], enter: "list" },
-  { id: "snoozed", keys: ["d", "f", "pt", "x"], enter: "list" },
+  { id: "planned", keys: ["d", "f", "pt", "x"], enter: "both" },
+  { id: "snoozed", keys: ["d", "f", "pt", "x"], enter: "both" },
   { id: "done", keys: ["f"] },
 ];
 
