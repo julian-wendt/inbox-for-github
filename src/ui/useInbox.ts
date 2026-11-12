@@ -63,6 +63,10 @@ export interface Inbox {
    * marked unread after that time stays unread, so a pending "seen" timer cannot undo the mark.
    */
   markSeen: (nodeId: string, openedAt?: string) => Promise<void>;
+  /** Item id → the time up to which the viewer handled the item's asks (D, P, T, F set it). */
+  handledUntil: ReadonlyMap<string, string>;
+  /** Sets an item's handled-until, or removes it with null; for an undo that restores none. */
+  setHandledUntil: (nodeId: string, at: string | null) => Promise<void>;
   /** Items the viewer marked unread by hand, with when, until they open them again. */
   unreadMarks: ReadonlyMap<string, string>;
   markUnread: (nodeId: string) => Promise<void>;
@@ -167,6 +171,7 @@ export function useInbox(): Inbox {
   const [statusLog, setStatusLog] = useState<Map<string, StatusChange[]>>(new Map());
   const [seen, setSeen] = useState<Map<string, string>>(new Map());
   const [unreadMarks, setUnreadMarks] = useState<Map<string, string>>(new Map());
+  const [handledUntil, setHandledUntilMap] = useState<Map<string, string>>(new Map());
   const [notes, setNotes] = useState<Map<string, string>>(new Map());
   const [items, setItems] = useState<Item[]>([]);
   const [me, setMe] = useState<string | null>(null);
@@ -231,6 +236,7 @@ export function useInbox(): Inbox {
         setStatusLog((current) => movedLists(current, moves));
         setSeen((current) => movedKeys(current, moves));
         setUnreadMarks((current) => movedKeys(current, moves));
+        setHandledUntilMap((current) => movedKeys(current, moves));
         setNotes((current) => movedKeys(current, moves));
         setWriteFailures((current) => movedLists(current, moves));
       };
@@ -267,6 +273,7 @@ export function useInbox(): Inbox {
       setStatusLog(await opened.statusLog());
       setSeen(await opened.seen());
       setUnreadMarks(await opened.unreadMarks());
+      setHandledUntilMap(await opened.handledUntil());
       setNotes(await opened.notes());
       const cached = await opened.cachedFetch();
       log.debug("cache loaded", { items: cached?.items.length ?? 0, fetchedAt: cached?.fetchedAt.toISOString(), fullAt: cached?.fullAt?.toISOString(), scope: cached?.scope });
@@ -622,6 +629,7 @@ export function useInbox(): Inbox {
     const cleared = await store.resetStatuses(undefined, "settings:reset");
     log.debug("statuses reset", { count: cleared.size, source: "settings:reset" });
     setStatuses(new Map());
+    setHandledUntilMap(new Map());
     setStatusLog((current) => {
       const next = new Map(current);
       for (const [id, change] of cleared) next.set(id, [...(next.get(id) ?? []), change]);
@@ -629,6 +637,20 @@ export function useInbox(): Inbox {
     });
     return cleared.size;
   }, [store]);
+
+  const setHandledUntil = useCallback(
+    async (nodeId: string, at: string | null) => {
+      if (!store) return;
+      await store.setHandledUntil(nodeId, at);
+      setHandledUntilMap((current) => {
+        const next = new Map(current);
+        if (at === null) next.delete(nodeId);
+        else next.set(nodeId, at);
+        return next;
+      });
+    },
+    [store],
+  );
 
   /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
   const restoreStatus = useCallback(
@@ -736,6 +758,8 @@ export function useInbox(): Inbox {
     setStatus,
     clearStatus,
     resetStatuses,
+    handledUntil,
+    setHandledUntil,
     restoreStatus,
     statuses,
     writeFailures,

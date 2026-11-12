@@ -1,5 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { FeedbackMode } from "./feedback";
+import { deriveHandledUntil } from "./handledUntil";
 import type { Viewer } from "./github/fetch";
 import type { LogLevel } from "./log";
 import type { Handoff, Item, Reopen, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "./model";
@@ -61,6 +62,10 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS item_seen (
      node_id TEXT PRIMARY KEY,
      seen_at TEXT NOT NULL
+   )`,
+  `CREATE TABLE IF NOT EXISTS item_handled (
+     node_id       TEXT PRIMARY KEY,
+     handled_until TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS item_unread (
      node_id   TEXT PRIMARY KEY,
@@ -261,9 +266,38 @@ export class Store {
 
   static async open(): Promise<Store> {
     const db = await Database.load(DB_URL);
+    const fresh = (await db.select<unknown[]>("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'item_handled'")).length === 0;
     for (const statement of SCHEMA) await db.execute(statement);
     await dropLeftovers(db);
-    return new Store(db);
+    const store = new Store(db);
+    if (fresh) await store.fillHandledUntil();
+    return store;
+  }
+
+  /** Fills a just created `item_handled` from the older cutoffs (see `deriveHandledUntil`); one statement, so it is whole or absent. */
+  private async fillHandledUntil(): Promise<void> {
+    const settings = await this.settings();
+    const derived = deriveHandledUntil({
+      statuses: await this.statuses(),
+      filedAt: settings.filedAt,
+      plannedAt: settings.plannedAt,
+      dated: new Set([...settings.focus, ...settings.planned.map((p) => p.id)]),
+    });
+    if (derived.size === 0) return;
+    const rows = [...derived];
+    await this.db.execute(`INSERT INTO item_handled (node_id, handled_until) VALUES ${rows.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, rows.flat());
+  }
+
+  /** The time up to which the viewer handled each item's asks; asks from before it are not new. */
+  async handledUntil(): Promise<Map<string, string>> {
+    const rows = await this.db.select<{ node_id: string; handled_until: string }[]>("SELECT node_id, handled_until FROM item_handled");
+    return new Map(rows.map((r) => [r.node_id, r.handled_until]));
+  }
+
+  /** Sets an item's handled-until, or removes it with null (an undo that restores "never handled"). */
+  async setHandledUntil(nodeId: string, at: string | null): Promise<void> {
+    if (at === null) await this.db.execute("DELETE FROM item_handled WHERE node_id = $1", [nodeId]);
+    else await this.db.execute("INSERT INTO item_handled (node_id, handled_until) VALUES ($1, $2) ON CONFLICT (node_id) DO UPDATE SET handled_until = excluded.handled_until", [nodeId, at]);
   }
 
   async statuses(): Promise<Map<string, StoredStatus>> {
@@ -384,13 +418,14 @@ export class Store {
     const rows = await this.db.select<{ node_id: string }[]>("SELECT node_id FROM item_status");
     await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) SELECT node_id, 'open', $1, 1, $2 FROM item_status", [at, source]);
     await this.db.execute("DELETE FROM item_status");
+    await this.db.execute("DELETE FROM item_handled");
     const change: StatusChange = { status: "open", at, automatic: true };
     return new Map(rows.map((r) => [r.node_id, change]));
   }
 
   /**
    * Carries everything stored per item from each old node id to its new one, for issues that
-   * were transferred (see `findTransfers`): status, status log, note, seen, unread mark and
+   * were transferred (see `findTransfers`): status, handled-until, status log, note, seen, unread mark and
    * failed writes. A row the new id already has wins over the old one, which goes; log entries
    * and failures of both stay. Settings that name items are the caller's (see `movedSettings`).
    *
@@ -401,7 +436,7 @@ export class Store {
    */
   async moveItems(moves: ReadonlyMap<string, string>): Promise<void> {
     for (const [from, to] of moves) {
-      for (const table of ["item_status", "item_note", "item_seen", "item_unread"]) {
+      for (const table of ["item_status", "item_handled", "item_note", "item_seen", "item_unread"]) {
         await this.db.execute(`UPDATE OR IGNORE ${table} SET node_id = $2 WHERE node_id = $1`, [from, to]);
         await this.db.execute(`DELETE FROM ${table} WHERE node_id = $1`, [from]);
       }

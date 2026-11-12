@@ -10,6 +10,7 @@ export interface MemorySeed {
   notes?: Map<string, string>;
   seen?: Map<string, string>;
   unreadMarks?: Map<string, string>;
+  handledUntil?: Map<string, string>;
 }
 
 /**
@@ -27,6 +28,7 @@ export class MemoryStore implements Persistence {
   private noteMap: Map<string, string>;
   private seenMap: Map<string, string>;
   private unreadMap: Map<string, string>;
+  private handledMap: Map<string, string>;
   private failures = new Map<string, WriteFailure[]>();
   private cache: CachedFetch | null = null;
   private current: Settings;
@@ -38,6 +40,17 @@ export class MemoryStore implements Persistence {
     this.noteMap = new Map(seed.notes);
     this.seenMap = new Map(seed.seen);
     this.unreadMap = new Map(seed.unreadMarks);
+    this.handledMap = new Map(seed.handledUntil);
+  }
+
+  handledUntil(): Promise<Map<string, string>> {
+    return Promise.resolve(new Map(this.handledMap));
+  }
+
+  setHandledUntil(nodeId: string, at: string | null): Promise<void> {
+    if (at === null) this.handledMap.delete(nodeId);
+    else this.handledMap.set(nodeId, at);
+    return Promise.resolve();
   }
 
   statuses(): Promise<Map<string, StoredStatus>> {
@@ -87,11 +100,13 @@ export class MemoryStore implements Persistence {
     const cleared = new Map([...this.statusMap.keys()].map((id) => [id, change]));
     for (const id of cleared.keys()) this.logChange(id, change);
     this.statusMap.clear();
+    this.handledMap.clear();
     return Promise.resolve(cleared);
   }
 
   moveItems(moves: ReadonlyMap<string, string>): Promise<void> {
     this.statusMap = movedKeys(this.statusMap, moves);
+    this.handledMap = movedKeys(this.handledMap, moves);
     this.noteMap = movedKeys(this.noteMap, moves);
     this.seenMap = movedKeys(this.seenMap, moves);
     this.unreadMap = movedKeys(this.unreadMap, moves);
