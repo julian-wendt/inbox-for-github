@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Reopen } from "../../model";
 import { bucketHelp } from "../explain";
 import { t, type MessageKey } from "../i18n";
+import { DONE_DAYS } from "../doneBar";
 import { VIEWS } from "../labels";
 import { useGutter } from "../useGutter";
 
@@ -128,7 +129,7 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
             <>
               {GUIDE.map(({ id, keys, enter }) => (
                 <section key={id}>
-                  <strong>{t(`bucket.${id}`)}:</strong> {t(`guide.${id}.intent`)}
+                  <strong>{t(`bucket.${id}`)}:</strong> {t(`guide.${id}.intent`, { days: DONE_DAYS })}
                   <ul>
                     {keys.map((k) => (
                       <li key={k}>{t(`guide.${id}.${k}` as MessageKey)}</li>
