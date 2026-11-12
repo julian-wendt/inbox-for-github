@@ -16,7 +16,7 @@ import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
 import { movedKeys, movedLists, movedSettings } from "../transfer";
-import { lockOf } from "./statusPlan";
+import { lockedDone } from "./statusPlan";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -134,14 +134,6 @@ function logTransfers(before: Item[], fetched: Item[], moves: Map<string, string
     return found ? ref(found) : id;
   };
   log.debug("transferred", { items: [...moves].map(([from, to]) => `${refOf(before, from)} → ${refOf(fetched, to)}`).join(",") });
-}
-
-/**
- * A "done" or "my part done" stored on an item D may no longer finish (see `lockOf`): from before
- * the lock, it would hide open work for good, so the app clears it once.
- */
-function lockedDone(c: Classified, stored: StoredStatus | undefined, viewer: string): boolean {
-  return stored?.status === "done" && lockOf(c, viewer) !== null;
 }
 
 /** A "done" the viewer set on an open assignment before "my part done" existed, without a handoff. */
