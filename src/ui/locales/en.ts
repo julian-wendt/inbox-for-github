@@ -323,7 +323,7 @@ export const en = {
   "guide.inbox.d": "D files it, nothing stored as done: it leaves the inbox and sits in the Done bar. ⌘Z takes it back. On an item closed on GitHub, D is the only status offered.",
   "guide.inbox.f": "F files it, marks it seen while it is open and lets it wait in Follow-up until the date you pick.",
   "guide.inbox.pt": "P plans it for a day, T for today: it counts as handled, is marked seen while it is open, and moves into Planned.",
-  "guide.inbox.x": "X has nothing to take off here.",
+  "guide.inbox.x": "X takes off a follow-up that came due, or a plan an ask brought back; what it handled stays handled.",
   "guide.assigned.d": "D ends your part: it moves to the bar Finished. News on it, or a new assignment, brings it back.",
   "guide.assigned.f": "F is a when, not a status: it waits in its table and in Follow-up, and a finished part stays finished.",
   "guide.assigned.pt": "P and T put it in Planned and it keeps its place here, marked; they do not apply once your part is done.",

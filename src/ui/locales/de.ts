@@ -325,7 +325,7 @@ export const de: Messages = {
   "guide.inbox.d": "D legt es ab, es wird nichts als erledigt gespeichert: Es verlässt die Inbox und liegt in der Leiste Erledigt. ⌘Z nimmt es zurück. Bei einem auf GitHub geschlossenen Item ist D der einzige angebotene Status.",
   "guide.inbox.f": "F legt es ab, markiert es als gesehen, solange es offen ist, und lässt es in Wiedervorlage bis zum gewählten Datum warten.",
   "guide.inbox.pt": "P plant es für einen Tag, T für heute: Es gilt als bearbeitet, wird als gesehen markiert, solange es offen ist, und wandert nach Geplant.",
-  "guide.inbox.x": "X hat hier nichts zu entfernen.",
+  "guide.inbox.x": "X nimmt eine fällig gewordene Wiedervorlage weg oder einen Plan, den eine Frage zurückgeholt hat; was sie bearbeitet haben, bleibt bearbeitet.",
   "guide.assigned.d": "D beendet deinen Teil: Es wandert in die Leiste Fertig. Neues darin oder eine neue Zuweisung holt es zurück.",
   "guide.assigned.f": "F ist ein Zeitpunkt, kein Status: Es wartet in seiner Tabelle und in Wiedervorlage, ein erledigter Teil bleibt erledigt.",
   "guide.assigned.pt": "P und T legen es nach Geplant, hier behält es seinen Platz, markiert; bei erledigtem Teil gelten sie nicht.",
