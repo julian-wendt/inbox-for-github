@@ -22,6 +22,18 @@ describe("handledAt", () => {
     expect(at(app, issue)).toBe(app.entry(issue).item.comments.at(-1)!.createdAt);
   });
 
+  it("leaves an own issue to Created by me after the viewer answered a mention on it", async () => {
+    const { world, app } = sim;
+    const issue = world.issue({ author: ME });
+    world.comment(issue, "alice", "@octocat which version?");
+    await app.refresh();
+    world.advance(HOUR);
+    await app.comment(issue, "The latest.");
+    expect(app.views().authored).toContain(issue.id);
+    expect(at(app, issue)).toBeNull();
+    expect(app.views().done).not.toContain(issue.id);
+  });
+
   it("takes handled-until for a mention filed on an assignment", async () => {
     const { world, app } = sim;
     const issue = world.issue({ assignees: [ME] });

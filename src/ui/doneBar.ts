@@ -1,5 +1,7 @@
 import type { Classified } from "../classify";
 import { lastReplyAt, latest, mentionsOf, sameLogin } from "../timeline";
+import { onPlate } from "./assignments";
+import { isOwnOpen } from "./authored";
 import { isWaiting } from "./followUp";
 
 /** How many days the Done bar keeps an open item after it was handled; fixed, no setting. */
@@ -12,10 +14,11 @@ const DAY_MS = 86_400_000;
 
 /**
  * When the viewer last handled an item that asks for nothing now: the latest of its handled-until
- * (D, P, T, F), their last reply if they were mentioned, their last review if they were asked for
- * one, the closing of a closed item that was for them, and the time of a "done" stored before
- * handled-until existed. Null while the item asks (it is in the inbox) or waits for a follow-up,
- * and when none of these exist. A "my part done" counts only through handled-until.
+ * (D, P, T, F), the closing of a closed item that was for them, the time of a "done" stored before
+ * handled-until existed, and, outside the tables, their last reply if they were mentioned and
+ * their last review if they were asked for one. Null while the item asks (it is in the inbox) or
+ * waits for a follow-up, and when none of these exist. Own and assigned items, "my part done"
+ * included, count only through handled-until, so working on them does not keep them in the bar.
  *
  * @param c             The item as classified.
  * @param handledUntil  Its handled-until (`useInbox().handledUntil`), if any.
@@ -28,8 +31,10 @@ const DAY_MS = 86_400_000;
 export function handledAt(c: Classified, handledUntil: string | undefined, me: string): string | null {
   if (c.bucket === "inbox" || isWaiting(c)) return null;
   const { item } = c;
-  const reply = mentionsOf(item, me).length > 0 ? lastReplyAt(item, me) : null;
-  const review = item.reasons.includes("review") ? latest(...item.reviews.filter((r) => sameLogin(r.author, me)).map((r) => r.at)) : null;
+  // Not `c.bucket`: an own issue whose mention was answered is "done" there, yet in Created by me.
+  const outsideTables = !onPlate(c, me) && !isOwnOpen(c, me);
+  const reply = outsideTables && mentionsOf(item, me).length > 0 ? lastReplyAt(item, me) : null;
+  const review = outsideTables && item.reasons.includes("review") ? latest(...item.reviews.filter((r) => sameLogin(r.author, me)).map((r) => r.at)) : null;
   const closed = c.bucket === "done" && item.closed ? item.closed.at : null;
   const stored = c.bucket === "done" && !c.answered && !item.closed ? c.statusAt : null;
   return latest(handledUntil, reply, review, closed, stored);
