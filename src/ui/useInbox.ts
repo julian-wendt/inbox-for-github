@@ -187,6 +187,7 @@ export function useInbox(): Inbox {
   const [myName, setMyName] = useState<string | null>(null);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const [missing, setMissing] = useState<Scope[]>([]);
+  /** The scopes the token lacks; null while unknown (also for fine-grained tokens), which keeps plans in `dropGone`. */
   const lacking = useRef<Scope[] | null>(null);
   const [paused, setPaused] = useState<Date | null>(null);
   const [usage, setUsage] = useState<Inbox["usage"]>({ budget: null, lastCost: null });
@@ -333,9 +334,10 @@ export function useInbox(): Inbox {
       const token = await ghToken();
       void tokenScopes(token).then(
         (scopes) => {
-          lacking.current = missingScopes(scopes);
-          log.debug("token scopes", { known: scopes !== null, missing: lacking.current.join(",") || "none" });
-          setMissing(lacking.current);
+          const absent = missingScopes(scopes);
+          lacking.current = scopes === null ? null : absent;
+          log.debug("token scopes", { known: scopes !== null, missing: absent.join(",") || "none" });
+          setMissing(absent);
         },
         () => undefined,
       );
