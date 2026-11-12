@@ -54,7 +54,8 @@ const TICK_MS = 30_000;
  * A follow-up with "Remind me" that comes due rings on its own (`dueReminders`), once, also
  * across a restart (`pending.rangAt`), with the main switch as its only condition: the viewer asked for it, so neither the reason switches,
  * `delivery` nor `inFront` hold it back. Its notification offers "Later" choices
- * (`laterChoices`) that set the follow-up anew through `reminders.onLater`.
+ * (`laterChoices`) that set the follow-up anew through `reminders.onLater`. An item that starts to
+ * ring sends only this notification, also when it gains another ask at the same moment.
  *
  * @param classified  The current classification; pass an empty list until the first fetch is done.
  * @param unread      Ids the badge counts: unread inbox items (`unreadInInbox`), unread active assignments and items marked unread by hand.

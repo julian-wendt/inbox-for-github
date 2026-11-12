@@ -41,12 +41,12 @@ export function ringing(c: Pick<Classified, "notify" | "asks">): boolean {
 
 /**
  * The due reminders to notify about now: items that ring (see `ringing`) and did not in the
- * previous result. On the first result (`rang` is null) those that came due after `since`, the
- * last fetch before the app started, so a reminder missed while it was quit rings once at start.
+ * previous result. On the first result (`rang` is null) those that came due after `since`, so a
+ * reminder missed while the app was quit rings once at start.
  *
  * @param classified  The current classification.
  * @param rang        Ids that rang in the previous result, or null before the first one.
- * @param since       The cached fetch's time at start (ISO 8601), or null without a cache.
+ * @param since       When a reminder last rang (`notifyRangAt`), else the cached fetch's time (ISO 8601); null without either.
  * @returns The items to notify about, in list order.
  *
  * @example

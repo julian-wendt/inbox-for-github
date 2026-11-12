@@ -57,8 +57,7 @@ import { useSeenSettings } from "./ui/useSeenSettings";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
-import { DONE_GROUP, handledAt, inDoneBar } from "./ui/doneBar";
-import { RINGING_GROUP, ringing } from "./ui/attention";
+import { DONE_GROUP, handledAt, inDoneBar, listBars } from "./ui/doneBar";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -299,14 +298,8 @@ export default function App() {
     if (table) return undefined;
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
     if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
-    const bar = doneRows.length > 0 ? [{ group: DONE_GROUP, heading: t("bucket.done"), entries: doneRows }] : [];
-    const ringingRows = bucket === "inbox" ? listed.filter(ringing) : [];
-    const top = ringingRows.length > 0 ? [{ group: RINGING_GROUP, heading: t("inbox.ringingBar"), entries: ringingRows }] : [];
-    const rest = top.length > 0 ? listed.filter((c) => !ringing(c)) : listed;
-    if (inbox.settings.groupByTime) return [...top, ...groupByTime(rest, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
-    // Without time groups the rows stand under no bar (""), or under the view's name below the Reminders bar.
-    const main = top.length === 0 ? [{ group: "", heading: "", entries: rest }] : rest.length > 0 ? [{ group: "rest", heading: t("bucket.inbox"), entries: rest }] : [];
-    return top.length > 0 || bar.length > 0 ? [...top, ...main, ...bar] : undefined;
+    const timed = inbox.settings.groupByTime ? (rows: Classified[]) => groupByTime(rows, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })) : null;
+    return listBars(listed, bucket === "inbox", doneRows, timed);
   }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Planned stays open in the inbox.
@@ -662,9 +655,14 @@ export default function App() {
   const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of?.id) : undefined;
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const snoozeItem = snoozeMenu ? inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) : undefined;
+  // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
+  const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
   // An item that left the list takes its menu along, so the menu cannot come back with it.
-  if (menu?.of && !menuItem) setMenu(null);
-  if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
+  if ((menu?.of && !menuItem) || (snoozeMenu && !snoozeItem)) {
+    if (menu?.of && !menuItem) setMenu(null);
+    if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
+    if (notifyChoice) setNotifyChoice(null);
+  }
   const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
@@ -848,8 +846,6 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
-  const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
   /** The follow-up choices for one item: "Remind me" (R), this afternoon (A) before 14:00, the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
   const snoozeEntries = (c: Classified): MenuEntry[] => {
     const notify = notifyChoice?.id === c.item.id ? notifyChoice.on : !!c.notify;
