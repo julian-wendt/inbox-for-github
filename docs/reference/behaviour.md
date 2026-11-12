@@ -69,15 +69,12 @@ Each line is an `it.fails` case in `src/behaviour.test.ts`, unless it says the c
 its issue.
 
 - [#106](https://github.com/julian-wendt/inbox-for-github/issues/106) one handled-until: D in the
-  inbox stores a done on someone else's item instead of filing it; X on a plan drops the plan's
-  time (`plannedAt`), so what the plan handled asks again (#106 adds the test for X, which the
-  simulated session cannot drive: it has no plans); D on a closed item with news waiting in the
-  inbox writes a stored done again instead of setting handled-until.
+  inbox stores a done on someone else's item instead of filing it; D on a closed item with news
+  waiting in the inbox writes a stored done again instead of setting handled-until.
 - The App wiring of F calling `unplan` and of T and P calling `followUpEnds` is not covered by the
   tests yet; #107 adds a real test for both.
 - [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
-  item whose part is done replaces the hand-off; X on someone else's follow-up drops the status,
-  so the asks F handled ask again.
+  item whose part is done replaces the hand-off.
 - [#108](https://github.com/julian-wendt/inbox-for-github/issues/108) returns only through asks:
   a new review request does not lift a stored done; a thread reply after D brings the item back
   for one pass only, as the Open written on the reset is newer than the reply, and then it shows

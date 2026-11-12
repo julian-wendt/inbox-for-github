@@ -54,8 +54,8 @@ const MENTIONS_ONLY: AskRules = { ownFeedback: "off", assignedFeedback: false, t
 const run = (i: Item, stored?: StoredStatus, overrides?: Record<string, boolean>, reopenOn?: Reopen) =>
   classify(i, ME, stored, ruleSwitches(overrides), reopenOn, undefined, undefined, undefined, MENTIONS_ONLY);
 
-const withRules = (i: Item, rules: Partial<AskRules> = {}, stored?: StoredStatus, filedAt?: string) =>
-  classify(i, ME, stored, ruleSwitches(), "mention", Date.parse("2026-10-20T00:00:00Z"), true, undefined, { ...ASK_RULES_DEFAULT, ...rules }, filedAt);
+const withRules = (i: Item, rules: Partial<AskRules> = {}, stored?: StoredStatus, handledUntil?: string) =>
+  classify(i, ME, stored, ruleSwitches(), "mention", Date.parse("2026-10-20T00:00:00Z"), true, handledUntil, { ...ASK_RULES_DEFAULT, ...rules });
 
 describe("findMention", () => {
   it("matches the login case-insensitively", () => {
@@ -437,7 +437,7 @@ describe("my part done", () => {
   });
 
   it("does not bring back a mention the plan already answered, but keeps a later one", () => {
-    const plan = (i: Item) => classify(i, ME, done, ruleSwitches(), "mention", undefined, true, "2026-10-04T00:00:00Z", MENTIONS_ONLY);
+    const plan = (i: Item) => classify(i, ME, done, ruleSwitches(), "mention", undefined, true, "2026-10-04T00:00:00Z", MENTIONS_ONLY, true);
     const before = assigned({ comments: [comment("bob", "@me can you look?", 3)] });
     expect(plan(before)).toMatchObject({ bucket: "assigned", asks: [] });
     const after = assigned({ comments: [comment("bob", "@me can you look?", 4), comment("bob", "@me ping", 5)] });
@@ -458,7 +458,7 @@ describe("my part done", () => {
 
 describe("planned items", () => {
   const at = (day: number, hour = 0) => `2026-10-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00:00Z`;
-  const planned = (i: Item, plannedAt: string, stored?: StoredStatus) => classify(i, ME, stored, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt);
+  const planned = (i: Item, plannedAt: string, stored?: StoredStatus) => classify(i, ME, stored, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt, ASK_RULES_DEFAULT, true);
   const requested = (day: number, reviewer = ME) => ({ kind: "review-requested" as const, at: at(day), actor: "alice", reviewer });
 
   it("leave the inbox for Planned once planned, and come back on a mention since", () => {
@@ -532,8 +532,9 @@ describe("feedback, thread replies and closings", () => {
 
   it("adds feedback on a waiting table item to the inbox without ending the follow-up", () => {
     const waiting: StoredStatus = { status: "snoozed", changedAt: at(2), until: "2026-10-30T09:00:00Z" };
-    expect(withRules(assigned({ comments: [comment("bob", "progress?", 3)] }), {}, waiting)).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["feedback"] });
-    expect(withRules(assigned({ comments: [comment("bob", "progress?", 1)] }), {}, waiting)).toMatchObject({ bucket: "assigned", asks: [] });
+    // F set handled-until when it started the follow-up.
+    expect(withRules(assigned({ comments: [comment("bob", "progress?", 3)] }), {}, waiting, at(2))).toMatchObject({ bucket: "inbox", status: "snoozed", asks: ["feedback"] });
+    expect(withRules(assigned({ comments: [comment("bob", "progress?", 1)] }), {}, waiting, at(2))).toMatchObject({ bucket: "assigned", asks: [] });
   });
 
   it("asks for an answer in a review thread the viewer wrote in, and brings a done item back for it", () => {

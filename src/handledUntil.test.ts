@@ -53,37 +53,56 @@ describe("deriveHandledUntil", () => {
   });
 });
 
-// With the derived time as the only cutoff (what the later steps give `classify`), no item changes view.
+// With the derived time as the only cutoff, no item changes view. `before` is what `classify` gave
+// with the old cutoffs (`plannedAt` while dated, `filedAt`) on main, after the hook wrote back a reset.
 describe("the derived time keeps every item where it was", () => {
   const handoff = { boards: {}, prs: [] };
-  const scenarios: { name: string; item: Item; status?: StoredStatus; filedAt?: string; plannedAt?: string; dated?: boolean }[] = [
-    { name: "a mention filed with D", item: item({ comments: [mention(3)] }), filedAt: day(4) },
-    { name: "a mention newer than D", item: item({ comments: [mention(3), mention(6)] }), filedAt: day(4) },
-    { name: "a mention before a plan", item: item({ comments: [mention(3)] }), plannedAt: day(4), dated: true },
-    { name: "a mention after a plan", item: item({ comments: [mention(6)] }), plannedAt: day(4), dated: true },
-    { name: "a plan time left behind", item: item({ comments: [mention(3)] }), plannedAt: day(4), dated: false },
-    { name: "a stored done on a mention", item: item({ comments: [mention(3)] }), status: stored("done", 4) },
-    { name: "a stored done on an own item", item: item({ author: ME, comments: [mention(3)] }), status: stored("done", 4) },
-    { name: "a follow-up on a mentioned item", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(25) }) },
-    { name: "a follow-up without a date", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4) },
-    { name: "a follow-up on an assignment, mention before it", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(25) }) },
-    { name: "a follow-up on an assignment, mention after it", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(6)] }), status: stored("snoozed", 4, { until: day(25) }) },
-    { name: "a follow-up after D on an assignment", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(3)] }), status: stored("snoozed", 6, { until: day(25) }), filedAt: day(4) },
-    { name: "my part done, mention before it", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(3)] }), status: stored("done", 4, { handoff }) },
-    { name: "my part done, mention filed", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(3)] }), status: stored("done", 4, { handoff }), filedAt: day(5) },
-    { name: "my part done, mention after a plan", item: item({ assignees: [ME], reasons: ["assigned", "mentioned"], comments: [mention(6)] }), status: stored("done", 4, { handoff }), plannedAt: day(5), dated: true },
+  const answer = (d: number): Comment => ({ author: ME, body: "Will do.", createdAt: day(d, 6) });
+  const assigned = { assignees: [ME], reasons: ["assigned", "mentioned"] as Item["reasons"] };
+  type View = Pick<ReturnType<typeof classify>, "bucket" | "status" | "asks">;
+  const view = (bucket: View["bucket"], status: View["status"], asks: View["asks"] = []): View => ({ bucket, status, asks });
+  const scenarios: { name: string; item: Item; status?: StoredStatus; filedAt?: string; plannedAt?: string; dated?: boolean; before: View; changes?: View }[] = [
+    { name: "a mention filed with D", item: item({ comments: [mention(3)] }), filedAt: day(4), before: view("done", "done") },
+    { name: "a mention newer than D", item: item({ comments: [mention(3), mention(6)] }), filedAt: day(4), before: view("inbox", "open", ["mention"]) },
+    { name: "a mention before a plan", item: item({ comments: [mention(3)] }), plannedAt: day(4), dated: true, before: view("planned", "open") },
+    { name: "a mention after a plan", item: item({ comments: [mention(6)] }), plannedAt: day(4), dated: true, before: view("inbox", "open", ["mention"]) },
+    { name: "a plan time left behind", item: item({ comments: [mention(3)] }), plannedAt: day(4), dated: false, before: view("inbox", "open", ["mention"]) },
+    { name: "a stored done on a mention", item: item({ comments: [mention(3)] }), status: stored("done", 4), before: view("done", "done") },
+    { name: "a stored done on an own item", item: item({ author: ME, comments: [mention(3)] }), status: stored("done", 4), before: view("done", "done") },
+    { name: "a follow-up on a mentioned item", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(25) }), before: view("snoozed", "snoozed") },
+    { name: "a follow-up without a date", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4), before: view("snoozed", "snoozed") },
+    { name: "a follow-up on an assignment, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(25) }), before: view("assigned", "snoozed") },
+    { name: "a follow-up on an assignment, mention after it", item: item({ ...assigned, comments: [mention(6)] }), status: stored("snoozed", 4, { until: day(25) }), before: view("inbox", "snoozed", ["mention"]) },
+    { name: "a follow-up after D on an assignment", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 6, { until: day(25) }), filedAt: day(4), before: view("assigned", "snoozed") },
+    { name: "a follow-up without a date on an assignment", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 4), before: view("assigned", "snoozed") },
+    { name: "my part done, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("done", 4, { handoff }), before: view("inbox", "done", ["mention"]) },
+    { name: "my part done, mention filed", item: item({ ...assigned, comments: [mention(3)] }), status: stored("done", 4, { handoff }), filedAt: day(5), before: view("assigned", "done") },
+    { name: "my part done, mention after a plan", item: item({ ...assigned, comments: [mention(6)] }), status: stored("done", 4, { handoff }), plannedAt: day(5), dated: true, before: view("inbox", "done", ["update", "mention"]) },
+    { name: "a due follow-up, mention before it", item: item({ comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]) },
+    { name: "a due follow-up on an answered mention", item: item({ comments: [mention(3), answer(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["reopened"]) },
+    { name: "a due follow-up on an assignment, mention before it", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 4, { until: day(10) }), before: view("inbox", "open", ["mention"]) },
+    { name: "a due follow-up on an assignment, nothing pending", item: item({ assignees: [ME], reasons: ["assigned"] }), status: stored("snoozed", 4, { until: day(10) }), before: view("assigned", "open") },
+    // Intended: the due follow-up asks again what was pending, also what D filed before F.
+    { name: "a due follow-up after D on an assignment", item: item({ ...assigned, comments: [mention(3)] }), status: stored("snoozed", 6, { until: day(10) }), filedAt: day(4), before: view("assigned", "open"), changes: view("inbox", "open", ["mention"]) },
   ];
 
   for (const s of scenarios) {
-    it(s.name, () => {
-      const statuses = new Map(s.status ? [[s.item.id, s.status]] : []);
-      const dated = new Set(s.dated ? [s.item.id] : []);
-      const before = classify(s.item, ME, s.status, ruleSwitches(), "mention", NOW, true, s.dated ? s.plannedAt : undefined, ASK_RULES_DEFAULT, s.filedAt);
-      const handled = deriveHandledUntil({ statuses, filedAt: s.filedAt ? { [s.item.id]: s.filedAt } : {}, plannedAt: s.plannedAt ? { [s.item.id]: s.plannedAt } : {}, dated }).get(s.item.id);
-      const after = classify(s.item, ME, s.status, ruleSwitches(), "mention", NOW, true, s.dated ? handled : undefined, ASK_RULES_DEFAULT, handled);
-      expect({ bucket: after.bucket, status: after.status, asks: after.asks }).toEqual({ bucket: before.bucket, status: before.status, asks: before.asks });
+    it(s.changes ? `${s.name} (changes on purpose)` : s.name, () => {
+      const handled = deriveHandledUntil({ statuses: new Map(s.status ? [[s.item.id, s.status]] : []), filedAt: s.filedAt ? { [s.item.id]: s.filedAt } : {}, plannedAt: s.plannedAt ? { [s.item.id]: s.plannedAt } : {}, dated: new Set(s.dated ? [s.item.id] : []) }).get(s.item.id);
+      const run = (status?: StoredStatus) => classify(s.item, ME, status, ruleSwitches(), "mention", NOW, true, handled, ASK_RULES_DEFAULT, !!s.dated);
+      let after = run(s.status);
+      // What the hook writes back on a reset, before the next pass.
+      if (after.statusReset) after = run(after.renewed ? undefined : { status: "open", changedAt: new Date(NOW).toISOString() });
+      expect({ bucket: after.bucket, status: after.status, asks: after.asks }).toEqual(s.changes ?? s.before);
     });
   }
+});
+
+describe("X keeps handled-until", () => {
+  it("a plan taken off leaves the mention it handled handled", () => {
+    const unplanned = classify(item({ comments: [mention(3)] }), ME, undefined, ruleSwitches(), "mention", NOW, true, day(4), ASK_RULES_DEFAULT, false);
+    expect(unplanned).toMatchObject({ bucket: "done", asks: [] });
+  });
 });
 
 describe("the in-memory store", () => {

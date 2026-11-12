@@ -81,13 +81,14 @@ export interface Classified {
  * 2. Otherwise the item goes to the inbox while someone waits for an answer: a review request is
  *    not answered yet (see `reviewAnswered`) or a mention is pending. A stored "Open" (an
  *    explicit reopen, or the one written when a follow-up date passed) counts as a fresh request:
- *    what was answered before it asks again (`reopened`). With `reviewOnCommits`, a push by someone
- *    else since the viewer's last review or comment asks again (`commits`). An assignment alone
- *    is no such ask.
- * 2b. A plan (`plannedAt`: the item is pinned for today or planned for a day) answers the asks
- *    the viewer saw when they made it: only an ask that came later shows the item in the inbox.
- *    With none, the item stays in its table ("assigned", "authored") or goes to "planned", which
- *    only the Planned view shows; answering a later ask ends only the ask, never the plan.
+ *    what was answered before it asks again (`reopened`), and what was pending asks again at its
+ *    time, handled-until or not. A follow-up whose date passed does the same at its date, before
+ *    the Open is written. With `reviewOnCommits`, a push by someone else since the viewer's last
+ *    review or comment asks again (`commits`). An assignment alone is no such ask.
+ * 2b. Handled-until (D, P, T and F set it) answers the asks from before it: only an ask that
+ *    came later shows the item in the inbox. With none, a `planned` item stays in its table
+ *    ("assigned", "authored") or goes to "planned", which only the Planned view shows; answering
+ *    a later ask ends only the ask, never the plan.
  * 3. An item assigned to the viewer with nothing pending goes to "assigned".
  * 4. Once the viewer has answered every review request and mention, the item counts as "done"
  *    without a stored status, and `answered` says why.
@@ -100,11 +101,10 @@ export interface Classified {
  * @param switches  Rule id → enabled, as returned by `ruleSwitches`.
  * @param reopenOn  What brings a snoozed or done item back to "Open" (the "reopenOn" setting).
  * @param reviewOnCommits  Pushes by others bring a reviewed pull request back (the "reviewOnCommits" setting).
- * @param plannedAt  When the viewer pinned the item for today or planned it for a day (ISO 8601), if they did
- *                   (the "plannedAt" setting); asks from before then do not put it into the inbox.
+ * @param handledUntil  The time up to which the viewer handled the item's asks (ISO 8601, see
+ *                      `Store.handledUntil`); asks from before it, closing included, do not count.
  * @param askRules  Which feedback, thread replies and closings ask for the viewer (see `AskRules`).
- * @param filedAt   When the viewer last filed the item's asks with D without finishing it (the
- *                  "filedAt" setting); asks from before then, closing included, do not count.
+ * @param planned   The item is pinned for today or planned for a day.
  *
  * @example
  *   classify(item, "octocat", { status: "done", changedAt: "2026-10-01T12:00:00Z" }, ruleSwitches());
@@ -117,9 +117,9 @@ export function classify(
   reopenOn: Reopen = REOPEN_DEFAULT,
   now = Date.now(),
   reviewOnCommits = true,
-  plannedAt?: string,
+  handledUntil?: string,
   askRules: AskRules = ASK_RULES_DEFAULT,
-  filedAt?: string,
+  planned = false,
 ): Classified {
   const rules = RULES.filter((r) => switches[r.id]);
   const assigned = item.reasons.includes("assigned");
@@ -128,12 +128,12 @@ export function classify(
   const inTable = assigned || own;
   const renewed = stored?.status === "done" && !item.closed && assignedAgain(item, me, stored.changedAt);
   if (stored?.status === "done" && stored.handoff && !renewed) {
-    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, latest(plannedAt, filedAt) ?? undefined);
+    if (assigned || item.closed) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil);
     stored = undefined;
   }
   if (item.closed) {
     const closer = own && askRules.ownClosed ? closedByOther(item, me) : null;
-    if (closer && closer.at > (filedAt ?? "")) {
+    if (closer && closer.at > (handledUntil ?? "")) {
       return { item, mention: null, statusReset: false, statusAt: stored?.changedAt ?? null, bucket: "inbox", status: "done", answered: null, asks: ["closed"], closedBy: closer.by };
     }
     const forMe = item.reasons.includes("review") || mentionsOf(item, me).length > 0;
@@ -145,12 +145,15 @@ export function classify(
   const threadAnswer = !own && askRules.threadReplies ? threadReply(item, me) : null;
   const repliedSinceStatus = !inTable && !!threadAnswer && !!stored && stored.status !== "open" && threadAnswer.at > stored.changedAt;
   const statusReset = tableSnooze ? snoozeEnded(stored, now) : reopens(item, me, stored, reopenOn, now) || pushedSinceStatus || repliedSinceStatus;
+  const effective = statusReset ? undefined : stored;
+  const reopenedAt = effective?.status === "open" ? effective.changedAt : snoozeEnded(stored, now) ? stored!.until : undefined;
+  // A reopen newer than handled-until asks again what was pending (rule 2), so nothing is cut off.
+  const seenAt = reopenedAt && reopenedAt > (handledUntil ?? "") ? undefined : handledUntil;
   const feedbackMode: FeedbackMode = own ? askRules.ownFeedback : assigned && askRules.assignedFeedback ? "any" : "off";
-  const found = inTable ? feedbackSince(item, me, latest(lastAnswerAt(item, me), filedAt), feedbackMode) : null;
+  const found = inTable ? feedbackSince(item, me, latest(lastAnswerAt(item, me), seenAt), feedbackMode) : null;
   // A mention is feedback too, but asks already as one.
   const feedback = found && !mentionsOf(item, me).some((m) => m.at === found.at) ? found : null;
   const reply = threadAnswer && !feedback && !mentionsOf(item, me).some((m) => m.at === threadAnswer.at) ? threadAnswer : null;
-  const effective = statusReset ? undefined : stored;
   const mention = pendingMention(item, rules, { me });
   const requestedBy = requesterOf(item, me);
   const assignedBy = assignerOf(item, me);
@@ -159,7 +162,7 @@ export function classify(
   const result = { item, mention, statusReset, ...(renewed && { renewed }), statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   if (effective && tableSnooze) {
-    const since = (at: string) => at > effective.changedAt && at > (filedAt ?? "");
+    const since = (at: string) => at > (handledUntil ?? "");
     const newFeedback = feedback && since(feedback.at) ? feedback : null;
     const newReply = reply && since(reply.at) ? reply : null;
     const asks: Ask[] = [
@@ -183,7 +186,6 @@ export function classify(
     return { ...result, bucket: status, status, answered: null, asks: [] };
   }
 
-  const reopenedAt = effective?.changedAt;
   const reviewed = item.reasons.includes("review");
   const mentioned = mentionsOf(item, me).length > 0;
   const reviewOpen = reviewed && !reviewAnswered(item, me, reopenedAt);
@@ -197,10 +199,9 @@ export function classify(
   if (reply && (!reopenedAt || reply.at > reopenedAt)) asks.push("reply");
   if (reopenedOnGitHub && !asks.includes("reopened")) asks.push("reopened");
 
-  // The plan answers what the viewer saw when they made it; an ask of unknown time counts as seen.
+  // Handled-until answers what came before it; an ask of unknown time counts as handled.
   const askedAt = (ask: Ask): string | undefined =>
     ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (reopenedAt ?? ghReopen ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
-  const seenAt = latest(plannedAt, filedAt);
   const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const parked = fresh.length < asks.length;
   const shown = parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result;
@@ -218,7 +219,7 @@ export function classify(
     };
   }
   if (assigned) return { ...shown, bucket: "assigned", status: "open", answered: null, asks: fresh };
-  if (plannedAt) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
+  if (planned) return { ...shown, bucket: own ? "authored" : "planned", status: "open", answered: null, asks: fresh };
   if (reviewed || mentioned) {
     return { ...shown, bucket: "done", status: "done", answered: reviewed ? "review" : "mention", asks: fresh };
   }

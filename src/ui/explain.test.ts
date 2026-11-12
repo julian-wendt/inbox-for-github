@@ -118,7 +118,7 @@ describe("explain, where the inbox and a stored status meet", () => {
 
 describe("explain, for planned items", () => {
   const planned = (i: Item, plannedAt: string, dated: Parameters<typeof explain>[3]) =>
-    explain(classify(i, ME, undefined, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt), "mention", ME, dated);
+    explain(classify(i, ME, undefined, ruleSwitches(), "mention", Date.parse(at(10)), true, plannedAt, undefined, true), "mention", ME, dated);
   const mentioned = item({ comments: [comment("bob", "@me look", 2)] });
 
   it("says a planned item left the inbox, with its day, and what brings it back", () => {
