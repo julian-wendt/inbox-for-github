@@ -694,10 +694,10 @@ export default function App() {
     { label: t("askChoice.file"), hint: t("hint.askChoice.file"), keys: "D", onSelect: () => choose("file") },
   ];
   const hasFollowUp = (c: Classified) => c.status === "snoozed";
-  /** Takes the follow-up off an item, as if never set; undo puts back exactly what was stored. */
+  /** Takes the follow-up off an item; a finished part stays done (see `afterFollowUp`). Undo puts back exactly what was stored. */
   const followUpStep = (c: Classified) => {
     const previous = inbox.statuses.get(c.item.id);
-    return { run: () => void inbox.clearStatus(c.item.id), undo: () => void inbox.restoreStatus(c.item.id, previous) };
+    return { run: () => void inbox.endFollowUp(c.item.id), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
   const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c)]);
   /** X on one item: its plan or Today pin goes, else its follow-up. */
@@ -800,7 +800,8 @@ export default function App() {
     const hand = () => void inbox.setStatus(id, "done", { handoff: snapshotOf(c.item) });
     switch (plan.do) {
       case "resume":
-        return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));
+        // The work opens again; a follow-up stays, as work and when are apart.
+        return change(t("toast.resumed", { number }), () => void (c.status === "snoozed" ? inbox.setStatus(id, "snoozed", c.until ? { until: c.until } : {}) : inbox.clearStatus(id)));
       case "hand-off": {
         moveOn(id);
         if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
@@ -808,7 +809,7 @@ export default function App() {
         return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
       }
       case "clear": {
-        if (bucket === "snoozed") return change(t("toast.reminderRemoved", { number }), () => void inbox.clearStatus(id));
+        if (bucket === "snoozed") return change(t("toast.reminderRemoved", { number }), () => void inbox.endFollowUp(id));
         const handling = handled(c);
         return change(t("toast.filed", { number }), () => (handling.run(), void inbox.clearStatus(id)), handling.undo);
       }

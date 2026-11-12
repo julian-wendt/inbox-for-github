@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { snapshotOf, updatesSince } from "./handoff";
+import { afterFollowUp, snapshotOf, updatesSince } from "./handoff";
 import type { Item } from "./model";
 
 const item = (overrides: Partial<Item> = {}) =>
@@ -68,5 +68,18 @@ describe("updatesSince on a closed item", () => {
 
   it("counts no board or pull request change once `since` is past the closing", () => {
     expect(updatesSince(closed, "me", "2026-10-12T00:00:00Z", snap)).toEqual([]);
+  });
+});
+
+describe("afterFollowUp", () => {
+  const handoff = { boards: { PVT_1: "Done" }, prs: [3] };
+
+  it("keeps a finished part done, with its time and snapshot", () => {
+    expect(afterFollowUp({ status: "snoozed", changedAt: "2026-11-02T10:00:00Z", until: "2026-11-05T08:00:00Z", handoff })).toEqual({ status: "done", changedAt: "2026-11-02T10:00:00Z", handoff });
+  });
+
+  it("leaves nothing of a plain follow-up", () => {
+    expect(afterFollowUp({ status: "snoozed", changedAt: "2026-11-02T10:00:00Z", until: "2026-11-05T08:00:00Z" })).toBeUndefined();
+    expect(afterFollowUp(undefined)).toBeUndefined();
   });
 });

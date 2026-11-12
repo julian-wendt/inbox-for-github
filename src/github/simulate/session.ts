@@ -1,6 +1,6 @@
 import { datedOf } from "../../ui/plan";
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
-import { snapshotOf } from "../../handoff";
+import { afterFollowUp, snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
 import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
@@ -170,8 +170,8 @@ export class InboxSession {
     }
   }
 
-  /** D or O or a snooze choice, as `App.applyStatus` carries it out. */
-  choose(ref: Ref, status: Status, until?: string): void {
+  /** D or O or a snooze choice, as `App.applyStatus` carries it out, in the item's view or in `view`. */
+  choose(ref: Ref, status: Status, until?: string, view?: View): void {
     const c = this.entry(ref);
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
@@ -183,15 +183,19 @@ export class InboxSession {
       if (handledBefore) this.handledUntil.set(ref.id, handledBefore);
       else this.handledUntil.delete(ref.id);
     };
-    const view = viewOf(c, this.me) ?? "inbox";
-    const plan = planStatus(c, status, this.me, view);
+    const shown = view ?? viewOf(c, this.me) ?? "inbox";
+    const plan = planStatus(c, status, this.me, shown);
     switch (plan.do) {
       case "resume":
-        this.statuses.delete(ref.id);
+        if (c.status === "snoozed") this.write(ref.id, "snoozed", false, c.until ? { until: c.until } : {});
+        else this.statuses.delete(ref.id);
         break;
       case "clear":
-        this.statuses.delete(ref.id);
-        if (view !== "snoozed") this.handledUntil.set(ref.id, this.world.stamp());
+        if (shown === "snoozed") this.endFollowUp(ref.id);
+        else {
+          this.statuses.delete(ref.id);
+          this.handledUntil.set(ref.id, this.world.stamp());
+        }
         break;
       case "file":
       case "tick-update": {
@@ -232,15 +236,22 @@ export class InboxSession {
     this.choose(ref, "snoozed", until);
   }
 
-  /** X or the × in the chip: takes the follow-up off, as if never set. */
+  /** X or the × in the chip: takes the follow-up off; a finished part stays done. */
   clearFollowUp(ref: Ref): void {
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
-    this.statuses.delete(ref.id);
+    this.endFollowUp(ref.id);
     this.undoStep = () => {
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
     };
+  }
+
+  /** What `Store.endFollowUp` does on the session's map. */
+  private endFollowUp(id: string): void {
+    const next = afterFollowUp(this.statuses.get(id));
+    if (next) this.statuses.set(id, next);
+    else this.statuses.delete(id);
   }
 
   /** The follow-up date the item waits for, which its chip shows; null once it is back. */

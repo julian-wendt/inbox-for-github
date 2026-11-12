@@ -465,6 +465,52 @@ describe("rule 5: a follow-up is a when, not a status", () => {
       },
     },
     {
+      situation: "X on a finished part that waits gives back my part done; handled-until stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        const handled = app.handledUntil.get(issue.id);
+        world.advance(HOUR);
+        app.clearFollowUp(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+        expect(app.handledUntil.get(issue.id)).toBe(handled);
+      },
+    },
+    {
+      situation: "news while a finished part waited stays an update after X",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        world.advance(HOUR);
+        world.comment(issue, "alice", "Shipped in the last release.");
+        await refetch(world, app, issue);
+        app.clearFollowUp(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox", "assigned"]);
+        expect(app.entry(issue).asks).toEqual(["update"]);
+      },
+    },
+    {
+      situation: "D in Follow-up on a finished part ends the follow-up; my part stays done",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.choose(issue, "done", undefined, "snoozed");
+        expect(viewsOf(app.entry(issue))).toEqual(["assigned"]);
+        expect(app.entry(issue)).toMatchObject({ status: "done", updates: [] });
+      },
+    },
+    {
+      situation: "O on a finished part that waits opens the work; the follow-up stays",
+      run: async (world, app) => {
+        const issue = await handedOff(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.open(issue);
+        expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
+        expect(app.entry(issue).updates).toBeUndefined();
+      },
+    },
+    {
       situation: "X takes off the follow-up only; the asks F handled stay out of the inbox",
       run: async (world, app) => {
         const issue = await mentioned(world, app);

@@ -1,6 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { FeedbackMode } from "./feedback";
 import { deriveHandledUntil } from "./handledUntil";
+import { afterFollowUp } from "./handoff";
 import type { Viewer } from "./github/fetch";
 import type { LogLevel } from "./log";
 import type { Handoff, Item, Reopen, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "./model";
@@ -389,6 +390,27 @@ export class Store {
   /** Replaces the snapshot of a stored "my part done" and keeps its time; logs nothing (ticking off an update). */
   async setHandoff(nodeId: string, handoff: Handoff): Promise<void> {
     await this.db.execute("UPDATE item_status SET handoff = $2 WHERE node_id = $1", [nodeId, JSON.stringify(handoff)]);
+  }
+
+  /**
+   * Takes the follow-up off an item and logs it (see `afterFollowUp`): a finished part goes back
+   * to "done" and keeps its time and snapshot; anything else is cleared as by `clearStatus`.
+   *
+   * @param source  Logged with the change, as for `setStatus`.
+   * @returns What is stored now, if anything, and the log entry.
+   *
+   * @example
+   *   await store.endFollowUp("I_kwDOAbc", new Date(), "key:x"); // { stored: { status: "done", … }, change: { status: "done", … } }
+   */
+  async endFollowUp(nodeId: string, now = new Date(), source: string | null = null): Promise<{ stored?: StoredStatus; change: StatusChange }> {
+    const rows = await this.db.select<{ status: Status; changed_at: string; handoff: string | null }[]>("SELECT status, changed_at, handoff FROM item_status WHERE node_id = $1", [nodeId]);
+    const row = rows[0];
+    const stored = afterFollowUp(row && { status: row.status, changedAt: row.changed_at, ...(row.handoff && { handoff: JSON.parse(row.handoff) as Handoff }) });
+    if (!stored) return { change: await this.clearStatus(nodeId, now, source) };
+    const at = now.toISOString();
+    await this.writeStatus(nodeId, stored.status, stored.changedAt, stored);
+    await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) VALUES ($1, $2, $3, 0, $4)", [nodeId, stored.status, at, source]);
+    return { stored, change: { status: stored.status, at, automatic: false, ...(source && { source }) } };
   }
 
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {

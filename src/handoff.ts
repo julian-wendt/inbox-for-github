@@ -1,4 +1,4 @@
-import type { Handoff, Item } from "./model";
+import type { Handoff, Item, StoredStatus } from "./model";
 import { isBot, posts, sameLogin } from "./timeline";
 
 /** What happened on a handed-off item since the viewer's part ended (see `updatesSince`). */
@@ -49,4 +49,16 @@ export function updatesSince(item: Item, me: string, since: string, snapshot: Ha
   const closed: Update[] = item.closed && item.closed.at > since ? [{ kind: "closed", state: item.closed.state, at: item.closed.at }] : [];
   const reopened: Update[] = item.activities.flatMap((a) => (a.kind === "state" && a.change === "reopened" && byOthers(a.actor, a.at) ? [{ kind: "reopened" as const, by: a.actor, at: a.at }] : []));
   return [...closed, ...reopened, ...boardUpdates, ...prUpdates, ...postUpdates];
+}
+
+/**
+ * What is left of a stored status once its follow-up is taken off (X, D in Follow-up, P or T): a
+ * finished part stays done with its time and snapshot, so news since then still counts; anything
+ * else leaves nothing.
+ *
+ * @example
+ *   afterFollowUp({ status: "snoozed", changedAt: "2026-11-02T10:00:00Z", handoff }); // { status: "done", changedAt: "2026-11-02T10:00:00Z", handoff }
+ */
+export function afterFollowUp(stored: StoredStatus | undefined): StoredStatus | undefined {
+  return stored?.handoff ? { status: "done", changedAt: stored.changedAt, handoff: stored.handoff } : undefined;
 }

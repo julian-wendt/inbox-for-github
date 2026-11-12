@@ -83,6 +83,8 @@ export interface Inbox {
   resetStatuses: () => Promise<number>;
   /** Puts back a stored status exactly as it was, or none; for undoing a change with extras. */
   restoreStatus: (nodeId: string, previous: StoredStatus | undefined) => Promise<void>;
+  /** Takes the follow-up off an item; a finished part stays done (see `Store.endFollowUp`). */
+  endFollowUp: (nodeId: string) => Promise<void>;
   /** Replaces the hand-off snapshot of a stored "my part done", keeping its time and log. */
   setHandoff: (nodeId: string, handoff: Handoff) => Promise<void>;
   /** The classification as of now, for code that runs later (an undo) and must not see the render that scheduled it. */
@@ -653,6 +655,24 @@ export function useInbox(): Inbox {
     [store],
   );
 
+  /** Takes the follow-up off an item at the viewer's request; a finished part stays done (see `Store.endFollowUp`). */
+  const endFollowUp = useCallback(
+    async (nodeId: string) => {
+      if (!store) return;
+      const source = manualSource();
+      const { stored, change } = await store.endFollowUp(nodeId, undefined, source);
+      logChange(nodeId, stored, `endFollowUp:${source}`);
+      setStatuses((current) => {
+        const next = new Map(current);
+        if (stored) next.set(nodeId, stored);
+        else next.delete(nodeId);
+        return next;
+      });
+      setStatusLog((current) => new Map(current).set(nodeId, [...(current.get(nodeId) ?? []), change]));
+    },
+    [store, logChange],
+  );
+
   /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
   const setHandoff = useCallback(
     async (nodeId: string, handoff: Handoff) => {
@@ -774,6 +794,7 @@ export function useInbox(): Inbox {
     handledUntil,
     setHandledUntil,
     restoreStatus,
+    endFollowUp,
     setHandoff,
     statuses,
     writeFailures,
