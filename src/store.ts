@@ -20,6 +20,12 @@ const DB_URL = "sqlite:tracker.db";
 /** Rows per INSERT that fills `item_handled`: two bound parameters each, under the 999 older SQLite builds allow. */
 const FILL_ROWS = 400;
 
+/** `item_handled` is filled under this name and renamed when complete, so it exists only whole. */
+const HANDLED_FILL = `CREATE TABLE IF NOT EXISTS item_handled_fill (
+  node_id       TEXT PRIMARY KEY,
+  handled_until TEXT NOT NULL
+)`;
+
 /** Bump when `Item` changes shape, so a cache in the old shape is ignored instead of misread. */
 const CACHE_VERSION = 2;
 
@@ -64,10 +70,6 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS item_seen (
      node_id TEXT PRIMARY KEY,
      seen_at TEXT NOT NULL
-   )`,
-  `CREATE TABLE IF NOT EXISTS item_handled (
-     node_id       TEXT PRIMARY KEY,
-     handled_until TEXT NOT NULL
    )`,
   `CREATE TABLE IF NOT EXISTS item_unread (
      node_id   TEXT PRIMARY KEY,
@@ -268,16 +270,35 @@ export class Store {
 
   static async open(): Promise<Store> {
     const db = await Database.load(DB_URL);
-    const fresh = (await db.select<unknown[]>("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'item_handled'")).length === 0;
     for (const statement of SCHEMA) await db.execute(statement);
     await dropLeftovers(db);
     const store = new Store(db);
-    if (fresh) await store.fillHandledUntil();
+    if (!(await store.hasHandled())) await store.fillHandledUntil();
     return store;
   }
 
-  /** Fills a just created `item_handled` from the older cutoffs (see `deriveHandledUntil`), `FILL_ROWS` rows per statement. */
+  private async hasHandled(): Promise<boolean> {
+    return (await this.db.select<unknown[]>("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'item_handled'")).length > 0;
+  }
+
+  /**
+   * Creates `item_handled` from the older cutoffs (see `deriveHandledUntil`), once: the rows go into
+   * `item_handled_fill`, `FILL_ROWS` per statement, which is then renamed in one step. A fill cut
+   * short is redone on the next start; a second open that loses the race to the rename gives up
+   * quietly once the table exists.
+   */
   private async fillHandledUntil(): Promise<void> {
+    try {
+      await this.db.execute(HANDLED_FILL);
+      await this.insertHandled();
+      await this.db.execute("ALTER TABLE item_handled_fill RENAME TO item_handled");
+    } catch (e) {
+      if (!(await this.hasHandled())) throw e;
+    }
+    await this.db.execute("DROP TABLE IF EXISTS item_handled_fill");
+  }
+
+  private async insertHandled(): Promise<void> {
     const settings = await this.settings();
     const derived = deriveHandledUntil({
       statuses: await this.statuses(),
@@ -288,7 +309,7 @@ export class Store {
     const rows = [...derived];
     for (let from = 0; from < rows.length; from += FILL_ROWS) {
       const chunk = rows.slice(from, from + FILL_ROWS);
-      await this.db.execute(`INSERT INTO item_handled (node_id, handled_until) VALUES ${chunk.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, chunk.flat());
+      await this.db.execute(`INSERT OR IGNORE INTO item_handled_fill (node_id, handled_until) VALUES ${chunk.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, chunk.flat());
     }
   }
 

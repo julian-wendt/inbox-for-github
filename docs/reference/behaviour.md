@@ -80,4 +80,5 @@ its issue.
   item whose part is done replaces the hand-off.
 - [#108](https://github.com/julian-wendt/inbox-for-github/issues/108) returns only through asks:
   a reopen by someone else asks only where a status is stored or the item was handled; a due
-  follow-up on a table item ends without an ask.
+  follow-up on a table item comes back into the inbox only for what was pending or answered
+  before (as on any item), and one with nothing of that stays in its table without an ask.
