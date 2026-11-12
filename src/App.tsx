@@ -831,11 +831,11 @@ export default function App() {
         return c.updates ? actions.notify(t("toast.partAlreadyDone", { number })) : undefined;
     }
   };
-  /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
-  const followUp = (c: Classified, until: string) => {
+  /** A follow-up for one item, with or without a date and with "Remind me" as `notify`; its plan or Today pin goes with it, since an item has one "when". */
+  const followUp = (c: Classified, until: string, notify = false) => {
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
-    if (followUpUnchanged(c, until)) return;
-    const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until)), handled(c), ...seenOnOpen(c)];
+    if (followUpUnchanged(c, until, notify)) return;
+    const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until, notify)), handled(c), ...seenOnOpen(c)];
     for (const s of steps) s.run();
     actions.announce(
       replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),
@@ -843,13 +843,19 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** The follow-up choices for one item: the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
-  const snoozeEntries = (c: Classified): MenuEntry[] => [
-    ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime)), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined),
-    { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
-    { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
-  ];
+  // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
+  const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
+  /** The follow-up choices for one item: "Remind me" (R), the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
+  const snoozeEntries = (c: Classified): MenuEntry[] => {
+    const notify = notifyChoice?.id === c.item.id ? notifyChoice.on : !!c.notify;
+    return [
+      { label: t("snooze.notify"), hint: t("hint.snooze.notify"), keys: "R", checked: notify, keepOpen: true, onSelect: () => setNotifyChoice({ id: c.item.id, on: !notify }) },
+      ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
+      { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until, notify) }) },
+      { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
+      { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
+    ];
+  };
   /** F on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {
     if (c.item.closed) return actions.apply(c, "snoozed");
@@ -1407,9 +1413,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => setMenu(null)} />}
+      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => (setMenu(null), setNotifyChoice(null))} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => (setSnoozeMenu(null), setNotifyChoice(null))} />
       )}
       {calendarFor && (
         <CalendarDay
