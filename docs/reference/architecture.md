@@ -23,11 +23,16 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 4. **Classify:** `directOnly` (`src/rules/directOnly.ts`) first drops the "review" reason from items in the repos the "Only addressed to me" setting covers when no request names the viewer; then `classify` (`src/classify.ts`) puts each item into a bucket from the item, the
    viewer's stored status and the rules. `useInbox` runs it over all items, after leaving out
    untracked items, repos filtered in the settings and closed items outside the window.
-5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–6); `AssignedTable`
+5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–5); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
    Created by me (`groupAuthored`), both also by repository with `groupByRepo`; `InboxList` the
    Inbox, Planned (`datedOf` for what is pinned or planned, `groupBySnoozeEnd` for the day bars), Follow-up (`isWaiting`, by the day each
-   comes back) and Done. Planned and Follow-up render as a list or a table (`useViewLayout`).
+   comes back). The inbox ends in the Done bar (`inDoneBar` in `src/ui/doneBar.ts`): what was
+   handled in the last 7 days (`handledAt`: handled-until, the viewer's answer, the closing of an
+   item for them) and asks for nothing, outside Planned and Follow-up; closed items stay as long as
+   `closedDays` loads them. It is folded by default, left out of every count, the badge and unread,
+   and opens on a click or a jump to one of its items. Planned and Follow-up render as a list or a
+   table (`useViewLayout`).
    The sidebar counts follow the picked repositories; the other filters narrow only the list.
 
 ## Buckets and statuses
@@ -95,7 +100,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
   follow-up, F ends a plan or pin (`unplan`).
 - Unassigned, the handoff no longer counts: the item sorts as if no status were stored.
-- A closed or merged item is in Done when it was for the viewer (a review request or a mention)
+- A closed or merged item is in the Done bar when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
 - A stored status falls back to `open` when its trigger fires (`reopens` in `src/reopen.ts`):
   a new mention, or any post, by the "reopenOn" setting; for snoozes with `until`, also that time.

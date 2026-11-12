@@ -68,12 +68,12 @@ const TRAFFIC_LIGHTS = `(() => {
   document.body.append(lights);
 })()`;
 
-/** The shots of one run: what to press (keys of the app), then the file name. Views follow the keys 1–6 (`VIEWS` in `src/ui/labels.ts`). */
+/** The shots of one run: what to press (keys of the app) or click, then the file name. Views follow the keys 1–5 (`VIEWS` in `src/ui/labels.ts`). */
 const SHOTS = [
   { name: "inbox", keys: [{ key: "1" }] },
   { name: "inbox-detail", keys: [{ key: "1" }, ...Array(4).fill({ key: "ArrowDown" })] },
   { name: "follow-ups", keys: [{ key: "3" }] },
-  { name: "done", keys: [{ key: "6" }] },
+  { name: "done", keys: [{ key: "1" }], click: '[data-bar="done"]' },
   { name: "assigned", keys: [{ key: "4" }] },
   { name: "created-by-me", keys: [{ key: "5" }] },
   { name: "help", keys: [{ key: "1" }, { key: "?" }] },
@@ -123,6 +123,7 @@ try {
         await send("Runtime.evaluate", { expression: "delete document.documentElement.dataset.env" });
         await send("Runtime.evaluate", { expression: TRAFFIC_LIGHTS });
         for (const key of shot.keys) await press(key);
+        if (shot.click) await send("Runtime.evaluate", { expression: `document.querySelector(${JSON.stringify(shot.click)})?.click()` });
         await sleep(600);
         const image = await send("Page.captureScreenshot", { format: "png" });
         const file = join(out, `${lang}-${theme}-${shot.name}.png`);
