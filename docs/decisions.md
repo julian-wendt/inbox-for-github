@@ -2,6 +2,17 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-11-12
+
+- **No multi-select; every key acts on one item.** Marking several items (⌘-click, ⇧-click,
+  ⇧↑/⇧↓) and the actions on the marks are gone. The bulk paths held most of the inconsistencies
+  the audit of 2026-11-11 found (toasts that said "→ Done" for everything, D skipping closed
+  items silently, X and F without feedback), and each model step would have needed a bulk variant
+  and a second test case. D moves to the next item, so D, D, D replaces bulk D. "Mark all read" on
+  a view stays: it acts on a view's items, not on a selection. Supersedes the marks parts of
+  2026-11-11 ("D means one thing per view", the calendar record) and "An open pop-up owns the
+  keys" of 2026-11-10, which is removed.
+
 ## 2026-11-11
 
 - **A new assignment or a reopen on GitHub brings a finished item back.** Someone wants
@@ -29,12 +40,11 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   on an item of a table first files what asks for you, and only then ends your part") and the D
   entries of 2026-11-06 and 2026-11-02. D on an assignment with open asks asks first, like F: Enter
   is "only my part" (the asks stay in the inbox), D also files them, Esc does nothing. The inbox
-  stays the place where asks are handled, but D D clears both in one go; with marks the choice is
-  asked once for all.
+  stays the place where asks are handled, but D D clears both in one go.
 - **D on an item of a table first files what asks for you, and only then ends your part.**
   Replaced the same day by "D means one thing per view" above.
 - **The calendar is a record of what was done when, so only the user removing a plan deletes its
-  event.** X (single or on marks) and T switching a Today pin off delete it; D, a follow-up, the
+  event.** X and T switching a Today pin off delete it; D, a follow-up, the
   item closing on GitHub and dropping it from the app end the plan but leave the event, and only
   the link goes. "My part done" (D) keeps its plan in every view, shared or not. Supersedes the
   plan-keeping limits of 2026-11-06 (Planned view or lone assignee) and, as far as events go, the
@@ -58,8 +68,6 @@ Short records of product decisions whose reason is not obvious from the code. Ne
   after a click they are shortcuts again.
 - **A row of a table counts as seen only once its pop-up showed it,** not while it is merely
   selected: the row shows nothing of the item, and a right click selects it too.
-- **An open pop-up owns the keys.** With items marked and a pop-up open, D, F and the others act
-  on the shown item, not on the marks; Enter and Space drop the marks as a click does.
 - **Closing a pop-up lets go of a row reached by a click,** and keeps one reached with the
   keyboard: the selection is the keyboard's cursor, and a click meant the item, not the row. The
   same holds when the pop-up closes because its item left the table, as after D: a click-opened

@@ -29,8 +29,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Pop-up in den Tabellen per Klick geöffnet: Schließen (Esc, Leertaste, ✕ oder Klick daneben) hebt auch die
       Auswahl der Zeile auf; ↑/↓ macht danach bei ihr weiter. Per Enter oder Leertaste geöffnet, oder im Pop-up mit
       ↑/↓ weitergegangen: die Zeile bleibt ausgewählt.
-- [ ] Esc bei offener Ansichts-Info (Glühbirne) schließt nur die Info: Suche, Markierung und Auswahl bleiben.
-- [ ] Esc schließt von innen nach außen: Menü, Pop-up, Markierung, dann die Auswahl (Detail zeigt
+- [ ] Esc bei offener Ansichts-Info (Glühbirne) schließt nur die Info: Suche und Auswahl bleiben.
+- [ ] Esc schließt von innen nach außen: Menü, Pop-up, dann die Auswahl (Detail zeigt
       „Nichts ausgewählt“). Filter und Ansicht bleiben, auch mehrfach gedrückt. ↑/↓ danach macht
       beim zuletzt gewählten Item weiter.
 - [ ] Die Zahlen an den Ansichten folgen dem Repo-Filter und passen dann zur Liste; Issues/Pull Requests,
@@ -128,7 +128,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       und mit jedem weiteren ⌘Z geht es die Kette weiter zurück, bis zu fünfzig Änderungen; danach
       steht dort „Nichts zum Rückgängigmachen“. ⌘Y macht Zurückgenommenes in der alten Reihenfolge
       wieder (Toast „Wiederholt: …“); eine neue Änderung beendet das Wiederholen („Nichts zum
-      Wiederholen“). Das gilt für D, O, F samt Datum, X, U oder R (auch mehrere), P, ⌃A und ⌃U (zuweisen wie entfernen, schreibt auf GitHub jeweils das Gegenteil, beim Wiederholen wieder das Original),
+      Wiederholen“). Das gilt für D, O, F samt Datum, X, U oder R, P, ⌃A und ⌃U (zuweisen wie entfernen, schreibt auf GitHub jeweils das Gegenteil, beim Wiederholen wieder das Original),
       Schließen und Wiedereröffnen und das Ausblenden eines Items; nur ein gesendeter Kommentar
       bleibt, wie er ist. Ein zurückgeholtes Item ist wieder ausgewählt. Im Kommentar- oder Notizfeld
       gilt ⌘Z für den Text; ⌘Y löst dort nichts aus.
@@ -211,11 +211,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Enter öffnet das Pop-up der Auswahl, die Sortierung bleibt.
 - [ ] Pop-up per Klick geöffnet, D (Leiste „Fertig“ eingeklappt): das Pop-up schließt, keine Zeile ist ausgewählt, ein
       zweites D zeigt „Kein Item ausgewählt“. Per Enter geöffnet, D: das Pop-up schließt, die nächste Zeile ist ausgewählt.
-- [ ] Pop-up per Klick geöffnet, dann mit ⇧↓ weiter: Esc schließt es, die Zeile bleibt ausgewählt. Ebenso nach einem
+- [ ] Pop-up per Klick geöffnet, dann mit ↓ weiter: Esc schließt es, die Zeile bleibt ausgewählt. Ebenso nach einem
       Sprung aus der Palette (⌘K) bei offenem Pop-up.
-- [ ] Tabelle: mehrere mit ⇧↓ markieren, Enter: das Pop-up öffnet ohne Markierung, D erledigt nur das gezeigte Item.
-      Im Pop-up mit ⇧↓ weitermarkiert: D wirkt weiter nur aufs gezeigte Item.
-- [ ] Tabelle: eine neue Zuweisung nur auswählen (↑/↓, Rechtsklick, ⌘-Klick) und warten: „Neu“ und Fettdruck bleiben.
+- [ ] Tabelle: eine neue Zuweisung nur auswählen (↑/↓, Rechtsklick) und warten: „Neu“ und Fettdruck bleiben.
       Erst das offene Pop-up nimmt sie nach gut zwei Sekunden weg. In den Listen reicht die Auswahl wie bisher.
 
 ## Gelesen und ungelesen
@@ -235,7 +233,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Ansicht in der Seitenleiste samt Zahl ist fett, solange sie Ungelesenes hat; Geplant,
       Erledigt und Von mir erstellt nie.
 - [ ] U oder R auf einem gelesenen Item macht es ungelesen (fett, Badge +1), auch direkt nach dem Öffnen;
-      U erneut oder späteres Öffnen macht es gelesen. Mit markierten Items gilt U für alle. Auch im
+      U erneut oder späteres Öffnen macht es gelesen. Auch im
       Kontextmenü (dort mit der Taste R) und in ⌘K („Als ungelesen/gelesen markieren“).
 
 ## Inbox
@@ -284,7 +282,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       steht unter „Zugewiesen“.
 - [ ] Rechts in der Zeile nur das Alter („3W“), Tooltip „Eröffnet am …“; kein Avatar. Sortiert nach
       Eröffnung, der Sortierknopf dreht das.
-- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. Hier gibt es kein D: weder Zeile, Kontextmenü noch ⌘K bieten es an, ein eigener PR oder ein eigenes Issue endet auf GitHub (schließen oder mergen dort, oder F). Was nach dir fragt (Erwähnung, Feedback, Wiedereröffnung), legst du in der Inbox mit D ab. Mit Markierten überspringt D diese Items und nennt, wie viele.
+- [ ] Eigene Items mit offener Erwähnung stehen hier und zusätzlich in der Inbox; geschlossene und gemergte verschwinden. Hier gibt es kein D: weder Zeile, Kontextmenü noch ⌘K bieten es an, ein eigener PR oder ein eigenes Issue endet auf GitHub (schließen oder mergen dort, oder F). Was nach dir fragt (Erwähnung, Feedback, Wiedereröffnung), legst du in der Inbox mit D ab.
 
 ## Mir zugewiesen
 
@@ -312,8 +310,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Samstag als nächsten Werktag an, „Nächste Woche“ ist der erste Werktag der nächsten Woche.
       Der letzte Werktag lässt sich nicht ausschalten.
 - [ ] X auf einem geplanten oder angehefteten Item nimmt den Plan weg, auf einer Wiedervorlage die
-      Wiedervorlage, sonst sagt es, dass es nichts zu entfernen gibt; mit markierten Items alles
-      davon auf einmal. Kontextmenü und ⌘K bieten „Plan entfernen“ bzw. „Wiedervorlage entfernen“.
+      Wiedervorlage, sonst sagt es, dass es nichts zu entfernen gibt.
+      Kontextmenü und ⌘K bieten „Plan entfernen“ bzw. „Wiedervorlage entfernen“.
 - [ ] Ein geplantes Item, nur erwähnt: eine neue Erwähnung bringt es in die Inbox, es bleibt in
       Geplant. Darauf antworten nimmt es aus der Inbox, es bleibt geplant für seinen Tag (nicht
       Erledigt). P zeigt in der Inbox oben „Plan für Donnerstag behalten“ (K): das Item verlässt
@@ -386,14 +384,14 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Eine Erwähnung auf einem Item in Wiedervorlage: sie steht in der Inbox, das Item bleibt in
       „Wiedervorlage“ (Leiste und Ansicht). Andere Beiträge holen es nicht zurück, auch nicht mit „Jeder Beitrag“.
 - [ ] Das × im Chip entfernt die Wiedervorlage, ebenso X auf dem Item (auch Kontextmenü und ⌘K,
-      mit Zeiger über der Zeile, bei Markierten für alle); das Item ist dann, als wäre nie etwas
+      mit Zeiger über der Zeile); das Item ist dann, als wäre nie etwas
       gesetzt worden. ⌘Z nimmt es zurück. Bei einem Item ohne Datum tut X nichts.
 - [ ] Items außerhalb der Tabellen (z. B. eine Erwähnung) werden mit F aus der Liste genommen und
       stehen unter „Wiedervorlage“, bis ihre Zeit kommt.
 
 ## Mein Teil erledigt (Test-Issue)
 
-- [ ] D in „Mir zugewiesen“ auf einer Zuweisung mit offener Erwähnung öffnet unter der Zeile ein kleines Menü: Enter („Nur mein Teil“) setzt „Mein Teil erledigt“, die Erwähnung bleibt in der Inbox; D („Offene Anfragen auch ablegen“) tut beides in einem Toast und einem Rückgängig; Esc tut nichts. Ohne offene Anfrage wirkt D sofort. Mit Markierten erscheint das Menü einmal für alle.
+- [ ] D in „Mir zugewiesen“ auf einer Zuweisung mit offener Erwähnung öffnet unter der Zeile ein kleines Menü: Enter („Nur mein Teil“) setzt „Mein Teil erledigt“, die Erwähnung bleibt in der Inbox; D („Offene Anfragen auch ablegen“) tut beides in einem Toast und einem Rückgängig; Esc tut nichts. Ohne offene Anfrage wirkt D sofort.
 
 - [ ] D auf einer offenen Zuweisung ohne offene Erwähnung oder Review-Anfrage: Toast „Mein Teil erledigt“, das Item steht in der Leiste
       „Fertig“ ganz unten (mit der Beschreibung „Auf GitHub noch offen …“; unter Typ, Status und Repo gleich, nicht mitgezählt),
@@ -418,15 +416,6 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Ein „Erledigt“ auf einer Zuweisung aus älteren Versionen steht nach dem Start in „Fertig“.
 - [ ] Jemand weist dich einem Item neu zu, das du mit D erledigt hattest (oder dessen Teil fertig war; ggf. erst ausgetragen, dann neu zugewiesen): es steht wieder aktiv in „Mir zugewiesen“, fett, mit Punkt und in der Zahl, nicht unter „Fertig“. Selbst zuweisen (⌃A) tut das nicht.
 - [ ] Jemand anderes öffnet ein erledigtes Item auf GitHub wieder: es steht mit „Wieder offen“ in der Inbox, D legt das ab. Bei „Mein Teil erledigt“ kommt es als Update („wieder geöffnet“). Selbst wieder geöffnet: nichts davon.
-
-## Mehrfachauswahl
-
-- [ ] ⌘-Klick markiert einzelne Items (das ausgewählte kommt mit), ⇧-Klick einen Bereich,
-      ⇧↑/⇧↓ markieren beim Bewegen; Leisten werden nie markiert. Im Kopf steht „3 ausgewählt“,
-      Klick darauf oder Esc hebt die Auswahl auf, ebenso ein normaler Klick oder ↑/↓.
-- [ ] D, O, F, X, U (oder R), ⌃A und ⌃U wirken auf alle markierten: ein Toast, ⌘Z nimmt alle zusammen zurück. F bietet Zeiten, alle bekommen dieselbe Wiedervorlage. ⌃A weist alle noch nicht zugewiesenen zu, ⌃U nimmt dich bei allen heraus, bei denen du zugewiesen bist.
-- [ ] Rechtsklick auf ein markiertes Item zeigt das Menü für alle; auf ein anderes das eigene,
-      und die Markierung geht weg.
 
 ## Geplant (Ansicht)
 
@@ -481,7 +470,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       nach „Eintragen“, nach „Ändern“ auf eine andere Zeit und nach einem Verschieben im
       Kalender auch die neue. Ein Ganztagstermin zeigt keine Uhrzeit, ein Plan ohne Termin den
       leeren Kalender.
-- [ ] X (auch an Markierten) und T zum Abschalten löschen den Termin, ⌘Z legt ihn zur alten Zeit
+- [ ] X und T zum Abschalten löschen den Termin, ⌘Z legt ihn zur alten Zeit
       neu an. F und D beenden den Plan, der Termin bleibt im Kalender, nur die Verknüpfung geht
       (⌘Z stellt sie wieder her); Schließen auf GitHub lässt ihn ebenfalls stehen.
 - [ ] Im Kalender (z. B. Outlook) den Termin auf einen anderen Tag ziehen: nach dem Sync plant die
