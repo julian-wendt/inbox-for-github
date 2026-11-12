@@ -22,7 +22,8 @@ type Write = (nodeId: string, status: Status, extra?: StatusExtra) => Promise<vo
  * @param restoreStatus  Puts a stored status back exactly, or none, e.g. `useInbox().restoreStatus`.
  * @param stored         The item's stored status right now, to remember what undo has to restore.
  * @param onTakeBack     Called with the item's id after a status change was undone, e.g. to select it again.
- * @returns `apply` to change an item's status (with `until`, a follow-up date); `announce` for any other change,
+ * @returns `apply` to change an item's status (with `until`, a follow-up date, and `also`, steps that go with it in
+ *   the same undo); `announce` for any other change,
  *   with what takes it back and what does it again; `notify` for a message that is no change; `undo`, `redo`,
  *   `undoSteps` and `redoSteps` (several at once, for a pick from the history); `history` as texts, nearest first;
  *   and the toast to show.
@@ -80,21 +81,23 @@ export function useStatusActions(setStatus: Write, restoreStatus: (nodeId: strin
   );
 
   const apply = useCallback(
-    (entry: Classified, status: Status, until?: string) => {
+    (entry: Classified, status: Status, until?: string, also: { run: () => void; undo: () => void }[] = []) => {
       if (entry.item.closed) return show({ text: t("closed.noStatus", { number: entry.item.number }) });
       if (entry.status === status && until === undefined) return;
       const id = entry.item.id;
       const previous = stored(id);
       const extra: StatusExtra = until ? { until } : {};
       void setStatus(id, status, extra);
+      also.forEach((s) => s.run());
       const title = STATUSES.find((s) => s.id === status)!.title;
       announce(
         until ? t("toast.snoozedUntil", { number: entry.item.number, until: untilText(until) }) : `#${entry.item.number} → ${title}`,
         () => {
           void restoreStatus(id, previous);
+          also.forEach((s) => s.undo());
           onTakeBack?.(id);
         },
-        () => void setStatus(id, status, extra),
+        () => (void setStatus(id, status, extra), also.forEach((s) => s.run())),
       );
     },
     [setStatus, restoreStatus, stored, onTakeBack, show, announce],

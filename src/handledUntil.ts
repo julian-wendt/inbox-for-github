@@ -36,3 +36,21 @@ export function deriveHandledUntil({ statuses, filedAt, plannedAt, dated }: Cuto
   for (const [id, s] of statuses) if ((s.status === "done" && !s.handoff) || s.status === "snoozed") note(id, s.changedAt);
   return derived;
 }
+
+/**
+ * Marks an item handled until `at` as an undo step: `run` sets it, `undo` puts back exactly what
+ * the item had before, "never handled" included, and running it again sets `at` once more.
+ *
+ * @param id        The item's node id.
+ * @param previous  Its handled-until before the change, undefined for none.
+ * @param at        The new handled-until (ISO 8601), the same "now" as the change it belongs to.
+ * @param write     Persists a value or removes it with null, e.g. `useInbox().setHandledUntil`.
+ *
+ * @example
+ *   const step = handledStep("I_1", undefined, "2026-11-12T09:00:00Z", inbox.setHandledUntil);
+ *   step.run();  // I_1 handled until 09:00
+ *   step.undo(); // I_1 never handled again
+ */
+export function handledStep(id: string, previous: string | undefined, at: string, write: (id: string, at: string | null) => Promise<void>): { run: () => void; undo: () => void } {
+  return { run: () => void write(id, at), undo: () => void write(id, previous ?? null) };
+}

@@ -6,6 +6,7 @@ import { queueWrite } from "./github/queue";
 import { sameLogin } from "./timeline";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Classified } from "./classify";
+import { handledStep } from "./handledUntil";
 import type { Status, StatusChange, WriteFailure } from "./model";
 import { setLang, t, type MessageKey } from "./ui/i18n";
 import { itemLink, statusHint, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
@@ -433,14 +434,15 @@ export default function App() {
     const { focus } = inbox.settings;
     const on = focus.includes(c.item.id);
     const previous = todayOf(inbox.settings);
+    const at = new Date().toISOString();
     const next: Today = {
       focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id],
       focusDay: localDay(),
       planned: setPlan(inbox.settings.planned, c.item.id, null),
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
-      plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() },
+      plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: at },
     };
-    const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [handled(c, at), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -468,15 +470,16 @@ export default function App() {
   /** Plans an item for `day`, or takes the plan off with null; a plan takes it out of Today and ends its follow-up. */
   const planFor = (c: Classified, day: string | null, text: string, extra: Step[] = []) => {
     const previous = todayOf(inbox.settings);
+    const at = new Date().toISOString();
     const next: Today = {
       focus: inbox.settings.focus.filter((id) => id !== c.item.id),
       focusDay: inbox.settings.focusDay,
       planned: setPlan(inbox.settings.planned, c.item.id, day),
       pinnedOn: without(inbox.settings.pinnedOn, c.item.id),
-      plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
+      plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: at } : without(inbox.settings.plannedAt, c.item.id),
     };
     const events = day ? eventMoves(c, day) : eventEnds([c]);
-    const steps = [todayStep([c.item.id], previous, next), ...(day ? followUpEnds(c) : []), ...events, ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(day ? [handled(c, at), ...followUpEnds(c)] : []), ...events, ...extra];
     for (const s of steps) s.run();
     actions.announce(
       day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
@@ -490,7 +493,8 @@ export default function App() {
   /** Keeps a plan through a new ask: the ask counts as seen, as when planned again, and the item leaves the inbox. */
   const keepPlan = (c: Classified, day: string | null) => {
     const previous = todayOf(inbox.settings);
-    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep([c.item.id], previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: new Date().toISOString() } })]);
+    const at = new Date().toISOString();
+    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep([c.item.id], previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: at } }), handled(c, at)]);
   };
   /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and its removal (X). With a calendar, a day opens the day view on it, and "Today at a time" (A) joins. */
   const planEntries = (c: Classified): MenuEntry[] => {
@@ -665,16 +669,19 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** D on an item that only files its asks (see `planStatus`): the "filedAt" time, with an undo that restores the earlier one. */
+  /** D on an item that only files its asks (see `planStatus`): the "filedAt" time and handled-until, with an undo that restores the earlier ones. */
   const fileStep = (c: Classified) => {
     const id = c.item.id;
     const previous = inbox.settings.filedAt[id];
     const at = new Date().toISOString();
+    const handling = handled(c, at);
     return {
-      run: () => void inbox.updateSettings((s) => ({ ...s, filedAt: { ...s.filedAt, [id]: at } })),
-      undo: () => void inbox.updateSettings((s) => ({ ...s, filedAt: previous ? { ...s.filedAt, [id]: previous } : without(s.filedAt, id) })),
+      run: () => (handling.run(), void inbox.updateSettings((s) => ({ ...s, filedAt: { ...s.filedAt, [id]: at } }))),
+      undo: () => (handling.undo(), void inbox.updateSettings((s) => ({ ...s, filedAt: previous ? { ...s.filedAt, [id]: previous } : without(s.filedAt, id) }))),
     };
   };
+  /** D in the inbox, P, T and F mark the item handled until `at`, as a step (see `handledStep`). */
+  const handled = (c: Classified, at = new Date().toISOString()) => handledStep(c.item.id, inbox.handledUntil.get(c.item.id), at, inbox.setHandledUntil);
   const statusStep = (c: Classified, status: Status, until?: string) => {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.setStatus(c.item.id, status, until ? { until } : {}), undo: () => void inbox.restoreStatus(c.item.id, previous) };
@@ -795,14 +802,20 @@ export default function App() {
         const filing = fileStep(c);
         return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
       }
-      case "clear":
-        return change(t(bucket === "snoozed" ? "toast.reminderRemoved" : "toast.filed", { number }), () => void inbox.clearStatus(id));
+      case "clear": {
+        if (bucket === "snoozed") return change(t("toast.reminderRemoved", { number }), () => void inbox.clearStatus(id));
+        const handling = handled(c);
+        return change(t("toast.filed", { number }), () => (handling.run(), void inbox.clearStatus(id)), handling.undo);
+      }
       case "blocked":
         return;
-      case "set":
-        if (ends.length === 0) return actions.apply(c, plan.status);
+      case "set": {
+        // A plain done is what D stores on someone else's item; it handles the item's asks.
+        const handling = plan.status === "done" ? [handled(c)] : [];
+        if (ends.length === 0) return actions.apply(c, plan.status, undefined, handling);
         if (c.item.closed) return actions.notify(t("closed.noStatus", { number }));
-        return change(`#${number} → ${t(`status.${plan.status}`)}`, () => void inbox.setStatus(id, plan.status));
+        return change(`#${number} → ${t(`status.${plan.status}`)}`, () => (void inbox.setStatus(id, plan.status), handling.forEach((s) => s.run())), () => handling.forEach((s) => s.undo()));
+      }
       case "none":
         return c.updates ? actions.notify(t("toast.partAlreadyDone", { number })) : undefined;
     }
@@ -810,9 +823,9 @@ export default function App() {
   /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
   const followUp = (c: Classified, until: string) => {
     const steps = unplanStep([c]);
-    if (steps.length === 0) return actions.apply(c, "snoozed", until);
+    if (steps.length === 0) return actions.apply(c, "snoozed", until, [handled(c)]);
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
-    steps.push(statusStep(c, "snoozed", until));
+    steps.push(statusStep(c, "snoozed", until), handled(c));
     for (const s of steps) s.run();
     actions.announce(
       replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),

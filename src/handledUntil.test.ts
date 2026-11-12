@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { MemoryStore } from "./demo/memoryStore";
 import { ASK_RULES_DEFAULT, classify } from "./classify";
-import { deriveHandledUntil, type Cutoffs } from "./handledUntil";
+import { deriveHandledUntil, handledStep, type Cutoffs } from "./handledUntil";
 import type { Comment, Item, StoredStatus } from "./model";
 import { ruleSwitches } from "./rules";
 import { Store } from "./store";
@@ -119,5 +119,29 @@ describe("the migration", () => {
 
   it("runs only when the table is created", async () => {
     expect(await open(filed(3), true)).toEqual([]);
+  });
+});
+
+describe("handledStep", () => {
+  const recorded = () => {
+    const writes: [string, string | null][] = [];
+    return { writes, write: (id: string, at: string | null) => Promise.resolve(void writes.push([id, at])) };
+  };
+
+  it("sets the time, undo restores the earlier one, redo sets it again", () => {
+    const { writes, write } = recorded();
+    const step = handledStep("I_1", day(2), day(5), write);
+    step.run();
+    step.undo();
+    step.run();
+    expect(writes).toEqual([["I_1", day(5)], ["I_1", day(2)], ["I_1", day(5)]]);
+  });
+
+  it("undo removes the time when the item had none", () => {
+    const { writes, write } = recorded();
+    const step = handledStep("I_1", undefined, day(5), write);
+    step.run();
+    step.undo();
+    expect(writes).toEqual([["I_1", day(5)], ["I_1", null]]);
   });
 });
