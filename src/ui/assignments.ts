@@ -309,10 +309,10 @@ export function isNewAssignment(entry: Pick<Classified, "item" | "statusAt">, se
  * @example
  *   hasNewActivity(entry, new Map(), "octocat"); // true when someone commented after the assignment
  */
-export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, seen: Map<string, string>, me: string): boolean {
+export function hasNewActivity(entry: Pick<Classified, "item" | "statusAt">, seen: Map<string, string>, me: string, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
   const mine = entry.item.reasons.includes("assigned") || sameLogin(entry.item.author, me);
   const since = seen.get(entry.item.id) ?? entry.statusAt ?? (mine ? assignedAt(entry.item, me).at : null);
-  const last = lastOthersActivity(entry.item, me);
+  const last = lastOthersActivity(entry.item, me, counted);
   return !!last && !!since && last > since;
 }
 

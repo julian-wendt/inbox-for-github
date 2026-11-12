@@ -3,7 +3,7 @@ import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
-import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type PlateGroup, type TableGroup, type TableGrouping } from "../assignments";
+import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type MovesUp, type PlateGroup, type TableGroup, type TableGrouping } from "../assignments";
 import { dateLocale, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
@@ -90,6 +90,8 @@ interface Props {
   seen: Map<string, string>;
   /** Items marked unread by hand, printed bold like those with news. */
   unreadMarks: ReadonlyMap<string, string>;
+  /** Which activity counts as news (the "movesUp" setting). */
+  movesUp: MovesUp;
   me: string;
   kind: KindFilter;
   sort: SortOrder;
@@ -121,7 +123,7 @@ interface Props {
  *   <AssignedTable mode="assigned" groups={plate} collapsed={bars.collapsed} onToggle={bars.toggle} … />
  */
 export function AssignedTable(props: Props) {
-  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, me, selected, onSelect, onOpen, datedOf } = props;
+  const { groups, collapsed, onToggle, onMove, selectedBar, onSelectBar, attributes, hiddenBoards, statusMap, seen, movesUp, me, selected, onSelect, onOpen, datedOf } = props;
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
   // One width for the whole end column, so the attribute chips end at the same place on every row.
@@ -138,7 +140,7 @@ export function AssignedTable(props: Props) {
         attributes={attributes}
         hiddenBoards={hiddenBoards}
         statusMap={statusMap}
-        fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me), marked: props.unreadMarks.has(entry.item.id) }}
+        fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me, movesUp), marked: props.unreadMarks.has(entry.item.id) }}
         selected={entry.item.id === selected}
         marked={props.marks.has(entry.item.id)}
         onMark={(range) => props.onMark(entry.item.id, range)}

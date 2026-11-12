@@ -42,7 +42,22 @@ describe("unreadInInbox", () => {
   });
 });
 
+describe("unreadInInbox with the movesUp setting", () => {
+  const commit = { activities: [{ kind: "commit" as const, at: "2026-10-22T12:00:00Z", actor: "alice" }] };
+  const counted = { commits: true, events: true, bots: false };
+
+  it("counts a commit as news only when the setting lets commits count", () => {
+    const withCommit = entry({ asks: ["review"] }, commit);
+    expect(unreadInInbox(withCommit, seen, "me")).toBe(false);
+    expect(unreadInInbox(withCommit, seen, "me", counted)).toBe(true);
+  });
+});
+
 describe("unreadAssignment", () => {
+  it("does not count a new assignment outside Assigned to me, where the row shows none", () => {
+    expect(unreadAssignment(entry({ bucket: "authored", asks: [] }, { reasons: ["assigned"] }), new Map(), "me")).toBe(false);
+  });
+
   it("counts a new assignment as unread until opened", () => {
     const assigned = { reasons: ["assigned" as const], activities: [{ kind: "assigned" as const, at: "2026-10-22T09:00:00Z", actor: "alice", assignee: "me" }] };
     expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map(), "me")).toBe(true);

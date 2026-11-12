@@ -1,6 +1,6 @@
 import type { Classified } from "../classify";
 import { latest } from "../timeline";
-import { hasNewActivity, isNewAssignment, lastOthersActivity } from "./assignments";
+import { hasNewActivity, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, type MovesUp } from "./assignments";
 
 /**
  * Whether an inbox item has something the viewer has not opened yet, like an unread mail: it was
@@ -11,25 +11,26 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity } from "./assignmen
  * @param entry  An item of the inbox.
  * @param seen   When the viewer last opened each item (`useInbox().seen`).
  * @param me     The viewer's login.
+ * @param counted  Which activity counts, the "movesUp" setting; the same the rows sort by.
  *
  * @example
  *   unreadInInbox(entry, inbox.seen, "octocat"); // true until octocat opens the item after the mention
  */
-export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: string): boolean {
+export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: string, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
   const since = seen.get(entry.item.id);
   if (!since) return true;
   const reopened = entry.asks.includes("reopened") ? entry.statusAt : null;
-  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me), reopened);
+  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me, counted), reopened);
   return !!last && last > since;
 }
 
 /**
- * Whether a row of Assigned to me is unread: a new assignment or new activity by others since the
- * viewer last opened it, the same as its "new" mark and dot.
+ * Whether a row of a table is unread: new activity by others since the viewer last opened it,
+ * and in Assigned to me also a new assignment, the same as the row's "new" mark and dot.
  *
  * @example
  *   unreadAssignment(entry, inbox.seen, "octocat"); // true for an assignment octocat has not opened
  */
-export function unreadAssignment(entry: Classified, seen: Map<string, string>, me: string): boolean {
-  return isNewAssignment(entry, seen, me) || hasNewActivity(entry, seen, me);
+export function unreadAssignment(entry: Classified, seen: Map<string, string>, me: string, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
+  return (entry.bucket === "assigned" && isNewAssignment(entry, seen, me)) || hasNewActivity(entry, seen, me, counted);
 }

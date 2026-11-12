@@ -189,11 +189,11 @@ export default function App() {
   /** How D is offered for an item: as usual, or not at all (see `doneAccess`). */
   const doneIn = (c: Classified) => doneAccess(c, me, bucket);
   const unreadInboxIds = useMemo(
-    () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me))).map((c) => c.item.id)),
-    [inbox.classified, inbox.seen, inbox.unreadMarks, me],
+    () => new Set(inbox.classified.filter((c) => c.bucket === "inbox" && (inbox.unreadMarks.has(c.item.id) || unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
+    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   /** U: unread as its view counts it, or marked so by hand. */
-  const isUnread = (c: Classified) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me));
+  const isUnread = (c: Classified) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp));
   /** Marks the items read when any is unread, else unread, with undo that restores each item's read state exactly. */
   const toggleRead = (cs: Classified[]) => {
     const read = cs.some(isUnread);
@@ -212,9 +212,9 @@ export default function App() {
       new Set(
         groupPlate(inbox.classified, inbox.settings.statusMap, [], me)
           .filter((g) => isActiveBar(g.group))
-          .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me)).map((c) => c.item.id)),
+          .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp)).map((c) => c.item.id)),
       ),
-    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.statusMap, me],
+    [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.statusMap, inbox.settings.movesUp, me],
   );
   /** The items a view's count stands for, within the repository filter, whatever else narrows its list. */
   const itemsOfView = (view: View): Classified[] => {
@@ -238,8 +238,8 @@ export default function App() {
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
   // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
   const unreadPlannedIds = useMemo(
-    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me))).map((c) => c.item.id)),
-    [plannedAll, inbox.seen, inbox.unreadMarks, me],
+    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
+    [plannedAll, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   const plannedGroups = useMemo(
     () => (bucket === "planned" ? groupBySnoozeEnd(plannedAll.filter((c) => matchesText(c.item, query)), (c) => datedAt(datedOf(c, focus, plans, today)!), (c) => c.statusAt ?? "", sort.of("planned") === "oldest") : []),
@@ -258,8 +258,8 @@ export default function App() {
     [bucket, followUpAll, query, sort],
   );
   const unreadFollowUpIds = useMemo(
-    () => new Set(followUpAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me) : unreadAssignment(c, inbox.seen, me))).map((c) => c.item.id)),
-    [followUpAll, inbox.seen, inbox.unreadMarks, me],
+    () => new Set(followUpAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
+    [followUpAll, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   const followUpSprints = useMemo(() => sprintChoices(followUpAll.map((c) => c.item), hidden), [followUpAll, hidden]);
   const followUpTable = useMemo(
@@ -1231,8 +1231,8 @@ export default function App() {
       x: onMarks ? () => removeMarkedFollowUps(true) : withCurrent(removeWhen),
       t: withCurrent((c) => (pinnable(c) ? toggleFocus(c) : actions.notify(t("noop.notPinnable", { number: c.item.number })))),
       p: withCurrent(plan),
-      u: onMarks ? () => toggleRead(marked) : withCurrent((c) => toggleRead([c])),
-      r: onMarks ? () => toggleRead(marked) : withCurrent((c) => toggleRead([c])),
+      u: onMarks ? () => (toggleRead(marked), clearMarks()) : withCurrent((c) => toggleRead([c])),
+      r: onMarks ? () => (toggleRead(marked), clearMarks()) : withCurrent((c) => toggleRead([c])),
       "mod+z": actions.undo,
       "mod+y": actions.redo,
       "ctrl+o": withCurrent((c) => void openUrl(c.item.url)),
@@ -1374,6 +1374,7 @@ export default function App() {
           onMove={moveTableBar}
           seen={inbox.seen}
           unreadMarks={inbox.unreadMarks}
+          movesUp={inbox.settings.movesUp}
           me={inbox.me ?? ""}
           search={search}
           onSearch={setSearch}
