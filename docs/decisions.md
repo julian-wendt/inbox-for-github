@@ -129,8 +129,10 @@ question, and D follows that intent (2026-11-11); the table of views is in
   GitHub drops it at once. Plain activity stays in Planned as unread. D ends a plan, except "my
   part done", which keeps it in every view, shared or not.
 - **Plan and Follow-up offer the same days** from one function (`dayChoices`), with the same
-  keys. "Later today" went, as a follow-up is about days; its time is a setting (`followUpTime`,
-  09:00). One mark, the calendar with the day, replaces the star for Today in rows and tables;
+  keys; a follow-up for a day comes back at a setting (`followUpTime`, 09:00). Follow-up adds
+  "This afternoon" (A, today at 14:00, only before then) (2026-11-12): handing a review to
+  someone free after lunch is a same-day wait. Earlier: "Later today" went on 2026-10-29, as a
+  follow-up was thought to be about days only. One mark, the calendar with the day, replaces the star for Today in rows and tables;
   T and P remain as keys.
 
 ## Calendar
@@ -322,9 +324,9 @@ returns only through an ask newer than its handled-until. The reasons:
   would be one more quiet return. Only the main switch stops it, and one that came due while it
   was off stays quiet, as other items do. It rings once; one missed while the app was quit rings
   at the next start, judged by when a reminder last rang (`notifyRangAt`), since the cached
-  fetch's time lags behind while offline and would ring one twice. Its "Later" choices are in 1 hour, this afternoon at 14:00 (while earlier) and
-  the next workday at the follow-up time. "This afternoon" belongs only to the notification: the
-  F menu stays with days, as decided on 2026-10-29.
+  fetch's time lags behind while offline and would ring one twice. Its "Later" choices are in 1
+  hour, this afternoon at 14:00 (while earlier, as in the F menu) and the next workday at the
+  follow-up time.
 - **No notifications while the app is in front, by default.** Unlike the other new switches,
   `notifyInFront` starts off and so changes what existing users get: the list already shows what
   arrives while one works in it. Each reason has its own switch, all on.

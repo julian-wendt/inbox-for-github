@@ -292,7 +292,6 @@ export const en = {
   "notify.summaryReason.update": "Updates",
   "notify.due": "Your follow-up is due",
   "notify.later.hour": "In 1 hour",
-  "notify.later.afternoon": "This afternoon",
   "notify.open": "Open",
 
   "history.done": "You marked it as done",
@@ -687,6 +686,7 @@ export const en = {
   "closed.statusHint": "Closed on GitHub, so it stays in Done; reopen it on GitHub or with the comment box to change that.",
   "closed.noStatus": "#{number} is closed on GitHub; its status follows GitHub.",
   "snooze.notify": "Remind me",
+  "snooze.afternoon": "This afternoon",
   "snooze.none": "Without a date",
   "snooze.pick": "Pick a date…",
   "snooze.pickTitle": "Follow up on",

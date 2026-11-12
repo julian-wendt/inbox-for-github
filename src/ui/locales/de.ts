@@ -294,7 +294,6 @@ export const de: Messages = {
   "notify.summaryReason.update": "Aktualisierungen",
   "notify.due": "Deine Wiedervorlage ist fällig",
   "notify.later.hour": "In 1 Stunde",
-  "notify.later.afternoon": "Heute Nachmittag",
   "notify.open": "Öffnen",
 
   "history.done": "Du hast es als erledigt markiert",
@@ -689,6 +688,7 @@ export const de: Messages = {
   "closed.statusHint": "Auf GitHub geschlossen, deshalb bleibt es in Erledigt; öffne es auf GitHub oder über das Kommentarfeld wieder, um das zu ändern.",
   "closed.noStatus": "#{number} ist auf GitHub geschlossen; sein Status folgt GitHub.",
   "snooze.notify": "Erinnern",
+  "snooze.afternoon": "Heute Nachmittag",
   "snooze.none": "Ohne Datum",
   "snooze.pick": "Datum wählen…",
   "snooze.pickTitle": "Wiedervorlage am",

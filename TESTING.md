@@ -522,6 +522,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Fenster mit ⌘W oder dem roten Knopf schließen: die App bleibt im Dock, Klick aufs Icon holt
       das Fenster an derselben Stelle zurück. Eine neue Erwähnung meldet sich auch
       bei geschlossenem Fenster. ⌘Q beendet die App.
+- [ ] F vor 14 Uhr bietet „Heute Nachmittag“ (A) unter „Erinnern“, ab 14 Uhr fehlt es; A setzt die
+      Wiedervorlage auf heute 14:00, beim nächsten F ist der Eintrag abgehakt.
 - [ ] F auf einem Item, R schaltet „Erinnern“ an (Haken, Menü bleibt offen), dann eine Zeit in zwei
       Minuten über D: zur Zeit kommt eine Mitteilung „Deine Wiedervorlage ist fällig“, auch bei
       Fenster vorn und im Modus „Nur Zusammenfassungen“, und das Item steht oben in der Leiste

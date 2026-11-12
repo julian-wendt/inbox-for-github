@@ -22,7 +22,7 @@ import { CalendarDay } from "./ui/parts/CalendarDay";
 import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEvent } from "./calendar";
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
-import { followUpOn, untilText } from "./ui/snooze";
+import { followUpOn, thisAfternoon, untilText } from "./ui/snooze";
 import { followUpExtra, followUpUnchanged, isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { doneAccess, keepsItsPlan, needsAskChoice, planStatus, type Place } from "./ui/statusPlan";
@@ -850,12 +850,14 @@ export default function App() {
   };
   // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
   const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
-  /** The follow-up choices for one item: "Remind me" (R), the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
+  /** The follow-up choices for one item: "Remind me" (R), this afternoon (A) before 14:00, the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
   const snoozeEntries = (c: Classified): MenuEntry[] => {
     const notify = notifyChoice?.id === c.item.id ? notifyChoice.on : !!c.notify;
+    const afternoon = thisAfternoon();
     return [
       { label: t("snooze.notify"), hint: t("hint.snooze.notify"), keys: "R", checked: notify, keepOpen: true, onSelect: () => setNotifyChoice({ id: c.item.id, on: !notify }) },
-      ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 ? { ...e, divided: true } : e)),
+      ...(afternoon ? [{ label: t("snooze.afternoon"), keys: "A", divided: true, checked: c.status === "snoozed" && c.until === afternoon, onSelect: () => followUp(c, afternoon, notify) }] : []),
+      ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 && !afternoon ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until, notify) }) },
       { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
       { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },

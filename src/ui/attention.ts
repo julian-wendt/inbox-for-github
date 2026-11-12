@@ -1,8 +1,7 @@
 import type { Ask, Classified } from "../classify";
 import { t } from "./i18n";
-import { localDay } from "./assignments";
 import { dayChoices } from "./plan";
-import { followUpOn } from "./snooze";
+import { followUpOn, thisAfternoon } from "./snooze";
 
 /**
  * Which items deserve a notification now, given the inbox items already known.
@@ -65,12 +64,9 @@ export interface Later {
   until: string;
 }
 
-/** Afternoon for "This afternoon"; fixed, no setting. */
-const AFTERNOON = "14:00";
-
 /**
- * The "Later" choices of a reminder's notification: in an hour, this afternoon at 14:00 while it
- * is earlier than that, and the next workday at the "followUpTime" (see `dayChoices`).
+ * The "Later" choices of a reminder's notification: in an hour, this afternoon (see
+ * `thisAfternoon`) while it is earlier than 14:00, and the next workday at the "followUpTime" (see `dayChoices`).
  *
  * @param now           When the notification goes out.
  * @param workdays      The "workdays" setting.
@@ -80,10 +76,10 @@ const AFTERNOON = "14:00";
  *   laterChoices(new Date(2026, 10, 13, 9), [1, 2, 3, 4, 5], "09:00"); // a Friday: in 1 hour, 14:00, Monday 09:00
  */
 export function laterChoices(now: Date, workdays: readonly number[], followUpTime: string): Later[] {
-  const afternoon = followUpOn(localDay(now), AFTERNOON);
+  const afternoon = thisAfternoon(now);
   return [
     { id: "later-hour", title: t("notify.later.hour"), until: new Date(now.getTime() + 3_600_000).toISOString() },
-    ...(Date.parse(afternoon) > now.getTime() ? [{ id: "later-afternoon", title: t("notify.later.afternoon"), until: afternoon }] : []),
+    ...(afternoon ? [{ id: "later-afternoon", title: t("snooze.afternoon"), until: afternoon }] : []),
     { id: "later-workday", title: t("plan.nextWorkday"), until: followUpOn(dayChoices(now, workdays)[0].day, followUpTime) },
   ];
 }
