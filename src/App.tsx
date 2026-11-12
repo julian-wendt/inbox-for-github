@@ -64,7 +64,7 @@ import { pickRepo } from "./ui/repoSelection";
 import { useStatusActions } from "./ui/useStatusActions";
 import { authoredCount, groupAuthored } from "./ui/authored";
 import { setLogContext } from "./log";
-import { unreadAssignment, unreadInInbox } from "./ui/unread";
+import { seenStep, unreadAssignment, unreadInInbox } from "./ui/unread";
 import { ASK_FILTERS, ASK_VIEWS, matchesAsk, type AskFilter } from "./ui/inboxFilter";
 import "./ui/styles/shell.css";
 import "./ui/styles/inbox.css";
@@ -442,7 +442,7 @@ export default function App() {
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
       plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: at },
     };
-    const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [handled(c, at), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -479,7 +479,7 @@ export default function App() {
       plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: at } : without(inbox.settings.plannedAt, c.item.id),
     };
     const events = day ? eventMoves(c, day) : eventEnds([c]);
-    const steps = [todayStep([c.item.id], previous, next), ...(day ? [handled(c, at), ...followUpEnds(c)] : []), ...events, ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(day ? [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c)] : []), ...events, ...extra];
     for (const s of steps) s.run();
     actions.announce(
       day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
@@ -494,7 +494,7 @@ export default function App() {
   const keepPlan = (c: Classified, day: string | null) => {
     const previous = todayOf(inbox.settings);
     const at = new Date().toISOString();
-    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep([c.item.id], previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: at } }), handled(c, at)]);
+    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep([c.item.id], previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: at } }), handled(c, at), ...seenOnOpen(c)]);
   };
   /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and its removal (X). With a calendar, a day opens the day view on it, and "Today at a time" (A) joins. */
   const planEntries = (c: Classified): MenuEntry[] => {
@@ -682,6 +682,8 @@ export default function App() {
   };
   /** D in the inbox, P, T and F mark the item handled until `at`, as a step (see `handledStep`). */
   const handled = (c: Classified, at = new Date().toISOString()) => handledStep(c.item.id, inbox.handledUntil.get(c.item.id), at, inbox.setHandledUntil);
+  /** P, T and F mark the item seen while it is open, as a step (see `seenStep`). */
+  const seenOnOpen = (c: Classified) => seenStep(c.item.id, openedId, { seen: inbox.seen.get(c.item.id), mark: inbox.unreadMarks.get(c.item.id) }, inbox.markSeen, inbox.restoreRead);
   const statusStep = (c: Classified, status: Status, until?: string) => {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.setStatus(c.item.id, status, until ? { until } : {}), undo: () => void inbox.restoreStatus(c.item.id, previous) };
@@ -823,9 +825,9 @@ export default function App() {
   /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
   const followUp = (c: Classified, until: string) => {
     const steps = unplanStep([c]);
-    if (steps.length === 0) return actions.apply(c, "snoozed", until, [handled(c)]);
+    if (steps.length === 0) return actions.apply(c, "snoozed", until, [handled(c), ...seenOnOpen(c)]);
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
-    steps.push(statusStep(c, "snoozed", until), handled(c));
+    steps.push(statusStep(c, "snoozed", until), handled(c), ...seenOnOpen(c));
     for (const s of steps) s.run();
     actions.announce(
       replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),
