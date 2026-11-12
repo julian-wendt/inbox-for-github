@@ -203,7 +203,7 @@ export function classify(
   if (reply && (!reopenedAt || reply.at > reopenedAt)) asks.push("reply");
   if (reopenedOnGitHub && !asks.includes("reopened")) asks.push("reopened");
   const postedAt = reopenOn === "any-post" && !inTable && handledUntil ? lastPostByOthers(item, me) : null;
-  const newPost = postedAt && postedAt > handledUntil! && postedAt !== mention?.at ? postedAt : undefined;
+  const newPost = postedAt && postedAt > handledUntil! && postedAt > (lastReplyAt(item, me) ?? "") && postedAt !== mention?.at ? postedAt : undefined;
   if (newPost && !asks.includes("reopened")) asks.push("reopened");
 
   // Handled-until answers what came before it; an ask of unknown time counts as handled.
