@@ -38,7 +38,8 @@ Independent of each other:
    work in Assigned to me, with its dot, also after my part done.
 3. D on someone else's item files it: it sets handled-until; there is no stored "done" for it.
 4. The Done bar shows what was handled in the last 7 days and has no newer ask; a fixed number,
-   not `closedDays`, with no setting and no key.
+   not `closedDays`, with no setting. The bar opens by click and on a jump to an item in it; no key
+   opens it.
 5. A follow-up is a *when*, not a status: F and X leave the work fact alone, X leaves
    handled-until alone. An item has one when: the newer of plan and follow-up replaces the
    other.
@@ -64,11 +65,14 @@ Independent of each other:
 
 ## Where the code differs
 
-Each line is an `it.fails` case in `src/behaviour.test.ts`.
+Each line is an `it.fails` case in `src/behaviour.test.ts`, unless it says the case comes with
+its issue.
 
 - [#106](https://github.com/julian-wendt/inbox-for-github/issues/106) one handled-until: D in the
   inbox stores a done on someone else's item instead of filing it; X on a plan drops the plan's
-  time (`plannedAt`), so what the plan handled asks again.
+  time (`plannedAt`), so what the plan handled asks again (#106 adds the test for X, which the
+  simulated session cannot drive: it has no plans); D on a closed item with news waiting in the
+  inbox writes a stored done again instead of setting handled-until.
 - [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
   item whose part is done replaces the hand-off; X on someone else's follow-up drops the status,
   so the asks F handled ask again.
