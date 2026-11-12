@@ -799,7 +799,7 @@ export const de: Messages = {
   "settings.movesUp": "Items nach oben holen bei",
   "settings.movesUpHint": "Kommentare und Reviews anderer holen ein Item immer nach oben in seiner Liste und bestimmen die angezeigte Zeit; deine eigenen Aktionen nie. Geplant und Erledigt behalten ihre eigenen Zeiten. Ob ein Item zurück in die Inbox kommt, legst du oben fest.",
   "settings.movesUp.events": "Andere Ereignisse",
-  "settings.movesUp.eventsHint": "Zuweisungen, Review-Anfragen, Schließen und Wiederöffnen, verknüpfte Pull Requests und Force-Pushes anderer.",
+  "settings.movesUp.eventsHint": "Zuweisungen (nicht ihr Entfernen), Review-Anfragen, Schließen und Wiederöffnen, verknüpfte Pull Requests und Force-Pushes anderer.",
   "settings.movesUp.commits": "Commits",
   "settings.movesUp.commitsHint": "Neue Commits in einem Pull Request, auch deine eigenen: GitHub sagt nicht, wer sie gepusht hat.",
   "settings.movesUp.bots": "Bots",

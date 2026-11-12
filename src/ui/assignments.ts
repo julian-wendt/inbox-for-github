@@ -101,7 +101,7 @@ export const PLATE_GROUPS: PlateGroup[] = ["review", "progress", "todo", "blocke
 export interface MovesUp {
   /** Pushed commits; GitHub names no pusher, so the viewer's own count too. */
   commits: boolean;
-  /** Timeline events: assignments, review requests, state changes, links, force pushes. */
+  /** Timeline events: assignments, review requests, state changes, links, force pushes; never an unassignment. */
   events: boolean;
   /** Posts and events by bots. */
   bots: boolean;
@@ -110,7 +110,8 @@ export interface MovesUp {
 export const MOVES_UP_DEFAULT: MovesUp = { commits: false, events: true, bots: false };
 
 /**
- * The latest post or activity by someone other than the viewer, or null.
+ * The latest post or activity by someone other than the viewer, or null. An unassignment never
+ * counts, whoever it removes: it shows in the activity log but asks nothing of the viewer.
  *
  * @param counted  Which activity counts besides posts and reviews by people; the default leaves
  *                 out commits and bots.
@@ -123,6 +124,7 @@ export function lastOthersActivity(item: Item, me: string, counted: MovesUp = MO
   const counts = (a: Item["activities"][number]) => {
     if (!isShownActivity(a, me, sameLogin(item.author, me))) return false;
     if (a.kind === "commit") return counted.commits;
+    if (a.kind === "unassigned") return false;
     return byOther(a.actor) && (a.kind === "reviewed" || counted.events);
   };
   const times = [...posts(item).filter((p) => byOther(p.author)).map((p) => p.at), ...item.activities.filter(counts).map((a) => a.at)];

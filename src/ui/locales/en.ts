@@ -797,7 +797,7 @@ export const en = {
   "settings.movesUp": "Move items up on",
   "settings.movesUpHint": "Comments and reviews by others always move an item to the top of its list and set the time it shows; your own activity never does. Planned and Done keep their own times. Whether an item comes back into the inbox is set above.",
   "settings.movesUp.events": "Other events",
-  "settings.movesUp.eventsHint": "Assignments, review requests, closing and reopening, linked pull requests and force pushes by others.",
+  "settings.movesUp.eventsHint": "Assignments (not their removal), review requests, closing and reopening, linked pull requests and force pushes by others.",
   "settings.movesUp.commits": "Commits",
   "settings.movesUp.commitsHint": "New commits on a pull request, your own included: GitHub does not say who pushed them.",
   "settings.movesUp.bots": "Bots",

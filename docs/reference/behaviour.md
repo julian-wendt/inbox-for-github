@@ -50,6 +50,9 @@ Independent of each other:
 6. Planning (P, T) and a follow-up (F) count as handled and, when the item is open (the list's
    detail or a table's pop-up), as seen. A table row that is only selected stays unread, and so
    does an item marked unread by hand.
+7. News by someone else since I last saw an item makes it unread and moves it up: a post, a
+   review and, with "Other events", their events. An unassignment is no news, whoever it removes,
+   me included; it shows only in the activity log. An assignment of someone else stays news.
 
 ## Situations
 

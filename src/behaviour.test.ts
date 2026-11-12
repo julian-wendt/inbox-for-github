@@ -3,7 +3,7 @@ import type { Classified } from "./classify";
 import type { InboxSession } from "./github/simulate/session";
 import { DAY, HOUR, MINUTE, simulation } from "./github/simulate/vitest";
 import type { GitHubSimulator, Ref } from "./github/simulate/world";
-import { isNewAssignment, onPlate } from "./ui/assignments";
+import { hasNewActivity, isNewAssignment, onPlate } from "./ui/assignments";
 import { isOwnOpen } from "./ui/authored";
 import { isWaiting } from "./ui/followUp";
 import { VIEWS, type View } from "./ui/labels";
@@ -647,6 +647,25 @@ describe("rule 6: planning and a follow-up count as handled and as seen", () => 
         expect(viewsOf(app.entry(issue))).toEqual(["snoozed", "assigned"]);
       },
     },
+  ]);
+});
+
+describe("rule 7: news by someone else makes an item unread; an unassignment is none", () => {
+  /** An own issue assigned to me and bob, seen now, then `act` happens an hour later. */
+  async function newsAfter(world: GitHubSimulator, app: InboxSession, act: (issue: Ref) => void): Promise<boolean> {
+    const issue = world.issue({ author: ME, assignees: [ME, "bob"] });
+    await app.refresh();
+    const seen = new Map([[app.entry(issue).item.id, world.now.toISOString()]]);
+    world.advance(HOUR);
+    act(issue);
+    await refetch(world, app, issue);
+    return hasNewActivity(app.entry(issue), seen, ME);
+  }
+  walk([
+    { situation: "a comment by someone else is news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.comment(i, "alice", "Looks good"))).toBe(true) },
+    { situation: "someone else assigns another person: news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.assign(i, "alice", "carol"))).toBe(true) },
+    { situation: "someone else removes another assignee: no news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.unassign(i, "alice", "bob"))).toBe(false) },
+    { situation: "someone else removes me: no news", run: async (world, app) => expect(await newsAfter(world, app, (i) => world.unassign(i, "alice", ME))).toBe(false) },
   ]);
 });
 

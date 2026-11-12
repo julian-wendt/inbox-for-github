@@ -243,6 +243,9 @@ returns only through an ask newer than its handled-until. The reasons:
   from its last status change, else from when it was assigned to you or opened by you; an item
   that is neither shows no dot. On your own items the timeline shows every assignment, so someone
   taking one on counts as news.
+- **An unassignment is no news, whoever it removes** (2026-11-12, #129). It stays in the activity
+  log but asks nothing of you: someone dropping a co-assignee, or you, is no to-do. An assignment
+  of someone else stays news.
 - **The dock badge counts unread, like a mailbox, and only where there is something to do.**
   Unread inbox items and unread assignments (not the parked bars Follow-up and Finished), marks by
   hand included. Opening an item (after `SEEN_AFTER_MS`) lowers it; anything new by others since
