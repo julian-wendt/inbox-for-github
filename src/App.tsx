@@ -764,13 +764,15 @@ export default function App() {
     });
   };
   /**
-   * D moved the item into a parked bar of the same table: the selection goes on to the next open
-   * row instead of following it down, as when an item leaves the list. A pop-up opened by click
-   * closes and leaves nothing selected; one opened by key shows the next row.
+   * D moved the item into a parked bar of the same table or into the inbox's Done bar: the
+   * selection goes on to the next open row instead of following it down, as when an item leaves
+   * the list. A pop-up opened by click closes and leaves nothing selected; one opened by key shows
+   * the next row.
    */
   const moveOn = (id: string) => {
-    if (!table || !viewGroups) return;
-    const open = viewGroups.filter((g) => !folded(g.group) && isActiveBar(g.group as PlateGroup)).flatMap((g) => g.entries.map((e) => e.item.id));
+    if (!viewGroups) return;
+    const parked = (group: string) => (table ? !isActiveBar(group as PlateGroup) : group === DONE_GROUP);
+    const open = viewGroups.filter((g) => !folded(g.group) && !parked(g.group)).flatMap((g) => g.entries.map((e) => e.item.id));
     const at = open.indexOf(id);
     if (at < 0) return;
     if (popup === "pointer") {
@@ -789,6 +791,7 @@ export default function App() {
     const previous = inbox.statuses.get(id);
     const plan = planStatus(c, status, me, place(c));
     if (!asks && needsAskChoice(c, status, me, place(c))) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...paneCenter(), centered: true });
+    if (status === "done" && bucket === "inbox") moveOn(id);
     if (plan.do === "file" || plan.do === "tick-update") {
       const ticking = plan.do === "tick-update";
       // Ticking off an open item also takes a fresh snapshot, so board and pull request changes count from now.
