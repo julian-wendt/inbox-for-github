@@ -77,8 +77,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   `pinnedOn`). At its date the stored status becomes "open"
   (automatic, source `auto:snooze-ended`; the log says "follow-up came due"): the item is back
   where its asks put it, and what was answered before asks again (`reopened`) until the viewer
-  replies, D or F; what was pending asks again too, even an ask D had filed before F. The list
-  shows no mark of it. `followUpOf` gives the date that the
+  replies, D or F; what was pending asks again too, even an ask D had filed before F. This holds
+  for table items as well: one with something pending or answered comes into the inbox, one with
+  nothing stays in its table without an ask (#108). The list shows no mark of it. `followUpOf` gives the date that the
   chip shows, and only while the item waits.
 - **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
   posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
