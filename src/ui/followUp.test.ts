@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpExtra, followUpOf, followUpWhen, isWaiting, rowWhen } from "./followUp";
+import { followUpExtra, followUpOf, followUpUnchanged, followUpWhen, isWaiting, rowWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -89,5 +89,21 @@ describe("followUpExtra", () => {
 
   it("keeps a part that is done, with a fresh snapshot", () => {
     expect(followUpExtra({ item: boarded, updates: [] }, "")).toEqual({ handoff: { boards: { PVT_1: "In review" }, prs: [] } });
+  });
+});
+
+describe("followUpUnchanged", () => {
+  const entry = (stored?: StoredStatus, comments: Item["comments"] = []) => classify({ ...item, author: "alice", reasons: ["assigned"], assignees: ["me"], comments }, "me", stored, ruleSwitches(), "mention", now);
+
+  it("is true for the follow-up the item already has, with or without a date", () => {
+    expect(followUpUnchanged(entry(waiting()), "")).toBe(true);
+    expect(followUpUnchanged(entry(waiting(ahead)), ahead)).toBe(true);
+  });
+
+  it("is false for another date, an item that does not wait, and one with an ask F would handle", () => {
+    expect(followUpUnchanged(entry(waiting(ahead)), "")).toBe(false);
+    expect(followUpUnchanged(entry(waiting()), ahead)).toBe(false);
+    expect(followUpUnchanged(entry(), "")).toBe(false);
+    expect(followUpUnchanged(entry(waiting(), [{ author: "bob", body: "@me ping", createdAt: "2026-10-10T00:00:00Z" }]), "")).toBe(false);
   });
 });

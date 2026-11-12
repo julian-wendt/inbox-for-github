@@ -66,6 +66,20 @@ export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Date
 }
 
 /**
+ * Whether F with `until` would change nothing: the item already waits for the same date, or
+ * without one for "", and no ask waits that F would handle. F then writes nothing, so neither the
+ * status time nor the hand-off snapshot moves.
+ *
+ * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ *
+ * @example
+ *   followUpUnchanged(waitingWithoutDate, ""); // true while nothing asks
+ */
+export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks">, until: string): boolean {
+  return isWaiting(entry) && (entry.until ?? "") === until && entry.asks.length === 0;
+}
+
+/**
  * What F stores besides "snoozed": the date, if any, and on an item whose part is done a fresh
  * hand-off snapshot, so the part stays done and F ticks off its news like any other ask.
  *

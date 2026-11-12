@@ -10,7 +10,7 @@ import { leaveClears, localDay, onPlate, withAssignees, withSelfAssigned } from 
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
-import { followUpExtra, followUpOf, isWaiting } from "../../ui/followUp";
+import { followUpExtra, followUpOf, followUpUnchanged, isWaiting } from "../../ui/followUp";
 import { lockedDone, planStatus } from "../../ui/statusPlan";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
@@ -217,7 +217,7 @@ export class InboxSession {
         this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":
-        if (c.item.closed || (c.status === plan.status && until === undefined)) return;
+        if (c.item.closed || (c.status === plan.status && until === undefined) || (plan.status === "snoozed" && followUpUnchanged(c, until ?? ""))) return;
         this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "") : {});
         if (plan.status !== "open") this.handledUntil.set(ref.id, this.world.stamp());
         // F, as `App.followUp`: an item has one when.
