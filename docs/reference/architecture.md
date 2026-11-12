@@ -142,7 +142,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   view) a `nodes` query; both put the answer in through `takeReloaded`, which also takes over a
   transfer the answer shows. For an id GitHub no longer resolves (`NOT_FOUND`), the cached issues
   that may be its transferred copy are loaded by id (`transferCandidates`, about a point each);
-  failing that, a refresh runs, and what is still unresolved leaves the cache (`dropGone`).
+  failing that, a refresh runs, and what is still unresolved leaves the cache and loses its pin
+  or plan (`dropGone`). Once a day the pinned and planned items that are not loaded go through
+  `reloadItems` too, so a deleted one or one the viewer lost access to drops its plan; one that
+  is only outside the item limit or a filtered repository still resolves and keeps it.
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
 - **In the background:** the refresh timer is a plain `setInterval` and keeps running only

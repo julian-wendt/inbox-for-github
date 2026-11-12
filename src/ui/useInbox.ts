@@ -16,6 +16,7 @@ import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
 import { movedKeys, movedLists, movedSettings } from "../transfer";
 import { lockedDone } from "./statusPlan";
+import { todayOf, unplan } from "./plan";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -224,6 +225,29 @@ export function useInbox(): Inbox {
   useEffect(() => {
     latestSettings.current = settings;
   }, [settings]);
+
+  // The SQL plugin's pool runs writes on several connections, so two saves at once could land out of order.
+  const settingsWrites = useRef<Promise<void>>(Promise.resolve());
+  const saveSettings = useCallback(
+    async (next: Settings) => {
+      if (!store) return;
+      latestSettings.current = next;
+      const write = settingsWrites.current.then(() => store.saveSettings(next));
+      settingsWrites.current = write.catch(() => undefined);
+      await write;
+      if (latestSettings.current === next) setSettings(next);
+    },
+    [store],
+  );
+
+  const updateSettings = useCallback(
+    (change: (current: Settings) => Settings) => {
+      // Set at once, so a second update in the same tick builds on this one instead of the last render.
+      latestSettings.current = change(latestSettings.current);
+      return saveSettings(latestSettings.current);
+    },
+    [saveSettings],
+  );
 
   /**
    * Carries the local state of transferred issues to their new ids, in the store; the returned
@@ -461,13 +485,15 @@ export function useInbox(): Inbox {
   /**
    * Handles items GitHub no longer resolves and no cached item turned out to be their transferred
    * copy: a refresh first, which finds an issue transferred to a place not cached yet and carries
-   * its state over, then what is still cached under these ids goes.
+   * its state over, then what is still cached under these ids goes, and so do their pins and
+   * plans (a calendar link follows as an orphan, see `orphanLinks`).
    * A refresh that fails or is stopped keeps them, so a later one can still pair them.
    */
   const dropGone = useCallback(
     async (ids: string[]) => {
       log.debug("items gone", { ids: ids.join(",") });
       if (!(await refresh())) return;
+      await updateSettings((s) => ({ ...s, ...unplan(todayOf(s), ids) }));
       const last = lastFetch.current;
       const gone = new Set(ids);
       if (!store || !last?.items.some((item) => gone.has(item.id))) return;
@@ -476,7 +502,7 @@ export function useInbox(): Inbox {
       setItems(next.items);
       await store.saveFetch(next);
     },
-    [store, refresh],
+    [store, refresh, updateSettings],
   );
 
   /**
@@ -734,29 +760,6 @@ export function useInbox(): Inbox {
       log.verbose("classify", { item: ref(c.item), why, reasons: c.item.reasons.join("+"), title: c.item.title });
     }
   }, [classified]);
-
-  // The SQL plugin's pool runs writes on several connections, so two saves at once could land out of order.
-  const settingsWrites = useRef<Promise<void>>(Promise.resolve());
-  const saveSettings = useCallback(
-    async (next: Settings) => {
-      if (!store) return;
-      latestSettings.current = next;
-      const write = settingsWrites.current.then(() => store.saveSettings(next));
-      settingsWrites.current = write.catch(() => undefined);
-      await write;
-      if (latestSettings.current === next) setSettings(next);
-    },
-    [store],
-  );
-
-  const updateSettings = useCallback(
-    (change: (current: Settings) => Settings) => {
-      // Set at once, so a second update in the same tick builds on this one instead of the last render.
-      latestSettings.current = change(latestSettings.current);
-      return saveSettings(latestSettings.current);
-    },
-    [saveSettings],
-  );
 
   return {
     ready: store !== null,

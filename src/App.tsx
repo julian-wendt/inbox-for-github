@@ -1062,6 +1062,16 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [ready, settings, saveSettings, classified, me]);
 
+  // Once a day GitHub is asked about pinned or planned items not loaded; only those it no longer resolves lose their plan (`dropGone`).
+  const { reloadItems } = inbox;
+  const goneChecked = useRef("");
+  useEffect(() => {
+    if (!ready || classified.length === 0 || goneChecked.current === today) return;
+    goneChecked.current = today;
+    const unloaded = [...settings.focus, ...settings.planned.map((p) => p.id)].filter((id) => !classified.some((c) => c.item.id === id));
+    if (unloaded.length > 0) void reloadItems(unloaded);
+  }, [ready, today, settings, classified, reloadItems]);
+
   // A plan of an item closed on GitHub goes at once, not with the next day.
   const changeSettings = inbox.updateSettings;
   useEffect(() => {
