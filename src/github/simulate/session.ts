@@ -12,6 +12,7 @@ import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
 import { followUpOf, isWaiting } from "../../ui/followUp";
 import { lockedDone, planStatus } from "../../ui/statusPlan";
+import { inDoneBar } from "../../ui/doneBar";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
@@ -292,7 +293,7 @@ export class InboxSession {
       authored: ids((c) => isOwnOpen(c, this.me)),
       planned: ids((c) => datedOf(c, [], []) !== null),
       snoozed: ids(isWaiting),
-      done: ids((c) => c.bucket === "done"),
+      done: ids((c) => inDoneBar(c, this.handledUntil.get(c.item.id), this.me, this.nowMs, false)),
     };
   }
 
