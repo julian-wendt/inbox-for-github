@@ -620,6 +620,11 @@ describe("a new assignment or a reopen on GitHub", () => {
     expect(run(item({ activities: [assignedBy("alice", 6)] }), handoff).updates).toBeUndefined();
   });
 
+  it("still brings the closing as news when a handed-off part was assigned anew and then closed", () => {
+    const closed = assigned({ activities: [assignedBy("alice", 6)], closed: { state: "closed", at: "2026-10-08T00:00:00Z" } });
+    expect(run(closed, handoff)).toMatchObject({ bucket: "inbox", status: "done", asks: ["update"], updates: [{ kind: "closed", state: "closed" }] });
+  });
+
   it("keeps the follow-up of a handed-off part when the viewer was assigned anew", () => {
     const waiting: StoredStatus = { ...handoff, status: "snoozed", until: "2026-10-30T09:00:00Z" };
     const result = classify(assigned({ activities: [assignedBy("alice", 6)] }), ME, waiting, ruleSwitches(), "mention", Date.parse("2026-10-07T00:00:00Z"));

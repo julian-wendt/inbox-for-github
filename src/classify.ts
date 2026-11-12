@@ -158,7 +158,8 @@ export function classify(
   const inTable = assigned || own;
   const handedOff = !!stored?.handoff && stored.status !== "open";
   // A new assignment by someone else starts the work anew; a follow-up stays (rule 2).
-  const renewed = !!stored && (stored.status === "done" || handedOff) && assignedAgain(item, me, stored.changedAt);
+  // A closed item keeps its hand-off, so its closing still asks as news.
+  const renewed = !!stored && (stored.status === "done" || handedOff) && !item.closed && assignedAgain(item, me, stored.changedAt);
   if (stored && handedOff && !renewed && (assigned || item.closed)) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil, now);
   if (stored && (handedOff || renewed)) stored = stored.status === "snoozed" ? { status: "snoozed", changedAt: stored.changedAt, ...(stored.until && { until: stored.until }) } : undefined;
   if (item.closed) {
