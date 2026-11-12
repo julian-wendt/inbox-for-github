@@ -16,7 +16,7 @@ export interface NotifyOptions {
 
 /** What a due reminder needs: the last fetch before start, the settings its "Later" choices follow, and what a choice does. */
 export interface ReminderOptions {
-  /** The last fetch's time, read only with the first result, where it is the cached fetch's: reminders due since then ring at start. */
+  /** The last fetch's time, read only with the first result and only while no reminder has rung (`Pending.rangAt`). */
   since: Date | null;
   workdays: readonly number[];
   followUpTime: string;
@@ -24,10 +24,11 @@ export interface ReminderOptions {
   onLater: (itemId: string, until: string) => void;
 }
 
-/** What waits for its summary: the collected item ids and when the last summary went out (ISO 8601). */
+/** What notifications keep between starts: the item ids collected for the summary, when the last summary went out and when a due reminder last rang (ISO 8601). */
 export interface Pending {
   collected: string[];
   lastSummary: string | null;
+  rangAt: string | null;
 }
 
 /** How often the schedule is checked for a summary that came due; summaries land within this of their time. */
@@ -50,8 +51,8 @@ const TICK_MS = 30_000;
  * in the inbox that is. Switching to "immediately" sends what was collected at once. The first
  * check with a schedule only records the baseline, so enabling it replays nothing.
  *
- * A follow-up with "Remind me" that comes due rings on its own (`dueReminders`), once, with the
- * main switch as its only condition: the viewer asked for it, so neither the reason switches,
+ * A follow-up with "Remind me" that comes due rings on its own (`dueReminders`), once, also
+ * across a restart (`pending.rangAt`), with the main switch as its only condition: the viewer asked for it, so neither the reason switches,
  * `delivery` nor `inFront` hold it back. Its notification offers "Later" choices
  * (`laterChoices`) that set the follow-up anew through `reminders.onLater`.
  *
@@ -73,7 +74,7 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
   const known = useRef<Map<string, string> | null>(null);
   const rang = useRef<Set<string> | null>(null);
   const { on, reasons, inFront, delivery } = notify;
-  const { collected, lastSummary } = pending;
+  const { collected, lastSummary, rangAt } = pending;
   const open = useRef(onOpen);
   const change = useRef(onPending);
   const remind = useRef(reminders);
@@ -82,10 +83,10 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
     change.current = onPending;
     remind.current = reminders;
   }, [onOpen, onPending, reminders]);
-  const latest = useRef({ on, delivery, collected, lastSummary });
+  const latest = useRef({ on, delivery, collected, lastSummary, rangAt });
   useEffect(() => {
-    latest.current = { on, delivery, collected, lastSummary };
-  }, [on, delivery, collected, lastSummary]);
+    latest.current = { on, delivery, collected, lastSummary, rangAt };
+  }, [on, delivery, collected, lastSummary, rangAt]);
   const [tick, setTick] = useState(0);
 
   // Only a summary that came due renders again; a tick that finds nothing must not.
@@ -116,9 +117,13 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
   useEffect(() => {
     if (classified.length === 0) return;
     const { since, workdays, followUpTime } = remind.current;
-    const due = dueReminders(classified, rang.current, since?.toISOString() ?? null);
+    const due = dueReminders(classified, rang.current, latest.current.rangAt ?? since?.toISOString() ?? null);
     rang.current = new Set(classified.filter(ringing).map((c) => c.item.id));
-    if (on && due.length > 0) void sendReminders(due, laterChoices(new Date(), workdays, followUpTime));
+    if (due.length > 0) {
+      const now = new Date();
+      change.current((current) => ({ ...current, rangAt: now.toISOString() }));
+      if (on) void sendReminders(due, laterChoices(now, workdays, followUpTime));
+    }
     const fresh = arrivals(classified, known.current).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
     known.current = new Map(classified.filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
     if (!on || fresh.length === 0) return;
@@ -144,7 +149,7 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
     }
     const sent = new Set(collected);
     const entries = classified.filter((c) => c.bucket === "inbox" && sent.has(c.item.id) && notifies(notifyReason(c), reasons));
-    change.current((current) => ({ collected: current.collected.filter((id) => !sent.has(id)), lastSummary: now.toISOString() }));
+    change.current((current) => ({ ...current, collected: current.collected.filter((id) => !sent.has(id)), lastSummary: now.toISOString() }));
     if (entries.length > 0 && (inFront || !document.hasFocus())) void sendSummary(entries);
   }, [classified, on, reasons, inFront, delivery, collected, lastSummary, tick]);
 }

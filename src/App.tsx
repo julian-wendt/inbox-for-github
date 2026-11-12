@@ -1184,13 +1184,13 @@ export default function App() {
     if (entry) jumpTo(entry);
     else setBucket("inbox");
   };
-  const { notifyDelivery, notifyCollected, notifyLastSummary } = inbox.settings;
+  const { notifyDelivery, notifyCollected, notifyLastSummary, notifyRangAt } = inbox.settings;
   const notifyOptions = { on: inbox.settings.notifications, reasons: inbox.settings.notifyOn, inFront: inbox.settings.notifyInFront, delivery: notifyDelivery };
-  const pending = { collected: notifyCollected, lastSummary: notifyLastSummary };
+  const pending = { collected: notifyCollected, lastSummary: notifyLastSummary, rangAt: notifyRangAt };
   const savePending = (change: (current: Pending) => Pending) =>
     void inbox.updateSettings((s) => {
-      const next = change({ collected: s.notifyCollected, lastSummary: s.notifyLastSummary });
-      return { ...s, notifyCollected: next.collected, notifyLastSummary: next.lastSummary };
+      const next = change({ collected: s.notifyCollected, lastSummary: s.notifyLastSummary, rangAt: s.notifyRangAt });
+      return { ...s, notifyCollected: next.collected, notifyLastSummary: next.lastSummary, notifyRangAt: next.rangAt };
     });
   const laterNotified = (itemId: string, until: string) => {
     const entry = inbox.classified.find((c) => c.item.id === itemId);
@@ -1498,7 +1498,7 @@ export default function App() {
         <SettingsDialog
           settings={inbox.settings}
           welcome={welcome}
-          onSave={(s) => void inbox.updateSettings((current) => ({ ...current, ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary }))}
+          onSave={(s) => void inbox.updateSettings((current) => ({ ...current, ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary, notifyRangAt: current.notifyRangAt }))}
           onClose={() => setDialog(null)}
           boards={boards}
           memberOrgs={inbox.memberOrgs}

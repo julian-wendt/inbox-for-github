@@ -172,6 +172,8 @@ export interface Settings {
   notifyCollected: string[];
   /** When the last summary went out, ISO 8601; null until the first one is due. */
   notifyLastSummary: string | null;
+  /** When a due reminder ("Remind me") last rang, or came due with notifications off; ISO 8601, null until then. Reminders due after it ring at the next start. */
+  notifyRangAt: string | null;
   /** The dock badge counts the unread items in the inbox. */
   dockBadge: boolean;
   /** Comments the detail shows before folding older ones away; 0 shows all. */
@@ -255,7 +257,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, notifyRangAt: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, maxItems: 200, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

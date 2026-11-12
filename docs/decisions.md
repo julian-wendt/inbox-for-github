@@ -319,9 +319,10 @@ returns only through an ask newer than its handled-until. The reasons:
   organization filter, bundling and sound are left for later.
 - **A due "Remind me" rings whatever the mode,** the reason switches and the window in front
   (2026-11-12): the viewer asked for that one nudge, and collected into a summary or held back it
-  would be one more quiet return. Only the main switch stops it. It rings once; one missed while
-  the app was quit rings at the next start, judged by the cached fetch's time, so nothing is
-  stored for it. Its "Later" choices are in 1 hour, this afternoon at 14:00 (while earlier) and
+  would be one more quiet return. Only the main switch stops it, and one that came due while it
+  was off stays quiet, as other items do. It rings once; one missed while the app was quit rings
+  at the next start, judged by when a reminder last rang (`notifyRangAt`), since the cached
+  fetch's time lags behind while offline and would ring one twice. Its "Later" choices are in 1 hour, this afternoon at 14:00 (while earlier) and
   the next workday at the follow-up time. "This afternoon" belongs only to the notification: the
   F menu stays with days, as decided on 2026-10-29.
 - **No notifications while the app is in front, by default.** Unlike the other new switches,
