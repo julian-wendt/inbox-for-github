@@ -18,7 +18,7 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
     keys: [
       [["↓"], "keys.next"],
       [["↑"], "keys.previous"],
-      [["1", "–", "6"], "keys.bucket"],
+      [["1", "–", String(VIEWS.length)], "keys.bucket"],
       [["⌘", "T"], "keys.kind"],
       [["⌘", "G"], "keys.grouping"],
       [["Esc"], "keys.escape"],
