@@ -16,7 +16,7 @@ export type StatusPlan =
   | { do: "tick-update" }
   | { do: "hand-off" }
   | { do: "clear" }
-  | { do: "file" }
+  | { do: "file"; unplan?: true }
   | { do: "blocked" }
   | { do: "set"; status: Status }
   | { do: "none" };
@@ -25,19 +25,19 @@ export type StatusPlan =
  * Decides what a status chosen for an item means. D means one thing per view, matching what the
  * view is for:
  *
- * - Inbox (someone wants something from the viewer): D files the item's asks ("file": the
- *   "filedAt" setting; the asks go, the item leaves the inbox, its status stays). Only a
- *   "reopened" ask is cleared instead ("clear"). An "update" ask is ticked off ("tick-update")
- *   and the other asks are filed with it; so is the "closed" ask of an own item someone else
- *   closed. Only the inbox files asks. An item outside the tables (neither assigned to the
- *   viewer nor opened by them) just becomes done ("set").
+ * - Inbox (someone wants something from the viewer): D files the item's asks ("file": it sets
+ *   handled-until; the asks go, the item leaves the inbox, its status stays). On an item of a
+ *   table, a "reopened" ask alone is cleared instead ("clear"). An "update" ask is ticked off
+ *   ("tick-update") and the other asks are filed with it; so is the "closed" ask of an own item
+ *   someone else closed. An item outside the tables (neither assigned to the viewer nor opened
+ *   by them) is filed and loses its plan ("file" with `unplan`); no "done" is stored.
  * - Assigned to me (the viewer's own work): D is "my part done" ("hand-off"), whatever asks the
  *   item has; those stay in the inbox until filed there. A finished part gets "none", also
  *   with an update waiting in the inbox.
  * - Created by me (monitoring): no D ("blocked", hidden): asks are filed in the inbox, and the
  *   item ends on GitHub (see `lockOf`).
  * - Planned: as in the item's home view, an assignment as in Assigned to me, an own item as in
- *   Created by me, anything else becomes done.
+ *   Created by me, anything else is filed as in the inbox.
  * - Follow-up: D ends the follow-up ("clear"); the item returns where it came from.
  * - Done: "none".
  *
@@ -61,12 +61,13 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
   if (home === "inbox") {
     if (c.asks.includes("update")) return { do: "tick-update" };
     if (c.asks.includes("closed")) return { do: "file" };
-    if (!inTable(c, me)) return { do: "set", status };
+    if (!inTable(c, me)) return { do: "file", unplan: true };
     if (c.asks.length === 0) return { do: "none" };
     return { do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" };
   }
   if (home === "assigned" && onPlate(c, me)) return c.updates ? { do: "none" } : { do: "hand-off" };
   if (home === "authored") return { do: "blocked" };
+  if (home === null) return { do: "file", unplan: true };
   return { do: "set", status };
 }
 

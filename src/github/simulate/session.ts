@@ -57,7 +57,7 @@ export class InboxSession {
   readonly settings: Required<SessionSettings>;
   /** The "filedAt" setting: when D last filed an item's asks without finishing it. */
   readonly filedAt = new Map<string, string>();
-  /** Handled-until per item, as `useInbox().handledUntil`: D in the inbox and F set it. */
+  /** Handled-until per item, as `useInbox().handledUntil`: D in the inbox and F set it; the session has no plans. */
   readonly handledUntil = new Map<string, string>();
   private last: { fetchedAt: Date; fullAt: Date; key: string } | null = null;
   private undoStep: (() => void) | null = null;
@@ -193,23 +193,19 @@ export class InboxSession {
         this.statuses.delete(ref.id);
         if (view !== "snoozed") this.handledUntil.set(ref.id, this.world.stamp());
         break;
-      case "file": {
+      case "file":
+      case "tick-update": {
         const before = this.filedAt.get(ref.id);
-        const at = this.world.now.toISOString();
+        const at = this.world.stamp();
         this.filedAt.set(ref.id, at);
         this.handledUntil.set(ref.id, at);
+        if (plan.do === "tick-update" && !c.item.closed && previous?.handoff) this.statuses.set(ref.id, { ...previous, handoff: snapshotOf(c.item) });
         this.undoStep = () => (before ? this.filedAt.set(ref.id, before) : this.filedAt.delete(ref.id), restore());
         return;
       }
       case "blocked":
         return;
-      case "tick-update":
       case "hand-off":
-        if (plan.do === "tick-update" && c.bucket === "inbox") {
-          const at = this.world.stamp();
-          this.filedAt.set(ref.id, at);
-          this.handledUntil.set(ref.id, at);
-        }
         this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":
@@ -322,6 +318,8 @@ export class InboxSession {
       for (const [id, value] of next) map.set(id, value);
     };
     refill(this.statuses, movedKeys(this.statuses, moves));
+    refill(this.handledUntil, movedKeys(this.handledUntil, moves));
+    refill(this.filedAt, movedKeys(this.filedAt, moves));
     refill(this.log, movedLists(this.log, moves));
     refill(this.writeFailures, movedLists(this.writeFailures, moves));
   }

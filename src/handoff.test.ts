@@ -57,3 +57,16 @@ describe("updatesSince", () => {
     expect(updatesSince(item({ boards: [] }), "me", since, snap)).toEqual([]);
   });
 });
+
+describe("updatesSince on a closed item", () => {
+  const snap = snapshotOf(item());
+  const closed = item({ closed: { state: "closed", at: "2026-10-11T00:00:00Z" }, boards: [{ id: "B", title: "Roadmap", status: "Done", sprint: null, fields: [] }] });
+
+  it("reports the board change until the closing is handled", () => {
+    expect(updatesSince(closed, "me", "2026-10-10T00:00:00Z", snap).map((u) => u.kind)).toEqual(["closed", "board"]);
+  });
+
+  it("counts no board or pull request change once `since` is past the closing", () => {
+    expect(updatesSince(closed, "me", "2026-10-12T00:00:00Z", snap)).toEqual([]);
+  });
+});

@@ -185,7 +185,7 @@ describe("Commenting", () => {
 });
 
 describe("Status and log", () => {
-  it("logs every change: done, snoozed, open", async () => {
+  it("logs every status change: snoozed, open; D files without one", async () => {
     const { world, app } = sim;
     const issue = world.issue();
     world.comment(issue, "alice", "@octocat");
@@ -197,17 +197,17 @@ describe("Status and log", () => {
     expect(app.viewOf(issue)).toBe("snoozed");
     app.open(issue);
 
-    expect(app.log.get(issue.id)?.map((l) => l.status)).toEqual(["done", "snoozed", "open"]);
+    expect(app.log.get(issue.id)?.map((l) => l.status)).toEqual(["snoozed", "open"]);
   });
 
-  it("does nothing for done on a done item, and moves the date of a snoozed one", async () => {
+  it("writes no status for D on a filed item, and moves the date of a snoozed one", async () => {
     const { world, app } = sim;
     const issue = world.issue();
     world.comment(issue, "alice", "@octocat");
     await app.refresh();
     app.done(issue);
     app.done(issue);
-    expect(app.log.get(issue.id)).toHaveLength(1);
+    expect(app.log.get(issue.id)).toBeUndefined();
 
     const other = world.issue();
     world.comment(other, "alice", "@octocat");

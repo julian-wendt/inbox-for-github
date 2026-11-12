@@ -145,7 +145,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a review request after D",
-      diverges: "#108: a new request does not lift the done D stored",
       run: async (world, app) => {
         const pr = world.pullRequest();
         world.requestReview(pr, "alice", ME);
@@ -172,7 +171,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reply in my review thread after D",
-      diverges: "#108: the Open written on the reset is newer than the reply, which then no longer asks",
       run: async (world, app) => {
         const pr = world.pullRequest();
         world.review(pr, ME, "COMMENTED", { inline: [{ path: "a.ts", line: 1, body: "Why?" }] });
@@ -239,7 +237,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reopen by someone else after D asks alone; the mention D handled stays handled",
-      diverges: "#108: the reset drops what D handled, and the mention asks again",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.done(issue);
@@ -306,7 +303,6 @@ describe("rule 3: D on someone else's item files it; there is no stored done for
     },
     {
       situation: "D in the inbox stores no done",
-      diverges: "#106: it stores a done instead of filing",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.done(issue);
@@ -330,7 +326,6 @@ describe("rule 3, closed items", () => {
   walk([
     {
       situation: "D on a closed item with news in the inbox sets handled-until and writes no done",
-      diverges: "#106: it writes a stored done again (tick-update)",
       run: async (world, app) => {
         const issue = await handedOff(world, app);
         world.comment(issue, "alice", "Shipped.");

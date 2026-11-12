@@ -266,7 +266,7 @@ describe("Transferred issues", () => {
     expect(app.items.map((i) => [i.id, i.repo])).toEqual([[moved.id, "octo-org/portal"]]);
   });
 
-  it("keeps the viewer's status and its history across the transfer", async () => {
+  it("keeps what the viewer handled across the transfer", async () => {
     const { world, app } = sim;
     const issue = world.issue({ repo: "octo-org/docs" });
     world.comment(issue, "alice", "@octocat could you check the link?");
@@ -278,8 +278,8 @@ describe("Transferred issues", () => {
     await app.refresh();
 
     expect(app.viewOf(moved)).toBe("done");
-    expect(app.statuses.has(issue.id)).toBe(false);
-    expect(app.log.get(moved.id)?.map((c) => c.status)).toEqual(["done"]);
+    expect(app.handledUntil.has(issue.id)).toBe(false);
+    expect(app.handledUntil.has(moved.id)).toBe(true);
   });
 
   it("finds the transfer in a full fetch as well", async () => {

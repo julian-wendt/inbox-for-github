@@ -10,7 +10,7 @@ import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
 import { sameLogin } from "../timeline";
-import type { Item, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
+import type { Handoff, Item, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
 import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
@@ -83,6 +83,8 @@ export interface Inbox {
   resetStatuses: () => Promise<number>;
   /** Puts back a stored status exactly as it was, or none; for undoing a change with extras. */
   restoreStatus: (nodeId: string, previous: StoredStatus | undefined) => Promise<void>;
+  /** Replaces the hand-off snapshot of a stored "my part done", keeping its time and log. */
+  setHandoff: (nodeId: string, handoff: Handoff) => Promise<void>;
   /** The classification as of now, for code that runs later (an undo) and must not see the render that scheduled it. */
   classifiedNow: () => Classified[];
   /** The stored statuses per item id. */
@@ -652,6 +654,18 @@ export function useInbox(): Inbox {
   );
 
   /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
+  const setHandoff = useCallback(
+    async (nodeId: string, handoff: Handoff) => {
+      if (!store) return;
+      await store.setHandoff(nodeId, handoff);
+      setStatuses((current) => {
+        const stored = current.get(nodeId);
+        return stored ? new Map(current).set(nodeId, { ...stored, handoff }) : current;
+      });
+    },
+    [store],
+  );
+
   const restoreStatus = useCallback(
     async (nodeId: string, previous: StoredStatus | undefined) => {
       if (!store) return;
@@ -760,6 +774,7 @@ export function useInbox(): Inbox {
     handledUntil,
     setHandledUntil,
     restoreStatus,
+    setHandoff,
     statuses,
     writeFailures,
     logWriteFailure,

@@ -68,18 +68,12 @@ Independent of each other:
 Each line is an `it.fails` case in `src/behaviour.test.ts`, unless it says the case comes with
 its issue.
 
-- [#106](https://github.com/julian-wendt/inbox-for-github/issues/106) one handled-until: D in the
-  inbox stores a done on someone else's item instead of filing it; D on a closed item with news
-  waiting in the inbox writes a stored done again instead of setting handled-until.
 - The App wiring of F calling `unplan` and of T and P calling `followUpEnds` is not covered by the
   tests yet; #107 adds a real test for both.
 - [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
   item whose part is done replaces the hand-off.
 - [#108](https://github.com/julian-wendt/inbox-for-github/issues/108) returns only through asks:
-  a new review request does not lift a stored done; a thread reply after D brings the item back
-  for one pass only, as the Open written on the reset is newer than the reply, and then it shows
-  nowhere; a reopen by someone else asks only where a status is stored; a reset of a stored done
-  (e.g. by a reopen) makes the mention D had handled ask again; a due follow-up on a table item
-  ends without an ask.
+  a reopen by someone else asks only where a status is stored or the item was handled; a due
+  follow-up on a table item ends without an ask.
 - [#109](https://github.com/julian-wendt/inbox-for-github/issues/109) the Done bar: Done is still
   a view, without asks filed on assignments and with no limit of days.

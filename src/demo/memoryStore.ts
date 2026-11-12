@@ -1,4 +1,4 @@
-import type { Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
+import type { Handoff, Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 import { movedKeys, movedLists } from "../transfer";
 
@@ -85,6 +85,12 @@ export class MemoryStore implements Persistence {
     if (previous) this.statusMap.set(nodeId, previous);
     else this.statusMap.delete(nodeId);
     this.dropLastChange(nodeId);
+    return Promise.resolve();
+  }
+
+  setHandoff(nodeId: string, handoff: Handoff): Promise<void> {
+    const stored = this.statusMap.get(nodeId);
+    if (stored) this.statusMap.set(nodeId, { ...stored, handoff });
     return Promise.resolve();
   }
 

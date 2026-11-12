@@ -773,10 +773,18 @@ export default function App() {
     const previous = inbox.statuses.get(id);
     const plan = planStatus(c, status, me, bucket);
     if (!asks && needsAskChoice(c, status, me, bucket)) return setMenu({ entries: askChoiceEntries((choice) => applyStatus(c, status, choice)), fit: true, ...paneCenter(), centered: true });
-    if (plan.do === "file") {
-      const step = fileStep(c);
-      step.run();
-      return actions.announce(t("toast.filed", { number }), () => (step.undo(), takeBack(id)), step.run);
+    if (plan.do === "file" || plan.do === "tick-update") {
+      const ticking = plan.do === "tick-update";
+      // Ticking off an open item also takes a fresh snapshot, so board and pull request changes count from now.
+      const snapshot = ticking && !c.item.closed ? previous?.handoff : undefined;
+      const ends = plan.do === "file" && plan.unplan ? unplanStep([c]) : [];
+      const steps = [fileStep(c), ...(snapshot ? [{ run: () => void inbox.setHandoff(id, snapshotOf(c.item)), undo: () => void inbox.setHandoff(id, snapshot) }] : []), ...ends];
+      steps.forEach((s) => s.run());
+      return actions.announce(
+        ticking ? t("toast.updateDone", { number }) : replacing(t("toast.filed", { number }), ends.length > 0 ? endedPlan(c) : null),
+        () => (steps.forEach((s) => s.undo()), takeBack(id)),
+        () => steps.forEach((s) => s.run()),
+      );
     }
     // D ends a plan too, in the same toast and undo, unless the item keeps it (see `keepsItsPlan`).
     const ends = status === "done" && !keepsItsPlan(plan) ? unplanStep([c]) : [];
@@ -793,11 +801,6 @@ export default function App() {
     switch (plan.do) {
       case "resume":
         return change(t("toast.resumed", { number }), () => void inbox.clearStatus(id));
-      case "tick-update": {
-        const filing = fileStep(c);
-        const inInbox = bucket === "inbox";
-        return change(t("toast.updateDone", { number }), inInbox ? () => (hand(), filing.run()) : hand, inInbox ? filing.undo : undefined);
-      }
       case "hand-off": {
         moveOn(id);
         if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
@@ -812,7 +815,6 @@ export default function App() {
       case "blocked":
         return;
       case "set": {
-        // A plain done is what D stores on someone else's item; it handles the item's asks.
         const handling = plan.status === "done" ? [handled(c)] : [];
         if (ends.length === 0) return actions.apply(c, plan.status, undefined, handling);
         if (c.item.closed) return actions.notify(t("closed.noStatus", { number }));

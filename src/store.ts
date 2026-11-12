@@ -386,6 +386,11 @@ export class Store {
     await this.db.execute("DELETE FROM status_log WHERE id = (SELECT MAX(id) FROM status_log WHERE node_id = $1)", [nodeId]);
   }
 
+  /** Replaces the snapshot of a stored "my part done" and keeps its time; logs nothing (ticking off an update). */
+  async setHandoff(nodeId: string, handoff: Handoff): Promise<void> {
+    await this.db.execute("UPDATE item_status SET handoff = $2 WHERE node_id = $1", [nodeId, JSON.stringify(handoff)]);
+  }
+
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {
     await this.db.execute(
       `INSERT INTO item_status (node_id, status, changed_at, until, handoff) VALUES ($1, $2, $3, $4, $5)

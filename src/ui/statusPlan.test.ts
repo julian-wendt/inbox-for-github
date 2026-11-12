@@ -35,8 +35,8 @@ describe("planStatus", () => {
       expect(plan(entry({}, ["reopened"]), "inbox")).toEqual({ do: "clear" });
     });
 
-    it("sets an item outside the tables done, also with a mention", () => {
-      expect(plan(entry(others, ["mention"]), "inbox")).toEqual({ do: "set", status: "done" });
+    it("files an item outside the tables and ends its plan, also with a mention", () => {
+      expect(plan(entry(others, ["mention"]), "inbox")).toEqual({ do: "file", unplan: true });
     });
 
     it("ticks off an update, which files the other asks too", () => {
@@ -83,7 +83,7 @@ describe("planStatus", () => {
       expect(plan(entry(own), "planned")).toEqual({ do: "hand-off" });
       expect(plan(entry({ ...own, assignees: [], reasons: ["involved"] }), "planned")).toEqual({ do: "blocked" });
       expect(plan(entry({ ...own, kind: "pr" }), "planned")).toEqual({ do: "blocked" });
-      expect(plan(entry(others), "planned")).toEqual({ do: "set", status: "done" });
+      expect(plan(entry(others), "planned")).toEqual({ do: "file", unplan: true });
     });
   });
 
@@ -117,7 +117,6 @@ describe("doneAccess", () => {
   it("offers D alone for a closed item whose closing waits in the inbox", () => {
     const closed = entry({ author: ME, assignees: [], closed: { state: "closed", at: "2026-10-01T00:00:00Z" } }, ["closed"]);
     expect(doneAccess(closed, ME, "inbox")).toBe("closed");
-    expect(doneAccess({ ...closed, asks: [] }, ME, "inbox")).toBe("on");
   });
 });
 

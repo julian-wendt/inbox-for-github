@@ -3,7 +3,7 @@ import { assignedAgain, REOPEN_DEFAULT, reopenedByOther, reopens, snoozeEnded } 
 import { pushedSinceReview, reviewAnswered } from "./review";
 import { RULES, type Rule } from "./rules";
 import { closedByOther, feedbackSince, lastAnswerAt, threadReply, type Feedback, type FeedbackMode } from "./feedback";
-import { lastReplyAt, latest, mentionsOf, sameLogin, type Mention } from "./timeline";
+import { lastPostByOthers, lastReplyAt, latest, mentionsOf, sameLogin, type Mention } from "./timeline";
 import { updatesSince, type Update } from "./handoff";
 
 /**
@@ -84,7 +84,9 @@ export interface Classified {
  *    what was answered before it asks again (`reopened`), and what was pending asks again at its
  *    time, handled-until or not. A follow-up whose date passed does the same at its date, before
  *    the Open is written. With `reviewOnCommits`, a push by someone else since the viewer's last
- *    review or comment asks again (`commits`). An assignment alone is no such ask.
+ *    review or comment asks again (`commits`). With `reopenOn` "any-post", a post by someone else
+ *    newer than handled-until asks again (`reopened`) outside the tables. An assignment alone is
+ *    no such ask.
  * 2b. Handled-until (D, P, T and F set it) answers the asks from before it: only an ask that
  *    came later shows the item in the inbox. With none, a `planned` item stays in its table
  *    ("assigned", "authored") or goes to "planned", which only the Planned view shows; answering
@@ -158,7 +160,9 @@ export function classify(
   const requestedBy = requesterOf(item, me);
   const assignedBy = assignerOf(item, me);
   const ghReopen = reopenedByOther(item, me);
-  const reopenedOnGitHub = !!stored && !!ghReopen && ghReopen > (lastReplyAt(item, me) ?? "") && (stored.status === "open" || ghReopen > stored.changedAt);
+  // Without a stored status, a reopen asks only once the viewer handled the item (#108 widens it).
+  const afterHandling = !!ghReopen && (stored ? stored.status === "open" || ghReopen > stored.changedAt : !!handledUntil && ghReopen > handledUntil);
+  const reopenedOnGitHub = afterHandling && ghReopen > (lastReplyAt(item, me) ?? "");
   const result = { item, mention, statusReset, ...(renewed && { renewed }), statusAt: effective?.changedAt ?? null, ...(effective?.until && { until: effective.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   if (effective && tableSnooze) {
@@ -198,10 +202,13 @@ export function classify(
   if (feedback) asks.push("feedback");
   if (reply && (!reopenedAt || reply.at > reopenedAt)) asks.push("reply");
   if (reopenedOnGitHub && !asks.includes("reopened")) asks.push("reopened");
+  const postedAt = reopenOn === "any-post" && !inTable && handledUntil ? lastPostByOthers(item, me) : null;
+  const newPost = postedAt && postedAt > handledUntil! && postedAt !== mention?.at ? postedAt : undefined;
+  if (newPost && !asks.includes("reopened")) asks.push("reopened");
 
   // Handled-until answers what came before it; an ask of unknown time counts as handled.
   const askedAt = (ask: Ask): string | undefined =>
-    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (reopenedAt ?? ghReopen ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
+    ask === "mention" ? mention?.at : ask === "review" ? lastRequest(item, me)?.at : ask === "commits" ? pushed?.at : ask === "reopened" ? (latest(reopenedAt ?? ghReopen, newPost) ?? undefined) : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : undefined;
   const fresh = seenAt ? asks.filter((ask) => (askedAt(ask) ?? "") > seenAt) : asks;
   const parked = fresh.length < asks.length;
   const shown = parked ? { ...result, mention: fresh.includes("mention") ? mention : null } : result;
@@ -236,7 +243,7 @@ export function classify(
  */
 function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: Rule[], askRules: AskRules, seenAt?: string): Classified {
   const since = stored.changedAt;
-  const updates = updatesSince(item, me, since, stored.handoff!);
+  const updates = updatesSince(item, me, latest(since, seenAt) ?? since, stored.handoff!);
   const unfiled = (at: string) => at > (seenAt ?? "");
   const pending = pendingMention(item, rules, { me });
   const mention = pending && unfiled(pending.at) ? pending : null;
