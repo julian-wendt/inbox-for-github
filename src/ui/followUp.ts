@@ -31,6 +31,17 @@ export function isWaiting(entry: Pick<Classified, "status" | "item">): boolean {
 }
 
 /**
+ * Whether an item shows the "Remind me" bell: its follow-up has it and still waits, or rings now.
+ * D, X and a follow-up set anew without it take it off.
+ *
+ * @example
+ *   remindsMe({ notify: true, status: "snoozed", item, asks: [] }); // true
+ */
+export function remindsMe(entry: Pick<Classified, "notify" | "status" | "item" | "asks">): boolean {
+  return !!entry.notify && (isWaiting(entry) || entry.asks.includes("due"));
+}
+
+/**
  * What the row of a follow-up with a date shows at its end instead of its age: when it comes
  * back (see `untilShort`), with the full time as tooltip. Nothing without a date.
  *

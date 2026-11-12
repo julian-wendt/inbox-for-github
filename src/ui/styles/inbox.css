@@ -355,6 +355,12 @@
   align-items: center;
 }
 
+/* The "Remind me" bell beside a follow-up's date, in the text's color (see `NotifyMark`). */
+.notify-mark {
+  display: inline-flex;
+  flex: none;
+}
+
 .inbox-empty {
   display: grid;
   flex: 1;
@@ -801,6 +807,19 @@
 
 .when-times .table-update {
   width: 54px;
+}
+
+/* The same plus the "Remind me" bell (12px and its gap) when a row has one. */
+.when-bell .table-update {
+  width: 52px;
+}
+
+.when-bell.when-times .table-update {
+  width: 70px;
+}
+
+.when-bell.when-days .table-update {
+  width: 100px;
 }
 
 /* The detail as a pop-up above the table */

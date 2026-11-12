@@ -18,11 +18,11 @@ import { useGutter } from "../useGutter";
 import { useSearchDock } from "../useSearchDock";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { followUpWhen, rowWhen, type RowWhen } from "../followUp";
+import { followUpWhen, remindsMe, rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../useViewLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
+import { EventMark, KindIcon, NotifyMark, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -122,7 +122,8 @@ export function AssignedTable(props: Props) {
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
   // One width for the whole end column, so the attribute chips end at the same place on every row.
-  const whenColumn = props.mode === "planned" ? " when-days" : groups.some((g) => g.entries.some((e) => followUpWhen(e))) ? " when-times" : "";
+  const whenWidth = props.mode === "planned" ? " when-days" : groups.some((g) => g.entries.some((e) => followUpWhen(e))) ? " when-times" : "";
+  const whenColumn = whenWidth + (groups.some((g) => g.entries.some(remindsMe)) ? " when-bell" : "");
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -358,6 +359,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       <time className="table-update" title={when?.title ?? assignedTitle ?? opened}>
         {when && <WhenIcon when={when} />}
         {when?.text ?? compactAgo(assignment?.at ?? item.createdAt)}
+        <NotifyMark entry={entry} />
       </time>
     </div>
   );

@@ -1,9 +1,9 @@
-import { CalendarClock, CalendarDays, CircleDot, GitPullRequest, RotateCw, X } from "lucide-react";
+import { Bell, CalendarClock, CalendarDays, CircleDot, GitPullRequest, RotateCw, X } from "lucide-react";
 import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
-import { followUpOf, type RowWhen } from "../followUp";
+import { followUpOf, remindsMe, type RowWhen } from "../followUp";
 import { datedText, eventText, type Dated } from "../plan";
 import { reminderText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
@@ -36,7 +36,7 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
  * @example
  *   <FollowUpChip entry={entry} onRemove={() => remove(entry)} /> // [clock] Mon, 26 Oct, 09:00 [×]
  */
-export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until">; onRemove?: () => void }) {
+export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until" | "item" | "asks" | "notify">; onRemove?: () => void }) {
   const followUp = followUpOf(entry);
   if (!followUp) return null;
   const text = reminderText(followUp.at);
@@ -44,6 +44,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
     <span className="chip" title={t("snooze.reminderAt", { until: text })}>
       <StatusIcon status="snoozed" size={13} />
       {text}
+      <NotifyMark entry={entry} />
       {onRemove && (
         <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>
           <X size={12} />
@@ -69,6 +70,23 @@ export function EventMark({ dated, className }: { dated: Dated; className: strin
     <span className={`${className} event-mark`} title={event.title} aria-label={event.title}>
       <CalendarClock size={13} strokeWidth={1.75} aria-hidden />
       {event.text && <span>{event.text}</span>}
+    </span>
+  );
+}
+
+/**
+ * The bell of a follow-up with "Remind me" (see `remindsMe`), beside its date, in the text's
+ * color; nothing without it.
+ *
+ * @example
+ *   <NotifyMark entry={entry} /> // [bell], "Remind me: a notification when it comes due" as tooltip
+ */
+export function NotifyMark({ entry }: { entry: Pick<Classified, "notify" | "status" | "item" | "asks"> }) {
+  if (!remindsMe(entry)) return null;
+  const label = t("snooze.notifyMark");
+  return (
+    <span className="notify-mark" title={label} aria-label={label}>
+      <Bell size={12} strokeWidth={1.75} aria-hidden />
     </span>
   );
 }
