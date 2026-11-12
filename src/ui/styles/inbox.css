@@ -295,8 +295,7 @@
   background: var(--hover);
 }
 
-.inbox-row.selected,
-.inbox-row.marked {
+.inbox-row.selected {
   background: var(--selected);
 }
 
@@ -594,18 +593,8 @@
   background: var(--hover);
 }
 
-.table-row.selected,
-.table-row.marked {
+.table-row.selected {
   background: var(--selected);
-}
-
-.marked-chip {
-  gap: 4px;
-  cursor: pointer;
-}
-
-.marked-chip:hover {
-  background: var(--hover);
 }
 
 .table-number {

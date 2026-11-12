@@ -61,7 +61,7 @@ import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
 import { pickRepo } from "./ui/repoSelection";
 import { useStatusActions } from "./ui/useStatusActions";
-import { markedIn, markRange, toggleMark } from "./ui/marks";
+import { markedIn } from "./ui/marks";
 import { authoredCount, groupAuthored } from "./ui/authored";
 import { setLogContext } from "./log";
 import { unreadAssignment, unreadInInbox } from "./ui/unread";
@@ -341,25 +341,6 @@ export default function App() {
   const [marks, setMarks] = useState<Set<string>>(new Set());
   const marked = useMemo(() => markedIn(marks, ids).flatMap((id) => entries.filter((c) => c.item.id === id)), [marks, ids, entries]);
   const clearMarks = () => marks.size > 0 && setMarks(new Set());
-  /** ⌘-click toggles an item, ⇧-click marks the range from the selected one; marking starts from the selected item. */
-  const mark = (id: string, range: boolean) => {
-    const cursor = selection.selected;
-    setMarks((m) => {
-      const base = m.size === 0 && cursor && !isBar(cursor) && cursor !== id ? new Set([cursor]) : m;
-      return range ? markRange(base, ids, cursor, id) : toggleMark(base, id);
-    });
-    selection.select(id);
-  };
-  /** ⇧↑/⇧↓: moves the selection and marks everything passed on the way. */
-  const extend = (offset: number) => {
-    const from = selection.selected;
-    const at = from ? ids.indexOf(from) : -1;
-    const to = ids[Math.max(0, Math.min(ids.length - 1, at + offset))];
-    if (!to) return;
-    setMarks((m) => markRange(m, ids, from, to));
-    selection.select(to);
-    keyboardOwnsPopup();
-  };
   const step = (offset: number) => {
     clearMarks();
     selection.move(offset);
@@ -1226,8 +1207,8 @@ export default function App() {
 
   useHotkeys(
     {
-      ArrowDown: (e) => (e.shiftKey ? extend(1) : step(1)),
-      ArrowUp: (e) => (e.shiftKey ? extend(-1) : step(-1)),
+      ArrowDown: () => step(1),
+      ArrowUp: () => step(-1),
       // With items marked, D, O, F, X, U, R, ⌃A and ⌃U act on all of them; an open pop-up keeps the keys for its item.
       d: onMarks ? () => bulkStatus("done") : withCurrent((c) => applyStatus(c, "done")),
       f: onMarks ? openBulkTimes : withCurrent(snooze),
@@ -1394,9 +1375,6 @@ export default function App() {
             selection.select(id);
           }}
           onOpen={() => setPopup("pointer")}
-          marks={marks}
-          onMark={mark}
-          onClearMarks={() => setMarks(new Set())}
         />
       ) : (
         <InboxList
@@ -1442,9 +1420,6 @@ export default function App() {
             selection.select(id);
           }}
           onOpen={(c) => void openUrl(c.item.url)}
-          marks={marks}
-          onMark={mark}
-          onClearMarks={() => setMarks(new Set())}
         />
       )}
       <div className="resizer-slot sidebar-edge">

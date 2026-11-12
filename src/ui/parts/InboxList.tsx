@@ -17,7 +17,6 @@ import { useGutter } from "../useGutter";
 import { useScrollToBar } from "../useScrollIntoView";
 import { useSearchDock } from "../useSearchDock";
 import { InboxRow } from "./InboxRow";
-import { MarkedChip } from "./MarkedChip";
 import { LayoutSwitch } from "./LayoutSwitch";
 import { HeaderMenu } from "./HeaderMenu";
 import type { MenuEntry } from "./ContextMenu";
@@ -56,10 +55,6 @@ interface Props {
   avatars: boolean;
   onSelect: (id: string) => void;
   onOpen: (entry: Classified) => void;
-  /** Items marked for acting on several at once; ⌘-click toggles one (`range` false), ⇧-click a range. */
-  marks: ReadonlySet<string>;
-  onMark: (id: string, range: boolean) => void;
-  onClearMarks: () => void;
   /** Right click on a row: selects it and opens its context menu at the pointer. */
   onMenu: (entry: Classified, e: React.MouseEvent) => void;
   /** Items per view for the current selection, to point an empty view to the others. */
@@ -80,7 +75,7 @@ interface Props {
   onJump: (bucket: View) => void;
 }
 
-export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, avatars, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, marks, onMark, onClearMarks, search, onSearch, searchCount, searchRef }: Props) {
+export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, avatars, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, search, onSearch, searchCount, searchRef }: Props) {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const empty = useRef<HTMLDivElement>(null);
@@ -124,7 +119,6 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
     <section className="inbox" ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{title}</h1>
-        <MarkedChip count={marks.size} onClear={onClearMarks} />
         <span className="header-controls" aria-hidden />
         <span className="header-compact">
           <HeaderMenu icon={<ListFilter size={13} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} />
@@ -218,13 +212,11 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       key={entry.item.id}
                       entry={entry}
                       selected={entry.item.id === selected}
-                      marked={marks.has(entry.item.id)}
                       unread={(bucket === "inbox" || byReturn) && unread.has(entry.item.id)}
                       dated={bucket === "planned" ? undefined : (dated ?? undefined)}
                       event={dated ?? undefined}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
                       when={rowWhen(entry, dated, bucket === "planned")}
-                      onMark={(range) => onMark(entry.item.id, range)}
                       avatar={avatars}
                       onSelect={() => onSelect(entry.item.id)}
                       onOpen={() => onOpen(entry)}

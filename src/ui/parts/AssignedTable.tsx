@@ -16,7 +16,6 @@ import { Elsewhere } from "./Elsewhere";
 import { HeaderMenu } from "./HeaderMenu";
 import { useGutter } from "../useGutter";
 import { useSearchDock } from "../useSearchDock";
-import { MarkedChip } from "./MarkedChip";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
 import { followUpWhen, rowWhen, type RowWhen } from "../followUp";
@@ -101,10 +100,6 @@ interface Props {
   onSelect: (id: string) => void;
   /** Opens the item in the pop-up detail. */
   onOpen: (id: string) => void;
-  /** Items marked for acting on several at once; ⌘-click toggles one (`range` false), ⇧-click a range. */
-  marks: ReadonlySet<string>;
-  onMark: (id: string, range: boolean) => void;
-  onClearMarks: () => void;
   /** Right click on a row: selects it and opens its context menu at the pointer. */
   onMenu: (entry: Classified, e: React.MouseEvent) => void;
   /** Items per view for the current selection, to point an empty table to the other views. */
@@ -142,8 +137,6 @@ export function AssignedTable(props: Props) {
         statusMap={statusMap}
         fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me, movesUp), marked: props.unreadMarks.has(entry.item.id) }}
         selected={entry.item.id === selected}
-        marked={props.marks.has(entry.item.id)}
-        onMark={(range) => props.onMark(entry.item.id, range)}
         showOpened={props.showOpened}
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
         event={dated ?? undefined}
@@ -195,7 +188,6 @@ export function AssignedTable(props: Props) {
     <section className={`assigned${whenColumn}`} ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{props.title}</h1>
-        <MarkedChip count={props.marks.size} onClear={props.onClearMarks} />
         <span className="header-controls" aria-hidden />
         <HeaderMenu icon={<IterationCw size={13} />} label={sprintLabel} title={t("sprint.title")} entries={sprintEntries} disabled={props.sprints.length === 0} />
         <div className="segmented compact" role="radiogroup" aria-label={t("list.kind")}>
@@ -298,9 +290,6 @@ interface RowProps {
   /** New assignment, new activity, or marked unread by hand; any of them prints the row bold. */
   fresh: { assignment: boolean; activity: boolean; marked: boolean };
   selected: boolean;
-  /** Marked with others; a click with ⌘ or ⇧ marks instead of opening. */
-  marked: boolean;
-  onMark: (range: boolean) => void;
   showOpened: boolean;
   /** Pinned for today or planned for a day: the day as a blue badge after the title; left out in Planned, whose end column names it. */
   dated?: Dated;
@@ -316,7 +305,7 @@ interface RowProps {
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, marked, onMark, showOpened, dated, event, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, showOpened, dated, event, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(dateLocale(), { dateStyle: "medium", timeStyle: "short" });
@@ -326,16 +315,11 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
   const dotText = fresh.activity ? "plate.newDot" : fresh.assignment ? "plate.newAssignmentDot" : "row.unread";
   return (
     <div
-      className={`table-row${selected ? " selected" : ""}${marked ? " marked" : ""}${fresh.assignment || fresh.activity || fresh.marked ? " unread" : ""}`}
+      className={`table-row${selected ? " selected" : ""}${fresh.assignment || fresh.activity || fresh.marked ? " unread" : ""}`}
       data-id={item.id}
       role="button"
       tabIndex={-1}
-      onMouseDown={(e) => {
-        if (e.button !== 0) return;
-        if (!e.metaKey && !e.shiftKey) return onOpen();
-        e.preventDefault();
-        onMark(e.shiftKey);
-      }}
+      onMouseDown={(e) => e.button === 0 && onOpen()}
       onContextMenu={onMenu}
       ref={ref}
     >

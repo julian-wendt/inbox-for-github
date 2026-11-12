@@ -14,8 +14,6 @@ import type { RowWhen } from "../followUp";
 interface Props {
   entry: Classified;
   selected: boolean;
-  /** Marked with others; a click with ⌘ or ⇧ marks instead of selecting. */
-  marked: boolean;
   /** Not opened since what put it here; the title prints bold. */
   unread: boolean;
   /** Pinned for today (T) or planned for a day (P): the day in the context line. */
@@ -26,7 +24,6 @@ interface Props {
   carriedSince?: string;
   /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
   when?: RowWhen;
-  onMark: (range: boolean) => void;
   avatar: boolean;
   onSelect: () => void;
   onOpen: () => void;
@@ -39,7 +36,7 @@ interface Props {
   still: boolean;
 }
 
-export function InboxRow({ entry, selected, marked, unread, dated, event, carriedSince, when, onMark, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
+export function InboxRow({ entry, selected, unread, dated, event, carriedSince, when, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
   const { item, mention, status } = entry;
   const person = mention?.by ?? item.author;
   const ref = useScrollIntoView<HTMLLIElement>(selected);
@@ -51,16 +48,11 @@ export function InboxRow({ entry, selected, marked, unread, dated, event, carrie
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, x: -24, transition: { duration: 0.16 } }}
       transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-      className={`inbox-row${selected ? " selected" : ""}${marked ? " marked" : ""}${unread ? " unread" : ""}`}
-      aria-selected={selected || marked}
+      className={`inbox-row${selected ? " selected" : ""}${unread ? " unread" : ""}`}
+      aria-selected={selected}
       data-id={item.id}
       title={`${item.repo}#${item.number}`}
-      onMouseDown={(e) => {
-        if (e.button !== 0) return;
-        if (!e.metaKey && !e.shiftKey) return onSelect();
-        e.preventDefault();
-        onMark(e.shiftKey);
-      }}
+      onMouseDown={(e) => e.button === 0 && onSelect()}
       onDoubleClick={onOpen}
       onContextMenu={onMenu}
       ref={ref}
