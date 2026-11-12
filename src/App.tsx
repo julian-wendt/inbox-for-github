@@ -49,7 +49,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
-import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, todayOf, unplan, withEvent, withPin, withPlan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { unseenSettings } from "./ui/newSettings";
@@ -431,17 +431,10 @@ export default function App() {
 
   const pinnable = isPinnable;
   const toggleFocus = (c: Classified, extra: Step[] = []) => {
-    const { focus } = inbox.settings;
-    const on = focus.includes(c.item.id);
+    const on = inbox.settings.focus.includes(c.item.id);
     const previous = todayOf(inbox.settings);
     const at = new Date().toISOString();
-    const next: Today = {
-      focus: on ? focus.filter((id) => id !== c.item.id) : [...focus, c.item.id],
-      focusDay: localDay(),
-      planned: setPlan(inbox.settings.planned, c.item.id, null),
-      pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
-      plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: at },
-    };
+    const next = on ? { ...unplan(previous, [c.item.id]), focusDay: localDay() } : withPin(previous, c.item.id, localDay(), at);
     const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
@@ -456,7 +449,7 @@ export default function App() {
     undo: () => void inbox.updateSettings((s) => ({ ...s, ...retouch(todayOf(s), ids, previous) })),
   });
   /** An item has one "when": a plan or Today pin on a follow-up ends it, as a step; none when there is no follow-up. */
-  const followUpEnds = (c: Classified) => (c.status === "snoozed" ? [followUpStep(c)] : []);
+  const followUpEnds = (c: Classified) => (isWaiting(c) ? [followUpStep(c)] : []);
   /** What a plan or pin ends for the toast: the item's follow-up, with its date when it has one. */
   const endedFollowUp = (c: Classified) => (c.status !== "snoozed" ? null : c.until ? t("replaced.followUpAt", { until: untilText(c.until) }) : t("replaced.followUp"));
   /** What a follow-up ends for the toast: the item's Today pin or its plan. */
@@ -471,13 +464,7 @@ export default function App() {
   const planFor = (c: Classified, day: string | null, text: string, extra: Step[] = []) => {
     const previous = todayOf(inbox.settings);
     const at = new Date().toISOString();
-    const next: Today = {
-      focus: inbox.settings.focus.filter((id) => id !== c.item.id),
-      focusDay: inbox.settings.focusDay,
-      planned: setPlan(inbox.settings.planned, c.item.id, day),
-      pinnedOn: without(inbox.settings.pinnedOn, c.item.id),
-      plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: at } : without(inbox.settings.plannedAt, c.item.id),
-    };
+    const next = withPlan(previous, c.item.id, day, at);
     const events = day ? eventMoves(c, day) : eventEnds([c]);
     const steps = [todayStep([c.item.id], previous, next), ...(day ? [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c)] : []), ...events, ...extra];
     for (const s of steps) s.run();

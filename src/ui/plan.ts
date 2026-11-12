@@ -247,6 +247,34 @@ export function keepsPlan(entry: Pick<Classified, "status" | "item" | "updates">
 }
 
 /**
+ * Today with the item pinned for `day` (T), off any plan it had; Today then stands for `day`.
+ * What else Today holds stays. A follow-up the item had ends as well, which is the caller's.
+ *
+ * @param at  When it was pinned (ISO 8601), kept in `plannedAt`.
+ *
+ * @example
+ *   withPin(todayOf(settings), "I_1", "2026-11-12", "2026-11-12T09:00:00Z"); // focus [..., "I_1"], pinnedOn { I_1: "2026-11-12" }
+ */
+export function withPin(state: Today, id: string, day: string, at: string): Today {
+  const rest = unplan(state, [id]);
+  return { ...rest, focus: [...rest.focus, id], focusDay: day, pinnedOn: { ...rest.pinnedOn, [id]: day }, plannedAt: { ...rest.plannedAt, [id]: at } };
+}
+
+/**
+ * Today with the item planned for `day` (P) and out of the pins, or with its plan taken off when
+ * `day` is null. A follow-up the item had ends as well, which is the caller's.
+ *
+ * @param at  When it was planned (ISO 8601), kept in `plannedAt`.
+ *
+ * @example
+ *   withPlan(todayOf(settings), "I_1", "2026-11-16", "2026-11-12T09:00:00Z"); // planned [..., { id: "I_1", day: "2026-11-16" }]
+ */
+export function withPlan(state: Today, id: string, day: string | null, at: string): Today {
+  const rest = unplan(state, [id]);
+  return day ? { ...rest, planned: [...rest.planned, { id, day }], plannedAt: { ...rest.plannedAt, [id]: at } } : rest;
+}
+
+/**
  * Today without the items: their pins, plans and times go, as when a follow-up takes an item's
  * "when". The day Today stands for stays.
  *

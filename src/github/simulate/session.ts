@@ -1,4 +1,4 @@
-import { datedOf } from "../../ui/plan";
+import { datedOf, isPinnable, unplan, withPin, withPlan, type Today } from "../../ui/plan";
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
 import { afterFollowUp, snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
@@ -6,7 +6,7 @@ import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
-import { leaveClears, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
+import { leaveClears, localDay, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
@@ -57,8 +57,10 @@ export class InboxSession {
   readonly settings: Required<SessionSettings>;
   /** The "filedAt" setting: when D last filed an item's asks without finishing it. */
   readonly filedAt = new Map<string, string>();
-  /** Handled-until per item, as `useInbox().handledUntil`: D in the inbox and F set it; the session has no plans. */
+  /** Handled-until per item, as `useInbox().handledUntil`: D in the inbox, P, T and F set it. */
   readonly handledUntil = new Map<string, string>();
+  /** The pins and plans, as the settings hold them (see `todayOf`): T and P set them, F takes the item out. */
+  today: Today = { focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {} };
   private last: { fetchedAt: Date; fullAt: Date; key: string } | null = null;
   private undoStep: (() => void) | null = null;
 
@@ -176,7 +178,9 @@ export class InboxSession {
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
     const handledBefore = this.handledUntil.get(ref.id);
+    const todayBefore = this.today;
     const restore = () => {
+      this.today = todayBefore;
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
       else this.statuses.delete(ref.id);
@@ -216,6 +220,8 @@ export class InboxSession {
         if (c.item.closed || (c.status === plan.status && until === undefined)) return;
         this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "") : {});
         if (plan.status !== "open") this.handledUntil.set(ref.id, this.world.stamp());
+        // F, as `App.followUp`: an item has one when.
+        if (plan.status === "snoozed") this.today = unplan(this.today, [ref.id]);
         break;
       case "none":
         return;
@@ -229,6 +235,16 @@ export class InboxSession {
 
   open(ref: Ref): void {
     this.choose(ref, "open");
+  }
+
+  /** T on an item not pinned yet, as `App.toggleFocus`: pinned for today and handled; a follow-up ends. */
+  pin(ref: Ref): void {
+    this.when(ref, (at) => withPin(this.today, ref.id, localDay(this.world.now), at));
+  }
+
+  /** P for `day` (a local date such as "2026-11-16"), as `App.planFor`: planned and handled; a follow-up ends. */
+  plan(ref: Ref, day: string): void {
+    this.when(ref, (at) => withPlan(this.today, ref.id, day, at));
   }
 
   /** F with a time (or without): the item waits for a follow-up, in place if it belongs to a table. */
@@ -245,6 +261,16 @@ export class InboxSession {
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
     };
+  }
+
+  /** A new pin or plan, where T and P take the item (see `isPinnable`); its follow-up ends, as `App.followUpEnds` has it. */
+  private when(ref: Ref, next: (at: string) => Today): void {
+    const c = this.entry(ref);
+    if (!isPinnable(c)) return;
+    const at = this.world.stamp();
+    this.today = next(at);
+    this.handledUntil.set(ref.id, at);
+    if (isWaiting(c)) this.endFollowUp(ref.id);
   }
 
   /** What `Store.endFollowUp` does on the session's map. */
@@ -271,7 +297,8 @@ export class InboxSession {
     const list = () =>
       withinClosedWindow(this.items, this.settings.closedDays, this.nowMs).map((raw) => {
         const item = directOnly(raw, this.me, this.settings.directOnly);
-        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, this.handledUntil.get(item.id), this.settings.askRules);
+        const dated = this.today.focus.includes(item.id) || this.today.planned.some((p) => p.id === item.id);
+        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, this.handledUntil.get(item.id), this.settings.askRules, dated);
       });
     for (let pass = 0; pass < 3; pass++) {
       let changed = false;
@@ -301,7 +328,7 @@ export class InboxSession {
       inbox: ids((c) => c.bucket === "inbox"),
       assigned: ids((c) => onPlate(c, this.me)),
       authored: ids((c) => isOwnOpen(c, this.me)),
-      planned: ids((c) => datedOf(c, [], []) !== null),
+      planned: ids((c) => datedOf(c, this.today.focus, this.today.planned, localDay(this.world.now)) !== null),
       snoozed: ids(isWaiting),
       done: ids((c) => c.bucket === "done"),
     };

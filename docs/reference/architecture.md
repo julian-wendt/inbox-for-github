@@ -100,7 +100,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   table marked with its day; a mention, review request, push or reopen since brings it back, and
   answering it takes it out again without ending the plan. D and closing on GitHub end it. Each
   morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
-  follow-up, F ends a plan or pin (`unplan`).
+  follow-up (`withPin`, `withPlan`, `followUpEnds`), F ends a plan or pin (`unplan`).
 - Unassigned, the handoff no longer counts: the item sorts as if no status, or only its follow-up, were stored.
 - A closed or merged item is in Done when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
