@@ -70,7 +70,7 @@ import "./ui/styles/inbox.css";
 import "./ui/styles/detail.css";
 import "./ui/styles/palette.css";
 
-type Dialog = "settings" | "palette" | "help" | "rules" | null;
+type Dialog = "settings" | "palette" | "help" | "rules" | "keys" | null;
 
 const NO_HISTORY: StatusChange[] = [];
 const NO_FAILURES: WriteFailure[] = [];
@@ -1128,7 +1128,7 @@ export default function App() {
         searchRef.current.focus();
         searchRef.current.select();
       },
-      "?": () => setDialog("help"),
+      "?": () => setDialog("keys"),
       ...Object.fromEntries(views.map((b, i) => [String(i + 1), () => setBucket(b.id)])),
     },
     dialog === null && !welcome && !calendarFor && !pickingDate,
@@ -1204,7 +1204,7 @@ export default function App() {
         onStop={inbox.stopRefresh}
         onSettings={() => setDialog("settings")}
         settingsNew={unseenSettings(seenSettings.seen).length > 0}
-        onRules={() => setDialog("rules")}
+        onRules={() => setDialog("help")}
       />
       {table ? (
         <AssignedTable
@@ -1442,14 +1442,14 @@ export default function App() {
           onRedoSteps={actions.redoSteps}
           onSwitchDemo={canSwitchDemo() ? switchDemo : undefined}
           demo={isDemo()}
-          onHelp={() => setDialog("help")}
+          onHelp={() => setDialog("keys")}
           onRules={() => setDialog("rules")}
           onResetFilters={resetFilters}
         />
       )}
-      {(dialog === "help" || dialog === "rules") && (
+      {(dialog === "help" || dialog === "rules" || dialog === "keys") && (
         <Help
-          tab="basics"
+          tab={dialog === "help" ? "guide" : dialog}
           reopenOn={inbox.settings.reopenOn}
           refreshMinutes={inbox.settings.refreshMinutes}
           onClose={() => setDialog(null)}

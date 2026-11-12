@@ -7,9 +7,19 @@ import { t, type MessageKey } from "../i18n";
 import { VIEWS } from "../labels";
 import { useGutter } from "../useGutter";
 
-export type HelpTab = "rules" | "keys" | "basics";
+export type HelpTab = "guide" | "rules" | "keys" | "basics";
 
-const TABS: HelpTab[] = ["basics", "rules", "keys"];
+const TABS: HelpTab[] = ["guide", "rules", "keys", "basics"];
+
+/** The guide's views in reading order, each with the keys it explains; the Done bar is no view. */
+const GUIDE: { id: "inbox" | "assigned" | "authored" | "planned" | "snoozed" | "done"; keys: ("d" | "f" | "pt" | "x")[]; enter?: "list" | "table" }[] = [
+  { id: "inbox", keys: ["d", "f", "pt", "x"], enter: "list" },
+  { id: "assigned", keys: ["d", "f", "pt", "x"], enter: "table" },
+  { id: "authored", keys: ["d", "f", "pt", "x"], enter: "table" },
+  { id: "planned", keys: ["d", "f", "pt", "x"], enter: "list" },
+  { id: "snoozed", keys: ["d", "f", "pt", "x"], enter: "list" },
+  { id: "done", keys: ["f"] },
+];
 
 /** "–" spans a range; a "/" between keys means "or", a "/" at the end is the slash key itself. */
 const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey][] }[] = [
@@ -18,7 +28,7 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
     keys: [
       [["↓"], "keys.next"],
       [["↑"], "keys.previous"],
-      [["1", "–", "6"], "keys.bucket"],
+      [["1", "–", String(VIEWS.length)], "keys.bucket"],
       [["⌘", "T"], "keys.kind"],
       [["⌘", "G"], "keys.grouping"],
       [["Esc"], "keys.escape"],
@@ -66,8 +76,9 @@ const SYNCS = ["full", "delta", "item", "view", "boards"] as const;
 const BASICS = ["local", "history", "token", "why", "filter", "attention"] as const;
 
 /**
- * The help dialog in three tabs: how the app sorts items into its views (following the reopen
- * setting), every keyboard shortcut by group, and the basics of where data comes from and stays.
+ * The help dialog in four tabs: a guide to what each view is for and what D, F, P, T, X and Enter
+ * do there, how the app sorts items into its views (following the reopen setting), every keyboard
+ * shortcut by group, and the basics of where data comes from and stays.
  * Closes on Escape or a click outside.
  *
  * @param tab             The tab to open on.
@@ -113,6 +124,23 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
         </div>
 
         <div className="help-body" role="tabpanel" ref={body}>
+          {tab === "guide" && (
+            <>
+              {GUIDE.map(({ id, keys, enter }) => (
+                <section key={id}>
+                  <strong>{t(`bucket.${id}`)}:</strong> {t(`guide.${id}.intent`)}
+                  <ul>
+                    {keys.map((k) => (
+                      <li key={k}>{t(`guide.${id}.${k}` as MessageKey)}</li>
+                    ))}
+                    {enter && <li>{t(`guide.enter.${enter}`)}</li>}
+                  </ul>
+                </section>
+              ))}
+              <small>{t("guide.keys.link")}</small>
+            </>
+          )}
+
           {tab === "rules" &&
             VIEWS.map((b) => {
               const help = bucketHelp(b.id, reopenOn);
