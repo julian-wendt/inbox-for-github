@@ -86,7 +86,7 @@ describe("seenStep", () => {
 
   it("marks the open item seen, undo restores its read state, redo marks it again", () => {
     const { calls, markSeen, restoreRead } = recorded();
-    const before = { seen: "2026-10-20T00:00:00Z", mark: "2026-10-21T00:00:00Z" };
+    const before = { seen: "2026-10-20T00:00:00Z" };
     const [step] = seenStep("I_1", "I_1", before, markSeen, restoreRead);
     step.run();
     step.undo();
@@ -98,5 +98,10 @@ describe("seenStep", () => {
     const { markSeen, restoreRead } = recorded();
     expect(seenStep("I_1", undefined, {}, markSeen, restoreRead)).toEqual([]);
     expect(seenStep("I_1", "I_2", {}, markSeen, restoreRead)).toEqual([]);
+  });
+
+  it("keeps an unread mark set by hand", () => {
+    const { markSeen, restoreRead } = recorded();
+    expect(seenStep("I_1", "I_1", { seen: "2026-10-20T00:00:00Z", mark: "2026-10-21T00:00:00Z" }, markSeen, restoreRead)).toEqual([]);
   });
 });

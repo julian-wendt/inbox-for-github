@@ -44,7 +44,8 @@ export interface ReadState {
 
 /**
  * P, T and F count as seen, but only on the item that is open (the list's detail or a table's
- * pop-up); a table row that is only selected stays unread. As an undo step: `run` marks it seen,
+ * pop-up); a table row that is only selected stays unread, and so does an item marked unread by hand,
+ * which the opening's own timer keeps too. As an undo step: `run` marks it seen,
  * `undo` restores `before` exactly, unread mark included, and running it again marks it seen again.
  *
  * @param id           The item's node id.
@@ -58,6 +59,6 @@ export interface ReadState {
  *   seenStep("I_1", openedId, { seen: inbox.seen.get("I_1"), mark: inbox.unreadMarks.get("I_1") }, inbox.markSeen, inbox.restoreRead);
  */
 export function seenStep(id: string, openedId: string | undefined, before: ReadState, markSeen: (id: string) => Promise<void>, restoreRead: (id: string, previous: ReadState) => Promise<void>): { run: () => void; undo: () => void }[] {
-  if (id !== openedId) return [];
+  if (id !== openedId || before.mark) return [];
   return [{ run: () => void markSeen(id), undo: () => void restoreRead(id, before) }];
 }
