@@ -640,6 +640,11 @@ describe("D files instead of storing a done", () => {
     expect(handled(filed, at(6), "any-post")).toMatchObject({ bucket: "done", asks: [] });
   });
 
+  it("lets an own reply answer the post that brought it back with Any post", () => {
+    const answered = item({ comments: [comment("alice", "@me look", 2), comment("bob", "Any news here?", 5), comment(ME, "Next week.", 6)] });
+    expect(handled(answered, at(3), "any-post")).toMatchObject({ bucket: "done", asks: [] });
+  });
+
   it("leaves table items to their own asks with Any post", () => {
     const own = item({ author: ME, reasons: ["involved"], comments: [comment("bob", "Any news here?", 5)] });
     expect(classify(own, ME, undefined, ruleSwitches(), "any-post", Date.parse(at(20)), true, at(6), ASK_RULES_DEFAULT).asks).toEqual([]);

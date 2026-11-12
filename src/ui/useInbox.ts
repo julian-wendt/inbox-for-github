@@ -673,7 +673,7 @@ export function useInbox(): Inbox {
     [store, logChange],
   );
 
-  /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
+  /** Swaps the hand-off snapshot of a stored "my part done", keeping its time (see `Store.setHandoff`). */
   const setHandoff = useCallback(
     async (nodeId: string, handoff: Handoff) => {
       if (!store) return;
@@ -686,6 +686,7 @@ export function useInbox(): Inbox {
     [store],
   );
 
+  /** Takes back the last status change exactly, extras and time included (see `Store.restoreStatus`). */
   const restoreStatus = useCallback(
     async (nodeId: string, previous: StoredStatus | undefined) => {
       if (!store) return;

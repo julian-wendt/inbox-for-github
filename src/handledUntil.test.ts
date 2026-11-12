@@ -117,27 +117,76 @@ describe("the in-memory store", () => {
 });
 
 describe("the migration", () => {
-  /** Opens a `Store` on a fake database whose settings hold `filedAt`; returns the rows the fill inserted, per statement. */
-  async function open(filedAt: Record<string, string>, tableExists = false): Promise<string[][]> {
-    const inserts: string[][] = [];
-    const db = {
-      select: (sql: string) => Promise.resolve(sql.includes("sqlite_master") && tableExists ? [{}] : sql.includes("FROM settings") ? [{ key: "filedAt", value: JSON.stringify(filedAt) }] : []),
-      execute: (sql: string, params: string[] = []) => Promise.resolve(void (sql.startsWith("INSERT INTO item_handled") && inserts.push(params))),
-    };
-    load.mockResolvedValue(db);
-    await Store.open();
-    return inserts;
+  /** A database that keeps only what the fill touches: the tables by name and their rows. */
+  class FakeDb {
+    tables = new Map<string, Map<string, string>>();
+    inserts: number[] = [];
+    failAtInsert = 0;
+    constructor(readonly filedAt: Record<string, string>) {}
+    select(sql: string): Promise<unknown[]> {
+      if (sql.includes("sqlite_master")) return Promise.resolve(this.tables.has("item_handled") ? [{}] : []);
+      return Promise.resolve(sql.includes("FROM settings") ? [{ key: "filedAt", value: JSON.stringify(this.filedAt) }] : []);
+    }
+    execute(sql: string, params: string[] = []): Promise<void> {
+      const table = (name: string) => {
+        const rows = this.tables.get(name);
+        if (!rows) throw new Error(`no such table: ${name}`);
+        return rows;
+      };
+      if (sql.startsWith("CREATE TABLE IF NOT EXISTS item_handled_fill") && !this.tables.has("item_handled_fill")) this.tables.set("item_handled_fill", new Map());
+      if (sql.startsWith("DROP TABLE IF EXISTS item_handled_fill")) this.tables.delete("item_handled_fill");
+      if (sql.startsWith("ALTER TABLE item_handled_fill RENAME TO item_handled")) {
+        if (this.tables.has("item_handled")) return Promise.reject(new Error("there is already another table named item_handled"));
+        this.tables.set("item_handled", table("item_handled_fill"));
+        this.tables.delete("item_handled_fill");
+      }
+      if (sql.startsWith("INSERT OR IGNORE INTO item_handled_fill")) {
+        this.inserts.push(params.length / 2);
+        if (this.inserts.length === this.failAtInsert) return Promise.reject(new Error("the app quit"));
+        const rows = table("item_handled_fill");
+        for (let i = 0; i < params.length; i += 2) if (!rows.has(params[i])) rows.set(params[i], params[i + 1]);
+      }
+      return Promise.resolve();
+    }
   }
+  const open = (db: FakeDb) => {
+    load.mockResolvedValue(db);
+    return Store.open();
+  };
   const filed = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [`I_${i}`, day(2)]));
 
-  it("writes a large filedAt in chunks of at most 400 rows", async () => {
-    const inserts = await open(filed(900));
-    expect(inserts.map((params) => params.length / 2)).toEqual([400, 400, 100]);
-    expect(new Set(inserts.flat().filter((p) => p.startsWith("I_"))).size).toBe(900);
+  it("writes a large filedAt in chunks of at most 400 rows, then renames the whole table", async () => {
+    const db = new FakeDb(filed(900));
+    await open(db);
+    expect(db.inserts).toEqual([400, 400, 100]);
+    expect(db.tables.get("item_handled")?.size).toBe(900);
+    expect(db.tables.has("item_handled_fill")).toBe(false);
   });
 
-  it("runs only when the table is created", async () => {
-    expect(await open(filed(3), true)).toEqual([]);
+  it("leaves no partial table after a fill cut short, and finishes it on the next start", async () => {
+    const db = new FakeDb(filed(900));
+    db.failAtInsert = 2;
+    await expect(open(db)).rejects.toThrow("the app quit");
+    expect(db.tables.has("item_handled")).toBe(false);
+    db.failAtInsert = 0;
+    await open(db);
+    expect(db.tables.get("item_handled")?.size).toBe(900);
+    expect(db.tables.has("item_handled_fill")).toBe(false);
+  });
+
+  it("survives two opens at once, as React's StrictMode does in development", async () => {
+    const db = new FakeDb(filed(900));
+    await Promise.all([open(db), open(db)]);
+    expect(db.tables.get("item_handled")?.size).toBe(900);
+    expect(db.tables.has("item_handled_fill")).toBe(false);
+  });
+
+  it("does not fill a table that exists", async () => {
+    const db = new FakeDb(filed(3));
+    db.tables.set("item_handled", new Map([["I_9", day(5)]]));
+    await open(db);
+    expect(db.inserts).toEqual([]);
+    expect([...db.tables.get("item_handled")!]).toEqual([["I_9", day(5)]]);
   });
 });
 
