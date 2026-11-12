@@ -45,7 +45,7 @@ function item(overrides: Partial<Item> = {}): Item {
 const why = (i: Item, stored?: StoredStatus) => explain(classify(i, ME, stored, ruleSwitches()), "mention");
 
 describe("explain", () => {
-  it("lists every open ask of an inbox item", () => {
+  it("lists every open ask of an inbox item, the newest first", () => {
     const result = why(
       item({
         kind: "pr",
@@ -56,8 +56,8 @@ describe("explain", () => {
     );
     expect(result.tone).toBe("inbox");
     expect(result.lines).toHaveLength(2);
-    expect(result.lines[0]).toMatch(/^Dein Review ist angefragt/);
-    expect(result.lines[1]).toMatch(/^@bob hat dich .* erwähnt/);
+    expect(result.lines[0]).toMatch(/^@bob hat dich .* erwähnt/);
+    expect(result.lines[1]).toMatch(/^Dein Review ist angefragt/);
   });
 
   it("explains an assignment without an ask as being in Assigned to me", () => {

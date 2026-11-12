@@ -244,7 +244,7 @@ describe("Status and log", () => {
     expect(app.statuses.has(issue.id)).toBe(false);
   });
 
-  it("brings a snoozed item back on a mention, or on any post with that setting", async () => {
+  it("adds a snoozed item to the inbox on a mention, and it keeps waiting", async () => {
     const { world, app } = sim;
     const issue = world.issue();
     world.comment(issue, "alice", "@octocat");
@@ -260,7 +260,8 @@ describe("Status and log", () => {
     world.comment(issue, "bob", "@octocat now it matters");
     await app.reload(issue);
     expect(app.viewOf(issue)).toBe("inbox");
-    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "open", automatic: true });
+    expect(app.views().snoozed).toContain(issue.id);
+    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "snoozed", automatic: false });
   });
 
   it("brings a snoozed item back on any post when 'any post' is chosen", async () => {
@@ -295,7 +296,7 @@ describe("Snoozed until a date (Follow-up)", () => {
     const back = app.entry(issue);
 
     expect(back).toMatchObject({ bucket: "involved", asks: [] });
-    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "open", automatic: true, source: "auto:snooze-ended" });
+    expect(app.log.get(issue.id)?.at(-1)).toMatchObject({ status: "snoozed", automatic: false });
     expect(app.viewOf(issue)).toBeNull();
   });
 

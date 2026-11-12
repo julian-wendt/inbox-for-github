@@ -1,4 +1,4 @@
-import type { Classified } from "../classify";
+import { newestAsk, type Classified } from "../classify";
 import type { Update } from "../handoff";
 import type { Bucket, Item, Status } from "../model";
 import { lastReplyAt, sameLogin } from "../timeline";
@@ -257,9 +257,9 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * - Snoozed: when it comes back, else when you snoozed it.
  * - Done: when it was closed or merged on GitHub; else when you answered (your last reply, or
  *   your last review for a review request); else when you marked it done.
- * - Inbox and the rest: the pending mention, else the last activity by someone else.
- *   After a reopen (`statusReset`, or a stored Open newer than the mention) the mention from
- *   before it is old news: the last activity by someone else, which reopened it, counts.
+ * - Inbox and the rest: the newest ask (see `newestAsk`) when it is a mention, else the last
+ *   activity by someone else, which the other asks are made of. A mention older than another ask
+ *   is old news.
  *
  * Wherever a view's own moment is missing, the last activity by someone else stands in, and
  * `createdAt` when there is none: `updatedAt` also moves on commits and the viewer's own posts.
@@ -286,6 +286,6 @@ export function sortTime(c: Classified, me: string, movesUp: MovesUp = MOVES_UP_
     }
     return c.statusAt ?? activity();
   }
-  const reopened = c.statusReset || (!!c.mention && !!c.statusAt && c.statusAt > c.mention.at);
-  return (!reopened && c.mention?.at) || activity();
+  const newest = newestAsk(c);
+  return newest?.ask === "mention" ? newest.at : activity();
 }

@@ -1,4 +1,4 @@
-import type { Classified } from "../classify";
+import { newestAsk, type Classified } from "../classify";
 import type { Reopen } from "../model";
 import { t } from "./i18n";
 import { ago, agoInSentence, updateSummary, type View } from "./labels";
@@ -39,7 +39,9 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
 
   // In the inbox the asks say why, whatever else is stored: a follow-up that waits in place, a part that is done.
   if (asks.length > 0) {
-    const lines = asks.map((ask) => {
+    // The newest ask first: it is the one the row is dated by.
+    const newest = newestAsk(entry)?.ask;
+    const lines = (newest ? [newest, ...asks.filter((ask) => ask !== newest)] : asks).map((ask) => {
       switch (ask) {
         case "update":
           return t("explain.update", { what: updateSummary(entry.updates ?? []) });

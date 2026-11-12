@@ -90,9 +90,7 @@ describe("the derived time keeps every item where it was", () => {
     it(s.changes ? `${s.name} (changes on purpose)` : s.name, () => {
       const handled = deriveHandledUntil({ statuses: new Map(s.status ? [[s.item.id, s.status]] : []), filedAt: s.filedAt ? { [s.item.id]: s.filedAt } : {}, plannedAt: s.plannedAt ? { [s.item.id]: s.plannedAt } : {}, dated: new Set(s.dated ? [s.item.id] : []) }).get(s.item.id);
       const run = (status?: StoredStatus) => classify(s.item, ME, status, ruleSwitches(), "mention", NOW, true, handled, ASK_RULES_DEFAULT, !!s.dated);
-      let after = run(s.status);
-      // What the hook writes back on a reset, before the next pass.
-      if (after.statusReset) after = run(after.renewed ? undefined : { status: "open", changedAt: new Date(NOW).toISOString() });
+      const after = run(s.status);
       expect({ bucket: after.bucket, status: after.status, asks: after.asks }).toEqual(s.changes ?? s.before);
     });
   }

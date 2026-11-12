@@ -7,12 +7,12 @@ import { setLang } from "./i18n";
 setLang("en");
 
 function entry(id: string, overrides: Partial<Classified> = {}): Classified {
-  return { item: { id } as Item, bucket: "inbox", status: "open", mention: null, answered: null, asks: ["review"], statusAt: null, statusReset: false, ...overrides };
+  return { item: { id } as Item, bucket: "inbox", status: "open", mention: null, answered: null, asks: ["review"], statusAt: null, asked: {}, ...overrides };
 }
 
 describe("arrivals", () => {
   it("takes the first result as the baseline and notifies about nothing in it, a follow-up that came back included", () => {
-    expect(arrivals([entry("I_1"), entry("I_2", { asks: ["reopened"], statusReset: true })], null)).toEqual([]);
+    expect(arrivals([entry("I_1"), entry("I_2", { asks: ["reopened"] })], null)).toEqual([]);
   });
 
   it("notifies afterwards for every item new in the inbox, and nothing outside it", () => {

@@ -177,7 +177,7 @@ export interface Closed {
   at: string;
 }
 
-/** What brings a follow-up or done item back to open; see `reopens`. */
+/** What else brings a handled item back into the inbox: "any-post" makes any post by someone else an ask (see `classify`). */
 export type Reopen = "mention" | "any-post";
 
 /** A GitHub organization the viewer belongs to. */

@@ -12,7 +12,7 @@ function entry(overrides: Partial<Classified> = {}, item: Partial<Item> = {}): C
     answered: null,
     asks: ["mention"],
     statusAt: null,
-    statusReset: false,
+    asked: {},
     ...overrides,
   };
 }

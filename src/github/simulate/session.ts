@@ -2,7 +2,7 @@ import { datedOf, isPinnable, unplan, withPin, withPlan, type Today } from "../.
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
 import { afterFollowUp, snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
-import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
+import { REOPEN_DEFAULT } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
@@ -374,15 +374,6 @@ export class InboxSession {
   /** The automatic writes `useInbox` makes for one classification; true when it wrote. */
   private settle(c: Classified): boolean {
     const { id } = c.item;
-    if (c.renewed) {
-      this.statuses.delete(id);
-      this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:reassigned" }]);
-      return true;
-    }
-    if (c.statusReset) {
-      this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
-      return true;
-    }
     if (lockedDone(c, this.statuses.get(id), this.me)) {
       this.statuses.delete(id);
       this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:locked" }]);

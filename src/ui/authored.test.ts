@@ -12,7 +12,7 @@ function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<It
     answered: null,
     asks: [],
     statusAt: null,
-    statusReset: false,
+    asked: {},
     ...overrides,
   };
 }

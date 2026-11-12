@@ -319,7 +319,7 @@ describe("Snoozing on the plate", () => {
     world.advance(3 * MINUTE);
     expect(app.views().snoozed).not.toContain(issue.id);
     expect(app.entry(issue)).toMatchObject({ bucket: "assigned", asks: [] });
-    expect(app.statuses.get(issue.id)).toMatchObject({ status: "open" });
+    expect(app.statuses.get(issue.id)).toMatchObject({ status: "snoozed" });
     expect(app.onPlate(issue)).toBe(true);
   });
 
@@ -474,7 +474,7 @@ describe("Follow-ups", () => {
     expect(label).not.toMatch(/snooze|follow|reminder|ended|due/i);
   });
 
-  it("leaves a line in the item's log when the follow-up comes due", async () => {
+  it("writes nothing to the item's log when the follow-up comes due", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
     await app.refresh();
@@ -483,7 +483,7 @@ describe("Follow-ups", () => {
 
     app.classified();
 
-    expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed", "history.due"]);
+    expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed"]);
   });
 
   it("files the returned item with D without finishing it: it leaves the inbox and stays in its table", async () => {

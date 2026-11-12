@@ -1,5 +1,5 @@
 import type { Item, Reopen, StoredStatus } from "./model";
-import { mentionsOf, othersPostedAfter, sameLogin } from "./timeline";
+import { sameLogin } from "./timeline";
 
 export const REOPEN_DEFAULT: Reopen = "mention";
 
@@ -27,30 +27,4 @@ export function assignedAgain(item: Item, me: string, since: string): boolean {
 /** When someone else last reopened the item on GitHub, if they did. */
 export function reopenedByOther(item: Item, me: string): string | null {
   return item.activities.filter((a) => a.kind === "state" && a.change === "reopened" && !sameLogin(a.actor, me)).at(-1)?.at ?? null;
-}
-
-/**
- * Decides whether a stored "Follow-up" or "Done" falls back to "Open" because the item
- * needs the viewer again: it was snoozed past its date, someone assigned the viewer anew (see
- * `assignedAgain`), someone else reopened it on GitHub (see `reopenedByOther`), or the
- * `trigger` fires.
- *
- * @param item     The item as fetched.
- * @param me       The viewer's login.
- * @param stored   The viewer's manual status, if any.
- * @param trigger  What counts as needing the viewer, compared against the status change time:
- *                 - "mention": someone (or the viewer, as a reminder) mentioned the viewer;
- *                 - "any-post": anyone else commented or reviewed.
- * @returns True when the stored status should be discarded.
- *
- * @example
- *   reopens(item, "octocat", { status: "done", changedAt: "2026-10-01T12:00:00Z" }, "mention");
- */
-export function reopens(item: Item, me: string, stored: StoredStatus | undefined, trigger: Reopen, now = Date.now()): boolean {
-  if (!stored || stored.status === "open") return false;
-  if (snoozeEnded(stored, now) || assignedAgain(item, me, stored.changedAt)) return true;
-  if ((reopenedByOther(item, me) ?? "") > stored.changedAt) return true;
-  const mentioned = mentionsOf(item, me).some((m) => m.at > stored.changedAt);
-  if (trigger === "mention") return mentioned;
-  return othersPostedAfter(item, me, stored.changedAt);
 }
