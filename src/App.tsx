@@ -193,8 +193,10 @@ export default function App() {
     [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   /** U: unread as its view counts it, or marked so by hand. */
-  /** Unread as the rows of `view` draw it: the assignment mark only in Assigned to me. */
-  const isUnread = (c: Classified, view: View = bucket) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, view === "assigned", inbox.settings.movesUp));
+  /** Unread as the rows of `view` draw it: Assigned to me judges every row as an assignment, the same as its count. */
+  const isUnread = (c: Classified, view: View = bucket) =>
+    inbox.unreadMarks.has(c.item.id) ||
+    (view === "assigned" ? unreadAssignment(c, inbox.seen, me, true, inbox.settings.movesUp) : c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, false, inbox.settings.movesUp));
   /** Marks the items read when any is unread, else unread, with undo that restores each item's read state exactly. */
   const toggleRead = (cs: Classified[]) => {
     const read = cs.some((c) => isUnread(c));
