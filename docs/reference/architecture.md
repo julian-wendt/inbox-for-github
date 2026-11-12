@@ -161,7 +161,7 @@ would be added with `ALTER TABLE` in `Store.open`, guarded by a `PRAGMA table_in
 |---|---|
 | `settings` | one row per settings key, JSON values (`Settings` in `src/store.ts`) |
 | `item_status` | the current status per item, `until`, `handoff`; `due` is left over from the due state, not read since 2026-10-28 |
-| `item_handled` | one `handled_until` per item: asks from before it are not new, the only cutoff `classify` reads. Filled once when the table is created, from `filedAt`, `plannedAt` (while pinned or planned), a stored done without hand-off and a follow-up start (`deriveHandledUntil`, 400 rows per INSERT). Reset statuses clears it; a transfer moves it |
+| `item_handled` | one `handled_until` per item: asks from before it are not new, the only cutoff `classify` reads. Filled once when the table is created, from `filedAt`, `plannedAt` (while pinned or planned), a stored done without hand-off and a follow-up start (`deriveHandledUntil`), into `item_handled_fill`, 400 rows per INSERT, then renamed, so the table exists only whole; a fill cut short is redone on the next start. Reset statuses clears it; a transfer moves it |
 | `status_log` | every status change, with `automatic` for changes by the app and `source` for what caused it (see [`local-development.md`](local-development.md#the-local-database)) |
 | `item_seen` | when the viewer last looked at an item, for "since you were last here" |
 | `item_unread` | items the viewer marked unread by hand (U), with `marked_at`; opening the item removes the row |
