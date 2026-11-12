@@ -7,12 +7,12 @@ import { setLang } from "./i18n";
 setLang("en");
 
 function entry(id: string, overrides: Partial<Classified> = {}): Classified {
-  return { item: { id } as Item, bucket: "inbox", status: "open", mention: null, answered: null, asks: ["review"], statusAt: null, statusReset: false, ...overrides };
+  return { item: { id } as Item, bucket: "inbox", status: "open", mention: null, answered: null, asks: ["review"], statusAt: null, asked: {}, ...overrides };
 }
 
 describe("arrivals", () => {
   it("takes the first result as the baseline and notifies about nothing in it, a follow-up that came back included", () => {
-    expect(arrivals([entry("I_1"), entry("I_2", { asks: ["reopened"], statusReset: true })], null)).toEqual([]);
+    expect(arrivals([entry("I_1"), entry("I_2", { asks: ["reopened"] })], null)).toEqual([]);
   });
 
   it("notifies afterwards for every item new in the inbox, and nothing outside it", () => {
@@ -23,7 +23,8 @@ describe("arrivals", () => {
   it("lets an item that only asks again come back without a notification", () => {
     const back = entry("I_2", { asks: ["reopened"] });
     const asked = entry("I_3", { asks: ["reopened", "mention"] });
-    expect(arrivals([back, asked], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
+    const due = entry("I_4", { asks: ["due"] });
+    expect(arrivals([back, asked, due], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
   it("notifies again when an item already in the inbox gets a new ask", () => {
     const before = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-05T00:00:00Z", excerpt: "", self: false } });

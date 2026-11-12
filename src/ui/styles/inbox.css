@@ -274,7 +274,7 @@
   list-style: none;
 }
 
-/* Only the waiting bar is left: it sits under the empty mark instead of sharing the height with it. */
+/* Only the Done bar is left: it sits under the empty mark instead of sharing the height with it. */
 .inbox-list.parked {
   flex: 0 0 auto;
   max-height: 50%;

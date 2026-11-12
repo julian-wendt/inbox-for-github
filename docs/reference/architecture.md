@@ -23,21 +23,35 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 4. **Classify:** `directOnly` (`src/rules/directOnly.ts`) first drops the "review" reason from items in the repos the "Only addressed to me" setting covers when no request names the viewer; then `classify` (`src/classify.ts`) puts each item into a bucket from the item, the
    viewer's stored status and the rules. `useInbox` runs it over all items, after leaving out
    untracked items, repos filtered in the settings and closed items outside the window.
-5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–6); `AssignedTable`
+5. **Views:** `App.tsx` groups the classified items per view (`VIEWS`, keys 1–5); `AssignedTable`
    renders Assigned to me (`groupPlate`, by type with `groupByType`, timed by `assignedAt`) and
    Created by me (`groupAuthored`), both also by repository with `groupByRepo`; `InboxList` the
    Inbox, Planned (`datedOf` for what is pinned or planned, `groupBySnoozeEnd` for the day bars), Follow-up (`isWaiting`, by the day each
-   comes back) and Done. Planned and Follow-up render as a list or a table (`useViewLayout`).
+   comes back). The inbox ends in the Done bar (`inDoneBar` in `src/ui/doneBar.ts`): what was
+   handled in the last 7 days (`handledAt`: handled-until, the closing of an item for them and,
+   outside the tables, the viewer's answer) and asks for nothing, outside Planned, Follow-up and the
+   bar Finished of Assigned to me; closed items stay as long as
+   `closedDays` loads them. It is folded by default, left out of every count, the badge and unread,
+   and opens on a click or a jump to one of its items. Planned and Follow-up render as a list or a
+   table (`useViewLayout`).
    The sidebar counts follow the picked repositories; the other filters narrow only the list.
 
 ## Buckets and statuses
 
 - **Statuses** (`Status` in `src/model.ts`) are the viewer's own: `open`, `snoozed`, `done`.
   They live in `item_status` with a log in `status_log`; nothing is sent to GitHub.
+- **Handled-until** (`item_handled`; `Store.handledUntil`, `src/handledUntil.ts`) is the one
+  cutoff for asks: `classify` counts only asks newer than it. D in the inbox, P, T and F set it
+  to now (`handledStep`, with undo); X leaves it. P, T and F also mark the item seen while it is
+  open (`seenStep` in `src/ui/unread.ts`), unless it was marked unread by hand. D on someone
+  else's item stores no "done": it files (`planStatus` "file", which also ends its plan). A
+  stored Open newer than handled-until, or a follow-up whose date passed, lifts the cutoff, so
+  what was pending asks again. The settings `filedAt` and `plannedAt` are still written for one
+  version, so an older build reads what it expects, but nothing reads them any more.
 - **Buckets** (`Bucket`) say where an item belongs: `inbox` (someone waits for an answer: a
   pending mention, an unanswered review request, feedback by others on an item of the tables,
   an answer in the viewer's review thread, an own item closed by someone else, a stored Open that
-  asks again), `planned` (pinned for
+  asks again, a reopen on GitHub, a post with "Any post", a due follow-up), `planned` (pinned for
   today or planned for a day, with no ask since; only the Planned view shows it), `assigned`,
   `authored`, `snoozed`, `done`, and `involved` for what the viewer merely takes part in, which no
   view shows.
@@ -50,8 +64,18 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   (`item_status.handoff`, JSON of board statuses and linked pull requests; `snapshotOf`).
   `classify` then keeps it "done" instead of reopening it: in Assigned to me (bar `finished`, shared with items done on their board)
   while assigned and open, nowhere once closed and ticked off, and in the inbox (ask `update`) while
-  `updatesSince` finds posts by others, board moves, new linked pull requests or closing. D
-  there stores a fresh snapshot; Open (O) in the bar clears the status. `restoreStatus` undoes exactly.
+  `updatesSince` finds posts by others, board moves, new linked pull requests or closing, counted
+  from the later of the hand-off and handled-until; once a closed item is handled, board and pull
+  request changes no longer count. D there files the news and, on an open item, refreshes the
+  snapshot (`setHandoff`, keeping the status time); a closed item gets no write. Open (O) in the
+  bar clears the status. `restoreStatus` undoes exactly.
+- **A follow-up on a finished part** keeps the part done: F stores "snoozed" with a fresh
+  `handoff` (`followUpExtra`), so the item waits in Follow-up and stays in the bar `finished`.
+  `classify` reads it as "snoozed" while open and before its date, and as "done" after, with no
+  write. X and D in Follow-up take the follow-up off with `Store.endFollowUp`: the part goes back
+  to "done" with its time and snapshot (`afterFollowUp`), so news from the wait still counts. P
+  and T do not take a finished part (`isPinnable`), also while it waits. Open (O) opens the work
+  again and keeps the follow-up. Unassigned, only the follow-up counts.
 - **Repairs at start:** `Store.repairStatusLog` drops log entries at the end of an item's
   history that no stored status stands behind (`staleLogRows`), so the activity log never shows
   "marked as done" for an open item. A "done" stored on an item D may no longer finish
@@ -59,36 +83,41 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   hand-off on an own issue assigned to the viewer (`lockedDone` in `statusPlan.ts`).
 - **Follow-up** ("snoozed" in the code, "Wiedervorlage" in the UI, key F) is the one way to put an
   item aside, with a date or without. An assignment or an item the viewer opened stays in its
-  table, in the bar `later` ("Follow-up"; board-blocked items have their own bar `blocked`); only its date ends it (no "reopenOn"), and a
-  mention since adds it to the inbox while it stays waiting. Other items leave their list for the
-  bucket `snoozed`. The Follow-up view lists every follow-up that waits, from any list; Planned
-  shows only what is pinned for today or planned for a later day (settings `focus`, `planned`,
-  `pinnedOn`). At its date the stored status becomes "open"
-  (automatic, source `auto:snooze-ended`; the log says "follow-up came due"): the item is back
-  where its asks put it, and what was answered before asks again (`reopened`) until the viewer
-  replies, D or F; the list shows no mark of it. `followUpOf` gives the date that the
-  chip shows, and only while the item waits.
+  table, in the bar `later` ("Follow-up"; board-blocked items have their own bar `blocked`).
+  Other items leave their list for the bucket `snoozed`. An ask since adds any of them to the
+  inbox while the follow-up keeps waiting. The Follow-up view lists every follow-up that waits,
+  from any list; Planned shows only what is pinned for today or planned for a later day (settings
+  `focus`, `planned`, `pinnedOn`). At its date nothing is written: the follow-up asks (`due`, at
+  its date) on any item, table items and finished parts too, until the viewer replies, D, P, T or
+  F; what was pending asks again with it, even an ask D had filed before F. The row of a past-due
+  follow-up stays in `item_status` as it is. `followUpOf` gives the date that the chip shows, and
+  only while the item waits.
 - **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
   posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
   tables, answers in a review thread the viewer wrote in on another's pull request, and an own item
   closed by someone else. The settings `ownFeedback`, `assignedFeedback`, `threadReplies` and
   `ownClosed` switch them (`AskRules`). D on such an item finishes nothing (`planStatus` "file"):
-  it stores the time in the `filedAt` setting, and `classify` drops the asks from before it. A
-  reply reopens a stored Done or Follow-up like a push does; feedback on a waiting table item adds
-  it to the inbox and leaves the follow-up running.
+  it sets handled-until, and `classify` drops the asks from before it. A
+  reply or feedback after it asks again like a push does, and leaves a follow-up running.
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
-  `pinnedOn`), and `plannedAt` records when each item last got one. `classify` drops the asks
-  from before that time: with none left, the item leaves the inbox for `planned`, or stays in its
+  `pinnedOn`); both set handled-until. `classify` drops the asks from before it: with none left, the item leaves the inbox for `planned`, or stays in its
   table marked with its day; a mention, review request, push or reopen since brings it back, and
   answering it takes it out again without ending the plan. D and closing on GitHub end it. Each
   morning `rollOver` moves the plans due into Today. An item has one "when": P and T end a
-  follow-up, F ends a plan or pin (`unplan`).
-- Unassigned, the handoff no longer counts: the item sorts as if no status were stored.
-- A closed or merged item is in Done when it was for the viewer (a review request or a mention)
+  follow-up (`withPin`, `withPlan`, `followUpEnds`), F ends a plan or pin (`unplan`).
+- Unassigned, the handoff no longer counts: the item sorts as if no status, or only its follow-up, were stored.
+- A closed or merged item is in the Done bar when it was for the viewer (a review request or a mention)
   and shows nowhere otherwise; its status follows GitHub.
-- A stored status falls back to `open` when its trigger fires (`reopens` in `src/reopen.ts`):
-  a new mention, or any post, by the "reopenOn" setting; for snoozes with `until`, also that time.
-  A passed `until` is written back as `open`, which counts like a reopen by hand.
+- **Returns** are asks with a time (`Classified.asked`), compared with handled-until and the time
+  of a stored follow-up or of a done older builds stored; nothing is written to bring an item
+  back. Besides the asks above: `opened` (the viewer's O, a stored Open, also one older builds
+  wrote), `reopened` (someone else reopened it on GitHub, on an item that was for the viewer,
+  newer than handled-until and the viewer's last reply), `post` (with "reopenOn" "any-post", a
+  post by someone else outside the tables, newer than both) and `due`. `newestAsk` gives the ask
+  the row is dated by and the explanation names first; `back` the one that brought a handled
+  item back, which the detail's history shows at its time (`backChange`), with nothing stored.
+  These four return quietly, without a notification. A new assignment by someone else drops a
+  finished part without a write and keeps the follow-up.
 
 ## Refreshes
 
@@ -147,6 +176,7 @@ would be added with `ALTER TABLE` in `Store.open`, guarded by a `PRAGMA table_in
 |---|---|
 | `settings` | one row per settings key, JSON values (`Settings` in `src/store.ts`) |
 | `item_status` | the current status per item, `until`, `handoff`; `due` is left over from the due state, not read since 2026-10-28 |
+| `item_handled` | one `handled_until` per item: asks from before it are not new, the only cutoff `classify` reads. Filled once when the table is created, from `filedAt`, `plannedAt` (while pinned or planned), a stored done without hand-off and a follow-up start (`deriveHandledUntil`), into `item_handled_fill`, 400 rows per INSERT, then renamed, so the table exists only whole; a fill cut short is redone on the next start. Reset statuses clears it; a transfer moves it |
 | `status_log` | every status change, with `automatic` for changes by the app and `source` for what caused it (see [`local-development.md`](local-development.md#the-local-database)) |
 | `item_seen` | when the viewer last looked at an item, for "since you were last here" |
 | `item_unread` | items the viewer marked unread by hand (U), with `marked_at`; opening the item removes the row |

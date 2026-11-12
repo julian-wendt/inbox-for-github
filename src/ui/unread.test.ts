@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { unreadAssignment, unreadInInbox } from "./unread";
+import { seenStep, unreadAssignment, unreadInInbox, type ReadState } from "./unread";
 
 function entry(overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
   return {
@@ -12,7 +12,7 @@ function entry(overrides: Partial<Classified> = {}, item: Partial<Item> = {}): C
     answered: null,
     asks: ["mention"],
     statusAt: null,
-    statusReset: false,
+    asked: {},
     ...overrides,
   };
 }
@@ -37,8 +37,9 @@ describe("unreadInInbox", () => {
     expect(unreadInInbox(entry({ mention }, own), seen, "me")).toBe(false);
   });
 
-  it("counts a stored Open after the last visit as unread, as after a passed follow-up date", () => {
-    expect(unreadInInbox(entry({ asks: ["reopened"], statusAt: "2026-10-23T08:00:00Z" }, mentioned), seen, "me")).toBe(true);
+  it("counts an O or a due follow-up after the last visit as unread", () => {
+    expect(unreadInInbox(entry({ asks: ["opened"], asked: { opened: "2026-10-23T08:00:00Z" } }, mentioned), seen, "me")).toBe(true);
+    expect(unreadInInbox(entry({ asks: ["due"], asked: { due: "2026-10-23T08:00:00Z" } }, mentioned), seen, "me")).toBe(true);
   });
 });
 
@@ -73,5 +74,35 @@ describe("unreadAssignment", () => {
     const assigned = { reasons: ["assigned" as const], activities: [{ kind: "assigned" as const, at: "2026-10-22T09:00:00Z", actor: "alice", assignee: "me" }] };
     expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map(), "me", true)).toBe(true);
     expect(unreadAssignment(entry({ bucket: "assigned", asks: [] }, assigned), new Map([["I_1", "2026-10-22T10:00:00Z"]]), "me", true)).toBe(false);
+  });
+});
+
+describe("seenStep", () => {
+  const recorded = () => {
+    const calls: [string, ReadState?][] = [];
+    const markSeen = (id: string) => Promise.resolve(void calls.push([id]));
+    const restoreRead = (id: string, previous: ReadState) => Promise.resolve(void calls.push([id, previous]));
+    return { calls, markSeen, restoreRead };
+  };
+
+  it("marks the open item seen, undo restores its read state, redo marks it again", () => {
+    const { calls, markSeen, restoreRead } = recorded();
+    const before = { seen: "2026-10-20T00:00:00Z" };
+    const [step] = seenStep("I_1", "I_1", before, markSeen, restoreRead);
+    step.run();
+    step.undo();
+    step.run();
+    expect(calls).toEqual([["I_1"], ["I_1", before], ["I_1"]]);
+  });
+
+  it("leaves an item alone that is not open", () => {
+    const { markSeen, restoreRead } = recorded();
+    expect(seenStep("I_1", undefined, {}, markSeen, restoreRead)).toEqual([]);
+    expect(seenStep("I_1", "I_2", {}, markSeen, restoreRead)).toEqual([]);
+  });
+
+  it("keeps an unread mark set by hand", () => {
+    const { markSeen, restoreRead } = recorded();
+    expect(seenStep("I_1", "I_1", { seen: "2026-10-20T00:00:00Z", mark: "2026-10-21T00:00:00Z" }, markSeen, restoreRead)).toEqual([]);
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpOf, followUpWhen, isWaiting, rowWhen } from "./followUp";
+import { followUpExtra, followUpOf, followUpUnchanged, followUpWhen, isWaiting, rowWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -76,5 +76,34 @@ describe("rowWhen", () => {
     expect(followUp?.text).toMatch(/15:00/);
     expect(followUp?.icon).toBe("followUp");
     expect(rowWhen({ status: "open" }, plan, false, at)).toBeUndefined();
+  });
+});
+
+describe("followUpExtra", () => {
+  const boarded: Item = { ...item, boards: [{ id: "PVT_1", title: "Roadmap", status: "In review", sprint: null, fields: [] }] };
+
+  it("stores the date, or none", () => {
+    expect(followUpExtra({ item }, ahead)).toEqual({ until: ahead });
+    expect(followUpExtra({ item }, "")).toEqual({});
+  });
+
+  it("keeps a part that is done, with a fresh snapshot", () => {
+    expect(followUpExtra({ item: boarded, updates: [] }, "")).toEqual({ handoff: { boards: { PVT_1: "In review" }, prs: [] } });
+  });
+});
+
+describe("followUpUnchanged", () => {
+  const entry = (stored?: StoredStatus, comments: Item["comments"] = []) => classify({ ...item, author: "alice", reasons: ["assigned"], assignees: ["me"], comments }, "me", stored, ruleSwitches(), "mention", now);
+
+  it("is true for the follow-up the item already has, with or without a date", () => {
+    expect(followUpUnchanged(entry(waiting()), "")).toBe(true);
+    expect(followUpUnchanged(entry(waiting(ahead)), ahead)).toBe(true);
+  });
+
+  it("is false for another date, an item that does not wait, and one with an ask F would handle", () => {
+    expect(followUpUnchanged(entry(waiting(ahead)), "")).toBe(false);
+    expect(followUpUnchanged(entry(waiting()), ahead)).toBe(false);
+    expect(followUpUnchanged(entry(), "")).toBe(false);
+    expect(followUpUnchanged(entry(waiting(), [{ author: "bob", body: "@me ping", createdAt: "2026-10-10T00:00:00Z" }]), "")).toBe(false);
   });
 });

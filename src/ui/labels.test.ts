@@ -128,7 +128,7 @@ describe("sortTime", () => {
     reviews: [{ author: "me", at: "2026-10-17T00:00:00Z" }],
     activities: [{ kind: "commit", at: "2026-10-21T00:00:00Z" }],
   } as unknown as Classified["item"];
-  const entry = (over: Partial<Classified>) => ({ item, mention: null, statusAt: null, answered: null, ...over }) as Classified;
+  const entry = (over: Partial<Classified>) => ({ item, mention: null, statusAt: null, answered: null, asks: [], asked: {}, ...over }) as Classified;
 
   it("uses the moment that defines each view", () => {
     expect(sortTime(entry({ bucket: "snoozed", statusAt: "2026-10-15T00:00:00Z" }), "me")).toBe("2026-10-15T00:00:00Z");
@@ -139,11 +139,10 @@ describe("sortTime", () => {
     expect(sortTime(entry({ bucket: "inbox" }), "me")).toBe("2026-10-20T00:00:00Z");
   });
 
-  it("stamps an item reopened by a new post with that post, not the mention before it", () => {
+  it("dates an inbox item by its newest ask: a mention by its time, anything newer by the last activity", () => {
     const mention = { at: "2026-09-02T00:00:00Z", by: "carol" } as Classified["mention"];
-    expect(sortTime(entry({ bucket: "inbox", mention }), "me")).toBe("2026-09-02T00:00:00Z");
-    expect(sortTime(entry({ bucket: "inbox", mention, statusAt: "2026-10-20T00:05:00Z" }), "me")).toBe("2026-10-20T00:00:00Z");
-    expect(sortTime(entry({ bucket: "inbox", mention, statusReset: true }), "me")).toBe("2026-10-20T00:00:00Z");
+    expect(sortTime(entry({ bucket: "inbox", mention, asks: ["mention"], asked: { mention: mention!.at } }), "me")).toBe("2026-09-02T00:00:00Z");
+    expect(sortTime(entry({ bucket: "inbox", mention, asks: ["mention", "reopened"], asked: { mention: mention!.at, reopened: "2026-10-20T00:00:00Z" } }), "me")).toBe("2026-10-20T00:00:00Z");
   });
 
   it("leaves out commits and the viewer's own posts, and falls back to the creation", () => {
@@ -157,8 +156,8 @@ describe("views", () => {
   const entry = (bucket: Classified["bucket"], item: Partial<Item> = {}) =>
     ({ bucket, status: "open", item: { kind: "issue", author: "alice", closed: null, reasons: ["assigned"], ...item } }) as Classified;
 
-  it("offers six views, without Watching and All", () => {
-    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "snoozed", "assigned", "authored", "done"]);
+  it("offers five views, without Watching, All and Done", () => {
+    expect(VIEWS.map((v) => v.id)).toEqual(["inbox", "planned", "snoozed", "assigned", "authored"]);
   });
 
   it("finds an item's view, none for what the viewer merely takes part in", () => {
@@ -167,6 +166,13 @@ describe("views", () => {
     expect(viewOf(entry("involved", { reasons: ["involved"] }), "me")).toBeNull();
     expect(viewOf(entry("assigned"), "me")).toBe("assigned");
     expect(viewOf(entry("assigned", { kind: "pr", author: "me" }), "me")).toBe("authored");
+  });
+
+  it("finds an item of the Done bar in the inbox, and nowhere once it left the bar", () => {
+    expect(viewOf(entry("done"), "me", true)).toBe("inbox");
+    expect(viewOf(entry("involved", { reasons: ["involved"] }), "me", true)).toBe("inbox");
+    expect(viewOf(entry("done"), "me")).toBeNull();
+    expect(viewOf(entry("assigned"), "me", true)).toBe("assigned");
   });
 });
 

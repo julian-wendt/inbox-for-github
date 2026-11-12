@@ -120,7 +120,7 @@ describe("summarize", () => {
     answered: null,
     asks: ["review"],
     statusAt: null,
-    statusReset: false,
+    asked: {},
     ...overrides,
   });
 

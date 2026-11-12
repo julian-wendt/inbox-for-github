@@ -7,7 +7,7 @@ import type { BotComments, DescriptionMode, OpenAt } from "../../store";
 import { findMention, isBot, latest, posts, sameLogin } from "../../timeline";
 import { explain } from "../explain";
 import { t } from "../i18n";
-import { shownActivities, shownHistory } from "../activities";
+import { backChange, shownActivities, shownHistory } from "../activities";
 import type { DoneAccess } from "../statusPlan";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
@@ -130,7 +130,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
     ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} /> })),
     ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} itemUrl={item.url} /> })),
     ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} /> })),
-    ...shownHistory(history, item).filter((c) => !since || c.at >= since).map((change, i) => ({ at: change.at, node: <StatusChangeRow key={`s-${change.at}-${i}`} change={change} /> })),
+    ...[...shownHistory(history, item), ...[backChange(entry)].filter((c) => c !== null)].filter((c) => !since || c.at >= since).map((change, i) => ({ at: change.at, node: <StatusChangeRow key={`s-${change.at}-${i}`} change={change} /> })),
     ...failures.filter((f) => !since || f.at >= since).map((failure, i) => ({ at: failure.at, node: <WriteFailureRow key={`f-${failure.at}-${i}`} failure={failure} /> })),
   ].sort((a, b) => a.at.localeCompare(b.at));
   const dividerAt = seenAt ? timeline.findIndex((row) => row.at > seenAt) : -1;

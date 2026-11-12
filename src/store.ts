@@ -1,5 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import type { FeedbackMode } from "./feedback";
+import { deriveHandledUntil } from "./handledUntil";
+import { afterFollowUp } from "./handoff";
 import type { Viewer } from "./github/fetch";
 import type { LogLevel } from "./log";
 import type { Handoff, Item, Reopen, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "./model";
@@ -16,6 +18,14 @@ import type { StatusMap } from "./workStatus";
 
 /** Lives in the app's config directory, `~/Library/Application Support/<bundle id>/` on macOS. */
 const DB_URL = "sqlite:tracker.db";
+/** Rows per INSERT that fills `item_handled`: two bound parameters each, under the 999 older SQLite builds allow. */
+const FILL_ROWS = 400;
+
+/** `item_handled` is filled under this name and renamed when complete, so it exists only whole. */
+const HANDLED_FILL = `CREATE TABLE IF NOT EXISTS item_handled_fill (
+  node_id       TEXT PRIMARY KEY,
+  handled_until TEXT NOT NULL
+)`;
 
 /** Bump when `Item` changes shape, so a cache in the old shape is ignored instead of misread. */
 const CACHE_VERSION = 2;
@@ -263,7 +273,57 @@ export class Store {
     const db = await Database.load(DB_URL);
     for (const statement of SCHEMA) await db.execute(statement);
     await dropLeftovers(db);
-    return new Store(db);
+    const store = new Store(db);
+    if (!(await store.hasHandled())) await store.fillHandledUntil();
+    return store;
+  }
+
+  private async hasHandled(): Promise<boolean> {
+    return (await this.db.select<unknown[]>("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'item_handled'")).length > 0;
+  }
+
+  /**
+   * Creates `item_handled` from the older cutoffs (see `deriveHandledUntil`), once: the rows go into
+   * `item_handled_fill`, `FILL_ROWS` per statement, which is then renamed in one step. A fill cut
+   * short is redone on the next start; a second open that loses the race to the rename gives up
+   * quietly once the table exists.
+   */
+  private async fillHandledUntil(): Promise<void> {
+    try {
+      await this.db.execute(HANDLED_FILL);
+      await this.insertHandled();
+      await this.db.execute("ALTER TABLE item_handled_fill RENAME TO item_handled");
+    } catch (e) {
+      if (!(await this.hasHandled())) throw e;
+    }
+    await this.db.execute("DROP TABLE IF EXISTS item_handled_fill");
+  }
+
+  private async insertHandled(): Promise<void> {
+    const settings = await this.settings();
+    const derived = deriveHandledUntil({
+      statuses: await this.statuses(),
+      filedAt: settings.filedAt,
+      plannedAt: settings.plannedAt,
+      dated: new Set([...settings.focus, ...settings.planned.map((p) => p.id)]),
+    });
+    const rows = [...derived];
+    for (let from = 0; from < rows.length; from += FILL_ROWS) {
+      const chunk = rows.slice(from, from + FILL_ROWS);
+      await this.db.execute(`INSERT OR IGNORE INTO item_handled_fill (node_id, handled_until) VALUES ${chunk.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, chunk.flat());
+    }
+  }
+
+  /** The time up to which the viewer handled each item's asks; asks from before it are not new. */
+  async handledUntil(): Promise<Map<string, string>> {
+    const rows = await this.db.select<{ node_id: string; handled_until: string }[]>("SELECT node_id, handled_until FROM item_handled");
+    return new Map(rows.map((r) => [r.node_id, r.handled_until]));
+  }
+
+  /** Sets an item's handled-until, or removes it with null (an undo that restores "never handled"). */
+  async setHandledUntil(nodeId: string, at: string | null): Promise<void> {
+    if (at === null) await this.db.execute("DELETE FROM item_handled WHERE node_id = $1", [nodeId]);
+    else await this.db.execute("INSERT INTO item_handled (node_id, handled_until) VALUES ($1, $2) ON CONFLICT (node_id) DO UPDATE SET handled_until = excluded.handled_until", [nodeId, at]);
   }
 
   async statuses(): Promise<Map<string, StoredStatus>> {
@@ -348,6 +408,32 @@ export class Store {
     await this.db.execute("DELETE FROM status_log WHERE id = (SELECT MAX(id) FROM status_log WHERE node_id = $1)", [nodeId]);
   }
 
+  /** Replaces the snapshot of a stored "my part done" and keeps its time; logs nothing (ticking off an update). */
+  async setHandoff(nodeId: string, handoff: Handoff): Promise<void> {
+    await this.db.execute("UPDATE item_status SET handoff = $2 WHERE node_id = $1", [nodeId, JSON.stringify(handoff)]);
+  }
+
+  /**
+   * Takes the follow-up off an item and logs it (see `afterFollowUp`): a finished part goes back
+   * to "done" and keeps its time and snapshot; anything else is cleared as by `clearStatus`.
+   *
+   * @param source  Logged with the change, as for `setStatus`.
+   * @returns What is stored now, if anything, and the log entry.
+   *
+   * @example
+   *   await store.endFollowUp("I_kwDOAbc", new Date(), "key:x"); // { stored: { status: "done", … }, change: { status: "done", … } }
+   */
+  async endFollowUp(nodeId: string, now = new Date(), source: string | null = null): Promise<{ stored?: StoredStatus; change: StatusChange }> {
+    const rows = await this.db.select<{ status: Status; changed_at: string; handoff: string | null }[]>("SELECT status, changed_at, handoff FROM item_status WHERE node_id = $1", [nodeId]);
+    const row = rows[0];
+    const stored = afterFollowUp(row && { status: row.status, changedAt: row.changed_at, ...(row.handoff && { handoff: JSON.parse(row.handoff) as Handoff }) });
+    if (!stored) return { change: await this.clearStatus(nodeId, now, source) };
+    const at = now.toISOString();
+    await this.writeStatus(nodeId, stored.status, stored.changedAt, stored);
+    await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) VALUES ($1, $2, $3, 0, $4)", [nodeId, stored.status, at, source]);
+    return { stored, change: { status: stored.status, at, automatic: false, ...(source && { source }) } };
+  }
+
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {
     await this.db.execute(
       `INSERT INTO item_status (node_id, status, changed_at, until, handoff) VALUES ($1, $2, $3, $4, $5)
@@ -384,13 +470,14 @@ export class Store {
     const rows = await this.db.select<{ node_id: string }[]>("SELECT node_id FROM item_status");
     await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) SELECT node_id, 'open', $1, 1, $2 FROM item_status", [at, source]);
     await this.db.execute("DELETE FROM item_status");
+    await this.db.execute("DELETE FROM item_handled");
     const change: StatusChange = { status: "open", at, automatic: true };
     return new Map(rows.map((r) => [r.node_id, change]));
   }
 
   /**
    * Carries everything stored per item from each old node id to its new one, for issues that
-   * were transferred (see `findTransfers`): status, status log, note, seen, unread mark and
+   * were transferred (see `findTransfers`): status, handled-until, status log, note, seen, unread mark and
    * failed writes. A row the new id already has wins over the old one, which goes; log entries
    * and failures of both stay. Settings that name items are the caller's (see `movedSettings`).
    *
@@ -401,7 +488,7 @@ export class Store {
    */
   async moveItems(moves: ReadonlyMap<string, string>): Promise<void> {
     for (const [from, to] of moves) {
-      for (const table of ["item_status", "item_note", "item_seen", "item_unread"]) {
+      for (const table of ["item_status", "item_handled", "item_note", "item_seen", "item_unread"]) {
         await this.db.execute(`UPDATE OR IGNORE ${table} SET node_id = $2 WHERE node_id = $1`, [from, to]);
         await this.db.execute(`DELETE FROM ${table} WHERE node_id = $1`, [from]);
       }

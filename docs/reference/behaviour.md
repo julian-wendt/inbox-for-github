@@ -25,7 +25,8 @@ follow-up, **O** open.
 
 Independent of each other:
 
-- **Handled until**: one time. D in the inbox, P, T and F set it to now.
+- **Handled until**: one time. D in the inbox (and on someone else's item in Planned), P, T and
+  F set it to now; X leaves it.
 - **Work**, only for items assigned to me: open, or my part done.
 - **When**: nothing, today, a day, waits until a date, or waits without a date.
 
@@ -34,8 +35,11 @@ Independent of each other:
 1. The inbox holds every item with an ask newer than its handled-until.
 2. Everything that brings an item back is an ask with a time: a mention, a review request,
    feedback, a reply in my review thread, new commits after my review, a reopen, news after my
-   part done, a follow-up that is due. A new assignment is no ask: it brings the item back as new
-   work in Assigned to me, with its dot, also after my part done.
+   part done, a follow-up that is due, and with "Bring back on: Any post" any post by someone else
+   on an item outside the tables. A due follow-up asks again what was pending, though F handled
+   it, also an ask D had filed before F; what was answered asks as a reopen. A new assignment is
+   no ask: it brings the item back as new work in Assigned to me, with its dot, also after my
+   part done.
 3. D on someone else's item files it: it sets handled-until; there is no stored "done" for it.
 4. The Done bar shows what was handled in the last 7 days and has no newer ask; a fixed number,
    not `closedDays`, with no setting. The bar opens by click and on a jump to an item in it; no key
@@ -43,7 +47,9 @@ Independent of each other:
 5. A follow-up is a *when*, not a status: F and X leave the work fact alone, X leaves
    handled-until alone. An item has one when: the newer of plan and follow-up replaces the
    other.
-6. Planning (P, T) and a follow-up (F) count as handled and as seen.
+6. Planning (P, T) and a follow-up (F) count as handled and, when the item is open (the list's
+   detail or a table's pop-up), as seen. A table row that is only selected stays unread, and so
+   does an item marked unread by hand.
 
 ## Situations
 
@@ -66,23 +72,4 @@ Independent of each other:
 ## Where the code differs
 
 Each line is an `it.fails` case in `src/behaviour.test.ts`, unless it says the case comes with
-its issue.
-
-- [#106](https://github.com/julian-wendt/inbox-for-github/issues/106) one handled-until: D in the
-  inbox stores a done on someone else's item instead of filing it; X on a plan drops the plan's
-  time (`plannedAt`), so what the plan handled asks again (#106 adds the test for X, which the
-  simulated session cannot drive: it has no plans); D on a closed item with news waiting in the
-  inbox writes a stored done again instead of setting handled-until.
-- The App wiring of F calling `unplan` and of T and P calling `followUpEnds` is not covered by the
-  tests yet; #107 adds a real test for both.
-- [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
-  item whose part is done replaces the hand-off; X on someone else's follow-up drops the status,
-  so the asks F handled ask again.
-- [#108](https://github.com/julian-wendt/inbox-for-github/issues/108) returns only through asks:
-  a new review request does not lift a stored done; a thread reply after D brings the item back
-  for one pass only, as the Open written on the reset is newer than the reply, and then it shows
-  nowhere; a reopen by someone else asks only where a status is stored; a reset of a stored done
-  (e.g. by a reopen) makes the mention D had handled ask again; a due follow-up on a table item
-  ends without an ask.
-- [#109](https://github.com/julian-wendt/inbox-for-github/issues/109) the Done bar: Done is still
-  a view, without asks filed on assignments and with no limit of days.
+its issue. None at the moment: every case is a plain `it`.

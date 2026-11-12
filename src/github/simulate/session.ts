@@ -1,17 +1,18 @@
-import { datedOf } from "../../ui/plan";
+import { datedOf, isPinnable, unplan, withPin, withPlan, type Today } from "../../ui/plan";
 import { ASK_RULES_DEFAULT, classify, type AskRules, type Classified } from "../../classify";
-import { snapshotOf } from "../../handoff";
+import { afterFollowUp, snapshotOf } from "../../handoff";
 import type { Item, Reopen, StatusChange, StatusExtra, Status, StoredStatus } from "../../model";
-import { REOPEN_DEFAULT, snoozeEnded } from "../../reopen";
+import { REOPEN_DEFAULT } from "../../reopen";
 import { ruleSwitches } from "../../rules";
 import { directOnly } from "../../rules/directOnly";
 import { sameLogin } from "../../timeline";
-import { leaveClears, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
+import { leaveClears, localDay, onPlate, withAssignees, withSelfAssigned } from "../../ui/assignments";
 import { isOwnOpen } from "../../ui/authored";
 import { viewOf, type View } from "../../ui/labels";
 import { movedKeys, movedLists } from "../../transfer";
-import { followUpOf, isWaiting } from "../../ui/followUp";
+import { followUpExtra, followUpOf, followUpUnchanged, isWaiting } from "../../ui/followUp";
 import { lockedDone, planStatus } from "../../ui/statusPlan";
+import { inDoneBar } from "../../ui/doneBar";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
 import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
@@ -57,6 +58,10 @@ export class InboxSession {
   readonly settings: Required<SessionSettings>;
   /** The "filedAt" setting: when D last filed an item's asks without finishing it. */
   readonly filedAt = new Map<string, string>();
+  /** Handled-until per item, as `useInbox().handledUntil`: D in the inbox, P, T and F set it. */
+  readonly handledUntil = new Map<string, string>();
+  /** The pins and plans, as the settings hold them (see `todayOf`): T and P set them, F takes the item out. */
+  today: Today = { focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {} };
   private last: { fetchedAt: Date; fullAt: Date; key: string } | null = null;
   private undoStep: (() => void) | null = null;
 
@@ -168,38 +173,56 @@ export class InboxSession {
     }
   }
 
-  /** D or O or a snooze choice, as `App.applyStatus` carries it out. */
-  choose(ref: Ref, status: Status, until?: string): void {
+  /** D or O or a snooze choice, as `App.applyStatus` carries it out, in the item's view or in `view`. */
+  choose(ref: Ref, status: Status, until?: string, view?: View): void {
     const c = this.entry(ref);
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
+    const handledBefore = this.handledUntil.get(ref.id);
+    const todayBefore = this.today;
     const restore = () => {
+      this.today = todayBefore;
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
       else this.statuses.delete(ref.id);
+      if (handledBefore) this.handledUntil.set(ref.id, handledBefore);
+      else this.handledUntil.delete(ref.id);
     };
-    const plan = planStatus(c, status, this.me, viewOf(c, this.me) ?? "inbox");
+    const shown = view ?? viewOf(c, this.me) ?? (this.inBar(c) ? "done" : "inbox");
+    const plan = planStatus(c, status, this.me, shown);
     switch (plan.do) {
       case "resume":
-      case "clear":
-        this.statuses.delete(ref.id);
+        if (c.status === "snoozed") this.write(ref.id, "snoozed", false, c.until ? { until: c.until } : {});
+        else this.statuses.delete(ref.id);
         break;
-      case "file": {
+      case "clear":
+        if (shown === "snoozed") this.endFollowUp(ref.id);
+        else {
+          this.statuses.delete(ref.id);
+          this.handledUntil.set(ref.id, this.world.stamp());
+        }
+        break;
+      case "file":
+      case "tick-update": {
         const before = this.filedAt.get(ref.id);
-        this.filedAt.set(ref.id, this.world.now.toISOString());
-        this.undoStep = () => (before ? this.filedAt.set(ref.id, before) : this.filedAt.delete(ref.id));
+        const at = this.world.stamp();
+        this.filedAt.set(ref.id, at);
+        this.handledUntil.set(ref.id, at);
+        if (plan.do === "tick-update" && !c.item.closed && previous?.handoff) this.statuses.set(ref.id, { ...previous, handoff: snapshotOf(c.item) });
+        this.undoStep = () => (before ? this.filedAt.set(ref.id, before) : this.filedAt.delete(ref.id), restore());
         return;
       }
       case "blocked":
         return;
-      case "tick-update":
       case "hand-off":
-        if (plan.do === "tick-update" && c.bucket === "inbox") this.filedAt.set(ref.id, this.world.stamp());
         this.write(ref.id, "done", false, { handoff: snapshotOf(c.item) });
         break;
       case "set":
-        if (c.item.closed || (c.status === plan.status && until === undefined)) return;
-        this.write(ref.id, plan.status, false, until ? { until } : {});
+        if (c.item.closed || (c.status === plan.status && until === undefined) || (plan.status === "snoozed" && followUpUnchanged(c, until ?? ""))) return;
+        this.write(ref.id, plan.status, false, plan.status === "snoozed" ? followUpExtra(c, until ?? "") : {});
+        if (plan.status !== "open") this.handledUntil.set(ref.id, this.world.stamp());
+        // F, as `App.followUp`: an item has one when.
+        if (plan.status === "snoozed") this.today = unplan(this.today, [ref.id]);
         break;
       case "none":
         return;
@@ -215,20 +238,47 @@ export class InboxSession {
     this.choose(ref, "open");
   }
 
+  /** T on an item not pinned yet, as `App.toggleFocus`: pinned for today and handled; a follow-up ends. */
+  pin(ref: Ref): void {
+    this.when(ref, (at) => withPin(this.today, ref.id, localDay(this.world.now), at));
+  }
+
+  /** P for `day` (a local date such as "2026-11-16"), as `App.planFor`: planned and handled; a follow-up ends. */
+  plan(ref: Ref, day: string): void {
+    this.when(ref, (at) => withPlan(this.today, ref.id, day, at));
+  }
+
   /** F with a time (or without): the item waits for a follow-up, in place if it belongs to a table. */
   snooze(ref: Ref, until?: string): void {
     this.choose(ref, "snoozed", until);
   }
 
-  /** X or the × in the chip: takes the follow-up off, as if never set. */
+  /** X or the × in the chip: takes the follow-up off; a finished part stays done. */
   clearFollowUp(ref: Ref): void {
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
-    this.statuses.delete(ref.id);
+    this.endFollowUp(ref.id);
     this.undoStep = () => {
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
     };
+  }
+
+  /** A new pin or plan, where T and P take the item (see `isPinnable`); its follow-up ends, as `App.followUpEnds` has it. */
+  private when(ref: Ref, next: (at: string) => Today): void {
+    const c = this.entry(ref);
+    if (!isPinnable(c)) return;
+    const at = this.world.stamp();
+    this.today = next(at);
+    this.handledUntil.set(ref.id, at);
+    if (isWaiting(c)) this.endFollowUp(ref.id);
+  }
+
+  /** What `Store.endFollowUp` does on the session's map. */
+  private endFollowUp(id: string): void {
+    const next = afterFollowUp(this.statuses.get(id));
+    if (next) this.statuses.set(id, next);
+    else this.statuses.delete(id);
   }
 
   /** The follow-up date the item waits for, which its chip shows; null once it is back. */
@@ -248,7 +298,8 @@ export class InboxSession {
     const list = () =>
       withinClosedWindow(this.items, this.settings.closedDays, this.nowMs).map((raw) => {
         const item = directOnly(raw, this.me, this.settings.directOnly);
-        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, undefined, this.settings.askRules, this.filedAt.get(item.id));
+        const dated = this.today.focus.includes(item.id) || this.today.planned.some((p) => p.id === item.id);
+        return classify(item, this.me, this.statuses.get(item.id), switches, this.settings.reopenOn, this.nowMs, this.settings.reviewOnCommits, this.handledUntil.get(item.id), this.settings.askRules, dated);
       });
     for (let pass = 0; pass < 3; pass++) {
       let changed = false;
@@ -264,23 +315,28 @@ export class InboxSession {
     return found;
   }
 
-  /** The view the item stands in, or null where it shows nowhere. */
-  viewOf(ref: Ref): View | null {
+  /** The view the item stands in, "done" where it shows only in the inbox's Done bar, or null where it shows nowhere. */
+  viewOf(ref: Ref): View | "done" | null {
     const c = this.classified().find((e) => e.item.id === ref.id);
-    return c ? viewOf(c, this.me) : null;
+    return c ? (viewOf(c, this.me) ?? (this.inBar(c) ? "done" : null)) : null;
   }
 
-  /** What each view holds, by item id: the tables by their own rule, the lists by bucket. */
-  views(): Record<View, string[]> {
+  /** Whether the item sits in the inbox's Done bar; the session has no plans. */
+  inBar(c: Classified): boolean {
+    return inDoneBar(c, this.handledUntil.get(c.item.id), this.me, this.nowMs, false);
+  }
+
+  /** What each view holds, by item id: the tables by their own rule, the lists by bucket, and `done` the inbox's Done bar. */
+  views(): Record<View | "done", string[]> {
     const all = this.classified();
     const ids = (keep: (c: Classified) => boolean) => all.filter(keep).map((c) => c.item.id);
     return {
       inbox: ids((c) => c.bucket === "inbox"),
       assigned: ids((c) => onPlate(c, this.me)),
       authored: ids((c) => isOwnOpen(c, this.me)),
-      planned: ids((c) => datedOf(c, [], []) !== null),
+      planned: ids((c) => datedOf(c, this.today.focus, this.today.planned, localDay(this.world.now)) !== null),
       snoozed: ids(isWaiting),
-      done: ids((c) => c.bucket === "done"),
+      done: ids((c) => this.inBar(c)),
     };
   }
 
@@ -306,6 +362,8 @@ export class InboxSession {
       for (const [id, value] of next) map.set(id, value);
     };
     refill(this.statuses, movedKeys(this.statuses, moves));
+    refill(this.handledUntil, movedKeys(this.handledUntil, moves));
+    refill(this.filedAt, movedKeys(this.filedAt, moves));
     refill(this.log, movedLists(this.log, moves));
     refill(this.writeFailures, movedLists(this.writeFailures, moves));
   }
@@ -322,15 +380,6 @@ export class InboxSession {
   /** The automatic writes `useInbox` makes for one classification; true when it wrote. */
   private settle(c: Classified): boolean {
     const { id } = c.item;
-    if (c.renewed) {
-      this.statuses.delete(id);
-      this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:reassigned" }]);
-      return true;
-    }
-    if (c.statusReset) {
-      this.write(id, "open", true, {}, snoozeEnded(this.statuses.get(id), this.nowMs) ? "auto:snooze-ended" : "auto:reopen");
-      return true;
-    }
     if (lockedDone(c, this.statuses.get(id), this.me)) {
       this.statuses.delete(id);
       this.log.set(id, [...(this.log.get(id) ?? []), { status: "open", at: this.world.stamp(), automatic: true, source: "auto:locked" }]);

@@ -5,8 +5,8 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, 
 /**
  * Whether an inbox item has something the viewer has not opened yet, like an unread mail: it was
  * never opened, or opened before what put it there (the mention, the latest post or event by
- * someone else, a review request among them, or the stored Open that asks again after a reopen
- * or a passed follow-up date).
+ * someone else, a review request among them, the viewer's O, a reopen on GitHub, or a follow-up
+ * that came due).
  *
  * @param entry  An item of the inbox.
  * @param seen   When the viewer last opened each item (`useInbox().seen`).
@@ -19,8 +19,8 @@ import { hasNewActivity, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, 
 export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: string, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
   const since = seen.get(entry.item.id);
   if (!since) return true;
-  const reopened = entry.asks.includes("reopened") ? entry.statusAt : null;
-  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me, counted), reopened);
+  const { opened, reopened, due } = entry.asked;
+  const last = latest(entry.mention?.at, lastOthersActivity(entry.item, me, counted), opened, reopened, due);
   return !!last && last > since;
 }
 
@@ -34,4 +34,31 @@ export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: 
  */
 export function unreadAssignment(entry: Classified, seen: Map<string, string>, me: string, assignment: boolean, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
   return (assignment && isNewAssignment(entry, seen, me)) || hasNewActivity(entry, seen, me, counted);
+}
+
+/** An item's read state as `useInbox().restoreRead` puts it back: when it was last seen, and its unread mark. */
+export interface ReadState {
+  seen?: string;
+  mark?: string;
+}
+
+/**
+ * P, T and F count as seen, but only on the item that is open (the list's detail or a table's
+ * pop-up); a table row that is only selected stays unread, and so does an item marked unread by hand,
+ * which the opening's own timer keeps too. As an undo step: `run` marks it seen,
+ * `undo` restores `before` exactly, unread mark included, and running it again marks it seen again.
+ *
+ * @param id           The item's node id.
+ * @param openedId     The open item's id, if any.
+ * @param before       The item's read state before the change.
+ * @param markSeen     E.g. `useInbox().markSeen`.
+ * @param restoreRead  E.g. `useInbox().restoreRead`.
+ * @returns The step, or none when the item is not open.
+ *
+ * @example
+ *   seenStep("I_1", openedId, { seen: inbox.seen.get("I_1"), mark: inbox.unreadMarks.get("I_1") }, inbox.markSeen, inbox.restoreRead);
+ */
+export function seenStep(id: string, openedId: string | undefined, before: ReadState, markSeen: (id: string) => Promise<void>, restoreRead: (id: string, previous: ReadState) => Promise<void>): { run: () => void; undo: () => void }[] {
+  if (id !== openedId || before.mark) return [];
+  return [{ run: () => void markSeen(id), undo: () => void restoreRead(id, before) }];
 }
