@@ -130,10 +130,10 @@ question, and D follows that intent (2026-11-11); the table of views is in
   part done", which keeps it in every view, shared or not.
 - **Plan and Follow-up offer the same days** from one function (`dayChoices`), with the same
   keys; a follow-up for a day comes back at a setting (`followUpTime`, 09:00). Follow-up adds
-  "This afternoon" (A, today at 14:00, only before then) (2026-11-12): handing a review to
-  someone free after lunch is a same-day wait. Earlier: "Later today" went on 2026-10-29, as a
-  follow-up was thought to be about days only. One mark, the calendar with the day, replaces the star for Today in rows and tables;
-  T and P remain as keys.
+  "This afternoon" (A, today at 14:00, only before then; 2026-11-12), since waiting for someone
+  free after lunch is a wait within the day. Earlier: "Later today" was dropped on 2026-10-29,
+  when a follow-up was meant to be about days only. One mark, the calendar with the day,
+  replaces the star for Today in rows and tables; T and P remain as keys.
 
 ## Calendar
 
