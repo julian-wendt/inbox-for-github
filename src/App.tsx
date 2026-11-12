@@ -672,6 +672,10 @@ export default function App() {
   const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of) : undefined;
   const menuEntriesNow = !menu ? null : typeof menu.entries !== "function" ? menu.entries : menuItem ? menu.entries(menuItem) : null;
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
+  const snoozeItem = snoozeMenu ? inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) : undefined;
+  // An item that left the list takes its menu along, so the menu cannot come back with it.
+  if (menu && !menuEntriesNow) setMenu(null);
+  if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
   const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
@@ -1531,7 +1535,7 @@ export default function App() {
       <Toast toast={actions.toast} />
       {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => setMenu(null)} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) ?? snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
       )}
       {calendarFor && (
         <CalendarDay
