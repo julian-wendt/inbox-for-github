@@ -433,7 +433,7 @@ describe("rule 5: a follow-up is a when, not a status", () => {
 describe("rule 5, one when", () => {
   walk([
     {
-      situation: "F on a planned item takes the plan off: it only waits",
+      situation: "unplan clears the day plan that F replaces, and the item then only waits",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         const at = world.stamp();
@@ -445,7 +445,7 @@ describe("rule 5, one when", () => {
       },
     },
     {
-      situation: "T on a waiting item ends the follow-up: it is only planned",
+      situation: "clearing the follow-up leaves only the plan",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         app.snooze(issue, later(world, 3 * DAY));

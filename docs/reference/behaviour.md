@@ -73,6 +73,8 @@ its issue.
   time (`plannedAt`), so what the plan handled asks again (#106 adds the test for X, which the
   simulated session cannot drive: it has no plans); D on a closed item with news waiting in the
   inbox writes a stored done again instead of setting handled-until.
+- The App wiring of F calling `unplan` and of T and P calling `followUpEnds` is not covered by the
+  tests yet; #107 adds a real test for both.
 - [#107](https://github.com/julian-wendt/inbox-for-github/issues/107) follow-up as a when: F on an
   item whose part is done replaces the hand-off; X on someone else's follow-up drops the status,
   so the asks F handled ask again.
