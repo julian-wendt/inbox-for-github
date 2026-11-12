@@ -5,21 +5,26 @@ import { t } from "./i18n";
  * Which items deserve a notification now, given the inbox items already known.
  *
  * The first result (`known` is null) is the baseline, so a restart does not replay the inbox.
- * After that, every item that newly enters the inbox notifies, except one that only asks again
- * ("reopened"): the viewer reopened it, or its follow-up date came, and both return quietly.
+ * After that, every item that newly enters the inbox or whose ask changed (see `askKey`) notifies,
+ * except one that only asks again ("reopened"): the viewer reopened it, or its follow-up date
+ * came, and both return quietly.
  *
  * @param classified  The current classification.
- * @param known       Ids of the inbox items in the previous result, or null before the first one.
+ * @param known       Item id → `askKey` of the inbox items in the previous result, or null before the first one.
  * @returns The items to notify about, in list order.
  *
  * @example
- *   arrivals(classified, null);              // nothing: the baseline
- *   arrivals(classified, new Set(["I_1"]));  // every inbox item but I_1
+ *   arrivals(classified, null);                         // nothing: the baseline
+ *   arrivals(classified, new Map([["I_1", askKey(c)]])); // every inbox item but I_1, unless its ask changed
  */
-export function arrivals(classified: Classified[], known: ReadonlySet<string> | null): Classified[] {
-  const inbox = classified.filter((c) => c.bucket === "inbox");
+export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null): Classified[] {
   if (!known) return [];
-  return inbox.filter((c) => !known.has(c.item.id) && !c.asks.every((ask) => ask === "reopened"));
+  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && !c.asks.every((ask) => ask === "reopened"));
+}
+
+/** What an inbox item asks, with the time of the ask: it changes when a new mention or feedback comes in. */
+export function askKey({ asks, mention, feedback }: Pick<Classified, "asks" | "mention" | "feedback">): string {
+  return [...asks, mention?.at, feedback?.at].join("|");
 }
 
 /** Why an item notifies; each has its own switch in the settings. */

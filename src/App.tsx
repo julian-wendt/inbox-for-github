@@ -319,10 +319,14 @@ export default function App() {
     if (!reveal) return;
     const group = viewGroups?.find((g) => g.entries.some((c) => c.item.id === reveal))?.group;
     if (group && folded(group)) return bars.toggle(barKey(group));
-    if (ids.includes(reveal)) selection.select(reveal);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot: clears the jump target once it has landed or cannot
+    if (ids.includes(reveal)) {
+      selection.select(reveal);
+      // A table row shows nothing of the item; its pop-up is what opens it, and marks it seen.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot: the jump lands once
+      if (table) setPopup("keys");
+    }
     setReveal(null);
-  }, [reveal, viewGroups, folded, ids, bars, barKey, selection]);
+  }, [reveal, viewGroups, folded, ids, bars, barKey, selection, table]);
   const selectedBar = selection.selected?.startsWith("bar:") ? (selection.selected.slice(4) as TableGroup) : null;
   const toggleBar = (group: string) => bars.toggle(barKey(group));
   const setBar = (group: string, open: boolean) => folded(group) === open && toggleBar(group);

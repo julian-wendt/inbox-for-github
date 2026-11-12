@@ -2,7 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { isPermissionGranted, onAction, registerActionTypes, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { useEffect, useRef, useState } from "react";
 import type { Classified } from "../classify";
-import { arrivals, notificationTitle, notifies, notifyReason, type NotifyReason } from "./attention";
+import { arrivals, askKey, notificationTitle, notifies, notifyReason, type NotifyReason } from "./attention";
 import { notifiesLive, summarize, summaryDue, type Delivery } from "./delivery";
 import { t } from "./i18n";
 
@@ -54,7 +54,7 @@ const TICK_MS = 30_000;
  *   useAttention(inbox.classified, unreadIds, { on: true, reasons: { review: false }, inFront: false, delivery }, true, (id) => show(id), pending, (change) => store(change(pending)));
  */
 export function useAttention(classified: Classified[], unread: ReadonlySet<string>, notify: NotifyOptions, badge: boolean, onOpen: (itemId: string | null) => void, pending: Pending, onPending: (change: (current: Pending) => Pending) => void): void {
-  const known = useRef<Set<string> | null>(null);
+  const known = useRef<Map<string, string> | null>(null);
   const { on, reasons, inFront, delivery } = notify;
   const { collected, lastSummary } = pending;
   const open = useRef(onOpen);
@@ -94,7 +94,7 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
   useEffect(() => {
     if (classified.length === 0) return;
     const fresh = arrivals(classified, known.current).filter((c) => notifies(notifyReason(c), reasons));
-    known.current = new Set(classified.filter((c) => c.bucket === "inbox").map((c) => c.item.id));
+    known.current = new Map(classified.filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
     if (!on || fresh.length === 0) return;
     if (!notifiesLive(delivery, new Date())) {
       const ids = fresh.map((c) => c.item.id);

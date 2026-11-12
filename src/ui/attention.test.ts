@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { arrivals, notificationTitle, notifies, notifyReason } from "./attention";
+import { arrivals, askKey, notificationTitle, notifies, notifyReason } from "./attention";
 import { setLang } from "./i18n";
 
 setLang("en");
@@ -17,15 +17,20 @@ describe("arrivals", () => {
 
   it("notifies afterwards for every item new in the inbox, and nothing outside it", () => {
     const watched = entry("I_3", { bucket: "involved", asks: [] });
-    expect(arrivals([entry("I_1"), entry("I_2"), watched], new Set(["I_1"])).map((c) => c.item.id)).toEqual(["I_2"]);
+    expect(arrivals([entry("I_1"), entry("I_2"), watched], new Map([["I_1", askKey(entry("I_1"))]])).map((c) => c.item.id)).toEqual(["I_2"]);
   });
 
   it("lets an item that only asks again come back without a notification", () => {
     const back = entry("I_2", { asks: ["reopened"] });
     const asked = entry("I_3", { asks: ["reopened", "mention"] });
-    expect(arrivals([back, asked], new Set()).map((c) => c.item.id)).toEqual(["I_3"]);
+    expect(arrivals([back, asked], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
-
+  it("notifies again when an item already in the inbox gets a new ask", () => {
+    const before = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-05T00:00:00Z", excerpt: "", self: false } });
+    const after = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-06T00:00:00Z", excerpt: "", self: false } });
+    expect(arrivals([after], new Map([["I_1", askKey(before)]])).map((c) => c.item.id)).toEqual(["I_1"]);
+    expect(arrivals([before], new Map([["I_1", askKey(before)]]))).toEqual([]);
+  });
 });
 
 describe("notificationTitle", () => {
