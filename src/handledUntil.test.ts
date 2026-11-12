@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryStore } from "./demo/memoryStore";
 import { ASK_RULES_DEFAULT, classify } from "./classify";
 import { deriveHandledUntil, type Cutoffs } from "./handledUntil";
 import type { Comment, Item, StoredStatus } from "./model";
 import { ruleSwitches } from "./rules";
+import { Store } from "./store";
+
+const load = vi.hoisted(() => vi.fn());
+vi.mock("@tauri-apps/plugin-sql", () => ({ default: { load } }));
 
 const ME = "me";
 const NOW = Date.parse("2026-10-20T00:00:00Z");
@@ -90,5 +94,30 @@ describe("the in-memory store", () => {
     expect([...(await store.handledUntil())]).toEqual([["b", day(3)]]);
     await store.resetStatuses();
     expect((await store.handledUntil()).size).toBe(0);
+  });
+});
+
+describe("the migration", () => {
+  /** Opens a `Store` on a fake database whose settings hold `filedAt`; returns the rows the fill inserted, per statement. */
+  async function open(filedAt: Record<string, string>, tableExists = false): Promise<string[][]> {
+    const inserts: string[][] = [];
+    const db = {
+      select: (sql: string) => Promise.resolve(sql.includes("sqlite_master") && tableExists ? [{}] : sql.includes("FROM settings") ? [{ key: "filedAt", value: JSON.stringify(filedAt) }] : []),
+      execute: (sql: string, params: string[] = []) => Promise.resolve(void (sql.startsWith("INSERT INTO item_handled") && inserts.push(params))),
+    };
+    load.mockResolvedValue(db);
+    await Store.open();
+    return inserts;
+  }
+  const filed = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [`I_${i}`, day(2)]));
+
+  it("writes a large filedAt in chunks of at most 400 rows", async () => {
+    const inserts = await open(filed(900));
+    expect(inserts.map((params) => params.length / 2)).toEqual([400, 400, 100]);
+    expect(new Set(inserts.flat().filter((p) => p.startsWith("I_"))).size).toBe(900);
+  });
+
+  it("runs only when the table is created", async () => {
+    expect(await open(filed(3), true)).toEqual([]);
   });
 });

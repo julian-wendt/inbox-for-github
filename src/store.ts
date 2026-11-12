@@ -17,6 +17,8 @@ import type { StatusMap } from "./workStatus";
 
 /** Lives in the app's config directory, `~/Library/Application Support/<bundle id>/` on macOS. */
 const DB_URL = "sqlite:tracker.db";
+/** Rows per INSERT that fills `item_handled`: two bound parameters each, under the 999 older SQLite builds allow. */
+const FILL_ROWS = 400;
 
 /** Bump when `Item` changes shape, so a cache in the old shape is ignored instead of misread. */
 const CACHE_VERSION = 2;
@@ -274,7 +276,7 @@ export class Store {
     return store;
   }
 
-  /** Fills a just created `item_handled` from the older cutoffs (see `deriveHandledUntil`); one statement, so it is whole or absent. */
+  /** Fills a just created `item_handled` from the older cutoffs (see `deriveHandledUntil`), `FILL_ROWS` rows per statement. */
   private async fillHandledUntil(): Promise<void> {
     const settings = await this.settings();
     const derived = deriveHandledUntil({
@@ -283,9 +285,11 @@ export class Store {
       plannedAt: settings.plannedAt,
       dated: new Set([...settings.focus, ...settings.planned.map((p) => p.id)]),
     });
-    if (derived.size === 0) return;
     const rows = [...derived];
-    await this.db.execute(`INSERT INTO item_handled (node_id, handled_until) VALUES ${rows.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, rows.flat());
+    for (let from = 0; from < rows.length; from += FILL_ROWS) {
+      const chunk = rows.slice(from, from + FILL_ROWS);
+      await this.db.execute(`INSERT INTO item_handled (node_id, handled_until) VALUES ${chunk.map((_, i) => `($${2 * i + 1}, $${2 * i + 2})`).join(", ")}`, chunk.flat());
+    }
   }
 
   /** The time up to which the viewer handled each item's asks; asks from before it are not new. */
