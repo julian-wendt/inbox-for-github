@@ -23,7 +23,7 @@ import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEve
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
 import { followUpOn, untilText } from "./ui/snooze";
-import { followUpExtra, isWaiting } from "./ui/followUp";
+import { followUpExtra, followUpUnchanged, isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./ui/statusPlan";
 import { StatusIcon } from "./ui/parts/StatusIcon";
@@ -815,6 +815,7 @@ export default function App() {
   /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
   const followUp = (c: Classified, until: string) => {
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
+    if (followUpUnchanged(c, until)) return;
     const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until)), handled(c), ...seenOnOpen(c)];
     for (const s of steps) s.run();
     actions.announce(
