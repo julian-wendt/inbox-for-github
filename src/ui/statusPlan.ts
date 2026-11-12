@@ -1,5 +1,5 @@
 import type { Classified } from "../classify";
-import type { Status } from "../model";
+import type { Status, StoredStatus } from "../model";
 import { sameLogin } from "../timeline";
 import { onPlate } from "./assignments";
 import type { View } from "./labels";
@@ -83,13 +83,27 @@ export function needsAskChoice(c: Classified, status: Status, me: string, view: 
 
 /**
  * Why D may change no status of an open item, if so: the viewer opened it. Null for closed items
- * and everything else.
+ * and everything else. An own issue assigned to the viewer is still handed off in Assigned to me
+ * (see `lockedDone`).
  *
  * @example
  *   lockOf(entry, "octocat"); // "own" for an open issue octocat opened
  */
 export function lockOf({ item }: Pick<Classified, "item">, me: string): Lock | null {
   return !item.closed && sameLogin(item.author, me) ? "own" : null;
+}
+
+/**
+ * A "done" stored on an item D may no longer finish (see `lockOf`): from before the lock, it would
+ * hide open work for good, so the app clears it. Not on an own issue assigned to the viewer: there
+ * D is "my part done", and that hand-off is kept.
+ *
+ * @example
+ *   lockedDone(entry, { status: "done" }, "octocat"); // false for an own issue assigned to octocat
+ */
+export function lockedDone({ item }: Pick<Classified, "item">, stored: Pick<StoredStatus, "status"> | undefined, me: string): boolean {
+  const handsOff = item.kind !== "pr" && item.reasons.includes("assigned");
+  return stored?.status === "done" && lockOf({ item }, me) !== null && !handsOff;
 }
 
 /** Whether D is offered for an item: as usual, not at all, or alone for a closed item that waits in the inbox. */

@@ -2,6 +2,14 @@
 
 Short records of product decisions whose reason is not obvious from the code. Newest first.
 
+## 2026-11-12
+
+- **An own issue assigned to the viewer is their work, and D there is kept.** In Assigned to me
+  D is "my part done" as on any assignment; in Created by me it is only watched. `lockedDone` no
+  longer clears that hand-off. Own pull requests and own items not assigned to the viewer stay
+  locked. Supersedes "own items stay locked" of 2026-11-06 and "D never finishes an own item or
+  one assigned to you alone" of 2026-11-02 for own issues assigned to the viewer.
+
 ## 2026-11-11
 
 - **A new assignment or a reopen on GitHub brings a finished item back.** Someone wants

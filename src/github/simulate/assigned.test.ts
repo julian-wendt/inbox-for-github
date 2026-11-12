@@ -379,7 +379,7 @@ describe("Created by me", () => {
     expect(app.views().inbox).toContain(asked.id);
   });
 
-  it("never lets D finish or hand off an own item, also with another person assigned", async () => {
+  it("lets D hand off an own issue assigned to me, but not an own pull request", async () => {
     const { world, app } = sim;
     const alone = world.issue({ author: "octocat", assignees: ["octocat"] });
     const shared = world.issue({ author: "octocat", assignees: ["octocat", "alice"] });
@@ -390,8 +390,8 @@ describe("Created by me", () => {
     app.done(shared);
     app.done(pr);
 
-    expect(app.statuses.has(alone.id)).toBe(false);
-    expect(app.statuses.has(shared.id)).toBe(false);
+    expect(app.statuses.get(alone.id)?.handoff).toBeDefined();
+    expect(app.statuses.get(shared.id)?.handoff).toBeDefined();
     expect(app.statuses.has(pr.id)).toBe(false);
   });
 

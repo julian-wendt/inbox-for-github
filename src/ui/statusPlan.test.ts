@@ -3,7 +3,7 @@ import { classify, type Classified } from "../classify";
 import type { Item } from "../model";
 import { ruleSwitches } from "../rules";
 import type { View } from "./labels";
-import { doneAccess, keepsItsPlan, needsAskChoice, planStatus } from "./statusPlan";
+import { doneAccess, keepsItsPlan, lockedDone, needsAskChoice, planStatus } from "./statusPlan";
 
 const ME = "me";
 
@@ -139,5 +139,24 @@ describe("needsAskChoice", () => {
     expect(ask(entry({}), "assigned")).toBe(false);
     expect(ask(entry({}, ["mention"]), "inbox")).toBe(false);
     expect(needsAskChoice(entry({}, ["mention"]), "open", ME, "assigned")).toBe(false);
+  });
+});
+
+describe("lockedDone", () => {
+  const done = { status: "done" as const };
+  const involved = { author: ME, assignees: [], reasons: ["involved" as const] };
+
+  it("keeps my part done on an own issue assigned to me", () => {
+    expect(lockedDone(entry({ author: ME }), done, ME)).toBe(false);
+  });
+
+  it("clears a done on an own item that is no assignment of mine", () => {
+    expect(lockedDone(entry(involved), done, ME)).toBe(true);
+    expect(lockedDone(entry({ author: ME, kind: "pr" }), done, ME)).toBe(true);
+  });
+
+  it("leaves other items and other statuses alone", () => {
+    expect(lockedDone(entry({}), done, ME)).toBe(false);
+    expect(lockedDone(entry(involved), { status: "open" }, ME)).toBe(false);
   });
 });
