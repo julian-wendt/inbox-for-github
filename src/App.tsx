@@ -844,42 +844,37 @@ export default function App() {
   const [reloading, setReloading] = useState<string | null>(null);
   const assignable = (c: Classified) => !c.item.closed && !c.item.assignees.some((a) => sameLogin(a, me));
   /**
-   * Adds the viewer to the items' assignees: at once here, which moves them into Assigned to me,
-   * and then on GitHub, queued one after another; GitHub's assignees replace the local guess. A
-   * failure puts that item back where it was and says so.
+   * Adds the viewer to the item's assignees: at once here, which moves it into Assigned to me,
+   * and then on GitHub, queued; GitHub's assignees replace the local guess. A failure puts the
+   * item back where it was and says so.
    */
-  const assignAll = (entries: Classified[], quiet = false) => {
-    const due = entries.filter(assignable);
-    if (due.length === 0) return quiet ? undefined : actions.notify(t("assign.nothing"));
-    const text = due.length === 1 ? t("assign.done", { number: due[0].item.number }) : t("assign.doneMany", { count: due.length });
-    const ids = due.map((c) => c.item.id);
+  const assignMe = (c: Classified, quiet = false) => {
+    if (!assignable(c)) return quiet ? undefined : actions.notify(t("assign.nothing"));
+    const { id, number, assignees, reasons } = c.item;
+    const text = t("assign.done", { number });
     // Undo leaves again, on GitHub too, through the same queue and with the same rollback.
     if (quiet) actions.notify(text);
     else
       actions.announce(
         text,
-        () => ids.forEach((id) => classifiedById(id) && leave(classifiedById(id)!, true, true)),
-        () => ids.forEach((id) => classifiedById(id) && assignAll([classifiedById(id)!], true)),
+        () => classifiedById(id) && leave(classifiedById(id)!, true, true),
+        () => classifiedById(id) && assignMe(classifiedById(id)!, true),
       );
-    for (const c of due) {
-      const { id, number, assignees, reasons } = c.item;
-      const at = new Date().toISOString();
-      inbox.updateItem(id, (item) => withSelfAssigned(item, me, at));
-      void queueWrite(() =>
-        ghToken()
-          .then((token) => assignSelf(token, id))
-          .then(
-            (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
-            (e) => {
-              inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
-              void inbox.logWriteFailure(id, "assign", String(e));
-              actions.notify(t("assign.failed", { number, error: String(e) }));
-            },
-          ),
-      );
-    }
+    const at = new Date().toISOString();
+    inbox.updateItem(id, (item) => withSelfAssigned(item, me, at));
+    void queueWrite(() =>
+      ghToken()
+        .then((token) => assignSelf(token, id))
+        .then(
+          (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
+          (e) => {
+            inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
+            void inbox.logWriteFailure(id, "assign", String(e));
+            actions.notify(t("assign.failed", { number, error: String(e) }));
+          },
+        ),
+    );
   };
-  const assignMe = (c: Classified) => assignAll([c]);
   /** The item as classified right now; an undo that runs later must not see the list of the render that made it. */
   const classifiedById = (id: string) => inbox.classifiedNow().find((e) => e.item.id === id);
   const leavable = (c: Classified) => !c.item.closed && c.item.assignees.some((a) => sameLogin(a, me));
@@ -910,7 +905,7 @@ export default function App() {
         () => {
           if (cleared) void inbox.restoreStatus(id, previous);
           const now = classifiedById(id);
-          if (now) assignAll([now], true);
+          if (now) assignMe(now, true);
         },
         () => {
           const now = classifiedById(id);

@@ -825,7 +825,6 @@ export const en = {
   "assign.failed": "#{number} could not be assigned on GitHub and is back where it was: {error}",
   "reminder.remove": "Remove follow-up",
   "toast.reminderRemoved": "#{number}: follow-up removed",
-  "assign.doneMany": "{count} items → assigned to you",
   "keys.escape": "Close the pop-up or menu, then the selection; filters and the view stay",
   "notify.update": "Update",
   "row.update": "Update: {what}",

@@ -827,7 +827,6 @@ export const de: Messages = {
   "assign.failed": "#{number} konnte auf GitHub nicht zugewiesen werden und ist wieder, wo es war: {error}",
   "reminder.remove": "Wiedervorlage entfernen",
   "toast.reminderRemoved": "#{number}: Wiedervorlage entfernt",
-  "assign.doneMany": "{count} Items → dir zugewiesen",
   "keys.escape": "Pop-up oder Menü schließen, dann die Auswahl; Filter und Ansicht bleiben",
   "notify.update": "Update",
   "row.update": "Update: {what}",
