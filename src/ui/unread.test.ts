@@ -37,8 +37,9 @@ describe("unreadInInbox", () => {
     expect(unreadInInbox(entry({ mention }, own), seen, "me")).toBe(false);
   });
 
-  it("counts a stored Open after the last visit as unread, as after a passed follow-up date", () => {
-    expect(unreadInInbox(entry({ asks: ["reopened"], statusAt: "2026-10-23T08:00:00Z" }, mentioned), seen, "me")).toBe(true);
+  it("counts an O or a due follow-up after the last visit as unread", () => {
+    expect(unreadInInbox(entry({ asks: ["opened"], asked: { opened: "2026-10-23T08:00:00Z" } }, mentioned), seen, "me")).toBe(true);
+    expect(unreadInInbox(entry({ asks: ["due"], asked: { due: "2026-10-23T08:00:00Z" } }, mentioned), seen, "me")).toBe(true);
   });
 });
 

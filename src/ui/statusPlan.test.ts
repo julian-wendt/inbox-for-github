@@ -31,8 +31,9 @@ describe("planStatus", () => {
       expect(plan({ ...entry(shared, ["mention"]), updates: [] }, "inbox")).toEqual({ do: "file" });
     });
 
-    it("clears a stored Open when reopened is the only ask", () => {
-      expect(plan(entry({}, ["reopened"]), "inbox")).toEqual({ do: "clear" });
+    it("clears a stored Open when O is the only ask, and files a reopen on GitHub", () => {
+      expect(plan(entry({}, ["opened"]), "inbox")).toEqual({ do: "clear" });
+      expect(plan(entry({}, ["reopened"]), "inbox")).toEqual({ do: "file" });
     });
 
     it("files an item outside the tables and ends its plan, also with a mention", () => {

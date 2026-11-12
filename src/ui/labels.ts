@@ -1,4 +1,4 @@
-import { newestAsk, type Classified } from "../classify";
+import { newestAsk, type Ask, type Classified } from "../classify";
 import type { Update } from "../handoff";
 import type { Bucket, Item, Status } from "../model";
 import { lastReplyAt, sameLogin } from "../timeline";
@@ -257,8 +257,9 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * - Snoozed: when it comes back, else when you snoozed it.
  * - Done: when it was closed or merged on GitHub; else when you answered (your last reply, or
  *   your last review for a review request); else when you marked it done.
- * - Inbox and the rest: the newest ask (see `newestAsk`) when it is a mention or a due
- *   follow-up, else the last activity by someone else, which the other asks are made of. A mention older than another ask
+ * - Inbox and the rest: the newest ask (see `newestAsk`) when it is a mention, a reopen, the
+ *   viewer's O or a due follow-up, else the last activity by someone else, which the other asks
+ *   are made of. A mention older than another ask
  *   is old news.
  *
  * Wherever a view's own moment is missing, the last activity by someone else stands in, and
@@ -270,6 +271,8 @@ export function itemLink(item: Pick<Item, "url" | "repo" | "number" | "title">, 
  * @example
  *   sortTime(snoozedEntry, "octocat", settings.movesUp); // its statusAt
  */
+const OWN_TIME = new Set<Ask>(["mention", "reopened", "opened", "due"]);
+
 export function sortTime(c: Classified, me: string, movesUp: MovesUp = MOVES_UP_DEFAULT): string {
   const { item } = c;
   const activity = () => lastOthersActivity(item, me, movesUp) ?? item.createdAt;
@@ -287,5 +290,5 @@ export function sortTime(c: Classified, me: string, movesUp: MovesUp = MOVES_UP_
     return c.statusAt ?? activity();
   }
   const newest = newestAsk(c);
-  return newest?.ask === "mention" || newest?.ask === "due" ? newest.at : activity();
+  return newest && OWN_TIME.has(newest.ask) ? newest.at : activity();
 }

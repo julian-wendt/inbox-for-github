@@ -241,7 +241,6 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
     },
     {
       situation: "a reopen by someone else after my answer",
-      diverges: "#108: a reopen asks only where a status is stored",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
         await app.comment(issue, "Will do.");

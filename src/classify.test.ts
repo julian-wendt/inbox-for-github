@@ -179,7 +179,7 @@ describe("manual status", () => {
 
   it("ignores plain comments unless any post asks", () => {
     expect(run(commentedAgain, done(4)).bucket).toBe("done");
-    expect(run(commentedAgain, done(4), undefined, "any-post")).toMatchObject({ bucket: "inbox", status: "open", asks: ["reopened"] });
+    expect(run(commentedAgain, done(4), undefined, "any-post")).toMatchObject({ bucket: "inbox", status: "open", asks: ["post"], postedBy: "bob" });
   });
 
   it("moves snoozed items out of every other bucket", () => {
@@ -250,7 +250,7 @@ describe("review requests", () => {
   it("brings an answered request back on a manual reopen, until I answer again", () => {
     const reopened: StoredStatus = { status: "open", changedAt: "2026-10-04T12:00:00Z" };
     const answered = [comment(ME, "Looks odd", 3)];
-    expect(run(pr({ comments: answered }), reopened)).toMatchObject({ bucket: "inbox", status: "open", asks: ["reopened"] });
+    expect(run(pr({ comments: answered }), reopened)).toMatchObject({ bucket: "inbox", status: "open", asks: ["opened"], asked: { opened: reopened.changedAt } });
     expect(run(pr({ comments: [...answered, comment(ME, "Checked again", 5)] }), reopened).bucket).toBe("done");
   });
 
@@ -374,7 +374,7 @@ describe("snooze with a date", () => {
   it("asks again on the stored Open written at its date where something was answered, until the viewer replies", () => {
     const back = { status: "open" as const, changedAt: "2026-10-05T09:01:00Z" };
     const answered = item({ comments: [comment("bob", "@me ping", 2), comment(ME, "sure", 3)] });
-    expect(classify(answered, "me", back, ruleSwitches())).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(classify(answered, "me", back, ruleSwitches())).toMatchObject({ bucket: "inbox", asks: ["opened"] });
     expect(classify(item({ ...answered, comments: [...answered.comments, comment(ME, "done", 6)] }), "me", back, ruleSwitches()).bucket).toBe("done");
     const filed = { status: "snoozed" as const, changedAt: "2026-10-06T00:00:00Z" };
     expect(classify(answered, "me", filed, ruleSwitches()).bucket).toBe("snoozed");
@@ -513,7 +513,7 @@ describe("planned items", () => {
     expect(planned(reviewed, at(5)).bucket).toBe("planned");
     expect(planned(reviewed, at(3, 12))).toMatchObject({ bucket: "inbox", asks: ["commits"], pushedBy: ["alice"] });
     const answered = item({ comments: [comment("alice", "@me?", 2), comment(ME, "done", 3)] });
-    expect(planned(answered, at(4), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(planned(answered, at(4), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "inbox", asks: ["opened"] });
     expect(planned(answered, at(6), { status: "open", changedAt: at(5) })).toMatchObject({ bucket: "planned", asks: [] });
   });
 
@@ -628,10 +628,17 @@ describe("a new assignment or a reopen on GitHub", () => {
 
   it("brings a finished item back with the reopened ask after a reopen by someone else", () => {
     const answered = item({ comments: [comment("bob", "@me look", 2), comment(ME, "done", 3)], activities: [reopenedBy("bob", 6)] });
-    expect(run(answered, done(4))).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
-    expect(run(answered, { status: "open", changedAt: "2026-10-07T00:00:00Z" })).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(run(answered, done(4))).toMatchObject({ bucket: "inbox", asks: ["reopened"], reopenedBy: "bob", asked: { reopened: "2026-10-06T00:00:00Z" } });
+    expect(run(answered, { status: "open", changedAt: "2026-10-07T00:00:00Z" })).toMatchObject({ bucket: "inbox", asks: ["opened", "reopened"] });
     expect(run(answered, done(7))).toMatchObject({ bucket: "done", asks: [] });
     expect(run(item({ comments: answered.comments, activities: [reopenedBy(ME, 6)] }), done(4))).toMatchObject({ bucket: "done", asks: [] });
+  });
+
+  it("asks on a reopen after the viewer's last reply, without a status, only where the item was for them", () => {
+    const answered = item({ comments: [comment("bob", "@me look", 2), comment(ME, "done", 3)], activities: [reopenedBy("bob", 6)] });
+    expect(run(answered)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(run(item({ ...answered, comments: [...answered.comments, comment(ME, "again", 7)] })).asks).toEqual([]);
+    expect(run(item({ reasons: ["involved"], comments: [comment(ME, "noted", 3)], activities: [reopenedBy("bob", 6)] })).asks).toEqual([]);
   });
 
   it("counts a reopen as an update on a handed-off part", () => {
@@ -646,7 +653,7 @@ describe("D files instead of storing a done", () => {
   const filed = item({ comments: [comment("alice", "@me look", 2), comment("bob", "Any news here?", 5)] });
 
   it("brings a filed item back on any post by someone else with Any post", () => {
-    expect(handled(filed, at(3), "any-post")).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(handled(filed, at(3), "any-post")).toMatchObject({ bucket: "inbox", asks: ["post"], postedBy: "bob", asked: { post: at(5) } });
     expect(handled(filed, at(3))).toMatchObject({ bucket: "done", asks: [] });
     expect(handled(filed, at(6), "any-post")).toMatchObject({ bucket: "done", asks: [] });
   });

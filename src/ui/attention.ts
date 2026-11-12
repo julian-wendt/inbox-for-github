@@ -1,4 +1,4 @@
-import type { Classified } from "../classify";
+import type { Ask, Classified } from "../classify";
 import { t } from "./i18n";
 
 /**
@@ -6,8 +6,8 @@ import { t } from "./i18n";
  *
  * The first result (`known` is null) is the baseline, so a restart does not replay the inbox.
  * After that, every item that newly enters the inbox or whose ask changed (see `askKey`) notifies,
- * except one that only asks again: the viewer reopened it ("reopened"), or its follow-up came
- * due ("due"), and both return quietly.
+ * except one that only asks again: the viewer opened it again (O), someone reopened it on GitHub,
+ * someone posted with "Any post" on, or its follow-up came due; these return quietly.
  *
  * @param classified  The current classification.
  * @param known       Item id → `askKey` of the inbox items in the previous result, or null before the first one.
@@ -19,8 +19,10 @@ import { t } from "./i18n";
  */
 export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null): Classified[] {
   if (!known) return [];
-  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && !c.asks.every((ask) => ask === "reopened" || ask === "due"));
+  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && !c.asks.every(quiet));
 }
+
+const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
 
 /** What an inbox item asks, with the time of the ask: it changes when a new mention or feedback comes in. */
 export function askKey({ asks, mention, feedback }: Pick<Classified, "asks" | "mention" | "feedback">): string {

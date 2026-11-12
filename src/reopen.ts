@@ -24,7 +24,8 @@ export function assignedAgain(item: Item, me: string, since: string): boolean {
   return item.reasons.includes("assigned") && item.activities.some((a) => a.kind === "assigned" && sameLogin(a.assignee, me) && !sameLogin(a.actor, me) && a.at > since);
 }
 
-/** When someone else last reopened the item on GitHub, if they did. */
-export function reopenedByOther(item: Item, me: string): string | null {
-  return item.activities.filter((a) => a.kind === "state" && a.change === "reopened" && !sameLogin(a.actor, me)).at(-1)?.at ?? null;
+/** When someone else last reopened the item on GitHub, and who, if anyone did. */
+export function reopenedByOther(item: Item, me: string): { at: string; by: string } | null {
+  const last = item.activities.filter((a) => a.kind === "state" && a.change === "reopened" && !sameLogin(a.actor, me)).at(-1);
+  return last?.kind === "state" ? { at: last.at, by: last.actor } : null;
 }

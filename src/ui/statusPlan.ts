@@ -27,7 +27,7 @@ export type StatusPlan =
  *
  * - Inbox (someone wants something from the viewer): D files the item's asks ("file": it sets
  *   handled-until; the asks go, the item leaves the inbox, its status stays). On an item of a
- *   table, a "reopened" ask alone is cleared instead ("clear"). An "update" ask is ticked off
+ *   table, an "opened" ask (the viewer's O) alone is cleared instead ("clear"). An "update" ask is ticked off
  *   ("tick-update") and the other asks are filed with it; so is the "closed" ask of an own item
  *   someone else closed. An item outside the tables (neither assigned to the viewer nor opened
  *   by them) is filed and loses its plan ("file" with `unplan`); no "done" is stored.
@@ -63,7 +63,7 @@ export function planStatus(c: Classified, status: Status, me: string, view: View
     if (c.asks.includes("closed")) return { do: "file" };
     if (!inTable(c, me)) return { do: "file", unplan: true };
     if (c.asks.length === 0) return { do: "none" };
-    return { do: c.asks.every((ask) => ask === "reopened") ? "clear" : "file" };
+    return { do: c.asks.every((ask) => ask === "opened") ? "clear" : "file" };
   }
   if (home === "assigned" && onPlate(c, me)) return c.updates ? { do: "none" } : { do: "hand-off" };
   if (home === "authored") return { do: "blocked" };

@@ -52,6 +52,15 @@ describe("explain", () => {
     expect(result.lines[1]).toMatch(/^@bob hat dich .* erwähnt/);
   });
 
+  it("names who reopened it on GitHub, and who posted with Any post", () => {
+    const answered = [comment("bob", "@me can you check?", 1), comment(ME, "Sure.", 2)];
+    const reopened = item({ reasons: ["mentioned"], comments: answered, activities: [{ kind: "state", at: at(3), actor: "carol", change: "reopened" }] });
+    expect(why(reopened).lines[0]).toMatch(/^@carol hat es .* auf GitHub wieder geöffnet/);
+    const posted = item({ reasons: ["mentioned"], comments: [...answered, comment("dave", "Any news?", 4)] });
+    const post = explain(classify(posted, ME, undefined, ruleSwitches(), "any-post", Date.parse(at(5)), true, at(3)), "any-post");
+    expect(post.lines[0]).toMatch(/^@dave hat .* geschrieben/);
+  });
+
   it("lists every open ask of an inbox item, the newest first", () => {
     const result = why(
       item({
