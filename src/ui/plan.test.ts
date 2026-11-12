@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, eventText, withEvent, isPinnable, keepsPlan, dayChoices, followEvent, orphanLinks, rollOver, setPlan, unplan, type Today } from "./plan";
+import { carriedText, choiceKey, closedPlans, toggleWorkday, weekdayName, planOf, replan, datedAt, datedOf, datedText, dayText, eventText, withEvent, isPinnable, keepsPlan, dayChoices, followEvent, orphanLinks, retouch, rollOver, setPlan, unplan, type Today } from "./plan";
 
 const days = (now: Date, workdays?: number[]) => dayChoices(now, workdays).map((c) => `${c.kind}:${c.day}`);
 const always = () => true;
@@ -291,5 +291,18 @@ describe("eventText", () => {
 
   it("gives nothing without an event", () => {
     expect(eventText(day)).toBeNull();
+  });
+});
+
+describe("retouch", () => {
+  it("puts back only the given items and leaves a change to another item alone", () => {
+    const before = state(["a"], "2026-10-27", [{ id: "b", day: "2026-10-29" }], { a: "2026-10-27" }, { b: "t1" });
+    const now = state(["a", "c"], "2026-10-27", [{ id: "b", day: "2026-10-30" }], { a: "2026-10-27", c: "2026-10-27" }, { b: "t2", c: "t3" });
+    expect(retouch(now, ["b"], before)).toEqual(state(["a", "c"], "2026-10-27", [{ id: "b", day: "2026-10-29" }], { a: "2026-10-27", c: "2026-10-27" }, { b: "t1", c: "t3" }));
+  });
+
+  it("takes an item out again when it had no part before", () => {
+    const now = state(["a"], "2026-10-27", [], { a: "2026-10-27" }, { a: "t1" });
+    expect(retouch(now, ["a"], state([], null, []))).toEqual(state([], "2026-10-27", []));
   });
 });

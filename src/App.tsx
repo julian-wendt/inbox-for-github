@@ -48,7 +48,7 @@ import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
 import { assignedAt, withAssignees, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
-import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
+import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, setPlan, todayOf, unplan, withEvent, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
 import { unseenSettings } from "./ui/newSettings";
@@ -462,7 +462,7 @@ export default function App() {
       pinnedOn: on ? without(inbox.settings.pinnedOn, c.item.id) : { ...inbox.settings.pinnedOn, [c.item.id]: localDay() },
       plannedAt: on ? without(inbox.settings.plannedAt, c.item.id) : { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() },
     };
-    const steps = [todayStep(previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(on ? eventEnds([c]) : [...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -470,8 +470,11 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** A change of Today as a step: the settings go from `previous` to `next` and back. */
-  const todayStep = (previous: Today, next: Today) => ({ run: () => void inbox.updateSettings((s) => ({ ...s, ...next })), undo: () => void inbox.updateSettings((s) => ({ ...s, ...previous })) });
+  /** A change of Today to the items `ids` as a step: their part goes from `previous` to `next` and back, the rest of Today stays. */
+  const todayStep = (ids: string[], previous: Today, next: Today) => ({
+    run: () => void inbox.updateSettings((s) => ({ ...s, ...retouch(todayOf(s), ids, next) })),
+    undo: () => void inbox.updateSettings((s) => ({ ...s, ...retouch(todayOf(s), ids, previous) })),
+  });
   /** An item has one "when": a plan or Today pin on a follow-up ends it, as a step; none when there is no follow-up. */
   const followUpEnds = (c: Classified) => (c.status === "snoozed" ? [followUpStep(c)] : []);
   /** What a plan or pin ends for the toast: the item's follow-up, with its date when it has one. */
@@ -495,7 +498,7 @@ export default function App() {
       plannedAt: day ? { ...inbox.settings.plannedAt, [c.item.id]: new Date().toISOString() } : without(inbox.settings.plannedAt, c.item.id),
     };
     const events = day ? eventMoves(c, day) : eventEnds([c]);
-    const steps = [todayStep(previous, next), ...(day ? followUpEnds(c) : []), ...events, ...extra];
+    const steps = [todayStep([c.item.id], previous, next), ...(day ? followUpEnds(c) : []), ...events, ...extra];
     for (const s of steps) s.run();
     actions.announce(
       day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
@@ -509,7 +512,7 @@ export default function App() {
   /** Keeps a plan through a new ask: the ask counts as seen, as when planned again, and the item leaves the inbox. */
   const keepPlan = (c: Classified, day: string | null) => {
     const previous = todayOf(inbox.settings);
-    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep(previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: new Date().toISOString() } })]);
+    bulk(day ? t("plan.kept", { number: c.item.number, day }) : t("plan.keptToday", { number: c.item.number }), [todayStep([c.item.id], previous, { ...previous, plannedAt: { ...previous.plannedAt, [c.item.id]: new Date().toISOString() } })]);
   };
   /** The plan choices: "Keep plan" while a new ask shows a planned item in the inbox, Today (T), the days, a picked date and its removal (X). With a calendar, a day opens the day view on it, and "Today at a time" (A) joins. */
   const planEntries = (c: Classified): MenuEntry[] => {
@@ -781,7 +784,7 @@ export default function App() {
   const unplanStep = (cs: Classified[], remove = false) => {
     const { focus, planned } = inbox.settings;
     const ids = cs.map((c) => c.item.id).filter((id) => focus.includes(id) || planned.some((p) => p.id === id));
-    return ids.length > 0 ? [todayStep(todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids)), ...eventEnds(cs.filter((c) => ids.includes(c.item.id)), remove)] : [];
+    return ids.length > 0 ? [todayStep(ids, todayOf(inbox.settings), unplan(todayOf(inbox.settings), ids)), ...eventEnds(cs.filter((c) => ids.includes(c.item.id)), remove)] : [];
   };
   /** A time for the marked items: they wait until then. */
   const bulkLater = (until: string) => bulk(plural("marks.laterOne", "marks.later", open.length, { until: untilText(until) }), [...open.map((c) => statusStep(c, "snoozed", until)), ...unplanStep(open)]);
@@ -1146,7 +1149,8 @@ export default function App() {
   // Each morning "Today" keeps what is unfinished and takes in what was planned for it: checked on start and every few minutes while the app stays open.
   const { settings, saveSettings, ready, classified } = inbox;
   useEffect(() => {
-    if (!ready) return;
+    // Before the items are loaded, plans due today cannot move in and the day would be stamped without them.
+    if (!ready || classified.length === 0) return;
     const check = () => {
       const day = localDay();
       setToday(day);

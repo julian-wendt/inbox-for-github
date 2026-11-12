@@ -274,16 +274,29 @@ export function closedPlans(state: Pick<Today, "focus" | "planned">, closed: (id
 }
 
 /**
- * One item's part of Today: its pin with the day it came in, its plan, and when it got either;
- * the rest is empty. With `replan` it goes back once a close is undone.
+ * The items' part of Today (one id or several): their pins with the day they came in, their
+ * plans, and when they got either; the rest is empty. With `replan` it goes back once a close is undone.
  *
  * @example
  *   planOf({ focus: ["I_1", "I_2"], focusDay: "2026-10-28", planned: [], pinnedOn: { I_1: "2026-10-28" }, plannedAt: {} }, "I_1");
  *   // { focus: ["I_1"], focusDay: "2026-10-28", planned: [], pinnedOn: { I_1: "2026-10-28" }, plannedAt: {} }
  */
-export function planOf(state: Today, id: string): Today {
-  const only = (record: Record<string, string>) => (id in record ? { [id]: record[id] } : {});
-  return { focus: state.focus.filter((f) => f === id), focusDay: state.focusDay, planned: state.planned.filter((p) => p.id === id), pinnedOn: only(state.pinnedOn), plannedAt: only(state.plannedAt) };
+export function planOf(state: Today, id: string | readonly string[]): Today {
+  const ids = typeof id === "string" ? [id] : id;
+  const only = (record: Record<string, string>) => Object.fromEntries(Object.entries(record).filter(([key]) => ids.includes(key)));
+  return { focus: state.focus.filter((f) => ids.includes(f)), focusDay: state.focusDay, planned: state.planned.filter((p) => ids.includes(p.id)), pinnedOn: only(state.pinnedOn), plannedAt: only(state.plannedAt) };
+}
+
+/**
+ * Today with the items' part replaced by what `from` holds for them; the rest of Today stays as
+ * `state` has it. This is how a step runs and undoes one item's change without overwriting a
+ * change to another item made in between.
+ *
+ * @example
+ *   retouch(now, ["I_1"], before); // I_1's pin and plan as in `before`, everything else as in `now`
+ */
+export function retouch(state: Today, ids: readonly string[], from: Today): Today {
+  return replan(unplan(state, ids), planOf(from, ids));
 }
 
 /**
