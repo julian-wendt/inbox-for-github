@@ -1,8 +1,9 @@
 import { AtSign, Bold, Code, Heading, Italic, Link, List, ListOrdered, ListTodo, TextQuote, type LucideIcon } from "lucide-react";
 import { ghToken } from "../../github/token";
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useReducer, useRef, useState, type KeyboardEvent } from "react";
 import { addComment, setOpen, type CloseReason } from "../../github/comment";
 import type { Item } from "../../model";
+import { settleDraft } from "../drafts";
 import { t } from "../i18n";
 import { applyFormat, type Format } from "../markdownFormat";
 import { CloseButton } from "./CloseButton";
@@ -48,6 +49,9 @@ const drafts = new Map<string, string>();
 /** Items whose reply is on its way; the box of another visit to the item must not send the same draft again. */
 const inFlight = new Set<string>();
 
+/** The mounted boxes, told when a draft or an in-flight reply changed so they show it. */
+const watchers = new Set<() => void>();
+
 /**
  * Composer for a plain comment on the item, modeled on GitHub's comment box: Write and Preview
  * tabs, a Markdown toolbar (also ⌘B, ⌘I, ⌘E, ⌘K while typing), and a green Comment button.
@@ -73,10 +77,20 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
   const itemId = item.id;
   const [text, setText] = useState(() => drafts.get(itemId) ?? "");
   const [tab, setTab] = useState<Tab>("write");
-  const [sending, setSending] = useState(false);
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  const sending = inFlight.has(itemId);
   const [error, setError] = useState<string | null>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const selection = useRef<[number, number] | null>(null);
+
+  useEffect(() => {
+    const refresh = () => {
+      setText(drafts.get(itemId) ?? "");
+      rerender();
+    };
+    watchers.add(refresh);
+    return () => void watchers.delete(refresh);
+  }, [itemId]);
 
   useLayoutEffect(() => {
     if (!selection.current || !field.current) return;
@@ -92,9 +106,9 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
   };
 
   const send = async (state?: { action: "close" | "reopen"; reason?: CloseReason }) => {
-    if ((!text.trim() && !state) || sending || inFlight.has(itemId)) return;
+    if ((!text.trim() && !state) || sending) return;
     inFlight.add(itemId);
-    setSending(true);
+    watchers.forEach((w) => w());
     setError(null);
     let posted = false;
     try {
@@ -102,7 +116,8 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
       if (text.trim()) {
         await addComment(token, itemId, text);
         posted = true;
-        edit("");
+        settleDraft(drafts, itemId, text);
+        watchers.forEach((w) => w());
       }
       if (state) await setOpen(token, item, state.action, state.reason);
       setTab("write");
@@ -113,7 +128,7 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
       if (posted) onSent();
     } finally {
       inFlight.delete(itemId);
-      setSending(false);
+      watchers.forEach((w) => w());
     }
   };
 
