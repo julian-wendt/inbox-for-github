@@ -155,8 +155,8 @@ function legacyDone(c: Classified, viewer: string): boolean {
  * Owns the app state: opens the local store, reads the token from the `gh` CLI, fetches the
  * items for the configured organizations and classifies them with the enabled rules.
  *
- * Statuses that a rule resets are deleted from the store as a side effect, so the reset sticks.
- * At start the last successful fetch comes from the store, so the list shows at once and also
+ * Nothing a rule finds is written back to bring an item back; only repairs are (a "done" D may
+ * no longer finish, a "done" from before "my part done"). At start the last successful fetch comes from the store, so the list shows at once and also
  * without a connection; a failed fetch keeps it and sets `error`. Fetching starts once the store
  * is open and restarts whenever the organization list changes; it
  * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within
