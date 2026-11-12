@@ -83,7 +83,8 @@ export function needsAskChoice(c: Classified, status: Status, me: string, view: 
 
 /**
  * Why D may change no status of an open item, if so: the viewer opened it. Null for closed items
- * and everything else.
+ * and everything else. An own issue assigned to the viewer is still handed off in Assigned to me
+ * (see `lockedDone`).
  *
  * @example
  *   lockOf(entry, "octocat"); // "own" for an open issue octocat opened
