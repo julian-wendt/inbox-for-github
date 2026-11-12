@@ -19,7 +19,8 @@ const DAY_MS = 86_400_000;
  * their last review if they were asked for one. Null while the item asks (it is in the inbox),
  * waits for a follow-up (a past-due one no longer waits), sits in the bar Finished of Assigned to
  * me as "my part done", and when none of these exist. Other own and assigned items count only
- * through handled-until, so working on them does not keep them in the bar.
+ * through handled-until, so working on them does not keep them in the bar. A closed item counts
+ * only while it is for the viewer (bucket "done"); one ticked off that is no longer shows nowhere.
  *
  * @param c             The item as classified.
  * @param handledUntil  Its handled-until (`useInbox().handledUntil`), if any.
@@ -38,7 +39,8 @@ export function handledAt(c: Classified, handledUntil: string | undefined, me: s
   const review = outsideTables && item.reasons.includes("review") ? latest(...item.reviews.filter((r) => sameLogin(r.author, me)).map((r) => r.at)) : null;
   const closed = c.bucket === "done" && item.closed ? item.closed.at : null;
   const stored = c.bucket === "done" && !c.answered && !item.closed ? c.statusAt : null;
-  return latest(handledUntil, reply, review, closed, stored);
+  const until = item.closed && c.bucket !== "done" ? null : handledUntil;
+  return latest(until, reply, review, closed, stored);
 }
 
 /**
