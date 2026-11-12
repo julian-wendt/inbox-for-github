@@ -67,6 +67,7 @@ handover what to look at there: the user checks every change in the running app.
 | If you are … | Read |
 |---|---|
 | changing how items are fetched, classified or cached | [`architecture.md`](docs/reference/architecture.md) |
+| touching classification, statuses or what a key does to an item | [`behaviour.md`](docs/reference/behaviour.md), checked by `src/behaviour.test.ts` |
 | touching a GraphQL query, its cost or rate limits | [`github-api.md`](docs/reference/github-api.md) |
 | running the app locally, restarting it, reading the local DB | [`local-development.md`](docs/reference/local-development.md) |
 | touching "Open in Orca" or the Orca CLI calls | [`orca.md`](docs/reference/orca.md) |
