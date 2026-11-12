@@ -620,6 +620,11 @@ describe("a new assignment or a reopen on GitHub", () => {
     expect(run(item({ activities: [assignedBy("alice", 6)] }), handoff).updates).toBeUndefined();
   });
 
+  it("still brings the closing as news when a handed-off part was assigned anew and then closed", () => {
+    const closed = assigned({ activities: [assignedBy("alice", 6)], closed: { state: "closed", at: "2026-10-08T00:00:00Z" } });
+    expect(run(closed, handoff)).toMatchObject({ bucket: "inbox", status: "done", asks: ["update"], updates: [{ kind: "closed", state: "closed" }] });
+  });
+
   it("keeps the follow-up of a handed-off part when the viewer was assigned anew", () => {
     const waiting: StoredStatus = { ...handoff, status: "snoozed", until: "2026-10-30T09:00:00Z" };
     const result = classify(assigned({ activities: [assignedBy("alice", 6)] }), ME, waiting, ruleSwitches(), "mention", Date.parse("2026-10-07T00:00:00Z"));
@@ -640,6 +645,14 @@ describe("a new assignment or a reopen on GitHub", () => {
     expect(run(answered)).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
     expect(run(item({ ...answered, comments: [...answered.comments, comment(ME, "again", 7)] })).asks).toEqual([]);
     expect(run(item({ reasons: ["involved"], comments: [comment(ME, "noted", 3)], activities: [reopenedBy("bob", 6)] })).asks).toEqual([]);
+  });
+
+  it("asks on a reopen only once the viewer handled or answered the item, and only when newer", () => {
+    const reopened = assigned({ activities: [reopenedBy("bob", 6)] });
+    expect(run(reopened)).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(withRules(reopened, MENTIONS_ONLY, undefined, "2026-10-05T00:00:00Z")).toMatchObject({ bucket: "inbox", asks: ["reopened"] });
+    expect(withRules(reopened, MENTIONS_ONLY, undefined, "2026-10-07T00:00:00Z")).toMatchObject({ bucket: "assigned", asks: [] });
+    expect(run(item({ kind: "pr", reasons: ["review"], reviewRequests: [{ reviewer: ME, at: "2026-10-02T00:00:00Z" }], activities: [reopenedBy("bob", 6)] })).asks).toEqual(["review"]);
   });
 
   it("counts a reopen as an update on a handed-off part", () => {

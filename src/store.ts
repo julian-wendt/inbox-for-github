@@ -367,11 +367,12 @@ export class Store {
    * item to the automatic buckets and, by its time, makes earlier answers to a review request no
    * longer count.
    *
-   * @param automatic  True when the app reopens the item by the "reopenOn" setting, not the viewer.
+   * @param automatic  True when the app writes it (a repair, or taking a finished part back into the work), not the viewer.
    * @param extra      `until` with "snoozed" brings it back at that time; `handoff` with "done"
    *                   ends the viewer's part of an assignment, keeping how the item looked.
    * @param source     What caused the change, for tracing it later: the input ("key:o", "menu",
-   *                   "palette", "click") or the code path ("auto:reopen"); null when unknown.
+   *                   "palette", "click") or the code path ("auto:locked"; "auto:reopen" and
+   *                   "auto:snooze-ended" only in old rows); null when unknown.
    * @returns The stored status and its log entry.
    */
   async setStatus(nodeId: string, status: Status, automatic = false, now = new Date(), extra: StatusExtra = {}, source: string | null = null): Promise<{ stored: StoredStatus; change: StatusChange }> {
