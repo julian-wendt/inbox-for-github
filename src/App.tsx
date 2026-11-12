@@ -191,10 +191,13 @@ export default function App() {
     [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   /** U: unread as its view counts it, or marked so by hand. */
-  const isUnread = (c: Classified) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp));
+  /** Unread as the rows of `view` draw it: Assigned to me judges every row as an assignment, the same as its count. */
+  const isUnread = (c: Classified, view: View = bucket) =>
+    inbox.unreadMarks.has(c.item.id) ||
+    (view === "assigned" ? unreadAssignment(c, inbox.seen, me, true, inbox.settings.movesUp) : c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, false, inbox.settings.movesUp));
   /** Marks the items read when any is unread, else unread, with undo that restores each item's read state exactly. */
   const toggleRead = (cs: Classified[]) => {
-    const read = cs.some(isUnread);
+    const read = cs.some((c) => isUnread(c));
     const before = cs.map((c) => ({ id: c.item.id, seen: inbox.seen.get(c.item.id), mark: inbox.unreadMarks.get(c.item.id) }));
     for (const c of cs) void (read ? inbox.markSeen(c.item.id) : inbox.markUnread(c.item.id));
     const text = cs.length === 1 ? t(read ? "toast.markedRead" : "toast.markedUnread", { number: cs[0].item.number }) : t(read ? "marks.markedRead" : "marks.markedUnread", { count: cs.length });
@@ -210,7 +213,7 @@ export default function App() {
       new Set(
         groupPlate(inbox.classified, inbox.settings.statusMap, [], me)
           .filter((g) => isActiveBar(g.group))
-          .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp)).map((c) => c.item.id)),
+          .flatMap((g) => g.entries.filter((c) => inbox.unreadMarks.has(c.item.id) || unreadAssignment(c, inbox.seen, me, true, inbox.settings.movesUp)).map((c) => c.item.id)),
       ),
     [inbox.classified, inbox.seen, inbox.unreadMarks, inbox.settings.statusMap, inbox.settings.movesUp, me],
   );
@@ -236,7 +239,7 @@ export default function App() {
   const plannedAll = useMemo(() => scoped.filter((c) => datedOf(c, focus, plans, today) !== null), [scoped, focus, plans, today]);
   // Activity on a planned item leaves it in Planned, unread there, unless it asks the viewer again.
   const unreadPlannedIds = useMemo(
-    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
+    () => new Set(plannedAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, false, inbox.settings.movesUp))).map((c) => c.item.id)),
     [plannedAll, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   const plannedGroups = useMemo(
@@ -256,7 +259,7 @@ export default function App() {
     [bucket, followUpAll, query, sort],
   );
   const unreadFollowUpIds = useMemo(
-    () => new Set(followUpAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, inbox.settings.movesUp))).map((c) => c.item.id)),
+    () => new Set(followUpAll.filter((c) => inbox.unreadMarks.has(c.item.id) || (c.bucket === "inbox" ? unreadInInbox(c, inbox.seen, me, inbox.settings.movesUp) : unreadAssignment(c, inbox.seen, me, false, inbox.settings.movesUp))).map((c) => c.item.id)),
     [followUpAll, inbox.seen, inbox.unreadMarks, inbox.settings.movesUp, me],
   );
   const followUpSprints = useMemo(() => sprintChoices(followUpAll.map((c) => c.item), hidden), [followUpAll, hidden]);
@@ -710,7 +713,7 @@ export default function App() {
     const items = itemsOfView(view);
     if (items.length === 0) return;
     e.preventDefault();
-    const anyUnread = items.some(isUnread);
+    const anyUnread = items.some((c) => isUnread(c, view));
     const reading = view === "inbox" || view === "assigned";
     setMenu({
       entries: [

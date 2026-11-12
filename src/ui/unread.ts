@@ -26,11 +26,12 @@ export function unreadInInbox(entry: Classified, seen: Map<string, string>, me: 
 
 /**
  * Whether a row of a table is unread: new activity by others since the viewer last opened it,
- * and in Assigned to me also a new assignment, the same as the row's "new" mark and dot.
+ * and where the view draws the assignment mark (Assigned to me, `assignment`) also a new
+ * assignment, the same as the row's "new" mark and dot.
  *
  * @example
- *   unreadAssignment(entry, inbox.seen, "octocat"); // true for an assignment octocat has not opened
+ *   unreadAssignment(entry, inbox.seen, "octocat", true); // true for an assignment octocat has not opened
  */
-export function unreadAssignment(entry: Classified, seen: Map<string, string>, me: string, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
-  return (entry.bucket === "assigned" && isNewAssignment(entry, seen, me)) || hasNewActivity(entry, seen, me, counted);
+export function unreadAssignment(entry: Classified, seen: Map<string, string>, me: string, assignment: boolean, counted: MovesUp = MOVES_UP_DEFAULT): boolean {
+  return (assignment && isNewAssignment(entry, seen, me)) || hasNewActivity(entry, seen, me, counted);
 }
