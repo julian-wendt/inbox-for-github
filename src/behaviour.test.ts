@@ -517,7 +517,6 @@ describe("answered questions", () => {
     },
     {
       situation: "D on an own issue in Assigned to me sets my part done, and it stays",
-      diverges: "#110: lockedDone clears it on the next pass",
       run: async (world, app) => {
         const issue = world.issue({ author: ME, assignees: [ME] });
         await app.refresh();

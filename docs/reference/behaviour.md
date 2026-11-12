@@ -86,5 +86,3 @@ its issue.
   ends without an ask.
 - [#109](https://github.com/julian-wendt/inbox-for-github/issues/109) the Done bar: Done is still
   a view, without asks filed on assignments and with no limit of days.
-- [#110](https://github.com/julian-wendt/inbox-for-github/issues/110) own assigned issue: my part
-  done on an own issue is cleared again on the next pass (`lockedDone` in `useInbox.ts`).
