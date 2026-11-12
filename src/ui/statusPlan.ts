@@ -120,13 +120,14 @@ export function actsOnClosed(plan: StatusPlan): boolean {
 
 /**
  * How D is offered for an item in a view: as usual while it files, hands off or sets something,
- * not at all where it never applies (Created by me, and own items in Planned), and as the only
- * status of a closed item that waits in the inbox.
+ * not at all where it never applies (Created by me, own items in Planned, the Done bar), and as
+ * the only status of a closed item that waits in the inbox.
  *
  * @example
  *   doneAccess(entry, "octocat", "authored"); // "hidden" for any own item
  */
 export function doneAccess(c: Classified, me: string, view: Place): DoneAccess {
+  if (view === "done") return "hidden";
   const plan = planStatus(c, "done", me, view);
   return plan.do === "blocked" ? "hidden" : c.item.closed && actsOnClosed(plan) ? "closed" : "on";
 }
