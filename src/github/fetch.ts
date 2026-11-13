@@ -1,6 +1,7 @@
 import type { Activity, Comment, Item, Org, PullState, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
 import { fetchBoards } from "./boards";
-import { graphql } from "./client";
+import { graphql, TimeoutError } from "./client";
+import { log } from "../log";
 import { mentionsOf, sameLogin } from "../timeline";
 
 const PAGE_SIZE = 50;
@@ -484,11 +485,34 @@ export function reasonsOf(item: Item, me: string): Reason[] {
   return reasons;
 }
 
+/** The smallest search page; below it a timeout is the search's failure. */
+const MIN_PAGE_SIZE = 5;
+
+/** What search pages are held to once GitHub timed one out: half the size that failed. No bound before that. */
+let pageCap = Number.POSITIVE_INFINITY;
+
+/**
+ * Reads up to `limit` hits of one search, in pages of `pageSize`. A page GitHub drops after its
+ * ten seconds (`TimeoutError`) is asked again at half the size, down to `MIN_PAGE_SIZE`; the
+ * size that worked holds for every later page and search (`pageCap`), so a slow organization
+ * costs the wait once and not on every refresh.
+ */
 async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<RawItem[]> {
   const hits: RawItem[] = [];
   let after: string | null = null;
-  for (let page = 0; page < Math.ceil(limit / pageSize); page++) {
-    const data: SearchResult = await graphql<SearchResult>(token, QUERY, { q, first: pageSize, after }, signal);
+  let size = pageSize;
+  for (let asked = 0; asked < limit; asked += size) {
+    let data: SearchResult | undefined;
+    while (!data) {
+      size = Math.min(size, pageCap);
+      try {
+        data = await graphql<SearchResult>(token, QUERY, { q, first: size, after }, signal);
+      } catch (e) {
+        if (!(e instanceof TimeoutError) || size <= MIN_PAGE_SIZE) throw e;
+        pageCap = Math.min(pageCap, Math.max(MIN_PAGE_SIZE, Math.ceil(size / 2)));
+        log.debug("search page timed out", { first: size, next: pageCap });
+      }
+    }
     hits.push(...data.search.nodes.filter((node) => node?.id));
     if (!data.search.pageInfo.hasNextPage) break;
     after = data.search.pageInfo.endCursor;
