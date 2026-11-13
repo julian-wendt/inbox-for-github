@@ -188,12 +188,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
               ])}
             </div>
           )}
-          {onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me)) && (
-            <button className="chip-btn" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
-              <UserPlus size={15} />
-            </button>
-          )}
-          <button className="chip-btn" title={`${t("detail.openOnGitHub")} (⌃O)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
+          <WhyHint why={explain(entry, reopenOn, me, dated)} />
+          <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
             <GitHubMark />
           </button>
           {onOrca && (
@@ -201,15 +197,19 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
               <OrcaMark size={18} />
             </button>
           )}
+          <button className="chip-btn group-start" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
+            <Link size={15} />
+          </button>
           <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>
             <RefreshCw size={15} className={reloading ? "spin" : undefined} />
           </button>
-          <button className="chip-btn" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
-            <Link size={15} />
-          </button>
-          <WhyHint why={explain(entry, reopenOn, me, dated)} />
+          {onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me)) && (
+            <button className="chip-btn group-start" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
+              <UserPlus size={15} />
+            </button>
+          )}
           {onClose && (
-            <button className="chip-btn" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
+            <button className="chip-btn group-start" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
               <X size={15} />
             </button>
           )}
