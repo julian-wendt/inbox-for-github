@@ -8,7 +8,7 @@ import { compactAgo, rowContext } from "../labels";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
-import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
+import { EventMark, KindIcon, NotifyMark, WhenIcon } from "./ItemMarks";
 import type { RowWhen } from "../followUp";
 
 interface Props {
@@ -81,7 +81,10 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
             {when.text}
           </time>
         ) : (
-          <time>{compactAgo(time)}</time>
+          <time className="row-when">
+            <NotifyMark entry={entry} />
+            {compactAgo(time)}
+          </time>
         )}
         <span>#<Highlight spans={numberSpans(item.number, query)} /></span>
       </span>

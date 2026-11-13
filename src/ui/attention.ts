@@ -1,5 +1,7 @@
 import type { Ask, Classified } from "../classify";
 import { t } from "./i18n";
+import { dayChoices } from "./plan";
+import { followUpOn, thisAfternoon } from "./snooze";
 
 /**
  * Which items deserve a notification now, given the inbox items already known.
@@ -27,6 +29,61 @@ export function arrivals(classified: Classified[], known: ReadonlyMap<string, st
 const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
 
 const loud = ({ asked }: Classified, ask: Ask) => !quiet(ask) && !(asked.due && (asked[ask] ?? "") <= asked.due);
+
+/**
+ * Whether an item's follow-up rings: "Remind me" is on and it asks as due (see `Classified.notify`).
+ *
+ * @example
+ *   ringing({ notify: true, asks: ["due"] }); // true
+ */
+export function ringing(c: Pick<Classified, "notify" | "asks">): boolean {
+  return !!c.notify && c.asks.includes("due");
+}
+
+/**
+ * The due reminders to notify about now: items that ring (see `ringing`) and did not in the
+ * previous result. On the first result (`rang` is null) those that came due after `since`, so a
+ * reminder missed while the app was quit rings once at start.
+ *
+ * @param classified  The current classification.
+ * @param rang        Ids that rang in the previous result, or null before the first one.
+ * @param since       When a reminder last rang (`notifyRangAt`), else the cached fetch's time (ISO 8601); null without either.
+ * @returns The items to notify about, in list order.
+ *
+ * @example
+ *   dueReminders(classified, null, "2026-11-12T17:00:00Z"); // what came due since yesterday evening
+ *   dueReminders(classified, new Set(["I_1"]), null);       // what rings now apart from I_1
+ */
+export function dueReminders(classified: Classified[], rang: ReadonlySet<string> | null, since: string | null): Classified[] {
+  return classified.filter((c) => ringing(c) && (rang ? !rang.has(c.item.id) : !!since && (c.asked.due ?? "") > since));
+}
+
+/** A "Later" button of a reminder's notification: its action id, its title, and when the follow-up comes due again (ISO 8601). */
+export interface Later {
+  id: string;
+  title: string;
+  until: string;
+}
+
+/**
+ * The "Later" choices of a reminder's notification: in an hour, this afternoon (see
+ * `thisAfternoon`) while it is earlier than 14:00, and the next workday at the "followUpTime" (see `dayChoices`).
+ *
+ * @param now           When the notification goes out.
+ * @param workdays      The "workdays" setting.
+ * @param followUpTime  The "followUpTime" setting ("09:00").
+ *
+ * @example
+ *   laterChoices(new Date(2026, 10, 13, 9), [1, 2, 3, 4, 5], "09:00"); // a Friday: in 1 hour, 14:00, Monday 09:00
+ */
+export function laterChoices(now: Date, workdays: readonly number[], followUpTime: string): Later[] {
+  const afternoon = thisAfternoon(now);
+  return [
+    { id: "later-hour", title: t("notify.later.hour"), until: new Date(now.getTime() + 3_600_000).toISOString() },
+    ...(afternoon ? [{ id: "later-afternoon", title: t("snooze.afternoon"), until: afternoon }] : []),
+    { id: "later-workday", title: t("plan.nextWorkday"), until: followUpOn(dayChoices(now, workdays)[0].day, followUpTime) },
+  ];
+}
 
 /** What an inbox item asks, with the time of the ask: it changes when a new mention or feedback comes in. */
 export function askKey({ asks, mention, feedback }: Pick<Classified, "asks" | "mention" | "feedback">): string {

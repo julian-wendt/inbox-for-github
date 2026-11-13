@@ -47,7 +47,8 @@ const SCHEMA = [
      changed_at TEXT NOT NULL,
      until      TEXT,
      due        INTEGER NOT NULL DEFAULT 0,
-     handoff    TEXT
+     handoff    TEXT,
+     notify     INTEGER
    )`,
   `CREATE TABLE IF NOT EXISTS status_log (
      id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +97,8 @@ const SCHEMA = [
 /**
  * Removes what databases of earlier builds still hold and nothing reads any more: the reminders
  * table, the `keep_open` column of `item_status`, the settings keys the app dropped, and setting
- * values it no longer offers, rewritten to the value they acted as. The keys are named instead of
+ * values it no longer offers, rewritten to the value they acted as. Adds the `notify` column of
+ * `item_status` that databases from before it lack. The keys are named instead of
  * deleting every unknown one, since builds of different branches share one database. Does nothing
  * on a database created by `SCHEMA`, so it is safe on every start.
  *
@@ -111,6 +113,7 @@ async function dropLeftovers(db: Database): Promise<void> {
   await db.execute(`UPDATE settings SET value = '"mention"' WHERE key = 'reopenOn' AND value = '"mention-or-assigned-post"'`);
   const statusColumns = await db.select<{ name: string }[]>("PRAGMA table_info(item_status)");
   if (statusColumns.some((c) => c.name === "keep_open")) await db.execute("ALTER TABLE item_status DROP COLUMN keep_open");
+  if (!statusColumns.some((c) => c.name === "notify")) await db.execute("ALTER TABLE item_status ADD COLUMN notify INTEGER");
 }
 
 /** Where an opened item starts: at the top, at the relevant spot (see `DetailBody`), or at the latest entries. */
@@ -157,6 +160,8 @@ export interface Settings {
   notifyCollected: string[];
   /** When the last summary went out, ISO 8601; null until the first one is due. */
   notifyLastSummary: string | null;
+  /** When a due reminder ("Remind me") last rang, or came due with notifications off; ISO 8601, null until then. Reminders due after it ring at the next start. */
+  notifyRangAt: string | null;
   /** The dock badge counts the unread items in the inbox. */
   dockBadge: boolean;
   /** Comments the detail shows before folding older ones away; 0 shows all. */
@@ -231,7 +236,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], theme: "system", language: "en", hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, tableGrouping: "type", authoredGrouping: "status", untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], theme: "system", language: "en", hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, notifyRangAt: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, tableGrouping: "type", authoredGrouping: "status", untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent
@@ -306,13 +311,13 @@ export class Store {
   }
 
   async statuses(): Promise<Map<string, StoredStatus>> {
-    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; handoff: string | null }[]>(
-      "SELECT node_id, status, changed_at, until, handoff FROM item_status",
+    const rows = await this.db.select<{ node_id: string; status: StoredStatus["status"]; changed_at: string; until: string | null; notify: number | null; handoff: string | null }[]>(
+      "SELECT node_id, status, changed_at, until, notify, handoff FROM item_status",
     );
     return new Map(
       rows.map((r) => [
         r.node_id,
-        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
+        { status: r.status, changedAt: r.changed_at, ...(r.until && { until: r.until }), ...(r.notify === 1 && { notify: true }), ...(r.handoff && { handoff: JSON.parse(r.handoff) as Handoff }) },
       ]),
     );
   }
@@ -347,7 +352,7 @@ export class Store {
    * longer count.
    *
    * @param automatic  True when the app writes it (a repair, or taking a finished part back into the work), not the viewer.
-   * @param extra      `until` with "snoozed" brings it back at that time; `handoff` with "done"
+   * @param extra      `until` with "snoozed" brings it back at that time, and `notify` rings then; `handoff` with "done"
    *                   ends the viewer's part of an assignment, keeping how the item looked.
    * @param source     What caused the change, for tracing it later: the input ("key:o", "menu",
    *                   "palette", "click") or the code path ("auto:locked"; "auto:reopen" and
@@ -359,7 +364,7 @@ export class Store {
     await this.writeStatus(nodeId, status, changedAt, extra);
     await this.db.execute("INSERT INTO status_log (node_id, status, changed_at, automatic, source) VALUES ($1, $2, $3, $4, $5)", [nodeId, status, changedAt, automatic ? 1 : 0, source]);
     return {
-      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.handoff && { handoff: extra.handoff }) },
+      stored: { status, changedAt, ...(extra.until && { until: extra.until }), ...(extra.notify && { notify: true }), ...(extra.handoff && { handoff: extra.handoff }) },
       change: { status, at: changedAt, automatic, ...(source && { source }) },
     };
   }
@@ -416,9 +421,9 @@ export class Store {
 
   private async writeStatus(nodeId: string, status: Status, changedAt: string, extra: StatusExtra = {}): Promise<void> {
     await this.db.execute(
-      `INSERT INTO item_status (node_id, status, changed_at, until, handoff) VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, handoff = excluded.handoff`,
-      [nodeId, status, changedAt, extra.until ?? null, extra.handoff ? JSON.stringify(extra.handoff) : null],
+      `INSERT INTO item_status (node_id, status, changed_at, until, notify, handoff) VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (node_id) DO UPDATE SET status = excluded.status, changed_at = excluded.changed_at, until = excluded.until, notify = excluded.notify, handoff = excluded.handoff`,
+      [nodeId, status, changedAt, extra.until ?? null, extra.notify ? 1 : null, extra.handoff ? JSON.stringify(extra.handoff) : null],
     );
   }
 

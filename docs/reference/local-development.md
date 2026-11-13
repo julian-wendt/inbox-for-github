@@ -157,6 +157,11 @@ Read in the sources of `tauri-plugin-notification` 2.7.0 (`src/desktop.rs`), `no
   `notification.rs`), and `notify-rust` never sets `wait_for_click` (commented out). A plain
   notification returns at once and a later click is lost (seen in the built app, 2026-10-25). So
   every notification carries an "Open" button (action type `item`).
+- **Two or more actions become one "Options" button with a menu on macOS,** and a click on the
+  button itself reports the first action; the actions are told apart by their titles, which must
+  differ (`tauri-plugin-notification` 2.8.0 `show()` docs, `notify-rust` 4.18.2
+  `src/macos/nsusernotifications.rs`, read 2026-11-12). The title "Options" is fixed there, so it
+  is not translated. A due reminder puts "Open" first for that reason.
 - `notification:default` already allows the listener; no capability change was needed.
 - In `tauri dev` the plugin sends notifications as `com.apple.Terminal`, so a click there may
   bring the Terminal forward too; the built app sends them under its own identifier.

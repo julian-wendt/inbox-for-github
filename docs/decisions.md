@@ -91,16 +91,23 @@ question, and D follows that intent (2026-11-11); the table of views is in
   day"; F says "leave me alone, I am waiting for others". Both are a decision and take an item out
   of the inbox, which lists what is undecided. They differ in where the item comes back: a plan
   lands in Today on its day, a follow-up is back in the inbox at its date or on a new ask. The
-  "due" state and its notification went: coming back is enough, nothing needs to stick or ring.
+  "due" state and its notification went: coming back is enough for most follow-ups; "Remind me"
+  (below) rings for the ones where it is not.
 - **An item has one when** (2026-11-12, #107). The newer of a plan and a follow-up replaces the
   other; an item is never planned and waiting at the same time. A follow-up on a finished part
   is a when too: F keeps "my part done", X and D in Follow-up end the follow-up back into that
   state, and O opens the work again and keeps the follow-up. P and T never apply to a finished
   part. F that changes nothing (same date, or none again, with no ask waiting) is a no-op, so
   neither the status time nor the snapshot moves.
-- **One follow-up, no reminders** (2026-10-24). "Snooze" and "reminder" were two ways to say
-  "bring this back at a date", and an item could carry both. The follow-up has a date or none. A
-  passed date brings the item back as an ask, quietly. Where an item waits follows from where it lives:
+- **One follow-up, which can ring** (2026-10-24, 2026-11-12). "Snooze" and "reminder" were two
+  ways to say "bring this back at a date", and an item could carry both. The follow-up has a date
+  or none. A passed date brings the item back as an ask, quietly. "Remind me" on a follow-up with
+  a date (R in the F menu) makes it ring once, also on own items and assignments (2026-11-13: no
+  Reminders bar any more; a returning follow-up is unread like any return, which says enough): a review handed to someone who has time only
+  tomorrow is worth a nudge then, and in a full inbox a quiet return sinks. It is opt-in per
+  follow-up, so the rest stays quiet, and in-app only: no Reminders app or calendar to depend on,
+  and the app must run (below). In code it is `notify` (column `item_status.notify`), as
+  "reminder" already names the calendar alarm and the follow-up itself. Where an item waits follows from where it lives:
   assignments and own items stay in their table (bar Follow-up, with Blocked on its own), others
   leave their list.
 - **Follow-up has its own view** (2026-11-02). A follow-up is also how to check back on work
@@ -123,9 +130,11 @@ question, and D follows that intent (2026-11-11); the table of views is in
   GitHub drops it at once. Plain activity stays in Planned as unread. D ends a plan, except "my
   part done", which keeps it in every view, shared or not.
 - **Plan and Follow-up offer the same days** from one function (`dayChoices`), with the same
-  keys. "Later today" went, as a follow-up is about days; its time is a setting (`followUpTime`,
-  09:00). One mark, the calendar with the day, replaces the star for Today in rows and tables;
-  T and P remain as keys.
+  keys; a follow-up for a day comes back at a setting (`followUpTime`, 09:00). Follow-up adds
+  "This afternoon" (A, today at 14:00, only before then; 2026-11-12), since waiting for someone
+  free after lunch is a wait within the day. Earlier: "Later today" was dropped on 2026-10-29,
+  when a follow-up was meant to be about days only. One mark, the calendar with the day,
+  replaces the star for Today in rows and tables; T and P remain as keys.
 
 ## Calendar
 
@@ -319,6 +328,14 @@ returns only through an ask newer than its handled-until. The reasons:
   set up to mute the app outside work, so the app carries its own hours. No in-app "since your
   last summary" panel: the unread marks already show it. Exceptions per reason or repo, an
   organization filter, bundling and sound are left for later.
+- **A due "Remind me" rings whatever the mode,** the reason switches and the window in front
+  (2026-11-12): the viewer asked for that one nudge, and collected into a summary or held back it
+  would be one more quiet return. Only the main switch stops it, and one that came due while it
+  was off stays quiet, as other items do. It rings once; one missed while the app was quit rings
+  at the next start, judged by when a reminder last rang (`notifyRangAt`), since the cached
+  fetch's time lags behind while offline and would ring one twice. Its "Later" choices are in 1
+  hour, this afternoon at 14:00 (while earlier, as in the F menu) and the next workday at the
+  follow-up time.
 - **No notifications while the app is in front, by default.** Unlike the other new switches,
   `notifyInFront` starts off and so changes what existing users get: the list already shows what
   arrives while one works in it. Each reason has its own switch, all on.

@@ -367,6 +367,14 @@ describe("snooze with a date", () => {
     expect(classify(item({ reasons: ["involved"], comments: [comment(ME, "looked", 6)] }), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-07T00:00:00Z")).asks).toEqual([]);
   });
 
+  it("carries Remind me while it waits and once it is due, and only on a follow-up", () => {
+    const reminded = { ...snoozed, notify: true };
+    expect(classify(item(), "me", reminded, ruleSwitches(), "mention", Date.parse("2026-10-04T00:00:00Z")).notify).toBe(true);
+    expect(classify(item(), "me", reminded, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z"))).toMatchObject({ asks: ["due"], notify: true });
+    expect(classify(item(), "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z")).notify).toBeUndefined();
+    expect(classify(item(), "me", { ...reminded, status: "open" }, ruleSwitches(), "mention", Date.parse("2026-10-05T09:01:00Z")).notify).toBeUndefined();
+  });
+
   it("comes back as a mention when one arrives before the date", () => {
     const mentioned = item({ comments: [{ author: "bob", body: "@me ping", createdAt: "2026-10-02T00:00:00Z" }] });
     expect(classify(mentioned, "me", snoozed, ruleSwitches(), "mention", Date.parse("2026-10-03T00:00:00Z")).asks).toEqual(["mention"]);
@@ -473,6 +481,10 @@ describe("my part done", () => {
       expect(due.until).toBeUndefined();
       const filed = classify(assigned(), ME, waiting, ruleSwitches(), "mention", Date.parse("2026-10-11T00:00:00Z"), true, "2026-10-10T09:00:00Z", MENTIONS_ONLY);
       expect(filed).toMatchObject({ bucket: "assigned", status: "done", asks: [] });
+    });
+
+    it("keeps Remind me on a part that is done", () => {
+      expect(at(assigned(), { ...waiting, notify: true }, 11)).toMatchObject({ asks: ["due"], notify: true });
     });
 
     it("shows news as an update while it waits", () => {

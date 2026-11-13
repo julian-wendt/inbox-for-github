@@ -46,48 +46,53 @@ export function followUpWhen(entry: Pick<Classified, "status" | "until">, now = 
 export interface RowWhen {
   text: string;
   title: string;
-  /** A plan or a follow-up; none for Today, whose bar says it already. An event has its own mark (see `eventText`). */
-  icon?: "plan" | "followUp";
+  /** A plan, a follow-up, or one with "Remind me" (a bell); none for Today, whose bar says it already. An event has its own mark (see `eventText`). */
+  icon?: "plan" | "followUp" | "remind";
 }
 
 /**
  * The end of a row: in Planned the plan's day (see `datedText`), elsewhere a follow-up's return
  * time (see `followUpWhen`), each with its icon; a pin for today gets none. Nothing for a plain age.
+ * A follow-up with "Remind me" gets the bell instead of the arrow, and says so in its tooltip.
  *
  * @param planned  Whether the row is in the Planned view.
  *
  * @example
  *   rowWhen(entry, { kind: "planned", day: "2026-10-29" }, true); // { text: "Thursday", title: "…", icon: "plan" }
  */
-export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Dated | null, planned: boolean, now = new Date()): RowWhen | undefined {
+export function rowWhen(entry: Pick<Classified, "status" | "until" | "notify">, dated: Dated | null, planned: boolean, now = new Date()): RowWhen | undefined {
   if (planned && dated) return { ...datedText(dated, now), icon: dated.kind === "planned" ? "plan" : undefined };
   const followUp = followUpWhen(entry, now);
-  return followUp && { ...followUp, icon: "followUp" };
+  if (!followUp) return undefined;
+  return entry.notify ? { text: followUp.text, title: `${followUp.title} · ${t("snooze.notify")}`, icon: "remind" } : { ...followUp, icon: "followUp" };
 }
 
 /**
  * Whether F with `until` would change nothing: the item already waits for the same date, or
- * without one for "", and no ask waits that F would handle. F then writes nothing, so neither the
+ * without one for "", with "Remind me" as `notify` says, and no ask waits that F would handle. F then writes nothing, so neither the
  * status time nor the hand-off snapshot moves.
  *
- * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ * @param until   The follow-up date (ISO 8601), or "" for one without a date.
+ * @param notify  "Remind me" is on; it counts only with a date.
  *
  * @example
  *   followUpUnchanged(waitingWithoutDate, ""); // true while nothing asks
  */
-export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks">, until: string): boolean {
-  return isWaiting(entry) && (entry.until ?? "") === until && entry.asks.length === 0;
+export function followUpUnchanged(entry: Pick<Classified, "status" | "item" | "until" | "asks" | "notify">, until: string, notify = false): boolean {
+  return isWaiting(entry) && (entry.until ?? "") === until && !!entry.notify === (notify && !!until) && entry.asks.length === 0;
 }
 
 /**
- * What F stores besides "snoozed": the date, if any, and on an item whose part is done a fresh
- * hand-off snapshot, so the part stays done and F ticks off its news like any other ask.
+ * What F stores besides "snoozed": the date, if any, "Remind me" with a date, and on an item whose
+ * part is done a fresh hand-off snapshot, so the part stays done and F ticks off its news like any
+ * other ask.
  *
- * @param until  The follow-up date (ISO 8601), or "" for one without a date.
+ * @param until   The follow-up date (ISO 8601), or "" for one without a date.
+ * @param notify  "Remind me": the follow-up notifies when it comes due; dropped without a date.
  *
  * @example
- *   followUpExtra(handedOff, "2026-11-16T08:00:00Z"); // { until: "2026-11-16T08:00:00Z", handoff: { boards: {…}, prs: [] } }
+ *   followUpExtra(handedOff, "2026-11-16T08:00:00Z", true); // { until: "2026-11-16T08:00:00Z", notify: true, handoff: { boards: {…}, prs: [] } }
  */
-export function followUpExtra(entry: Pick<Classified, "item" | "updates">, until: string): StatusExtra {
-  return { ...(until && { until }), ...(entry.updates && { handoff: snapshotOf(entry.item) }) };
+export function followUpExtra(entry: Pick<Classified, "item" | "updates">, until: string, notify = false): StatusExtra {
+  return { ...(until && { until }), ...(until && notify && { notify: true }), ...(entry.updates && { handoff: snapshotOf(entry.item) }) };
 }

@@ -1,3 +1,4 @@
+import { localDay } from "./assignments";
 import { dateLocale } from "./i18n";
 
 /**
@@ -13,6 +14,18 @@ export function followUpOn(day: string, time = "09:00"): string {
   const [y, m, d] = day.split("-").map(Number);
   const { hours, minutes } = clockOf(time);
   return new Date(y, m - 1, d, hours, minutes).toISOString();
+}
+
+/**
+ * When "This afternoon" brings a follow-up back: today at 14:00, fixed with no setting, as
+ * ISO 8601; null from 14:00 on, when the choice is gone from the F menu and the notification.
+ *
+ * @example
+ *   thisAfternoon(new Date(2026, 10, 13, 9, 30)); // 13 Nov 2026, 14:00 local, as ISO
+ */
+export function thisAfternoon(now = new Date()): string | null {
+  const at = followUpOn(localDay(now), "14:00");
+  return Date.parse(at) > now.getTime() ? at : null;
 }
 
 /**

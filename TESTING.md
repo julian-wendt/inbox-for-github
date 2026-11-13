@@ -527,6 +527,19 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Fenster mit ⌘W oder dem roten Knopf schließen: die App bleibt im Dock, Klick aufs Icon holt
       das Fenster an derselben Stelle zurück. Eine neue Erwähnung meldet sich auch
       bei geschlossenem Fenster. ⌘Q beendet die App.
+- [ ] F vor 14 Uhr bietet „Heute Nachmittag“ (A) unter „Erinnern“, ab 14 Uhr fehlt es; A setzt die
+      Wiedervorlage auf heute 14:00, beim nächsten F ist der Eintrag abgehakt.
+- [ ] F auf einem Item, R schaltet „Erinnern“ an (Haken, Menü bleibt offen), dann eine Zeit in zwei
+      Minuten über D: zur Zeit kommt eine Mitteilung „Deine Wiedervorlage ist fällig“, auch bei
+      Fenster vorn und im Modus „Nur Zusammenfassungen“, und das Item steht oben in der Leiste
+      „Erinnerungen“ über den Zeitgruppen. Ohne „Erinnern“ dasselbe still und ohne Leiste.
+- [ ] Auf einer Wiedervorlage mit Datum ohne „Erinnern“: F, R, Esc. Die Glocke steht sofort statt
+      des Pfeils, das Datum bleibt; F, R, Esc nimmt sie wieder weg.
+- [ ] Im Menü „Optionen“ der Mitteilung: „In 1 Stunde“, vor 14 Uhr „Heute Nachmittag“, „Nächster
+      Arbeitstag“; jede setzt die Wiedervorlage neu mit „Erinnern“, das Item verlässt die Leiste.
+      Ein Klick auf „Optionen“ selbst oder „Öffnen“ öffnet das Item.
+- [ ] Erinnerung fällig, während die App mit ⌘Q beendet ist: beim nächsten Start eine Mitteilung,
+      beim Start danach keine mehr.
 - [ ] Items mit Wiedervorlage-Datum zeigen rechts in der Zeile statt des Alters, wann sie
       zurückkommen (Uhrzeit heute, Wochentag, sonst Datum); Tooltip „Wiedervorlage Mo., 26. Okt., 09:00“.
 - [ ] Im Detail steht bei solchen Items ein Chip mit rosa Kreispfeil (↻), Wochentag, Datum und Uhrzeit (24 h)

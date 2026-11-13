@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockOf, clockText, followUpOn, reminderText, untilShort } from "./snooze";
+import { clockOf, clockText, followUpOn, reminderText, thisAfternoon, untilShort } from "./snooze";
 import { setLang } from "./i18n";
 
 describe("followUpOn", () => {
@@ -34,5 +34,12 @@ describe("untilShort", () => {
     expect(untilShort(new Date(2026, 9, 24, 18).toISOString(), now)).toBe("18:00");
     expect(untilShort(new Date(2026, 9, 26, 9).toISOString(), now)).toBe("Mon");
     expect(untilShort(new Date(2026, 10, 5, 9).toISOString(), now)).toBe("Nov 5");
+  });
+});
+
+describe("thisAfternoon", () => {
+  it("is today at 14:00 until then, and gone from 14:00 on", () => {
+    expect(thisAfternoon(new Date(2026, 10, 13, 9, 30))).toBe(new Date(2026, 10, 13, 14, 0).toISOString());
+    expect(thisAfternoon(new Date(2026, 10, 13, 14, 0))).toBeNull();
   });
 });

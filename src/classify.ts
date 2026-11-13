@@ -46,6 +46,8 @@ export interface Classified {
   statusAt: string | null;
   /** Set for a follow-up with a date: when the item comes back on its own. */
   until?: string;
+  /** The item's follow-up has "Remind me" on, waiting or due: it notifies when it comes due (see `ringing`). */
+  notify?: true;
   /** Set once the viewer finished their part of it ("My part done"): what happened since, maybe nothing. */
   updates?: Update[];
   /** Who last asked the viewer (or one of their teams) for a review, when the activities say. */
@@ -161,7 +163,7 @@ export function classify(
   // A closed item keeps its hand-off, so its closing still asks as news.
   const renewed = !!stored && (stored.status === "done" || handedOff) && !item.closed && assignedAgain(item, me, stored.changedAt);
   if (stored && handedOff && !renewed && (assigned || item.closed)) return classifyHandedOff(item, me, stored, rules, askRules, handledUntil, now);
-  if (stored && (handedOff || renewed)) stored = stored.status === "snoozed" ? { status: "snoozed", changedAt: stored.changedAt, ...(stored.until && { until: stored.until }) } : undefined;
+  if (stored && (handedOff || renewed)) stored = stored.status === "snoozed" ? { status: "snoozed", changedAt: stored.changedAt, ...(stored.until && { until: stored.until }), ...(stored.notify && { notify: true }) } : undefined;
   if (item.closed) {
     const closer = own && askRules.ownClosed ? closedByOther(item, me) : null;
     if (closer && closer.at > (handledUntil ?? "")) {
@@ -199,7 +201,8 @@ export function classify(
   const posted = reopenOn === "any-post" && !inTable && handled ? lastPostByOthers(item, me) : null;
   const newPost = posted && posted.at > answeredAt! && posted.at !== mention?.at ? posted : null;
   const statusAt = passed ? stored!.until! : (stored?.changedAt ?? null);
-  const result = { item, mention, statusAt, ...(waiting && stored!.until && { until: stored!.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
+  const notify = stored?.status === "snoozed" && stored.notify ? { notify: true as const } : {};
+  const result = { item, mention, statusAt, ...notify, ...(waiting && stored!.until && { until: stored!.until }), ...(requestedBy && { requestedBy }), ...(assignedBy && { assignedBy }) };
 
   const reviewOpen = reviewed && !reviewAnswered(item, me, reopenedAt);
   const mentionOpen = mention !== null || (mentioned && !!reopenedAt && (lastReplyAt(item, me) ?? "") <= reopenedAt);
@@ -285,7 +288,7 @@ function classifyHandedOff(item: Item, me: string, stored: StoredStatus, rules: 
   const asked = timesOf(asks, (ask) => (ask === "update" ? updatedAt : ask === "review" ? request?.at : ask === "mention" ? mention?.at : ask === "feedback" ? feedback?.at : ask === "reply" ? reply?.at : ask === "due" ? dueAt : undefined));
   // Asks from before the hand-off were there already; only news and a due follow-up bring it back.
   const back = newestAsk({ asks: asks.filter((ask) => ask === "update" || ask === "due"), asked });
-  return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), mention, answered: null, asks, asked, ...(back && { back }), statusAt: since, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
+  return { item, bucket, status: waits ? "snoozed" : "done", ...(waits && stored.until && { until: stored.until }), ...(stored.status === "snoozed" && stored.notify && { notify: true as const }), mention, answered: null, asks, asked, ...(back && { back }), statusAt: since, updates, ...(feedback && { feedback }), ...(reply && { repliedBy: reply.by }) };
 }
 
 /** The last time the viewer, or one of their teams, was asked for a review, as the activities record it. */

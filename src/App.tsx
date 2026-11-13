@@ -22,7 +22,7 @@ import { CalendarDay } from "./ui/parts/CalendarDay";
 import { findEvents, moveEvent, putEvent, removeEvent, writing, type CalendarEvent } from "./calendar";
 import { onDay } from "./ui/calendarSlot";
 import { SnoozeDatePicker } from "./ui/parts/SnoozeDatePicker";
-import { followUpOn, untilText } from "./ui/snooze";
+import { followUpOn, thisAfternoon, untilText } from "./ui/snooze";
 import { followUpExtra, followUpUnchanged, isWaiting } from "./ui/followUp";
 import { canSwitchDemo, isDemo, rememberDemo } from "./demo/flag";
 import { doneAccess, keepsItsPlan, needsAskChoice, planStatus, type Place } from "./ui/statusPlan";
@@ -658,9 +658,14 @@ export default function App() {
   const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of?.id) : undefined;
   const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
   const snoozeItem = snoozeMenu ? inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) : undefined;
+  // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
+  const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
   // An item that left the list takes its menu along, so the menu cannot come back with it.
-  if (menu?.of && !menuItem) setMenu(null);
-  if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
+  if ((menu?.of && !menuItem) || (snoozeMenu && !snoozeItem)) {
+    if (menu?.of && !menuItem) setMenu(null);
+    if (snoozeMenu && !snoozeItem) setSnoozeMenu(null);
+    if (notifyChoice) setNotifyChoice(null);
+  }
   const [calendarFor, setCalendarFor] = useState<{ c: Classified; linked: CalendarEvent | null; day: string } | null>(null);
   const [pickingDate, setPickingDate] = useState<{ pick: (until: string) => void; day?: boolean } | null>(null);
   /** Runs one change on several items, with one toast and one undo for all of them. */
@@ -808,7 +813,7 @@ export default function App() {
     switch (plan.do) {
       case "resume":
         // The work opens again; a follow-up stays, as work and when are apart.
-        return change(t("toast.resumed", { number }), () => void (c.status === "snoozed" ? inbox.setStatus(id, "snoozed", c.until ? { until: c.until } : {}) : inbox.clearStatus(id)));
+        return change(t("toast.resumed", { number }), () => void (c.status === "snoozed" ? inbox.setStatus(id, "snoozed", c.until ? { until: c.until, ...(c.notify && { notify: true }) } : {}) : inbox.clearStatus(id)));
       case "hand-off": {
         moveOn(id);
         if (asks !== "file" || c.asks.length === 0) return change(t("toast.handedOff", { number }), hand);
@@ -832,11 +837,11 @@ export default function App() {
         return c.updates ? actions.notify(t("toast.partAlreadyDone", { number })) : undefined;
     }
   };
-  /** A follow-up for one item, with or without a date; its plan or Today pin goes with it, since an item has one "when". */
-  const followUp = (c: Classified, until: string) => {
+  /** A follow-up for one item, with or without a date and with "Remind me" as `notify`; its plan or Today pin goes with it, since an item has one "when". */
+  const followUp = (c: Classified, until: string, notify = false) => {
     if (c.item.closed) return actions.notify(t("closed.noStatus", { number: c.item.number }));
-    if (followUpUnchanged(c, until)) return;
-    const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until)), handled(c), ...seenOnOpen(c)];
+    if (followUpUnchanged(c, until, notify)) return;
+    const steps = [...unplanStep([c]), statusStep(c, "snoozed", followUpExtra(c, until, notify)), handled(c), ...seenOnOpen(c)];
     for (const s of steps) s.run();
     actions.announce(
       replacing(until ? t("toast.snoozedUntil", { number: c.item.number, until: untilText(until) }) : t("toast.snoozed", { number: c.item.number }), endedPlan(c)),
@@ -844,13 +849,19 @@ export default function App() {
       () => steps.forEach((s) => s.run()),
     );
   };
-  /** The follow-up choices for one item: the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
-  const snoozeEntries = (c: Classified): MenuEntry[] => [
-    ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime)), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined),
-    { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until) }) },
-    { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-    { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
-  ];
+  /** The follow-up choices for one item: "Remind me" (R, stored at once on a dated follow-up, else with the date chosen next), this afternoon (A) before 14:00, the days of Plan at the "followUpTime", a picked date, none, and its removal (X). */
+  const snoozeEntries = (c: Classified): MenuEntry[] => {
+    const notify = notifyChoice?.id === c.item.id ? notifyChoice.on : !!c.notify;
+    const afternoon = thisAfternoon();
+    return [
+      { label: t("snooze.notify"), hint: t("hint.snooze.notify"), keys: "R", checked: notify, keepOpen: true, onSelect: () => (c.status === "snoozed" && c.until ? followUp(c, c.until, !notify) : setNotifyChoice({ id: c.item.id, on: !notify })) },
+      ...(afternoon ? [{ label: t("snooze.afternoon"), keys: "A", divided: true, checked: c.status === "snoozed" && c.until === afternoon, onSelect: () => followUp(c, afternoon, notify) }] : []),
+      ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 && !afternoon ? { ...e, divided: true } : e)),
+      { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until, notify) }) },
+      { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
+      { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
+    ];
+  };
   /** F on an item: the follow-up choices open below its row, also to move the date. */
   const snooze = (c: Classified) => {
     if (c.item.closed) return actions.apply(c, "snoozed");
@@ -1179,15 +1190,20 @@ export default function App() {
     if (entry) jumpTo(entry);
     else setBucket("inbox");
   };
-  const { notifyDelivery, notifyCollected, notifyLastSummary } = inbox.settings;
+  const { notifyDelivery, notifyCollected, notifyLastSummary, notifyRangAt } = inbox.settings;
   const notifyOptions = { on: inbox.settings.notifications, reasons: inbox.settings.notifyOn, inFront: inbox.settings.notifyInFront, delivery: notifyDelivery };
-  const pending = { collected: notifyCollected, lastSummary: notifyLastSummary };
+  const pending = { collected: notifyCollected, lastSummary: notifyLastSummary, rangAt: notifyRangAt };
   const savePending = (change: (current: Pending) => Pending) =>
     void inbox.updateSettings((s) => {
-      const next = change({ collected: s.notifyCollected, lastSummary: s.notifyLastSummary });
-      return { ...s, notifyCollected: next.collected, notifyLastSummary: next.lastSummary };
+      const next = change({ collected: s.notifyCollected, lastSummary: s.notifyLastSummary, rangAt: s.notifyRangAt });
+      return { ...s, notifyCollected: next.collected, notifyLastSummary: next.lastSummary, notifyRangAt: next.rangAt };
     });
-  useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending);
+  const laterNotified = (itemId: string, until: string) => {
+    const entry = inbox.classified.find((c) => c.item.id === itemId);
+    if (entry) followUp(entry, until, true);
+  };
+  const reminderOptions = { since: inbox.fetchedAt, workdays: inbox.settings.workdays, followUpTime: inbox.settings.followUpTime, onLater: laterNotified };
+  useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending, reminderOptions);
 
   const orbLogins = useOrbLogins();
   const { orbLooks } = inbox.settings;
@@ -1408,9 +1424,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => setMenu(null)} />}
+      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => (setMenu(null), setNotifyChoice(null))} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => setSnoozeMenu(null)} />
+        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => (setSnoozeMenu(null), setNotifyChoice(null))} />
       )}
       {calendarFor && (
         <CalendarDay
@@ -1483,7 +1499,7 @@ export default function App() {
         <SettingsDialog
           settings={inbox.settings}
           welcome={welcome}
-          onSave={(s) => void inbox.updateSettings((current) => ({ ...current, ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary }))}
+          onSave={(s) => void inbox.updateSettings((current) => ({ ...current, ...s, notifyCollected: current.notifyCollected, notifyLastSummary: current.notifyLastSummary, notifyRangAt: current.notifyRangAt }))}
           onClose={() => setDialog(null)}
           boards={boards}
           memberOrgs={inbox.memberOrgs}
