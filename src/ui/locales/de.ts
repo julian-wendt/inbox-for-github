@@ -149,6 +149,7 @@ export const de: Messages = {
   "detail.navHint": "zum Navigieren",
   "detail.commandsHint": "für Befehle",
   "detail.openOnGitHub": "Auf GitHub öffnen",
+  "detail.more": "Weitere Aktionen",
   "detail.draft": "Entwurf",
   "detail.activities": "Aktivitäten",
   "detail.olderComments": "{count} ältere Kommentare anzeigen",

@@ -3,6 +3,7 @@
   flex-direction: column;
   min-width: 0;
   background: var(--panel);
+  container: detail / inline-size;
 }
 
 .detail-empty {
@@ -25,20 +26,34 @@
 }
 
 .detail .pane-header {
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
-.crumb {
-  min-width: 0;
-  overflow: hidden;
+/* The tools fold into a menu before the status switch has to squeeze; narrower still, the
+   switch keeps only its icons. */
+@container detail (max-width: 699px) {
+  .detail .header-full {
+    display: none;
+  }
+
+  .detail .header-compact {
+    display: contents;
+  }
+}
+
+@container detail (max-width: 559px) {
+  .status-switch :is(.segment-label, .segment-more) {
+    display: none;
+  }
+}
+
+.detail-crumb {
+  margin: 0 0 4px;
   color: var(--text-muted);
+  font-size: 12px;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.crumb-sep {
-  color: var(--text-faint);
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .btn.ghost {
