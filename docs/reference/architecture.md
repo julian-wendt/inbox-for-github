@@ -95,8 +95,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
   posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
   tables, answers in a review thread the viewer wrote in on another's pull request, and an own item
-  closed by someone else. The settings `ownFeedback`, `assignedFeedback`, `threadReplies` and
-  `ownClosed` switch them (`AskRules`). D on such an item finishes nothing (`planStatus` "file"):
+  closed by someone else. They always ask (`ASK_RULES_DEFAULT`); `AskRules` stays a parameter of
+  `classify` so tests can switch them off one by one. D on such an item finishes nothing (`planStatus` "file"):
   it sets handled-until, and `classify` drops the asks from before it. A
   reply or feedback after it asks again like a push does, and leaves a follow-up running.
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,
@@ -129,10 +129,14 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   loses the reason "review" and, left without a reason, the cache (`withdrawReviews`); an id the
   cache does not hold as a review request is loaded by id and gets it (`unseenReviews`,
   `addRequested`, at most 50 per delta), whether or not the request moved `updatedAt`.
+- **Pending writes:** assigning or unassigning oneself shows at once; until the queued write
+  settles, every fetch or reload puts that change back on the item (`withPending`), so one that
+  ran before GitHub had the write does not take it back.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
   `encodeScope`). Narrowing a setting filters locally. A longer closed window runs a delta plus
   the closed searches over the added days only (`widensClosed`, `closedBefore`); switching boards
-  on loads only the boards. A higher item limit has no such shortcut and fetches in full.
+  on loads only the boards. The item limit is always GitHub's 1000 (`SEARCH_STOP`); a cache
+  from a lower limit, set before it was removed, fetches in full once.
 - **Transfers:** an issue moved to another repository comes back under a new node id. Every
   fetch, full or delta, compares the issues that name `transferredFrom` with the items cached
   before it (`findTransfers`); the old copy leaves the cache, and its status, log, note, seen,
@@ -142,7 +146,12 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   view) a `nodes` query; both put the answer in through `takeReloaded`, which also takes over a
   transfer the answer shows. For an id GitHub no longer resolves (`NOT_FOUND`), the cached issues
   that may be its transferred copy are loaded by id (`transferCandidates`, about a point each);
-  failing that, a refresh runs, and what is still unresolved leaves the cache (`dropGone`).
+  failing that, a refresh runs, and what is still unresolved leaves the cache and loses its pin
+  or plan (`dropGone`), unless the token's scopes are unknown or lacking, when GitHub answers
+  `NOT_FOUND` for private items as well. Once per launch and day, after the launch's first
+  refresh, the pinned and planned items that are not loaded go through `reloadItems` too, so a
+  deleted one or one the viewer lost access to drops its plan; one that is only outside the item
+  limit or a filtered repository still resolves and keeps it.
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
 - **In the background:** the refresh timer is a plain `setInterval` and keeps running only

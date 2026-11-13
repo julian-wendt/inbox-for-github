@@ -26,6 +26,13 @@ describe("arrivals", () => {
     const due = entry("I_4", { asks: ["due"] });
     expect(arrivals([back, asked, due], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
+
+  it("keeps quiet what a due follow-up raises again, and notifies an ask newer than the due time", () => {
+    const raised = entry("I_1", { asks: ["due", "review"], asked: { due: "2026-11-13T12:45:00Z", review: "2026-11-10T09:00:00Z" } });
+    const parked = entry("I_2", { asks: ["due", "review"], asked: { due: "2026-11-13T12:45:00Z" } });
+    const newer = entry("I_3", { asks: ["due", "mention"], asked: { due: "2026-11-13T12:45:00Z", mention: "2026-11-13T13:00:00Z" } });
+    expect(arrivals([raised, parked, newer], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
+  });
   it("notifies again when an item already in the inbox gets a new ask", () => {
     const before = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-05T00:00:00Z", excerpt: "", self: false } });
     const after = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-06T00:00:00Z", excerpt: "", self: false } });

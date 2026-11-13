@@ -11,7 +11,7 @@ const KEY = "seen-settings";
  *
  * @example
  *   const { seen, markSeen } = useSeenSettings();
- *   markSeen(["ownFeedback"]);
+ *   markSeen(["tabToButtons"]);
  */
 export function useSeenSettings() {
   const [seen, setSeen] = useState<string[]>(() => {

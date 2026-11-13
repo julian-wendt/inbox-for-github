@@ -111,9 +111,12 @@ export function splitAttributes(list: CombinedAttribute[]): { tableAttributes: A
   };
 }
 
+/** The repository stands above the detail's title, so the detail has no chip and no switch for it. */
+export const TABLE_ONLY = "repo";
+
 /** The keys a view shows, in the shared order. */
 export function shownKeys(list: CombinedAttribute[], view: "table" | "detail"): string[] {
-  return list.filter((a) => a[view]).map((a) => a.key);
+  return list.filter((a) => a[view] && !(view === "detail" && a.key === TABLE_ONLY)).map((a) => a.key);
 }
 
 /**

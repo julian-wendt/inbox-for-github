@@ -48,7 +48,7 @@ import { useInbox } from "./ui/useInbox";
 import { useOrca } from "./ui/useOrca";
 import { addToOrca, openInOrca, pathText } from "./orca";
 import { useSelection } from "./ui/useSelection";
-import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
+import { assignedAt, withAssignees, withoutLocalEvent, withSelfAssigned, withSelfUnassigned, groupByRepo, groupByType, groupPlate, isActiveBar, isTypeGroup, leaveClears, localDay, moveBar, moveTypeBar, plateCount, type PlateGroup, type TableGroup, type TableGrouping } from "./ui/assignments";
 import { choiceKey, choiceText, closedPlans, datedAt, datedOf, datedText, dayChoices, dayText, isPinnable, keepsPlan, orphanLinks, planOf, replan, retouch, rollOver, todayOf, unplan, withEvent, withPin, withPlan, without, type Today } from "./ui/plan";
 import { attributeOptions, combineAttributes, shownKeys, tableKeys } from "./ui/attributes";
 import { useCollapsed } from "./ui/useCollapsed";
@@ -86,6 +86,7 @@ const SEEN_AFTER_MS = 2500;
 
 /** No calendar links while no calendar is chosen; one object, so `dated` keeps its identity. */
 const NO_LINKS: Record<string, string> = {};
+const LAUNCHED_AT = Date.now();
 
 /** A change with its undo, as the toasts take them. */
 type Step = { run: () => void; undo: () => void };
@@ -749,7 +750,7 @@ export default function App() {
     setMenu({
       entries: [
         ...(reading ? [{ label: t(anyUnread ? "view.markAllRead" : "view.markAllUnread"), icon: anyUnread ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead(items) }] : []),
-        { label: t("view.refresh"), icon: <RefreshCw size={14} />, onSelect: () => void refreshView(inbox.settings.refreshInRepos && repoFilter.length > 0 ? items.filter((c) => repoFilter.includes(c.item.repo)) : items) },
+        { label: t("view.refresh"), icon: <RefreshCw size={14} />, onSelect: () => void refreshView(repoFilter.length > 0 ? items.filter((c) => repoFilter.includes(c.item.repo)) : items) },
       ],
       x: e.clientX,
       y: e.clientY,
@@ -912,8 +913,7 @@ export default function App() {
         () => classifiedById(id) && assignMe(classifiedById(id)!, true),
       );
     const at = new Date().toISOString();
-    inbox.updateItem(id, (item) => withSelfAssigned(item, me, at));
-    void queueWrite(() =>
+    const write = queueWrite(() =>
       ghToken()
         .then((token) => assignSelf(token, id))
         .then(
@@ -925,6 +925,7 @@ export default function App() {
           },
         ),
     );
+    inbox.updateItem(id, (item) => withSelfAssigned(item, me, at), write);
   };
   /** The item as classified right now; an undo that runs later must not see the list of the render that made it. */
   const classifiedById = (id: string) => inbox.classifiedNow().find((e) => e.item.id === id);
@@ -942,12 +943,6 @@ export default function App() {
     const cleared = !keepStatus && leaveClears(previous);
     if (cleared) void inbox.clearStatus(id);
     const at = new Date().toISOString();
-    inbox.updateItem(id, (item) => ({
-      ...item,
-      assignees: item.assignees.filter((a) => !sameLogin(a, me)),
-      reasons: item.reasons.filter((r) => r !== "assigned"),
-      activities: [...item.activities, { kind: "unassigned", at, actor: me, assignee: me }],
-    }));
     const text = t("unassign.done", { number });
     if (quiet) actions.notify(text);
     else
@@ -963,7 +958,7 @@ export default function App() {
           if (now) leave(now, true);
         },
       );
-    void queueWrite(() =>
+    const write = queueWrite(() =>
       ghToken()
         .then((token) => unassignSelf(token, id))
         .then(
@@ -976,6 +971,7 @@ export default function App() {
           },
         ),
     );
+    inbox.updateItem(id, (item) => withSelfUnassigned(item, me, at), write);
   };
   /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   const replied = (id: string, change?: StateWrite) => {
@@ -1059,7 +1055,7 @@ export default function App() {
       ...(planned ? [{ label: t("plan.remove"), keys: "X", icon: <X size={14} />, onSelect: () => planFor(c, null, "") }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
-      { label: t("action.openOnGitHub"), keys: "⌃O", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
+      { label: t("action.openOnGitHub"), keys: "G", icon: <ExternalLink size={14} />, divided: !assignable(c), onSelect: () => void openUrl(item.url) },
       ...(orcaOffered(c) ? [{ label: t(orca.repoOf(item.repo) ? "orca.open" : "orca.addOpen"), hint: t(orca.repoOf(item.repo) ? "hint.orca.open" : "hint.orca.addOpen"), keys: "W", icon: <OrcaMark size={16} />, onSelect: () => runOrca(c) }] : []),
       { label: t("menu.copyLink"), keys: "C", icon: <Link size={14} />, onSelect: () => void copy(itemLink(item, "url")) },
       { label: t("menu.copyRef"), hint: t("hint.menu.copyRef"), icon: <Hash size={14} />, onSelect: () => void copy(itemLink(item, "ref")) },
@@ -1087,6 +1083,16 @@ export default function App() {
     const timer = window.setInterval(check, 5 * 60_000);
     return () => window.clearInterval(timer);
   }, [ready, settings, saveSettings, classified, me]);
+
+  // Once per launch and day, after this launch's first refresh, GitHub is asked about pinned or planned items not loaded (`dropGone`).
+  const { reloadItems, loading, fetchedAt } = inbox;
+  const goneChecked = useRef("");
+  useEffect(() => {
+    if (!ready || loading || !fetchedAt || fetchedAt.getTime() < LAUNCHED_AT || goneChecked.current === today) return;
+    goneChecked.current = today;
+    const unloaded = [...settings.focus, ...settings.planned.map((p) => p.id)].filter((id) => !classified.some((c) => c.item.id === id));
+    if (unloaded.length > 0) void reloadItems(unloaded);
+  }, [ready, loading, fetchedAt, today, settings, classified, reloadItems]);
 
   // A plan of an item closed on GitHub goes at once, not with the next day.
   const changeSettings = inbox.updateSettings;
@@ -1150,7 +1156,7 @@ export default function App() {
       r: withCurrent((c) => toggleRead([c])),
       "mod+z": actions.undo,
       "mod+y": actions.redo,
-      "ctrl+o": withCurrent((c) => void openUrl(c.item.url)),
+      g: withCurrent((c) => void openUrl(c.item.url)),
       w: withCurrent(runOrca),
       "ctrl+a": withCurrent(assignMe),
       "ctrl+u": withCurrent((c) => leave(c)),
@@ -1234,8 +1240,6 @@ export default function App() {
         counts={viewCounts}
         unread={unreadCounts}
         repos={repos}
-        viewCounts={inbox.settings.viewCounts}
-        repoCounts={inbox.settings.repoCounts}
         repoFilter={repoFilter}
         me={inbox.me}
         myName={inbox.myName}
@@ -1347,7 +1351,6 @@ export default function App() {
           selectedGroup={selectedBar}
           selected={selection.selected}
           loading={inbox.loading}
-          avatars={inbox.settings.avatars}
           onSelect={selection.select}
           onOpen={(c) => void openUrl(c.item.url)}
         />
@@ -1376,7 +1379,6 @@ export default function App() {
             statusMap={inbox.settings.statusMap}
             recentComments={inbox.settings.recentComments}
             botComments={inbox.settings.botComments}
-            stickyReply={inbox.settings.stickyReply}
             openAt={inbox.settings.openAt}
             descriptionMode={inbox.settings.descriptionMode}
             onReplied={replied}
@@ -1413,7 +1415,6 @@ export default function App() {
                 statusMap={inbox.settings.statusMap}
                 recentComments={inbox.settings.recentComments}
                 botComments={inbox.settings.botComments}
-                stickyReply={inbox.settings.stickyReply}
                 openAt={inbox.settings.openAt}
                 descriptionMode={inbox.settings.descriptionMode}
                 onReplied={replied}

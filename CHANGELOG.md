@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.5.0...v0.6.0) (2026-11-12)
+
+
+### Features
+
+* bring items back only through asks with a time ([#126](https://github.com/julian-wendt/inbox-for-github/issues/126)) ([834db9a](https://github.com/julian-wendt/inbox-for-github/commit/834db9a32afad36772e881c4e5f5b6867077a02e))
+* drop multi-select and actions on several items ([#120](https://github.com/julian-wendt/inbox-for-github/issues/120)) ([d92afbb](https://github.com/julian-wendt/inbox-for-github/commit/d92afbb516671cedea1653d82d463e2364666648))
+* keep my part done through a follow-up ([#124](https://github.com/julian-wendt/inbox-for-github/issues/124)) ([9d06483](https://github.com/julian-wendt/inbox-for-github/commit/9d0648322ef035aba6baeb67f43af34fc5d1d270))
+* keep one handled-until per item instead of five cutoffs ([#123](https://github.com/julian-wendt/inbox-for-github/issues/123)) ([8ec16e1](https://github.com/julian-wendt/inbox-for-github/commit/8ec16e1288be89316f23229aca9848755ede9dd6))
+* replace the Done view with a Done bar in the inbox ([#125](https://github.com/julian-wendt/inbox-for-github/issues/125)) ([65cde3a](https://github.com/julian-wendt/inbox-for-github/commit/65cde3acb1c01ea455c615dafa1a6e98ea27f18b))
+* turn the help into a how-to-use guide ([#128](https://github.com/julian-wendt/inbox-for-github/issues/128)) ([11a6a7d](https://github.com/julian-wendt/inbox-for-github/commit/11a6a7d7bcde69e20ecf30f661929d9b3a06bfb1))
+
+
+### Bug Fixes
+
+* keep my part done on an own issue assigned to me ([#116](https://github.com/julian-wendt/inbox-for-github/issues/116)) ([9269b6e](https://github.com/julian-wendt/inbox-for-github/commit/9269b6ea46bd9a4307a0a246878d917789c589f9))
+* smooth over smaller inconsistencies from the audit ([#117](https://github.com/julian-wendt/inbox-for-github/issues/117)) ([5d6737b](https://github.com/julian-wendt/inbox-for-github/commit/5d6737bff18e3a7aa6ae996ac465e1c18cbf4e49))
+* stop counting an unassignment by someone else as news ([#130](https://github.com/julian-wendt/inbox-for-github/issues/130)) ([ddd4d7b](https://github.com/julian-wendt/inbox-for-github/commit/ddd4d7beefdcce535ed4a8fa068bb4cb6c15f2a0))
+
 ## [0.5.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.4.0...v0.5.0) (2026-11-11)
 
 

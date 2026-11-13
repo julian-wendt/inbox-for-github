@@ -53,7 +53,6 @@ interface Props {
   onKind: (kind: KindFilter) => void;
   selected: string | null;
   loading: boolean;
-  avatars: boolean;
   onSelect: (id: string) => void;
   onOpen: (entry: Classified) => void;
   /** Right click on a row: selects it and opens its context menu at the pointer. */
@@ -76,7 +75,7 @@ interface Props {
   onJump: (bucket: View) => void;
 }
 
-export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, avatars, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, search, onSearch, searchCount, searchRef }: Props) {
+export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, search, onSearch, searchCount, searchRef }: Props) {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const empty = useRef<HTMLDivElement>(null);
@@ -220,7 +219,6 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                       event={dated ?? undefined}
                       carriedSince={pinned && pinnedOn[entry.item.id] < today ? pinnedOn[entry.item.id] : undefined}
                       when={rowWhen(entry, dated, bucket === "planned")}
-                      avatar={avatars}
                       onSelect={() => onSelect(entry.item.id)}
                       onOpen={() => onOpen(entry)}
                       onMenu={(e) => onMenu(entry, e)}

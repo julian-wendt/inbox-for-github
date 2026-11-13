@@ -51,7 +51,7 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
       [["←", "/", "→"], "keys.fold"],
       [["⌃", "A"], "keys.assign"],
       [["⌃", "U"], "keys.unassign"],
-      [["⌃", "O"], "action.openOnGitHub"],
+      [["G"], "action.openOnGitHub"],
       [["W"], "orca.open"],
       [["⌃", "R"], "action.refreshItem"],
       [["C"], "menu.copyLink"],

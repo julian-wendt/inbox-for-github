@@ -83,7 +83,8 @@ export function useStatusActions(setStatus: Write, restoreStatus: (nodeId: strin
   const apply = useCallback(
     (entry: Classified, status: Status, until?: string, also: { run: () => void; undo: () => void }[] = []) => {
       if (entry.item.closed) return show({ text: t("closed.noStatus", { number: entry.item.number }) });
-      if (entry.status === status && until === undefined) return;
+      // A due follow-up shows as open, though stored as snoozed; O ends it.
+      if (entry.status === status && until === undefined && !entry.asks.includes("due")) return;
       const id = entry.item.id;
       const previous = stored(id);
       const extra: StatusExtra = until ? { until } : {};

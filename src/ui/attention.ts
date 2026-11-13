@@ -9,7 +9,9 @@ import { followUpOn, thisAfternoon } from "./snooze";
  * The first result (`known` is null) is the baseline, so a restart does not replay the inbox.
  * After that, every item that newly enters the inbox or whose ask changed (see `askKey`) notifies,
  * except one that only asks again: the viewer opened it again (O), someone reopened it on GitHub,
- * someone posted with "Any post" on, or its follow-up came due; these return quietly.
+ * someone posted with "Any post" on, or its follow-up came due; these return quietly. A due
+ * follow-up also raises again what was pending when F was pressed; those asks are older than the
+ * due time and stay quiet too, while one newer than it notifies.
  *
  * @param classified  The current classification.
  * @param known       Item id → `askKey` of the inbox items in the previous result, or null before the first one.
@@ -21,10 +23,12 @@ import { followUpOn, thisAfternoon } from "./snooze";
  */
 export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null): Classified[] {
   if (!known) return [];
-  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && !c.asks.every(quiet));
+  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && c.asks.some((ask) => loud(c, ask)));
 }
 
 const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
+
+const loud = ({ asked }: Classified, ask: Ask) => !quiet(ask) && !(asked.due && (asked[ask] ?? "") <= asked.due);
 
 /**
  * Whether an item's follow-up rings: "Remind me" is on and it asks as due (see `Classified.notify`).

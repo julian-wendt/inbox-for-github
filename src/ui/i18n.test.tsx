@@ -1,8 +1,6 @@
 import { isValidElement } from "react";
 import { describe, expect, it } from "vitest";
-import { RULES } from "../rules";
 import { dateLocale, regionOf, setLang, setRegion, t, tRich } from "./i18n";
-import { en } from "./locales/en";
 
 describe("t", () => {
   it("fills placeholders in the current language", () => {
@@ -23,15 +21,6 @@ describe("tRich", () => {
     setLang("en");
     const parts = tRich("activity.assigned", { name: <strong>alice</strong> }) as React.ReactElement<{ children: unknown }>[];
     expect(parts.map((p) => (isValidElement(p.props.children) ? "<el>" : p.props.children))).toEqual(["", "<el>", " assigned you"]);
-  });
-});
-
-describe("rule texts", () => {
-  it("has a title and a description for every rule", () => {
-    for (const rule of RULES) {
-      expect(Object.keys(en)).toContain(`rule.${rule.id}.title`);
-      expect(Object.keys(en)).toContain(`rule.${rule.id}.description`);
-    }
   });
 });
 
