@@ -119,6 +119,31 @@ Checked against a real transfer:
 again: `retry-after` for secondary limits, else `x-ratelimit-reset`. `useInbox` pauses automatic
 refreshes until then and below 400 remaining points (`LOW_BUDGET`).
 
+## Timeouts
+
+GitHub gives a request ten seconds. One that takes longer gets `502 Bad Gateway` from the gateway
+in front of the API: an HTML page without `access-control-allow-origin`, so the web view's
+`fetch` rejects with a `TypeError` ("Failed to fetch" in WebView2) and has no status to read.
+Measured 2026-11-11 from Node, where the status shows: a search page came back as that 502 after
+10.9 s. In the app the same failures were logged 10.5 to 11 s after the request went out, and the
+sidebar read "Offline" on a working network.
+
+The search page is what runs into it. In an organization whose pull requests carry many reviews
+and threads, a page of 50 took 7 to 11 s, a page of 25 4 to 8 s and a page of 10 2 to 3 s, and
+the later pages of a search were slower than its first (measured 2026-11-11).
+
+`graphql` throws `TimeoutError` for a request that fails 9 to 20 s after it went out
+(`GAVE_UP_MS`, `GAVE_UP_UNTIL_MS`): a missing network fails at once, and a fetch caught by a Mac
+going to sleep fails much later; both stay what they are. `search` in `src/github/fetch.ts` asks
+for the page again at half the size, down to 5 hits, and holds every later page and search to
+that size until the next full fetch, which tries 50 again: a slow organization costs one dropped
+page per full fetch, not one per delta. GitHub's search cursor is an offset, so a page asked
+again at another size with the same `after` neither skips nor repeats hits (as the simulator
+models it; not checked against GitHub beyond the refresh going through). Smaller pages cost the same per hit: 19 points for 50, 9 for 25, 5 for 13, 3 for 7 and
+2 for 5 (dry run 2026-11-11). The dropped request is not free: `x-ratelimit-used` rose by 39
+over a dropped page of 50 and the page of 25 after it, where a page of 25 alone adds 9 or 10
+(seen 2026-11-11).
+
 ## Token scopes
 
 `REQUIRED_SCOPES`: `repo`, `read:org`, `project`. A missing one shows a notice with the command

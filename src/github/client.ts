@@ -9,6 +9,20 @@ export class RateLimitError extends Error {
   }
 }
 
+/**
+ * GitHub dropped the request after its ten seconds (see "Timeouts" in
+ * `docs/reference/github-api.md`); asking for less at once may get an answer.
+ */
+export class TimeoutError extends Error {
+  constructor() {
+    super("GitHub gave no answer within its ten seconds");
+  }
+}
+
+/** GitHub's timeout fails 10.5 to 11 s after sending; a missing network at once, a sleeping Mac much later. */
+const GAVE_UP_MS = 9_000;
+const GAVE_UP_UNTIL_MS = 20_000;
+
 let latestBudget: Budget | null = null;
 let spent = 0;
 
@@ -65,6 +79,7 @@ function refusedUntil(response: Response, messages: string[], now = Date.now()):
  * Every response updates `lastBudget()` from its rate-limit headers.
  *
  * @throws RateLimitError when GitHub refuses for a rate limit, with the time it allows queries again.
+ * @throws TimeoutError when GitHub dropped the request after its ten seconds.
  * @throws Error with GitHub's messages when the HTTP call fails or the response carries `errors`.
  *
  * @example
@@ -79,6 +94,7 @@ export async function graphql<T>(
 ): Promise<T> {
   const started = Date.now();
   const report = (outcome: Record<string, unknown>) => logRequest(query, variables, started, outcome);
+  const gaveUp = (ms = Date.now() - started) => ms >= GAVE_UP_MS && ms < GAVE_UP_UNTIL_MS;
   const response = await fetch(ENDPOINT, {
     signal,
     method: "POST",
@@ -86,7 +102,8 @@ export async function graphql<T>(
     body: JSON.stringify({ query, variables }),
   }).catch((e: unknown) => {
     report({ failed: String(e) });
-    throw e;
+    // The web view cannot read the timeout's 502, which comes without CORS headers: its fetch just fails.
+    throw e instanceof TypeError && gaveUp() ? new TimeoutError() : e;
   });
   noteHeaders(response.headers);
   const rate = { remaining: response.headers.get("x-ratelimit-remaining"), used: response.headers.get("x-ratelimit-used"), resource: response.headers.get("x-ratelimit-resource"), reset: response.headers.get("x-ratelimit-reset") };
@@ -94,6 +111,7 @@ export async function graphql<T>(
     const text = await response.text();
     const until = refusedUntil(response, [text]);
     report({ status: response.status, ...rate, retryAfter: response.headers.get("retry-after"), refused: until?.toISOString() });
+    if (!until && (response.status === 502 || response.status === 504) && gaveUp()) throw new TimeoutError();
     throw until ? new RateLimitError(until) : new Error(`GitHub API ${response.status}: ${text}`);
   }
   const payload = (await response.json()) as { data?: T; errors?: { message: string; type?: string }[] };
