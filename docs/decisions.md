@@ -378,7 +378,9 @@ returns only through an ask newer than its handled-until. The reasons:
   - the pop-up's ×.
 
   Assign me shows only when it can act, so it sits last, where its coming and going moves
-  nothing else.
+  nothing else. In a column narrower than 700px the tools after the 💡 fold into a "…" menu, as
+  the list's controls do. Below 560px the status switch keeps only its icons. The repository and
+  number left the header for a line above the title: squeezed in the header, they vanished first.
 - **Calm placeholders.** GitHub's identicons are replaced by gradient orbs picked per login.
   **No two people share an orb:** an orb is a look (palette, accent and accent angle, one number
   below `LOOKS`). A login's first look comes from its name and is kept whenever it is free;

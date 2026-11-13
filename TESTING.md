@@ -48,6 +48,9 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] ⌃R mit ausgewähltem Item: nur dieses Item lädt neu (1 Punkt, mit Boards 2), der Button im Detail-Kopf dreht sich, die Liste bleibt stehen.
 - [ ] Detail-Kopf von links: Status-Umschalter, 💡, dann mit kleinem Abstand GitHub und Orca, Link und Aktualisieren,
       „Mich zuweisen“ (nur wenn möglich) und im Pop-up ×. Erscheint „Mich zuweisen“, verrutscht davor nichts.
+- [ ] Detail-Spalte schmaler ziehen: unter etwa 700 px wandern GitHub bis „Mich zuweisen“ in das „…“-Menü (mit Tasten
+      rechts), 💡 und × bleiben; unter etwa 560 px zeigt der Umschalter nur Icons, Tooltips nennen den Status.
+      „org/repo #Nummer“ steht immer ganz über dem Titel.
 - [ ] Rechtsklick auf eine Ansicht: Inbox und „Mir zugewiesen“ bieten „Alle als gelesen markieren“
       (danach „… als ungelesen“; ⌘Z holt es zurück) und „Items dieses Views aktualisieren“, die
       anderen Ansichten nur das Aktualisieren. Das Aktualisieren lädt alle Items der Ansicht
