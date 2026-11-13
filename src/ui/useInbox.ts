@@ -4,7 +4,7 @@ import { classify, type Classified } from "../classify";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
 import { fetchBoards } from "../github/boards";
-import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
+import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer, SEARCH_STOP } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
@@ -161,9 +161,9 @@ function legacyDone(c: Classified, viewer: string): boolean {
  * is open and restarts whenever the organization list changes; it
  * repeats every `settings.refreshMinutes` minutes, or never when that is 0. Within
  * `FULL_EVERY_MS` (15 minutes) of a full fetch for the same organizations, refreshes only load what changed (see `canDelta`). Narrowing
- * the closed window, the item limit or switching boards off filters the cached items instead of
- * refetching. A longer closed window loads only the added days, switching boards on only the
- * boards; a higher item limit fetches in full. When GitHub's hourly
+ * the closed window or switching boards off filters the cached items instead of refetching. A
+ * longer closed window loads only the added days, switching boards on only the boards. Every
+ * search reads all GitHub returns (`SEARCH_STOP`); a cache from a lower item limit fetches in full once. When GitHub's hourly
  * GraphQL budget runs low, automatic refreshes wait for its reset (`pausedUntil`); ⌘R still works.
  *
  * @returns The current state and the actions the UI may call.
@@ -215,10 +215,10 @@ export function useInbox(): Inbox {
   }, []);
   const running = useRef<AbortController | null>(null);
   // Read by `refresh` without being dependencies: narrowing them filters locally instead of refetching.
-  const wanted = useRef<Coverage>({ closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: settings.maxItems });
+  const wanted = useRef<Coverage>({ closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: SEARCH_STOP });
   useEffect(() => {
-    wanted.current = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: settings.maxItems };
-  }, [settings.closedDays, settings.loadBoards, settings.maxItems]);
+    wanted.current = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: SEARCH_STOP };
+  }, [settings.closedDays, settings.loadBoards]);
 
   const latestSettings = useRef(settings);
   useEffect(() => {
@@ -550,11 +550,11 @@ export function useInbox(): Inbox {
   // Widening a setting past what the cache covers fetches; narrowing it only filters (`shown`).
   useEffect(() => {
     const had = decodeScope(lastFetch.current?.scope);
-    const want = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: settings.maxItems };
+    const want = { closedDays: settings.closedDays, boards: settings.loadBoards, maxItems: SEARCH_STOP };
     if (!had || (covers(had.coverage, want) && (!want.boards || had.coverage.boards))) return;
      
     void refresh();
-  }, [settings.closedDays, settings.loadBoards, settings.maxItems, refresh]);
+  }, [settings.closedDays, settings.loadBoards, refresh]);
 
   useEffect(() => {
     if (settings.refreshMinutes <= 0) return;
