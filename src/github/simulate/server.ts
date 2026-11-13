@@ -99,7 +99,7 @@ function search(world: GitHubSimulator, vars: Variables): Answer {
   const from = Number(vars.after ?? 0) || 0;
   const more = from + first < hits.length;
   return {
-    data: { search: { pageInfo: { hasNextPage: more, endCursor: more ? String(from + first) : null }, nodes: clone(hits.slice(from, from + first)) } },
+    data: { search: { issueCount: hits.length, pageInfo: { hasNextPage: more, endCursor: more ? String(from + first) : null }, nodes: clone(hits.slice(from, from + first)) } },
     cost: Math.max(1, Math.floor((first * 19) / 50)),
   };
 }
