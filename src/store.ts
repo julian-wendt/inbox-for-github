@@ -129,7 +129,6 @@ export interface Settings {
   /** Show the relevant person's avatar at the start of each list row. */
   /** The interface language; English unless chosen otherwise. */
   language: Lang;
-  avatars: boolean;
   /** Project ids of boards whose status and sprint stay out of the detail. */
   hiddenBoards: string[];
   /** Organization login → which of its repos to show; organizations without an entry show all. */
@@ -166,11 +165,6 @@ export interface Settings {
   tableGrouping: "type" | "status" | "repo";
   /** The Created by me table groups its bars by who has taken the item on ("status") or by repository. */
   authoredGrouping: "status" | "repo";
-  /** The sidebar shows item counts next to the views, and next to the repositories. */
-  viewCounts: boolean;
-  repoCounts: boolean;
-  /** "Refresh the items of this view" (right click in the sidebar) loads only the items of the picked repositories; off loads the whole view. */
-  refreshInRepos: boolean;
   /** Lists show time headings (today, yesterday, this week, …). */
   groupByTime: boolean;
   /** Tab walks the main window's buttons, and Enter and Space press the focused one; off, Tab does nothing there outside a text field. */
@@ -181,8 +175,6 @@ export interface Settings {
   descriptionMode: DescriptionMode;
   /** How the detail shows comments by bots. */
   botComments: BotComments;
-  /** The comment box stays at the bottom of the detail instead of scrolling with the thread. */
-  stickyReply: boolean;
   /** Items the viewer stopped tracking: left out everywhere, whatever happens on GitHub. */
   untracked: UntrackedItem[];
   /** Item ids marked "today" (T); any open item in any view. */
@@ -239,7 +231,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], theme: "system", language: "en", hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, tableGrouping: "type", authoredGrouping: "status", untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

@@ -25,13 +25,10 @@ import { ItemProps } from "./ItemProps";
 import { Markdown } from "./Markdown";
 import { StatusIcon } from "./StatusIcon";
 import { Reply, type StateWrite } from "./Reply";
-import { Resizer } from "./Resizer";
 import { WhyHint } from "./WhyHint";
-import { useStoredSize } from "../useStoredSize";
 import { useGutter } from "../useGutter";
 
 /** Height of the docked comment field, in CSS pixels. */
-const REPLY_HEIGHT = { initial: 72, min: 56, max: 520 };
 
 interface Props {
   entry: Classified | null;
@@ -56,8 +53,6 @@ interface Props {
   /** Comments shown before older ones fold away; 0 shows all. */
   recentComments: number;
   botComments: BotComments;
-  /** The comment box sits below the scrolling thread instead of at its end. */
-  stickyReply: boolean;
   /** Where the view starts when the item opens. */
   openAt: OpenAt;
   /** How the description card shows its text. */
@@ -101,7 +96,7 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -139,7 +134,6 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
   const timelineEnd = useRef<HTMLOListElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
   useGutter(() => scroll.current);
-  const replyHeight = useStoredSize("reply-height", REPLY_HEIGHT);
 
   // Once per item: DetailBody is keyed by the item id, so a refresh does not scroll again.
   useEffect(() => {
@@ -254,17 +248,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             )}
           </ol>
 
-          {!stickyReply && <Reply item={item} me={me} onSent={(change) => onReplied(item.id, change)} />}
+          <Reply item={item} me={me} onSent={(change) => onReplied(item.id, change)} />
         </div>
       </div>
-      {stickyReply && (
-        <div className="reply-dock">
-          <Resizer label={t("pane.reply")} axis="y" width={replyHeight.size} onResize={replyHeight.resize} onReset={replyHeight.reset} />
-          <div className="detail-column">
-            <Reply item={item} me={me} onSent={(change) => onReplied(item.id, change)} fieldHeight={replyHeight.size} />
-          </div>
-        </div>
-      )}
     </section>
   );
 }

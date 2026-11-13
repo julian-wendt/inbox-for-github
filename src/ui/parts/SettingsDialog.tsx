@@ -114,7 +114,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   const body = useRef<HTMLDivElement>(null);
   useGutter(() => body.current);
   const [draft, setDraft] = useState<Settings>(settings);
-  const { orgs, theme, avatars, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
+  const { orgs, theme, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
   const owners: Org[] = me && memberOrgs.length > 0 ? [{ login: me, name: t("orgs.personal"), avatarUrl: isDemo() ? avatarUrl(me) : `https://github.com/${me}.png` }, ...memberOrgs] : memberOrgs;
   const [chosenOrg, setRepoOrg] = useState<string | null>(null);
   const repoOrg = chosenOrg && orgs.includes(chosenOrg) ? chosenOrg : (orgs[0] ?? "");
@@ -391,15 +391,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </Field>
               <Field label={t("settings.group.lists")}>
                 <div className="toggle-card">
-                  <Toggle title={t("settings.groupByTime")} hint={t("settings.groupByTimeHint")} checked={draft.groupByTime} onChange={(on) => change({ groupByTime: on })} />
                   <Toggle isNew={isNew("tabToButtons")} title={t("settings.tabToButtons")} hint={t("settings.tabToButtonsHint")} checked={draft.tabToButtons} onChange={(on) => change({ tabToButtons: on })} />
-                </div>
-              </Field>
-              <Field label={t("settings.group.sidebar")}>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.viewCounts")} hint={t("settings.viewCountsHint")} checked={draft.viewCounts} onChange={(on) => change({ viewCounts: on })} />
-                  <Toggle title={t("settings.repoCounts")} hint={t("settings.repoCountsHint")} checked={draft.repoCounts} onChange={(on) => change({ repoCounts: on })} />
-                  <Toggle title={t("settings.refreshInRepos")} hint={t("settings.refreshInReposHint")} checked={draft.refreshInRepos} onChange={(on) => change({ refreshInRepos: on })} />
                 </div>
               </Field>
               <AttributeList
@@ -419,21 +411,11 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.descriptionMode")} hint={t("settings.descriptionModeHint")}>
                 <Choice options={DESCRIPTION_MODES} value={draft.descriptionMode} label={(id) => t(`settings.descriptionMode.${id}`)} onChange={(descriptionMode) => change({ descriptionMode })} />
               </Field>
-              <Field>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.stickyReply")} hint={t("settings.stickyReplyHint")} checked={draft.stickyReply} onChange={(on) => change({ stickyReply: on })} />
-                </div>
-              </Field>
             </>
           )}
 
           {section === "avatars" && (
             <>
-              <Field>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
-                </div>
-              </Field>
               <Field label={t("settings.orbs")} hint={t("settings.orbsHint")}>
                 <OrbShuffle looks={draft.orbLooks} onChange={(orbLooks) => change({ orbLooks })} />
               </Field>
@@ -587,7 +569,7 @@ function Choice<T extends string | number>({ options, value, label, onChange }: 
  * Compact rows are for short lists of plain choices, such as notification reasons or boards.
  *
  * @example
- *   <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
+ *   <Toggle title={t("settings.tabToButtons")} hint={t("settings.tabToButtonsHint")} checked={draft.tabToButtons} onChange={(on) => change({ tabToButtons: on })} />
  */
 function Toggle({ title, hint, checked, onChange, compact = false, isNew = false }: { title: string; hint?: string; checked: boolean; onChange: (on: boolean) => void; compact?: boolean; isNew?: boolean }) {
   return (

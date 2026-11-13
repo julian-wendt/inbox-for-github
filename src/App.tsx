@@ -730,7 +730,7 @@ export default function App() {
     setMenu({
       entries: [
         ...(reading ? [{ label: t(anyUnread ? "view.markAllRead" : "view.markAllUnread"), icon: anyUnread ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead(items) }] : []),
-        { label: t("view.refresh"), icon: <RefreshCw size={14} />, onSelect: () => void refreshView(inbox.settings.refreshInRepos && repoFilter.length > 0 ? items.filter((c) => repoFilter.includes(c.item.repo)) : items) },
+        { label: t("view.refresh"), icon: <RefreshCw size={14} />, onSelect: () => void refreshView(repoFilter.length > 0 ? items.filter((c) => repoFilter.includes(c.item.repo)) : items) },
       ],
       x: e.clientX,
       y: e.clientY,
@@ -1203,8 +1203,6 @@ export default function App() {
         counts={viewCounts}
         unread={unreadCounts}
         repos={repos}
-        viewCounts={inbox.settings.viewCounts}
-        repoCounts={inbox.settings.repoCounts}
         repoFilter={repoFilter}
         me={inbox.me}
         myName={inbox.myName}
@@ -1316,7 +1314,6 @@ export default function App() {
           selectedGroup={selectedBar}
           selected={selection.selected}
           loading={inbox.loading}
-          avatars={inbox.settings.avatars}
           onSelect={selection.select}
           onOpen={(c) => void openUrl(c.item.url)}
         />
@@ -1344,7 +1341,6 @@ export default function App() {
             statusMap={inbox.settings.statusMap}
             recentComments={inbox.settings.recentComments}
             botComments={inbox.settings.botComments}
-            stickyReply={inbox.settings.stickyReply}
             openAt={inbox.settings.openAt}
             descriptionMode={inbox.settings.descriptionMode}
             onReplied={replied}
@@ -1380,7 +1376,6 @@ export default function App() {
                 statusMap={inbox.settings.statusMap}
                 recentComments={inbox.settings.recentComments}
                 botComments={inbox.settings.botComments}
-                stickyReply={inbox.settings.stickyReply}
                 openAt={inbox.settings.openAt}
                 descriptionMode={inbox.settings.descriptionMode}
                 onReplied={replied}
