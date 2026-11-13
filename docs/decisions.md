@@ -293,8 +293,10 @@ returns only through an ask newer than its handled-until. The reasons:
   "Items loaded at most" (200) cut a search with more hits, and GitHub orders hits by best
   match, which shifts between fetches. So the cut items changed: an item dropped out and
   notified as new when it came back. A page of 50 costs about 19 points, so 250 hits instead
-  of 200 cost one page more. The stored key stays in the database for now, so older versions
-  can still read it.
+  of 200 cost one page more. Near GitHub's 1000 a full fetch costs well over a thousand points,
+  and four of them an hour would use up the budget; the pause before it runs out (`LOW_BUDGET`)
+  covers that rare case. The stored key stays in the database for now, so older versions can
+  still read it.
 - **A transferred issue is recognized by repository, creation time and title.** GitHub gives it a
   new node id and keeps no link to the old one, but keeps `createdAt` and the title, and names
   the old repository in a `TransferredEvent`. The match also needs exactly one candidate, and the

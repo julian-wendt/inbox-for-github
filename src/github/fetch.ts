@@ -310,9 +310,9 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * Runs one search per qualifier in `QUALIFIERS` over all owners (GitHub ORs repeated `org:` and
  * `user:` qualifiers) and merges the hits by node id; "assigned" and "mentioned" come from the
  * item's assignees and posts, so an item carries all its reasons.
- * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50; only the last 100 comments per item
- * are loaded. Boards come from a second, failure-tolerant query (see `fetchBoards`), skipped when
- * `boards` is false.
+ * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50; only the
+ * last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
+ * `fetchBoards`), skipped when `boards` is false.
  *
  * @param token  GitHub token with `repo` and `read:org` scope.
  * @param orgs   Owner logins, e.g. `["octo-org"]`. An empty list returns no items.
