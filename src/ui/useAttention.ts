@@ -3,6 +3,7 @@ import { isPermissionGranted, onAction, registerActionTypes, requestPermission, 
 import { useEffect, useRef, useState } from "react";
 import type { Classified } from "../classify";
 import { arrivals, askKey, dueReminders, laterChoices, notificationTitle, notifies, notifyReason, ringing, type Later, type NotifyReason } from "./attention";
+import { DELTA_OVERLAP_MS } from "../github/delta";
 import { notifiesLive, summarize, summaryDue, type Delivery } from "./delivery";
 import { t } from "./i18n";
 
@@ -73,6 +74,7 @@ const TICK_MS = 30_000;
  */
 export function useAttention(classified: Classified[], unread: ReadonlySet<string>, notify: NotifyOptions, badge: boolean, onOpen: (itemId: string | null) => void, pending: Pending, onPending: (change: (current: Pending) => Pending) => void, reminders: ReminderOptions): void {
   const known = useRef<Map<string, string> | null>(null);
+  const knownAt = useRef<Date | null>(null);
   const rang = useRef<Set<string> | null>(null);
   const { on, reasons, inFront, delivery } = notify;
   const { collected, lastSummary, rangAt } = pending;
@@ -125,8 +127,11 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
       change.current((current) => ({ ...current, rangAt: now.toISOString() }));
       if (on) void sendReminders(due, laterChoices(now, workdays, followUpTime));
     }
-    const fresh = arrivals(classified, known.current).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
+    // The overlap allows for GitHub's search lagging behind, as a delta does.
+    const quietBefore = knownAt.current && new Date(knownAt.current.getTime() - DELTA_OVERLAP_MS).toISOString();
+    const fresh = arrivals(classified, known.current, quietBefore).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
     known.current = new Map(classified.filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
+    knownAt.current = since;
     if (!on || fresh.length === 0) return;
     if (!notifiesLive(delivery, new Date())) {
       const ids = fresh.map((c) => c.item.id);

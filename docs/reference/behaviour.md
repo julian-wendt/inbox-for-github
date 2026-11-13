@@ -75,6 +75,9 @@ Independent of each other:
    Of decisions with nothing in between (no post, review, event or return) only the last shows,
    the others were corrections; and none when that last takes off a follow-up or plan set in the
    same run. Dates are absolute, as the lines stay.
+10. An ask notifies only when it is newer than the fetch before (less the 5 minutes a delta
+    overlaps, for GitHub's late indexing). An item missing from a result for a while, e.g. cut
+    from a search, comes back quietly with its old ask; an ask of unknown time still notifies.
 
 ## Situations
 
@@ -94,6 +97,7 @@ Independent of each other:
 | A follow-up comes due | Inbox, also for table items | as for any ask | as for any ask | as for any ask | – |
 | A follow-up with "Remind me" comes due | Inbox, unread, one notification | as for any ask | a new date; "Later" in the notification too | as for any ask | – |
 | Planned or pinned | Planned (and its table) | as in its home view | the follow-up replaces the plan | a new day | takes off the plan; what is still pending asks again |
+| Missing from a fetch, back in the next with an older ask | Inbox, no notification | as for any ask | as for any ask | as for any ask | – |
 
 ## Where the code differs
 

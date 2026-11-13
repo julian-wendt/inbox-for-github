@@ -33,6 +33,13 @@ describe("arrivals", () => {
     const newer = entry("I_3", { asks: ["due", "mention"], asked: { due: "2026-11-13T12:45:00Z", mention: "2026-11-13T13:00:00Z" } });
     expect(arrivals([raised, parked, newer], new Map()).map((c) => c.item.id)).toEqual(["I_3"]);
   });
+  it("keeps quiet an item that returns with an ask from before the last fetch, and notifies a newer or undated one", () => {
+    const old = entry("I_1", { asks: ["mention"], asked: { mention: "2026-11-12T18:00:00Z" } });
+    const recent = entry("I_2", { asks: ["mention"], asked: { mention: "2026-11-13T09:58:00Z" } });
+    const undated = entry("I_3", { asks: ["review"] });
+    expect(arrivals([old, recent, undated], new Map(), "2026-11-13T09:55:00Z").map((c) => c.item.id)).toEqual(["I_2", "I_3"]);
+  });
+
   it("notifies again when an item already in the inbox gets a new ask", () => {
     const before = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-05T00:00:00Z", excerpt: "", self: false } });
     const after = entry("I_1", { asks: ["mention"], mention: { by: "bob", at: "2026-10-06T00:00:00Z", excerpt: "", self: false } });
