@@ -12,6 +12,7 @@ import type { SnoozeGroup } from "./timeGroups";
  * part done. Assignments not opened yet sit in their work status bar, marked as new in their row;
  * so do those pinned for today or planned for a day, with their day (Planned lists them).
  */
+// "later" holds the follow-ups; the id is stored in `plateOrder` and the collapsed bars, so it keeps its name.
 export type PlateGroup = "review" | "progress" | "todo" | "blocked" | "later" | "finished";
 
 /** A bar of the tables in any grouping: a work status bar, a type bar (see `groupByType`), a repository bar (see `groupByRepo`), a bar of Created by me or a day bar of Planned. */

@@ -43,7 +43,7 @@ const SHORTCUTS: { group: MessageKey; keys: [keys: string[], action: MessageKey]
       [["U", "/", "R"], "keys.read"],
       [["D"], "keys.done"],
       [["F"], "keys.snooze"],
-      [["X"], "keys.reminderRemove"],
+      [["X"], "keys.followUpRemove"],
       [["O"], "keys.open"],
       [["⌘", "Z"], "keys.undo"],
       [["⌘", "Y"], "keys.redo"],

@@ -456,7 +456,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--st-accepted);
+  background: var(--unread);
 }
 
 /* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
@@ -523,7 +523,7 @@
 
 /* Where a dragged bar will land: just above this one. */
 .bar-group.drop-target {
-  box-shadow: 0 -2px 0 var(--st-accepted);
+  box-shadow: 0 -2px 0 var(--blue);
 }
 
 .bar {
@@ -757,7 +757,7 @@
 }
 
 .option-blue {
-  --option: var(--st-accepted);
+  --option: var(--blue);
 }
 
 .option-green {

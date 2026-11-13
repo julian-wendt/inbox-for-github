@@ -6,7 +6,7 @@ import { STATUSES } from "../labels";
 import { followUpOf, type RowWhen } from "../followUp";
 import { ringing } from "../attention";
 import { datedText, eventText, type Dated } from "../plan";
-import { reminderText } from "../snooze";
+import { followUpText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
 
 /**
@@ -41,14 +41,14 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
 export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until" | "notify">; onRemove?: () => void }) {
   const followUp = followUpOf(entry);
   if (!followUp) return null;
-  const text = reminderText(followUp.at);
-  const title = t("snooze.reminderAt", { until: text });
+  const text = followUpText(followUp.at);
+  const title = t("snooze.followUpAt", { until: text });
   return (
     <span className="chip" title={entry.notify ? `${title} · ${t("snooze.notify")}` : title}>
       {entry.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={13} />}
       {text}
       {onRemove && (
-        <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>
+        <button className="chip-x" title={`${t("followUp.remove")} (X)`} aria-label={t("followUp.remove")} onClick={onRemove}>
           <X size={12} />
         </button>
       )}

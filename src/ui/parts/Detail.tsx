@@ -297,7 +297,7 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
   const bot = isBot(post.author);
   const [open, setOpen] = useState(!bot || !botsFolded);
   const mentionsMe = findMention(post.body, me) !== null;
-  const kind = mentionsMe ? (sameLogin(post.author, me) ? " reminder" : " mention") : "";
+  const kind = mentionsMe ? (sameLogin(post.author, me) ? " self-mention" : " mention") : "";
   return (
     <li ref={innerRef} className={`post${kind}${bot ? " bot" : ""}${trigger ? " trigger" : ""}`}>
       <div
@@ -323,8 +323,8 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
         )}
         {kind && (
           <span className="mention-tag">
-            {kind === " reminder" ? <Bell size={13} /> : <AtSign size={13} />}
-            {kind === " reminder" ? t("post.reminder") : t("post.mentioned")}
+            {kind === " self-mention" ? <Bell size={13} /> : <AtSign size={13} />}
+            {kind === " self-mention" ? t("post.selfMention") : t("post.mentioned")}
           </span>
         )}
       </div>

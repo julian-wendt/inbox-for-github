@@ -1277,7 +1277,7 @@
 }
 
 .attribute-row.droppable:hover {
-  border-color: var(--st-accepted);
+  border-color: var(--blue);
 }
 
 .attribute-grip {

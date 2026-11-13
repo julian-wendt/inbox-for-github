@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockOf, clockText, followUpOn, reminderText, thisAfternoon, untilShort } from "./snooze";
+import { clockOf, clockText, followUpOn, followUpText, thisAfternoon, untilShort } from "./snooze";
 import { setLang } from "./i18n";
 
 describe("followUpOn", () => {
@@ -18,11 +18,11 @@ describe("clockOf and clockText", () => {
   });
 });
 
-describe("reminderText", () => {
+describe("followUpText", () => {
   it("names weekday, date and a 24-hour time in the device's time zone", () => {
     setLang("en");
     const at = new Date(2026, 9, 26, 21, 5);
-    expect(reminderText(at.toISOString())).toContain("21:05");
+    expect(followUpText(at.toISOString())).toContain("21:05");
   });
 });
 

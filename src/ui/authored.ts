@@ -4,6 +4,7 @@ import { sameLogin } from "../timeline";
 import { reviewersOf } from "./attributes";
 
 /** A bar in "Created by me": nobody has taken the item on, someone has, or the viewer set a follow-up on it. */
+// "later" holds the follow-ups; the id is stored with the collapsed bars, so it keeps its name.
 export type AuthoredGroup = "unassigned" | "taken" | "later";
 
 /** The bars in display order: what may be stuck first. */
