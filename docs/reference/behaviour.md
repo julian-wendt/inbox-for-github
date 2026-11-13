@@ -60,6 +60,20 @@ Independent of each other:
    hour, this afternoon, the next workday) set the follow-up anew with "Remind me". Without it a
    follow-up comes due quietly (rule 2). Either way it comes back unread, as every return to the
    inbox does, though no one else posted; there is no bar of its own.
+9. The activity log shows, besides GitHub, every decision made in the app and every return to
+   the inbox, each as one line that stays; only an undo takes a line back:
+   - F: "You set a follow-up for Mon, 16 Nov, 09:00", with "with Remind me", or "without a
+     date". A new date or Remind me switched gives the same line with the new values.
+   - X on a follow-up: "You took off the follow-up"; on a plan: "You took off the plan".
+   - P and T: "You planned it for Wed, 18 Nov"; "Keep plan": "You kept the plan for …".
+   - D that files: "You filed it"; my part done and O as before.
+   - Each return to the inbox, whatever brought it: "Back in the inbox: …", at the time of the
+     ask, also when the app was quit then; the first one since the item was last handled.
+   - One "when" replacing the other (rule 5) shows only the new one. A planned day arriving
+     writes nothing: the item does not move into the inbox.
+   Of decisions with nothing in between (no post, review, event or return) only the last shows,
+   the others were corrections; and none when that last takes off a follow-up or plan set in the
+   same run. Dates are absolute, as the lines stay.
 
 ## Situations
 
