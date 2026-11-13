@@ -399,7 +399,7 @@ returns only through an ask newer than its handled-until. The reasons:
 ## Look
 
 - **The detail's buttons go from the item's state outward** (2026-11-13). They stand on the
-  right, "Issue details" or "Pull request details" on the left; first the status switch and the
+  right, "Issue details" or "PR details" on the left; first the status switch and the
   reason the item sits there (💡), then each group a little apart:
   - opening it elsewhere: GitHub, Orca;
   - tools on it: link, refresh;

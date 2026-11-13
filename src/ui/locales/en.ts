@@ -149,7 +149,7 @@ export const en = {
   "detail.openOnGitHub": "Open on GitHub",
   "detail.more": "More actions",
   "detail.headingIssue": "Issue details",
-  "detail.headingPr": "Pull request details",
+  "detail.headingPr": "PR details",
   "detail.draft": "Draft",
   "detail.activities": "Activities",
   "detail.olderComments": "Show {count} older comments",
