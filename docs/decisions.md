@@ -399,8 +399,8 @@ returns only through an ask newer than its handled-until. The reasons:
 ## Look
 
 - **The detail's buttons go from the item's state outward** (2026-11-13). They stand on the
-  right, the repository and number on the left; first the status switch and the reason the item
-  sits there (💡), then each group a little apart:
+  right, "Issue details" or "Pull request details" on the left; first the status switch and the
+  reason the item sits there (💡), then each group a little apart:
   - opening it elsewhere: GitHub, Orca;
   - tools on it: link, refresh;
   - Assign me, the one button that writes to GitHub;
@@ -408,11 +408,11 @@ returns only through an ask newer than its handled-until. The reasons:
 
   Assign me shows only when it can act, so it sits last, where its coming and going moves
   nothing else. In a column narrower than 700px the tools after the 💡 fold into a "…" menu, as
-  the list's controls do. Below 560px the status switch keeps only its icons. Once the repository
-  and number no longer fit beside the buttons, they move to a line above the title instead of
-  being cut (`useFits`); moving the buttons left to make room read worse. Shown in one of the two
-  places, they make the repository chip under the title redundant, so the detail has none and
-  its attribute settings no switch for it; the tables keep it.
+  the list's controls do. Below 560px the status switch keeps only its icons. The repository and
+  number stand above the title for good: in the header they were cut or, moved there only when
+  they fit, jumped between the two places as the column changed width; moving the buttons left
+  instead read worse. That line makes the repository chip under the title redundant, so the
+  detail has none and its attribute settings no switch for it; the tables keep it.
 - **Calm placeholders.** GitHub's identicons are replaced by gradient orbs picked per login.
   **No two people share an orb:** an orb is a look (palette, accent and accent angle, one number
   below `LOOKS`). A login's first look comes from its name and is kept whenever it is free;

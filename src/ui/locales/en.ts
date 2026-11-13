@@ -148,6 +148,8 @@ export const en = {
   "detail.commandsHint": "for commands",
   "detail.openOnGitHub": "Open on GitHub",
   "detail.more": "More actions",
+  "detail.headingIssue": "Issue details",
+  "detail.headingPr": "Pull request details",
   "detail.draft": "Draft",
   "detail.activities": "Activities",
   "detail.olderComments": "Show {count} older comments",
