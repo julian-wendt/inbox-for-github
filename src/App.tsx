@@ -453,7 +453,7 @@ export default function App() {
     const previous = todayOf(inbox.settings);
     const at = new Date().toISOString();
     const next = on ? { ...unplan(previous, [c.item.id]), focusDay: localDay() } : withPin(previous, c.item.id, localDay(), at);
-    const steps = [todayStep([c.item.id], previous, next), logStep(c, on ? "plan-removed" : "plan", on ? undefined : localDay()), ...(on ? eventEnds([c]) : [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
+    const steps = [todayStep([c.item.id], previous, next), logStep(c, on ? "plan-removed" : "plan", on ? undefined : localDay()), ...(on ? [...eventEnds([c]), unhandled(c)] : [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c), ...eventMoves(c, localDay())]), ...extra];
     for (const s of steps) s.run();
     actions.announce(
       on ? t("focus.removed", { number: c.item.number }) : replacing(t("focus.added", { number: c.item.number }), endedFollowUp(c)),
@@ -484,7 +484,7 @@ export default function App() {
     const at = new Date().toISOString();
     const next = withPlan(previous, c.item.id, day, at);
     const events = day ? eventMoves(c, day) : eventEnds([c]);
-    const steps = [todayStep([c.item.id], previous, next), logStep(c, day ? "plan" : "plan-removed", day ?? undefined), ...(day ? [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c)] : []), ...events, ...extra];
+    const steps = [todayStep([c.item.id], previous, next), logStep(c, day ? "plan" : "plan-removed", day ?? undefined), ...(day ? [handled(c, at), ...seenOnOpen(c), ...followUpEnds(c)] : [unhandled(c)]), ...events, ...extra];
     for (const s of steps) s.run();
     actions.announce(
       day ? replacing(t("plan.added", { number: c.item.number, day: text }), endedFollowUp(c)) : t(events.length > 0 ? "plan.removedEvent" : "plan.removed", { number: c.item.number }),
@@ -717,7 +717,12 @@ export default function App() {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.endFollowUp(c.item.id, replaced ? "hidden" : undefined), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
-  const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c)]);
+  const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c), ...(c.updates ? [] : [unhandled(c)])]);
+  /** X gives back what a follow-up or plan handled: handled-until goes, so what is still pending asks again, as at a due date. */
+  const unhandled = (c: Classified) => {
+    const previous = inbox.handledUntil.get(c.item.id);
+    return { run: () => void inbox.setHandledUntil(c.item.id, null), undo: () => void inbox.setHandledUntil(c.item.id, previous ?? null) };
+  };
   /** X on one item: its plan or Today pin goes, else its follow-up. */
   const removeWhen = (c: Classified) =>
     dated(c) ? planFor(c, null, "") : hasFollowUp(c) ? removeFollowUp(c) : actions.notify(t("noop.noFollowUp", { number: c.item.number }));

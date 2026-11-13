@@ -542,9 +542,31 @@ describe("rule 5: a follow-up is a when, not a status", () => {
       },
     },
     {
-      situation: "X takes off the follow-up only; the asks F handled stay out of the inbox",
+      situation: "X takes off the follow-up and gives back what F handled: the pending mention asks again",
       run: async (world, app) => {
         const issue = await mentioned(world, app);
+        app.snooze(issue, later(world, 3 * DAY));
+        app.clearFollowUp(issue);
+        expect(viewsOf(app.entry(issue))).toContain("inbox");
+        expect(app.entry(issue).asks).toEqual(["mention"]);
+      },
+    },
+    {
+      situation: "X on a plan gives back what P handled, as on a follow-up",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        app.plan(issue, later(world, 2 * DAY).slice(0, 10));
+        expect(viewsOf(app.entry(issue))).not.toContain("inbox");
+        app.clearPlan(issue);
+        expect(app.entry(issue).asks).toEqual(["mention"]);
+      },
+    },
+    {
+      situation: "X on a follow-up with nothing pending brings nothing back",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        world.comment(issue, ME, "On it.");
+        await refetch(world, app, issue);
         app.snooze(issue, later(world, 3 * DAY));
         app.clearFollowUp(issue);
         expect(viewsOf(app.entry(issue))).not.toContain("inbox");
