@@ -125,8 +125,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Eine Wiedervorlage, deren Datum vorbei ist, auch auf einer Zuweisung: das Item steht in der Inbox („Deine Wiedervorlage ist … fällig geworden“, als erste Zeile der Erklärung), im Verlauf „Zurück in der Inbox: deine Wiedervorlage ist fällig“, und es kommt keine Benachrichtigung. D legt es ab, die Verlaufszeile verschwindet; ins Protokoll wird nichts geschrieben.
 - [ ] D auf einer Zeile der Leiste „Erledigt“ ändert nichts und fehlt im Menü; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
-- [ ] ⌃O öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O allein öffnet
-      nichts im Browser. Im Kommentarfeld tut ⌃O nichts an der App.
+- [ ] G öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O öffnet
+      nichts im Browser. Im Kommentarfeld tippt G nur den Buchstaben.
 - [ ] ⌘Z nimmt die letzte Änderung exakt zurück und sagt, welche („Rückgängig: #5 → Erledigt“),
       und mit jedem weiteren ⌘Z geht es die Kette weiter zurück, bis zu fünfzig Änderungen; danach
       steht dort „Nichts zum Rückgängigmachen“. ⌘Y macht Zurückgenommenes in der alten Reihenfolge
@@ -206,7 +206,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus.
 - [ ] Ohne Auswahl (Pop-up per Klick geöffnet und geschlossen, Esc, oder eine Leiste ausgewählt) melden D, F, O, X,
-      T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
+      T, P, U, R, W, G, C, ⌃A, ⌃U und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
 - [ ] Einstellungen › Darstellung › Listen › „Tab erreicht Knöpfe“ aus (Standard): Tab und ⇧Tab tun im Hauptfenster
       nichts, auch nicht in der Suche oder im Kommentarfeld. An: Tab erreicht die Knöpfe; Enter und Leertaste drücken den fokussierten Knopf (z. B. Sortierung), statt
       das Pop-up zu öffnen. Nach einem Mausklick auf einen Knopf öffnen Enter und Leertaste wieder das Pop-up der Auswahl.

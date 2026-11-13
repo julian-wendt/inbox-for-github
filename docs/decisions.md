@@ -64,9 +64,10 @@ question, and D follows that intent (2026-11-11); the table of views is in
   one leaves nothing selected, so a second D cannot hit the next row unseen; a key-opened one
   moves on to the next row, for working through a table. A key pressed with no item selected says
   so in a toast.
-- **Keys that write to GitHub carry Control.** ⌃A assigns you, ⌃U removes you, ⌃O opens the item
-  in the browser, ⌃R reloads it; no plain letter does either, so a key under the pointer never
-  writes to GitHub by accident. U and R both toggle read and unread. ⌘T and ⌘G switch the app
+- **Keys that write to GitHub carry Control.** ⌃A assigns you and ⌃U removes you; ⌃R, which
+  reloads the item, kept its Control too. No plain letter writes, so a key under the pointer never
+  writes to GitHub by accident. G opens the item on GitHub (2026-11-13; it was ⌃O): opening
+  writes nothing, so it needs no Control. U and R both toggle read and unread. ⌘T and ⌘G switch the app
   (⌘T the filter, ⌘G the grouping), not an item, which freed T for Today and P for the plan
   menu.
 - **Tab reaches the main window's buttons only with a setting, off by default** (2026-11-10,
@@ -369,6 +370,15 @@ returns only through an ask newer than its handled-until. The reasons:
 
 ## Look
 
+- **The detail's buttons go from the item's state outward** (2026-11-13). After the status switch
+  comes the reason it sits there (💡). Then, each group a little apart:
+  - opening it elsewhere: GitHub, Orca;
+  - tools on it: link, refresh;
+  - Assign me, the one button that writes to GitHub;
+  - the pop-up's ×.
+
+  Assign me shows only when it can act, so it sits last, where its coming and going moves
+  nothing else.
 - **Calm placeholders.** GitHub's identicons are replaced by gradient orbs picked per login.
   **No two people share an orb:** an orb is a look (palette, accent and accent angle, one number
   below `LOOKS`). A login's first look comes from its name and is kept whenever it is free;
