@@ -19,8 +19,9 @@ export class TimeoutError extends Error {
   }
 }
 
-/** A failure this late is GitHub's timeout, not the network: that one fails at once. */
+/** GitHub's timeout fails 10.5 to 11 s after sending; a missing network at once, a sleeping Mac much later. */
 const GAVE_UP_MS = 9_000;
+const GAVE_UP_UNTIL_MS = 20_000;
 
 let latestBudget: Budget | null = null;
 let spent = 0;
@@ -93,7 +94,7 @@ export async function graphql<T>(
 ): Promise<T> {
   const started = Date.now();
   const report = (outcome: Record<string, unknown>) => logRequest(query, variables, started, outcome);
-  const gaveUp = () => Date.now() - started >= GAVE_UP_MS;
+  const gaveUp = (ms = Date.now() - started) => ms >= GAVE_UP_MS && ms < GAVE_UP_UNTIL_MS;
   const response = await fetch(ENDPOINT, {
     signal,
     method: "POST",

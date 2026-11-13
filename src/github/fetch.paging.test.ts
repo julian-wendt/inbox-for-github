@@ -38,7 +38,7 @@ async function github({ total, fits, failure }: { total: number; fits: number; f
     if (first > fits) return Promise.reject(new client.TimeoutError());
     const start = Number(variables.after ?? 0);
     const end = Math.min(total, start + first);
-    return Promise.resolve({ search: { pageInfo: { hasNextPage: end < total, endCursor: String(end) }, nodes: Array.from({ length: end - start }, (_, i) => raw(start + i)) } });
+    return Promise.resolve({ search: { issueCount: total, pageInfo: { hasNextPage: end < total, endCursor: String(end) }, nodes: Array.from({ length: end - start }, (_, i) => raw(start + i)) } });
   };
   vi.mocked(client.graphql).mockImplementation(answer);
   return {
@@ -59,12 +59,20 @@ describe("search pages GitHub times out", () => {
     expect(sizes("review-requested:@me")).toEqual([50, 25, 13, 13, 13]);
   });
 
-  it("starts the next refresh at the size that worked, without the wait", async () => {
+  it("starts the next delta at the size that worked, without the wait", async () => {
+    const { fetchItems, sizes, forget } = await github({ total: 30, fits: 20 });
+    await fetchItems("t", ["octo-org"], { boards: false, limit: 50 });
+    forget();
+    await fetchItems("t", ["octo-org"], { boards: false, limit: 50, since: new Date("2026-10-04T00:00:00Z") });
+    expect(sizes("involves:@me")).toEqual([13, 13, 13]);
+  });
+
+  it("tries the full size again on the next full fetch", async () => {
     const { fetchItems, sizes, forget } = await github({ total: 30, fits: 20 });
     await fetchItems("t", ["octo-org"], { boards: false, limit: 50 });
     forget();
     await fetchItems("t", ["octo-org"], { boards: false, limit: 50 });
-    expect(sizes("involves:@me")).toEqual([13, 13, 13]);
+    expect(sizes("involves:@me")).toEqual([50, 25, 13, 13, 13]);
   });
 
   it("still reads up to the limit in the smaller pages", async () => {
@@ -72,6 +80,13 @@ describe("search pages GitHub times out", () => {
     const items = await fetchItems("t", ["octo-org"], { boards: false, limit: 50 });
     expect(sizes("involves:@me")).toEqual([50, 25, 13, 13, 13, 13]);
     expect(items).toHaveLength(52);
+  });
+
+  it("still reports a search cut short when its pages were asked again smaller", async () => {
+    const { fetchItems } = await github({ total: 100, fits: 20 });
+    const cut: string[] = [];
+    await fetchItems("t", ["octo-org"], { boards: false, limit: 50, onCut: (q) => cut.push(q) });
+    expect(cut).toHaveLength(2);
   });
 
   it("fails with the timeout once the smallest page gets no answer either", async () => {

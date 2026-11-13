@@ -90,6 +90,14 @@ describe("graphql timeouts", () => {
     expect(error).not.toBeInstanceOf(TimeoutError);
   });
 
+  it("leaves a fetch that fails long after the ten seconds as it is: a Mac that slept, a network lost", async () => {
+    unreachable();
+    after(60_000);
+    const error = await graphql("t", "{ ok }").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(TypeError);
+    expect(error).not.toBeInstanceOf(TimeoutError);
+  });
+
   it("leaves a stopped request as it is, however late", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new DOMException("signal is aborted without reason", "AbortError"))));
     after(10_500);
