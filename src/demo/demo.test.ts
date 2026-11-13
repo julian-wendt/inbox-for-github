@@ -132,6 +132,19 @@ describe("the demo seed", () => {
     expect((await store.statusLog()).get(refs.retries.id)).toEqual([]);
   });
 
+  it("logs a follow-up with its date and Remind me, X by name, and item log entries until undone", async () => {
+    const store = new MemoryStore();
+    const until = "2026-11-16T08:00:00.000Z";
+    await store.setStatus("I_1", "snoozed", false, new Date(), { until, notify: true });
+    await store.endFollowUp("I_1");
+    expect((await store.statusLog()).get("I_1")).toMatchObject([{ status: "snoozed", until, notify: true }, { status: "open", logAs: "follow-up-ended" }]);
+    const plan = { kind: "plan" as const, at: "2026-11-13T10:00:00.000Z", value: "2026-11-18" };
+    await store.addLogEvent("I_1", plan);
+    expect((await store.itemLog()).get("I_1")).toEqual([plan]);
+    await store.removeLogEvent("I_1", plan);
+    expect((await store.itemLog()).get("I_1")).toEqual([]);
+  });
+
   it("puts a read state back exactly, with and without a mark", async () => {
     const store = new MemoryStore({ seen: new Map([["a", "2026-10-25T10:00:00Z"]]), unreadMarks: new Map([["b", "2026-10-25T11:00:00Z"]]) });
 
