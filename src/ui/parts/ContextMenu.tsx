@@ -1,5 +1,6 @@
 import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { t } from "../i18n";
 import { noteInput } from "../inputTrail";
 import { keyMatches } from "../keyMatch";
 
@@ -20,6 +21,8 @@ export interface MenuEntry {
   keepOpen?: boolean;
   /** Shown greyed and skipped, for an entry that always has its place but nothing to do now. */
   disabled?: boolean;
+  /** The blue unread dot after the label: choosing the entry shows unread items now hidden. */
+  dot?: boolean;
 }
 
 /**
@@ -202,6 +205,7 @@ function MenuRow(props: { entry: MenuEntry; slot: boolean; active: boolean; open
         {entry.label}
         {entry.hint && <small className="menu-hint">{entry.hint}</small>}
       </span>
+      {entry.dot && <span className="fresh-dot" title={t("hiddenUnread.here")} aria-label={t("hiddenUnread.here")} />}
       {entry.keys && <kbd>{entry.keys}</kbd>}
       {entry.items && <ChevronRight size={14} className="menu-more" />}
     </button>
