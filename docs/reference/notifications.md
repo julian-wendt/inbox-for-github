@@ -14,8 +14,8 @@ watched owners (`fetchItems` in `src/github/fetch.ts`) with two qualifiers:
 - `is:pr review-requested:@me`, which includes requests to a team the viewer is on (the
   "Direct requests only" setting can hide those per repo).
 
-Open items always; closed ones within "Show closed and merged items"; at most "Items loaded at
-most" per search.
+Open items always; closed ones within "Show closed and merged items"; up to GitHub's 1000 hits
+per search.
 
 ## Reasons, mapped
 
@@ -42,7 +42,7 @@ Further gaps, whatever the reason:
 - **Not an issue or pull request:** discussions, commit comments, releases and gists; the search
   type is `ISSUE`.
 - **Old closed threads:** a new comment on a thread closed before the closed window is not seen.
-- **Beyond the item limit:** each search stops at the limit (GitHub at 1000).
+- **Beyond 1000 hits:** GitHub's search returns no more, so items past them are missing.
 - **The app must run:** its notifications come from the running app on this Mac, not from GitHub.
 
 ## Which GitHub settings can go
