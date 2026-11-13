@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classify } from "../classify";
 import type { Item, StoredStatus } from "../model";
 import { ruleSwitches } from "../rules";
-import { followUpExtra, followUpOf, followUpUnchanged, followUpWhen, isWaiting, remindsMe, rowWhen } from "./followUp";
+import { followUpExtra, followUpOf, followUpUnchanged, followUpWhen, isWaiting, rowWhen } from "./followUp";
 
 const item: Item = {
   id: "I_1", kind: "issue", repo: "o/r", number: 1, title: "t", url: "u", author: "me", body: "", createdAt: "2026-10-01T00:00:00Z", updatedAt: "2026-10-01T00:00:00Z",
@@ -120,17 +120,12 @@ describe("followUpUnchanged", () => {
   });
 });
 
-describe("remindsMe", () => {
-  const entry = (stored?: StoredStatus, now = Date.parse("2026-10-07T00:00:00Z"), handled?: string) => classify({ ...item, reasons: ["involved"] }, "me", stored, ruleSwitches(), "mention", now, true, handled);
-  const reminded = { ...waiting(ahead), notify: true };
-
-  it("shows while the follow-up with Remind me waits and while it rings", () => {
-    expect(remindsMe(entry(reminded))).toBe(true);
-    expect(remindsMe(entry(reminded, Date.parse(ahead) + 60_000))).toBe(true);
-  });
-
-  it("is gone without Remind me and once D filed it", () => {
-    expect(remindsMe(entry(waiting(ahead)))).toBe(false);
-    expect(remindsMe(entry(reminded, Date.parse(ahead) + 120_000, new Date(Date.parse(ahead) + 60_000).toISOString()))).toBe(false);
+describe("rowWhen with Remind me", () => {
+  it("shows the bell instead of the arrow and names Remind me in the tooltip", () => {
+    const now = new Date("2026-10-26T12:00:00Z");
+    const reminded = rowWhen({ status: "snoozed", until: ahead, notify: true }, null, false, now);
+    expect(reminded?.icon).toBe("remind");
+    expect(reminded?.title).toContain("Remind me");
+    expect(rowWhen({ status: "snoozed", until: ahead }, null, false, now)).toMatchObject({ icon: "followUp" });
   });
 });

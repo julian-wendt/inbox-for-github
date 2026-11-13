@@ -18,11 +18,11 @@ import { useGutter } from "../useGutter";
 import { useSearchDock } from "../useSearchDock";
 import { Highlight } from "./Highlight";
 import { SearchField } from "./SearchField";
-import { followUpWhen, remindsMe, rowWhen, type RowWhen } from "../followUp";
+import { rowWhen, type RowWhen } from "../followUp";
 import { carriedText, datedText, dayLong, type Dated } from "../plan";
 import type { Layout } from "../useViewLayout";
 import { numberSpans, titleSpans } from "../textFilter";
-import { EventMark, KindIcon, NotifyMark, WhenIcon } from "./ItemMarks";
+import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
@@ -122,8 +122,7 @@ export function AssignedTable(props: Props) {
   const assigned = props.mode === "assigned";
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
   // One width for the whole end column, so the attribute chips end at the same place on every row.
-  const whenWidth = props.mode === "planned" ? " when-days" : groups.some((g) => g.entries.some((e) => followUpWhen(e))) ? " when-times" : "";
-  const whenColumn = whenWidth + (groups.some((g) => g.entries.some(remindsMe)) ? " when-bell" : "");
+  const whenColumn = props.mode === "planned" ? " when-days" : "";
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -142,7 +141,8 @@ export function AssignedTable(props: Props) {
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
         event={dated ?? undefined}
         carriedSince={pinned && props.pinnedOn[entry.item.id] < props.today ? props.pinnedOn[entry.item.id] : undefined}
-        when={rowWhen(entry, dated, props.mode === "planned")}
+        when={props.mode === "planned" && dated ? rowWhen(entry, dated, true) : undefined}
+        followUp={rowWhen(entry, null, false)}
         assigned={assigned}
         onMenu={(e) => props.onMenu(entry, e)}
         onOpen={() => {
@@ -302,11 +302,13 @@ interface RowProps {
   assigned: boolean;
   /** Shown at the end instead of the time: in Planned, the day or the return time. */
   when?: RowWhen;
+  /** The follow-up's return time, shown as a chip after the title (see `rowWhen`). */
+  followUp?: RowWhen;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
 }
 
-function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, showOpened, dated, event, carriedSince, when, assigned, onOpen, onMenu }: RowProps) {
+function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, selected, showOpened, dated, event, carriedSince, when, followUp, assigned, onOpen, onMenu }: RowProps) {
   const { item } = entry;
   const ref = useScrollIntoView<HTMLDivElement>(selected);
   const full =(at: string) => new Date(at).toLocaleString(dateLocale(), { dateStyle: "medium", timeStyle: "short" });
@@ -346,6 +348,12 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
           </span>
         )}
         {event && <EventMark dated={event} className="table-planned" />}
+        {followUp && (
+          <span className="table-planned table-followup" title={followUp.title}>
+            <WhenIcon when={followUp} />
+            <span>{followUp.text}</span>
+          </span>
+        )}
         {showOpened && (
           <span className="table-opened" title={opened}>
             {openedText(item.createdAt)}
@@ -359,7 +367,6 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
       <time className="table-update" title={when?.title ?? assignedTitle ?? opened}>
         {when && <WhenIcon when={when} />}
         {when?.text ?? compactAgo(assignment?.at ?? item.createdAt)}
-        <NotifyMark entry={entry} />
       </time>
     </div>
   );

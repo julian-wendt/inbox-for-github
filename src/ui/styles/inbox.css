@@ -355,7 +355,7 @@
   align-items: center;
 }
 
-/* The "Remind me" bell beside a follow-up's date, in the text's color (see `NotifyMark`). */
+/* The "Remind me" bell before the age of a row that rings, in the text's color (see `NotifyMark`). */
 .notify-mark {
   display: inline-flex;
   flex: none;
@@ -677,6 +677,15 @@
   color: var(--st-planned);
 }
 
+/* A follow-up's return time after the title, pink like Follow-up elsewhere. */
+.table-planned.table-followup {
+  background: color-mix(in srgb, var(--pink) 14%, transparent);
+}
+
+.table-followup svg {
+  color: var(--st-snoozed);
+}
+
 /* The text, not the icon, gives the badge its baseline, so it lines up with the title and the date. */
 .table-planned span {
   align-self: baseline;
@@ -800,27 +809,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Room for the icon and a weekday ("Donnerstag") in Planned, or a follow-up's time elsewhere. */
+/* Room for the icon and a weekday ("Donnerstag") in Planned. */
 .when-days .table-update {
   width: 84px;
 }
 
-.when-times .table-update {
-  width: 54px;
-}
-
-/* The same plus the "Remind me" bell (12px and its gap) when a row has one. */
-.when-bell .table-update {
-  width: 52px;
-}
-
-.when-bell.when-times .table-update {
-  width: 70px;
-}
-
-.when-bell.when-days .table-update {
-  width: 100px;
-}
 
 /* The detail as a pop-up above the table */
 .item-popup {

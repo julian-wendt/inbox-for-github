@@ -3,7 +3,8 @@ import type { Classified } from "../../classify";
 import type { Item, Status } from "../../model";
 import { t } from "../i18n";
 import { STATUSES } from "../labels";
-import { followUpOf, remindsMe, type RowWhen } from "../followUp";
+import { followUpOf, type RowWhen } from "../followUp";
+import { ringing } from "../attention";
 import { datedText, eventText, type Dated } from "../plan";
 import { reminderText } from "../snooze";
 import { StatusIcon } from "./StatusIcon";
@@ -28,7 +29,8 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
 }
 
 /**
- * The detail's chip for an item that waits for a follow-up date: the follow-up icon, date and time. Gone once
+ * The detail's chip for an item that waits for a follow-up date: the follow-up icon (the bell with
+ * "Remind me"), date and time. Gone once
  * the item is back in the inbox (see `followUpOf`).
  *
  * @param onRemove  Adds a × that takes the follow-up off the item.
@@ -36,15 +38,15 @@ export function KindIcon({ item, size = 14, status }: { item: Pick<Item, "kind">
  * @example
  *   <FollowUpChip entry={entry} onRemove={() => remove(entry)} /> // [clock] Mon, 26 Oct, 09:00 [×]
  */
-export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until" | "item" | "asks" | "notify">; onRemove?: () => void }) {
+export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "status" | "until" | "notify">; onRemove?: () => void }) {
   const followUp = followUpOf(entry);
   if (!followUp) return null;
   const text = reminderText(followUp.at);
+  const title = t("snooze.reminderAt", { until: text });
   return (
-    <span className="chip" title={t("snooze.reminderAt", { until: text })}>
-      <StatusIcon status="snoozed" size={13} />
+    <span className="chip" title={entry.notify ? `${title} · ${t("snooze.notify")}` : title}>
+      {entry.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" aria-hidden style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={13} />}
       {text}
-      <NotifyMark entry={entry} />
       {onRemove && (
         <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>
           <X size={12} />
@@ -75,14 +77,14 @@ export function EventMark({ dated, className }: { dated: Dated; className: strin
 }
 
 /**
- * The bell of a follow-up with "Remind me" (see `remindsMe`), beside its date, in the text's
- * color; nothing without it.
+ * The bell before the age of a row whose follow-up with "Remind me" rings (see `ringing`), where a
+ * waiting one shows its date with the bell (see `rowWhen`); in the text's color, nothing otherwise.
  *
  * @example
  *   <NotifyMark entry={entry} /> // [bell], "Remind me: a notification when it comes due" as tooltip
  */
-export function NotifyMark({ entry }: { entry: Pick<Classified, "notify" | "status" | "item" | "asks"> }) {
-  if (!remindsMe(entry)) return null;
+export function NotifyMark({ entry }: { entry: Pick<Classified, "notify" | "asks"> }) {
+  if (!ringing(entry)) return null;
   const label = t("snooze.notifyMark");
   return (
     <span className="notify-mark" title={label} aria-label={label}>
@@ -91,7 +93,7 @@ export function NotifyMark({ entry }: { entry: Pick<Classified, "notify" | "stat
   );
 }
 
-const WHEN_ICONS = { plan: CalendarDays, followUp: RotateCw };
+const WHEN_ICONS = { plan: CalendarDays, followUp: RotateCw, remind: Bell };
 
 /**
  * The icon before a row's trailing "when" (see `rowWhen`), in the text's color; nothing without one.

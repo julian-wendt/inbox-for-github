@@ -31,17 +31,6 @@ export function isWaiting(entry: Pick<Classified, "status" | "item">): boolean {
 }
 
 /**
- * Whether an item shows the "Remind me" bell: its follow-up has it and still waits, or rings now.
- * D, X and a follow-up set anew without it take it off.
- *
- * @example
- *   remindsMe({ notify: true, status: "snoozed", item, asks: [] }); // true
- */
-export function remindsMe(entry: Pick<Classified, "notify" | "status" | "item" | "asks">): boolean {
-  return !!entry.notify && (isWaiting(entry) || entry.asks.includes("due"));
-}
-
-/**
  * What the row of a follow-up with a date shows at its end instead of its age: when it comes
  * back (see `untilShort`), with the full time as tooltip. Nothing without a date.
  *
@@ -57,23 +46,25 @@ export function followUpWhen(entry: Pick<Classified, "status" | "until">, now = 
 export interface RowWhen {
   text: string;
   title: string;
-  /** A plan or a follow-up; none for Today, whose bar says it already. An event has its own mark (see `eventText`). */
-  icon?: "plan" | "followUp";
+  /** A plan, a follow-up, or one with "Remind me" (a bell); none for Today, whose bar says it already. An event has its own mark (see `eventText`). */
+  icon?: "plan" | "followUp" | "remind";
 }
 
 /**
  * The end of a row: in Planned the plan's day (see `datedText`), elsewhere a follow-up's return
  * time (see `followUpWhen`), each with its icon; a pin for today gets none. Nothing for a plain age.
+ * A follow-up with "Remind me" gets the bell instead of the arrow, and says so in its tooltip.
  *
  * @param planned  Whether the row is in the Planned view.
  *
  * @example
  *   rowWhen(entry, { kind: "planned", day: "2026-10-29" }, true); // { text: "Thursday", title: "…", icon: "plan" }
  */
-export function rowWhen(entry: Pick<Classified, "status" | "until">, dated: Dated | null, planned: boolean, now = new Date()): RowWhen | undefined {
+export function rowWhen(entry: Pick<Classified, "status" | "until" | "notify">, dated: Dated | null, planned: boolean, now = new Date()): RowWhen | undefined {
   if (planned && dated) return { ...datedText(dated, now), icon: dated.kind === "planned" ? "plan" : undefined };
   const followUp = followUpWhen(entry, now);
-  return followUp && { ...followUp, icon: "followUp" };
+  if (!followUp) return undefined;
+  return entry.notify ? { text: followUp.text, title: `${followUp.title} · ${t("snooze.notify")}`, icon: "remind" } : { ...followUp, icon: "followUp" };
 }
 
 /**

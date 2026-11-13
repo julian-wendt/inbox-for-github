@@ -80,12 +80,11 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
           <time className="row-when" title={when.title}>
             <WhenIcon when={when} />
             {when.text}
-            <NotifyMark entry={entry} />
           </time>
         ) : (
           <time className="row-when">
-            {compactAgo(time)}
             <NotifyMark entry={entry} />
+            {compactAgo(time)}
           </time>
         )}
         <span>#<Highlight spans={numberSpans(item.number, query)} /></span>
