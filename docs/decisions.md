@@ -370,8 +370,9 @@ returns only through an ask newer than its handled-until. The reasons:
 
 ## Look
 
-- **The detail's buttons go from the item's state outward** (2026-11-13). After the status switch
-  comes the reason it sits there (💡). Then, each group a little apart:
+- **The detail's buttons go from the item's state outward** (2026-11-13). The status switch and
+  the reason the item sits there (💡) stand on the left, where reading starts; the tools stand on
+  the right, each group a little apart:
   - opening it elsewhere: GitHub, Orca;
   - tools on it: link, refresh;
   - Assign me, the one button that writes to GitHub;

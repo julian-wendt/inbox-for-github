@@ -196,6 +196,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
             </div>
           )}
           <WhyHint why={explain(entry, reopenOn, me, dated)} />
+        </div>
+        <div className="header-actions">
           <span className="header-full">
             <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
               <GitHubMark />
