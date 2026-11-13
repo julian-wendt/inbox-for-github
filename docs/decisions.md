@@ -287,6 +287,13 @@ returns only through an ask newer than its handled-until. The reasons:
   inline comments, how many are resolved), linked to the review on GitHub, instead of each
   comment as a post; only one mentioning the viewer stays a post. Resolving has no time on GitHub,
   so it changes the line's state in brackets and never adds a line of its own.
+- **The timeline tells the viewer's own decisions too** (2026-11-13). Plans, follow-ups with
+  their dates, filing and each return to the inbox get a line that stays, so an item's place can
+  always be read from its log: before, a plan left no trace, X on a follow-up read "Reopened
+  automatically", and the return line vanished once handled. One line per decision, never two
+  for one: a "when" replaced by another, or a cleared status D filed, is not shown again, and a
+  follow-up set and taken off in one go leaves nothing. Stored additively: new nullable columns on
+  `status_log`, plans and returns in `item_log`, so older rows read as before.
 
 ## Fetching and the API
 

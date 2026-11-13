@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Activity } from "../model";
-import type { Item } from "../model";
-import { backChange, historyText, shownActivities, shownHistory } from "./activities";
+import type { Item, LogEvent, StatusChange } from "../model";
+import { backEvent, eventText, historyText, localLines, shownActivities } from "./activities";
 
 const at = (hour: number) => `2026-10-01T${String(hour).padStart(2, "0")}:00:00Z`;
 
@@ -15,10 +15,25 @@ describe("historyText", () => {
     expect(historyText({ status: "snoozed", at: at(1), automatic: false })).toBe("history.snoozed");
   });
 
-  it("names the ask that brought an item back, at its time, without a stored row", () => {
-    expect(backChange({ back: { ask: "due", at: at(2) } })).toEqual({ status: "open", at: at(2), automatic: true, source: "back:due" });
-    expect(historyText(backChange({ back: { ask: "reopened", at: at(2) } })!)).toBe("history.back.reopened");
-    expect(backChange({})).toBeNull();
+  it("names the ask that brought an item back, at its time", () => {
+    expect(backEvent({ back: { ask: "due", at: at(2) } })).toEqual({ kind: "back", at: at(2), value: "due" });
+    expect(eventText(backEvent({ back: { ask: "reopened", at: at(2) } })!)).toBe("history.back.reopened");
+    expect(backEvent({})).toBeNull();
+  });
+
+  it("names a follow-up by its date and Remind me, and what X and O did, apart from older rows without a date", () => {
+    expect(historyText({ status: "snoozed", at: at(1), automatic: false, until: at(3) })).toBe("history.followUpAt");
+    expect(historyText({ status: "snoozed", at: at(1), automatic: false, until: at(3), notify: true })).toBe("history.followUpRemind");
+    expect(historyText({ status: "snoozed", at: at(1), automatic: false, until: "" })).toBe("history.followUpNone");
+    expect(historyText({ status: "open", at: at(1), automatic: true, logAs: "follow-up-ended" })).toBe("history.followUpEnded");
+    expect(historyText({ status: "snoozed", at: at(1), automatic: false, logAs: "resumed" })).toBe("history.resumed");
+  });
+
+  it("names plans, filing and returns of the item log", () => {
+    expect(eventText({ kind: "plan", at: at(1), value: "2026-11-18" })).toBe("history.plan");
+    expect(eventText({ kind: "plan-removed", at: at(1) })).toBe("history.planRemoved");
+    expect(eventText({ kind: "plan-kept", at: at(1), value: "2026-11-18" })).toBe("history.planKept");
+    expect(eventText({ kind: "filed", at: at(1) })).toBe("history.filed");
   });
 });
 
@@ -91,17 +106,30 @@ describe("commit authors", () => {
   });
 });
 
-describe("shownHistory", () => {
+describe("localLines", () => {
   const item = { comments: [{ author: "bob", body: "hm", createdAt: "2026-10-22T12:00:00Z" }], body: "", author: "alice", createdAt: "2026-10-01T00:00:00Z", activities: [], reviews: [] } as unknown as Item;
-  const change = (status: "done" | "snoozed", at: string) => ({ status, at, automatic: false });
+  const change = (status: "done" | "snoozed" | "open", at: string, more: Partial<StatusChange> = {}): StatusChange => ({ status, at, automatic: false, ...more });
+  const shown = (history: StatusChange[], events: LogEvent[] = []) => localLines(history, events, item).map((l) => ("change" in l ? `${l.change.status}${l.change.logAs ? `:${l.change.logAs}` : ""}` : l.event.kind));
 
   it("drops a change replaced before anything else happened", () => {
-    expect(shownHistory([change("done", "2026-10-22T10:00:00Z"), change("snoozed", "2026-10-22T10:05:00Z")], item)).toEqual([change("snoozed", "2026-10-22T10:05:00Z")]);
+    expect(shown([change("done", "2026-10-22T10:00:00Z"), change("snoozed", "2026-10-22T10:05:00Z", { until: "" })])).toEqual(["snoozed"]);
   });
 
   it("keeps a change when something happened before the next one", () => {
-    const history = [change("done", "2026-10-22T10:00:00Z"), change("snoozed", "2026-10-22T13:00:00Z")];
-    expect(shownHistory(history, item)).toEqual(history);
+    expect(shown([change("done", "2026-10-22T10:00:00Z"), change("snoozed", "2026-10-22T13:00:00Z")])).toEqual(["done", "snoozed"]);
+  });
+
+  it("shows nothing of a follow-up or plan set and taken off again, but the removal of one from before", () => {
+    const ended = change("open", "2026-10-22T10:05:00Z", { automatic: true, logAs: "follow-up-ended" });
+    expect(shown([change("snoozed", "2026-10-22T10:00:00Z", { until: "" }), ended])).toEqual([]);
+    expect(shown([], [{ kind: "plan", at: "2026-10-22T10:00:00Z", value: "2026-10-23" }, { kind: "plan-removed", at: "2026-10-22T10:01:00Z" }])).toEqual([]);
+    expect(shown([change("snoozed", "2026-10-22T09:00:00Z", { until: "" }), { ...ended, at: "2026-10-22T13:00:00Z" }])).toEqual(["snoozed", "open:follow-up-ended"]);
+  });
+
+  it("leaves out what another line tells, and always shows a return, which also ends a run", () => {
+    const history = [change("snoozed", "2026-10-22T09:00:00Z", { until: "2026-10-22T09:30:00Z" }), change("open", "2026-10-22T13:00:00Z", { automatic: true, logAs: "hidden" })];
+    const events: LogEvent[] = [{ kind: "back", at: "2026-10-22T09:30:00Z", value: "due" }, { kind: "plan", at: "2026-10-22T13:00:00Z", value: "2026-10-23" }];
+    expect(shown(history, events)).toEqual(["snoozed", "back", "plan"]);
   });
 });
 

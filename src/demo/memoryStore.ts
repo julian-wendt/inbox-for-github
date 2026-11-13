@@ -1,6 +1,6 @@
-import type { Handoff, Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
+import type { Handoff, LogAs, LogEvent, Status, StatusChange, StatusExtra, StoredStatus, WriteFailure } from "../model";
 import { afterFollowUp } from "../handoff";
-import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
+import { DEFAULT_SETTINGS, logEntry, type CachedFetch, type Persistence, type Settings } from "../store";
 import { movedKeys, movedLists } from "../transfer";
 
 /** What a `MemoryStore` starts with; everything is optional and starts empty. */
@@ -31,6 +31,7 @@ export class MemoryStore implements Persistence {
   private unreadMap: Map<string, string>;
   private handledMap: Map<string, string>;
   private failures = new Map<string, WriteFailure[]>();
+  private events = new Map<string, LogEvent[]>();
   private cache: CachedFetch | null = null;
   private current: Settings;
 
@@ -67,9 +68,23 @@ export class MemoryStore implements Persistence {
     return Promise.resolve(new Map(this.log));
   }
 
-  setStatus(nodeId: string, status: Status, automatic = false, now = new Date(), extra: StatusExtra = {}, source: string | null = null): Promise<{ stored: StoredStatus; change: StatusChange }> {
+  itemLog(): Promise<Map<string, LogEvent[]>> {
+    return Promise.resolve(new Map(this.events));
+  }
+
+  addLogEvent(nodeId: string, event: LogEvent): Promise<void> {
+    this.events.set(nodeId, [...(this.events.get(nodeId) ?? []), event]);
+    return Promise.resolve();
+  }
+
+  removeLogEvent(nodeId: string, event: LogEvent): Promise<void> {
+    this.events.set(nodeId, (this.events.get(nodeId) ?? []).filter((e) => e.kind !== event.kind || e.at !== event.at));
+    return Promise.resolve();
+  }
+
+  setStatus(nodeId: string, status: Status, automatic = false, now = new Date(), extra: StatusExtra = {}, source: string | null = null, logAs: LogAs | null = null): Promise<{ stored: StoredStatus; change: StatusChange }> {
     const stored: StoredStatus = { status, changedAt: now.toISOString(), ...(extra.until && { until: extra.until }), ...(extra.notify && { notify: true }), ...(extra.handoff && { handoff: extra.handoff }) };
-    const change: StatusChange = { status, at: stored.changedAt, automatic, ...(source && { source }) };
+    const change = logEntry(status, stored.changedAt, automatic, extra, source, logAs);
     this.statusMap.set(nodeId, stored);
     this.logChange(nodeId, change);
     return Promise.resolve({ stored, change });
@@ -95,18 +110,18 @@ export class MemoryStore implements Persistence {
     return Promise.resolve();
   }
 
-  async endFollowUp(nodeId: string, now = new Date(), source: string | null = null): Promise<{ stored?: StoredStatus; change: StatusChange }> {
+  async endFollowUp(nodeId: string, now = new Date(), source: string | null = null, logAs: LogAs = "follow-up-ended"): Promise<{ stored?: StoredStatus; change: StatusChange }> {
     const stored = afterFollowUp(this.statusMap.get(nodeId));
-    if (!stored) return { change: await this.clearStatus(nodeId, now, source) };
-    const change: StatusChange = { status: stored.status, at: now.toISOString(), automatic: false, ...(source && { source }) };
+    if (!stored) return { change: await this.clearStatus(nodeId, now, source, logAs) };
+    const change = logEntry(stored.status, now.toISOString(), false, {}, source, logAs);
     this.statusMap.set(nodeId, stored);
     this.logChange(nodeId, change);
     return { stored, change };
   }
 
-  clearStatus(nodeId: string, now = new Date(), source: string | null = null): Promise<StatusChange> {
+  clearStatus(nodeId: string, now = new Date(), source: string | null = null, logAs: LogAs | null = null): Promise<StatusChange> {
     this.statusMap.delete(nodeId);
-    const change: StatusChange = { status: "open", at: now.toISOString(), automatic: true, ...(source && { source }) };
+    const change = logEntry("open", now.toISOString(), true, {}, source, logAs);
     this.logChange(nodeId, change);
     return Promise.resolve(change);
   }
@@ -128,6 +143,7 @@ export class MemoryStore implements Persistence {
     this.unreadMap = movedKeys(this.unreadMap, moves);
     this.log = movedLists(this.log, moves);
     this.failures = movedLists(this.failures, moves);
+    this.events = movedLists(this.events, moves);
     return Promise.resolve();
   }
 

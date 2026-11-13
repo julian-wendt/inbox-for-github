@@ -225,4 +225,28 @@ export interface StatusChange {
   automatic: boolean;
   /** What caused the change, e.g. "key:d" or "auto:locked"; "auto:snooze-ended" and "auto:reopen" are only read from old rows; unset in older ones. */
   source?: string;
+  /** With "snoozed": the follow-up's date, "" for one without; unset in rows from before it was logged. */
+  until?: string;
+  /** With "snoozed": "Remind me" was on. */
+  notify?: true;
+  /** How the timeline names the change when its status alone would mislead (see `LogAs`). */
+  logAs?: LogAs;
+}
+
+/**
+ * A status change the timeline names by what the viewer did: X took off a follow-up ("follow-up-ended"),
+ * O took a finished part back into the work ("resumed"), or a change another line already tells
+ * ("hidden"): a follow-up a plan replaced, a cleared "Open" that D filed.
+ */
+export type LogAs = "follow-up-ended" | "resumed" | "hidden";
+
+/**
+ * One entry of an item's log besides its status: P or T planned it (`value` the local day),
+ * X took the plan off, "Keep plan" kept it through a new ask (`value` the day), D filed it, or it
+ * came back into the inbox (`value` the ask that brought it).
+ */
+export interface LogEvent {
+  kind: "plan" | "plan-removed" | "plan-kept" | "filed" | "back";
+  at: string;
+  value?: string;
 }

@@ -9,7 +9,7 @@ import { repoVisible } from "../repoFilter";
 import { recentInput } from "./inputTrail";
 import { snapshotOf } from "../handoff";
 import { sameLogin } from "../timeline";
-import type { Handoff, Item, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
+import type { Handoff, Item, LogAs, LogEvent, Org, Status, StatusChange, StoredStatus, StatusExtra, WriteFailure } from "../model";
 import { ruleSwitches } from "../rules";
 import { directOnly } from "../rules/directOnly";
 import { log, logContext, setLogLevel } from "../log";
@@ -59,6 +59,10 @@ export interface Inbox {
   updateItem: (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => void;
   /** Item id → its status history, oldest first. */
   statusLog: Map<string, StatusChange[]>;
+  /** Item id → its log besides the status (plans, filing, returns to the inbox), oldest first. */
+  itemLog: Map<string, LogEvent[]>;
+  /** Adds an entry to an item's log, or with `undo` drops it again. */
+  logEvent: (nodeId: string, event: LogEvent, undo?: boolean) => Promise<void>;
   /** Item id → when the viewer last opened it. */
   seen: Map<string, string>;
   /**
@@ -80,16 +84,16 @@ export interface Inbox {
   /** Item id → the viewer's private note. */
   notes: Map<string, string>;
   saveNote: (nodeId: string, note: string) => Promise<void>;
-  /** `extra.until` snoozes until a time. */
-  setStatus: (nodeId: string, status: Status, extra?: StatusExtra) => Promise<void>;
+  /** `extra.until` snoozes until a time; `logAs` names the change in the timeline (see `LogAs`). */
+  setStatus: (nodeId: string, status: Status, extra?: StatusExtra, logAs?: LogAs) => Promise<void>;
   /** Drops an item's stored status, as if never set; it does not count as reopening. */
-  clearStatus: (nodeId: string) => Promise<void>;
+  clearStatus: (nodeId: string, auto?: string, logAs?: LogAs) => Promise<void>;
   /** Drops every stored status, so all items sort as if never filed; resolves to how many there were. */
   resetStatuses: () => Promise<number>;
   /** Puts back a stored status exactly as it was, or none; for undoing a change with extras. */
   restoreStatus: (nodeId: string, previous: StoredStatus | undefined) => Promise<void>;
-  /** Takes the follow-up off an item; a finished part stays done (see `Store.endFollowUp`). */
-  endFollowUp: (nodeId: string) => Promise<void>;
+  /** Takes the follow-up off an item; a finished part stays done (see `Store.endFollowUp`). "hidden" when a plan replaces it. */
+  endFollowUp: (nodeId: string, logAs?: LogAs) => Promise<void>;
   /** Replaces the hand-off snapshot of a stored "my part done", keeping its time and log. */
   setHandoff: (nodeId: string, handoff: Handoff) => Promise<void>;
   /** The classification as of now, for code that runs later (an undo) and must not see the render that scheduled it. */
@@ -178,6 +182,7 @@ export function useInbox(): Inbox {
   const [statuses, setStatuses] = useState<Map<string, StoredStatus>>(new Map());
   const [writeFailures, setWriteFailures] = useState<Map<string, WriteFailure[]>>(new Map());
   const [statusLog, setStatusLog] = useState<Map<string, StatusChange[]>>(new Map());
+  const [itemLog, setItemLog] = useState<Map<string, LogEvent[]>>(new Map());
   const [seen, setSeen] = useState<Map<string, string>>(new Map());
   const [unreadMarks, setUnreadMarks] = useState<Map<string, string>>(new Map());
   const [handledUntil, setHandledUntilMap] = useState<Map<string, string>>(new Map());
@@ -272,6 +277,7 @@ export function useInbox(): Inbox {
         setSettings((current) => movedSettings(current, moves, items));
         setStatuses((current) => movedKeys(current, moves));
         setStatusLog((current) => movedLists(current, moves));
+        setItemLog((current) => movedLists(current, moves));
         setSeen((current) => movedKeys(current, moves));
         setUnreadMarks((current) => movedKeys(current, moves));
         setHandledUntilMap((current) => movedKeys(current, moves));
@@ -309,6 +315,7 @@ export function useInbox(): Inbox {
       setStatuses(await opened.statuses());
       setWriteFailures(await opened.writeFailures());
       setStatusLog(await opened.statusLog());
+      setItemLog(await opened.itemLog());
       setSeen(await opened.seen());
       setUnreadMarks(await opened.unreadMarks());
       setHandledUntilMap(await opened.handledUntil());
@@ -632,16 +639,26 @@ export function useInbox(): Inbox {
   }, [items, me, statuses, settings.reopenOn, settings.reviewOnCommits, handledUntil, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, now]);
 
   const writeStatus = useCallback(
-    async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource()) => {
+    async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource(), logAs: LogAs | null = null) => {
       if (!store) return;
-      const { stored, change } = await store.setStatus(nodeId, status, automatic, undefined, extra, source);
+      const { stored, change } = await store.setStatus(nodeId, status, automatic, undefined, extra, source, logAs);
       logChange(nodeId, stored, source);
       setStatuses((current) => new Map(current).set(nodeId, stored));
       setStatusLog((current) => new Map(current).set(nodeId, [...(current.get(nodeId) ?? []), change]));
     },
     [store, logChange],
   );
-  const setStatus = useCallback((nodeId: string, status: Status, extra: StatusExtra = {}) => writeStatus(nodeId, status, false, extra), [writeStatus]);
+  const setStatus = useCallback((nodeId: string, status: Status, extra: StatusExtra = {}, logAs?: LogAs) => writeStatus(nodeId, status, false, extra, manualSource(), logAs), [writeStatus]);
+
+  const logEvent = useCallback(
+    async (nodeId: string, event: LogEvent, undo = false) => {
+      if (!store) return;
+      await (undo ? store.removeLogEvent(nodeId, event) : store.addLogEvent(nodeId, event));
+      const without = (list: LogEvent[]) => list.filter((e) => e.kind !== event.kind || e.at !== event.at);
+      setItemLog((current) => new Map(current).set(nodeId, undo ? without(current.get(nodeId) ?? []) : [...(current.get(nodeId) ?? []), event]));
+    },
+    [store],
+  );
 
   /** Records a failed write to GitHub, which then shows in the item's timeline. */
   const logWriteFailure = useCallback(
@@ -655,10 +672,10 @@ export function useInbox(): Inbox {
 
   /** Drops the stored status at the viewer's request, as if never set (see `Store.clearStatus`). */
   const clearStatus = useCallback(
-    async (nodeId: string, auto?: string) => {
+    async (nodeId: string, auto?: string, logAs?: LogAs) => {
       if (!store) return;
       const source = auto ?? manualSource();
-      const change = await store.clearStatus(nodeId, undefined, source);
+      const change = await store.clearStatus(nodeId, undefined, source, logAs);
       logChange(nodeId, undefined, `clearStatus:${source}`);
       setStatuses((current) => {
         const next = new Map(current);
@@ -701,10 +718,10 @@ export function useInbox(): Inbox {
 
   /** Takes the follow-up off an item at the viewer's request; a finished part stays done (see `Store.endFollowUp`). */
   const endFollowUp = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, logAs?: LogAs) => {
       if (!store) return;
       const source = manualSource();
-      const { stored, change } = await store.endFollowUp(nodeId, undefined, source);
+      const { stored, change } = await store.endFollowUp(nodeId, undefined, source, logAs);
       logChange(nodeId, stored, `endFollowUp:${source}`);
       setStatuses((current) => {
         const next = new Map(current);
@@ -762,6 +779,20 @@ export function useInbox(): Inbox {
     }
   }, [classified, writeStatus, clearStatus, me, statuses]);
 
+  // Each return to the inbox keeps one line in the log: the first since the item was last handled.
+  const returns = useRef(new Set<string>());
+  useEffect(() => {
+    if (!store) return;
+    for (const c of classified) {
+      if (!c.back) continue;
+      const since = handledUntil.get(c.item.id) ?? "";
+      const key = `${c.item.id}@${since}`;
+      if (returns.current.has(key) || (itemLog.get(c.item.id) ?? []).some((e) => e.kind === "back" && e.at > since)) continue;
+      returns.current.add(key);
+      void logEvent(c.item.id, { kind: "back", at: c.back.at, value: c.back.ask });
+    }
+  }, [store, classified, handledUntil, itemLog, logEvent]);
+
   const latestClassified = useRef(classified);
   useEffect(() => {
     latestClassified.current = classified;
@@ -798,6 +829,8 @@ export function useInbox(): Inbox {
     reloadItems,
     updateItem,
     statusLog,
+    itemLog,
+    logEvent,
     seen,
     markSeen,
     unreadMarks,

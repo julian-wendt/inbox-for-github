@@ -178,7 +178,7 @@ export function carriedText(day: string, now = new Date()): string {
 }
 
 /** A local date ("2026-10-28") as a Date at local midnight. */
-function dateOf(day: string): Date {
+export function dateOf(day: string): Date {
   const [y, m, d] = day.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
