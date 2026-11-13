@@ -28,8 +28,6 @@ import { Reply, type StateWrite } from "./Reply";
 import { WhyHint } from "./WhyHint";
 import { useGutter } from "../useGutter";
 
-/** Height of the docked comment field, in CSS pixels. */
-
 interface Props {
   entry: Classified | null;
   me: string;

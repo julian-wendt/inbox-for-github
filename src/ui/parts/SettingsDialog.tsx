@@ -70,8 +70,6 @@ const DESCRIPTION_MODES = ["collapsed", "expandable", "full"] as const;
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
 const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
 
-/** The dictionary key of a rule's title or description; every rule id must have both. */
-
 interface Props {
   settings: Settings;
   /** True on first start: no close button, explanatory intro, an explicit start button. */

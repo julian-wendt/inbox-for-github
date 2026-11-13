@@ -481,8 +481,6 @@ export const en = {
   "close.notPlanned": "Close as not planned",
   "close.notPlannedHint": "Won't fix, can't repro, duplicate, stale",
   "orgs.personal": "Your repositories",
-  "resizer.heightLabel": "{pane}: change height",
-  "resizer.heightHint": "Drag to change the height, double-click to reset",
   "sidebar.paused": "GitHub limit · auto-refresh at {time}",
   "sidebar.pausedHint": "GitHub allows 5000 query points per hour, and briefly fewer when queries come too fast. Automatic refreshes wait until GitHub allows them again; ⌘R still tries.",
   "usage.title": "GitHub API usage",

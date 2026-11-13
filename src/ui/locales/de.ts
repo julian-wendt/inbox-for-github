@@ -483,8 +483,6 @@ export const de: Messages = {
   "close.notPlanned": "Als nicht geplant schließen",
   "close.notPlannedHint": "Wird nicht behoben, nicht reproduzierbar, Duplikat, veraltet",
   "orgs.personal": "Deine Repositories",
-  "resizer.heightLabel": "{pane}: Höhe ändern",
-  "resizer.heightHint": "Ziehen zum Ändern der Höhe, Doppelklick setzt zurück",
   "sidebar.paused": "GitHub-Limit · Auto-Refresh um {time}",
   "sidebar.pausedHint": "GitHub erlaubt 5000 Abfragepunkte pro Stunde und kurzzeitig weniger, wenn Abfragen zu schnell kommen. Automatische Aktualisierungen warten, bis GitHub sie wieder zulässt; ⌘R versucht es trotzdem.",
   "usage.title": "GitHub-API-Verbrauch",

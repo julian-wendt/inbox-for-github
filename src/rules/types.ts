@@ -20,7 +20,7 @@ export interface RuleContext {
  * To add a rule, create a file in this folder exporting a `Rule` and list it in `index.ts`.
  */
 export interface Rule {
-  /** Stable key; `ruleSwitches` switches rules by it. */
+  /** Stable key; tests switch a rule off by it (`ruleSwitches`). */
   id: string;
   defaultEnabled: boolean;
   pendingMention?: (item: Item, ctx: RuleContext) => Mention | null;
