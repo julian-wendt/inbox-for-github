@@ -29,6 +29,25 @@
   justify-content: space-between;
 }
 
+.crumb {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cut short, the path moves above the title; the box stays, so measuring it does not flip. */
+.crumb.hidden {
+  visibility: hidden;
+}
+
+.crumb-sep {
+  color: var(--text-faint);
+}
+
 /* The tools fold into a menu before the status switch has to squeeze; narrower still, the
    switch keeps only its icons. */
 @container detail (max-width: 699px) {

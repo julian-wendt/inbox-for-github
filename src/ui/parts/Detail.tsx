@@ -14,6 +14,7 @@ import { followUpOf } from "../followUp";
 import { datedText, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
 import { ActivityRow, LocalLineRow, OpenedRow, ReviewRow, WriteFailureRow } from "./ActivityRow";
+import { useFits } from "../useFits";
 import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
@@ -152,6 +153,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
   // A plan is the item's "when" while it is open, so Plan, not Open, shows as chosen.
   const dated = datedOf(entry);
   const plan = dated ? datedText(dated) : null;
+  const [crumb, crumbFits] = useFits<HTMLSpanElement>();
   const assignable = !!onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me));
   const tools: MenuEntry[] = [
     { label: t("detail.openOnGitHub"), icon: <GitHubMark />, keys: "G", onSelect: () => void openUrl(item.url) },
@@ -163,6 +165,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
   return (
     <section className="detail">
       <header className="pane-header" data-tauri-drag-region>
+        <span ref={crumb} className={`crumb${crumbFits ? "" : " hidden"}`} aria-hidden={!crumbFits}>
+          {item.repo} <span className="crumb-sep">/</span> #{item.number}
+        </span>
         <div className="header-actions">
           {item.closed && (
             <span className="chip closed-chip" title={t("closed.statusHint")}>
@@ -204,8 +209,6 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             </div>
           )}
           <WhyHint why={explain(entry, reopenOn, me, dated)} />
-        </div>
-        <div className="header-actions">
           <span className="header-full">
             <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
               <GitHubMark />
@@ -239,9 +242,11 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
       </header>
       <div className="detail-scroll" ref={scroll}>
         <div className="detail-column">
-          <p className="detail-crumb">
-            {item.repo} #{item.number}
-          </p>
+          {!crumbFits && (
+            <p className="detail-crumb">
+              {item.repo} #{item.number}
+            </p>
+          )}
           <h2 className="detail-title">{item.title}</h2>
           <div className="detail-meta">
             <KindIcon item={item} size={18} />
