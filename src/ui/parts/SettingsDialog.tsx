@@ -68,7 +68,7 @@ const DESCRIPTION_MODES = ["collapsed", "expandable", "full"] as const;
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
-const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
+const MOVES_UP = ["commits", "bots", "events"] as const satisfies (keyof MovesUp)[];
 
 interface Props {
   settings: Settings;
