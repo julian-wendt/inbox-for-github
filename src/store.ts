@@ -46,7 +46,6 @@ const SCHEMA = [
      status     TEXT NOT NULL,
      changed_at TEXT NOT NULL,
      until      TEXT,
-     due        INTEGER NOT NULL DEFAULT 0,
      handoff    TEXT,
      notify     INTEGER
    )`,
@@ -107,7 +106,7 @@ const SCHEMA = [
 
 /**
  * Removes what databases of earlier builds still hold and nothing reads any more: the reminders
- * table, the `keep_open` column of `item_status`, the settings keys the app dropped, and setting
+ * table, the `keep_open` and `due` columns of `item_status`, the settings keys the app dropped, and setting
  * values it no longer offers, rewritten to the value they acted as. Adds the `notify` column of
  * `item_status` and the `until`, `notify` and `log_as` columns of `status_log` that databases from
  * before them lack. The keys are named instead of
@@ -120,11 +119,13 @@ const SCHEMA = [
  */
 async function dropLeftovers(db: Database): Promise<void> {
   await db.execute("DROP TABLE IF EXISTS item_reminder");
-  await db.execute("DELETE FROM settings WHERE key IN ('snoozeAuthored', 'orbSeeds', 'hoverActs', 'calendarTime')");
+  await db.execute("DELETE FROM settings WHERE key IN ('snoozeAuthored', 'orbSeeds', 'hoverActs', 'calendarTime', 'maxItems', 'rules', 'avatars', 'ownFeedback', 'assignedFeedback', 'threadReplies', 'ownClosed', 'viewCounts', 'repoCounts', 'refreshInRepos', 'stickyReply')");
   await db.execute(`UPDATE settings SET value = '"type"' WHERE key = 'tableGrouping' AND value = '"time"'`);
   await db.execute(`UPDATE settings SET value = '"mention"' WHERE key = 'reopenOn' AND value = '"mention-or-assigned-post"'`);
   const statusColumns = await db.select<{ name: string }[]>("PRAGMA table_info(item_status)");
-  if (statusColumns.some((c) => c.name === "keep_open")) await db.execute("ALTER TABLE item_status DROP COLUMN keep_open");
+  for (const name of ["keep_open", "due"]) {
+    if (statusColumns.some((c) => c.name === name)) await db.execute(`ALTER TABLE item_status DROP COLUMN ${name}`);
+  }
   if (!statusColumns.some((c) => c.name === "notify")) await db.execute("ALTER TABLE item_status ADD COLUMN notify INTEGER");
   const logColumns = new Set((await db.select<{ name: string }[]>("PRAGMA table_info(status_log)")).map((c) => c.name));
   for (const [name, type] of [["until", "TEXT"], ["notify", "INTEGER"], ["log_as", "TEXT"]]) {

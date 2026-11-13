@@ -379,9 +379,9 @@ returns only through an ask newer than its handled-until. The reasons:
   - always off: the docked comment box;
   - grouping by time is switched only with ⌘G in the list.
 
-  Each switch doubled the cases the rulebook and the tests have to cover. Their stored rows stay
-  in the database until one cleanup removes them together with `maxItems` (#136), as an
-  exception to the rule above.
+  Each switch doubled the cases the rulebook and the tests have to cover. Their stored rows,
+  and `maxItems`'s, are deleted by `dropLeftovers` since #114; an older version reading the
+  database again falls back to its defaults, which are the fixed values.
 - **New settings say "New" until their section was open once** (2026-11-02). A quiet blue chip on
   the field and its section, and a dot on the settings button, so a setting that came with an
   update is found without the release notes. Seen is a per-device convenience in localStorage; a
