@@ -64,7 +64,7 @@ question, and D follows that intent (2026-11-11); the table of views is in
   one leaves nothing selected, so a second D cannot hit the next row unseen; a key-opened one
   moves on to the next row, for working through a table. A key pressed with no item selected says
   so in a toast.
-- **Keys that write to GitHub carry Control.** ⌃A assigns you and ⌃U removes you; ⌃R, which
+- **Keys that change GitHub carry Control.** ⌃A assigns you and ⌃U removes you; ⌃R, which
   reloads the item, kept its Control too. No plain letter writes, so a key under the pointer never
   writes to GitHub by accident. G opens the item on GitHub (2026-11-13; it was ⌃O): opening
   writes nothing, so it needs no Control. U and R both toggle read and unread. ⌘T and ⌘G switch the app
