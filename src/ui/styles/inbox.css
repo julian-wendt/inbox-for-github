@@ -459,6 +459,19 @@
   background: var(--st-accepted);
 }
 
+/* In a segmented control's text, where the dot is not a flex item. */
+.segmented .fresh-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.hidden-unread {
+  margin: 14px auto;
+}
+
 /* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
 .kind-icon.st-open {
   color: var(--st-open);

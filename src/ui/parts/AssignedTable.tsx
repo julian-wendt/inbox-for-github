@@ -3,7 +3,7 @@ import { useRef, useState, type RefObject } from "react";
 import { useScrollIntoView, useScrollToBar } from "../useScrollIntoView";
 import type { Classified } from "../../classify";
 import type { Reopen } from "../../model";
-import { assignedAt, hasNewActivity, isNewAssignment, isTypeGroup, shownStatus, type MovesUp, type PlateGroup, type TableGroup, type TableGrouping } from "../assignments";
+import { assignedAt, hasNewActivity, isActiveBar, isNewAssignment, isTypeGroup, shownStatus, type MovesUp, type PlateGroup, type TableGroup, type TableGrouping } from "../assignments";
 import { dateLocale, t, type MessageKey } from "../i18n";
 import { compactAgo, KINDS, openedText, type KindFilter, type View } from "../labels";
 import type { StatusMap } from "../../workStatus";
@@ -24,6 +24,7 @@ import type { Layout } from "../useViewLayout";
 import { numberSpans, titleSpans } from "../textFilter";
 import { EventMark, KindIcon, WhenIcon } from "./ItemMarks";
 import { LayoutSwitch } from "./LayoutSwitch";
+import { HiddenUnreadHint } from "./HiddenUnreadHint";
 
 /** What a bar holds, in a quiet line after its count; type and time bars name themselves. */
 const HINTS: Partial<Record<TableGroup, MessageKey>> = {
@@ -96,6 +97,12 @@ interface Props {
   sort: SortOrder;
   onSort: () => void;
   onKind: (kind: KindFilter) => void;
+  /** The kind and sprint options that would show unread items the current ones hide (see `hiddenUnread`). */
+  reveals: { kind: ReadonlySet<string>; sprint: ReadonlySet<string> };
+  /** Unread items the filters hide while no shown row is unread; 0 hides the hint. */
+  hiddenUnread: number;
+  /** Sets the filters back to "all". */
+  onShowHidden: () => void;
   selected: string | null;
   onSelect: (id: string) => void;
   /** Opens the item in the pop-up detail. */
@@ -123,6 +130,7 @@ export function AssignedTable(props: Props) {
   const anyOpen = groups.some((g) => !collapsed.has(g.group));
   // One width for the whole end column, so the attribute chips end at the same place on every row.
   const whenColumn = props.mode === "planned" ? " when-days" : "";
+  const freshOf = (entry: Classified) => ({ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me, movesUp), marked: props.unreadMarks.has(entry.item.id) });
   const row = (entry: Classified) => {
     const dated = datedOf(entry);
     const pinned = dated?.kind === "today";
@@ -135,7 +143,7 @@ export function AssignedTable(props: Props) {
         attributes={attributes}
         hiddenBoards={hiddenBoards}
         statusMap={statusMap}
-        fresh={{ assignment: assigned && isNewAssignment(entry, seen, me), activity: hasNewActivity(entry, seen, me, movesUp), marked: props.unreadMarks.has(entry.item.id) }}
+        fresh={freshOf(entry)}
         selected={entry.item.id === selected}
         showOpened={props.showOpened}
         dated={props.mode === "planned" ? undefined : (dated ?? undefined)}
@@ -181,20 +189,21 @@ export function AssignedTable(props: Props) {
   useScrollToBar(scroll, selectedBar);
   const sprintLabel = props.sprint === "all" ? t("sprint.all") : props.sprint === "none" ? t("sprint.none") : props.sprint.slice("sprint:".length);
   const sprintEntries = [
-    { label: t("sprint.all"), checked: props.sprint === "all", onSelect: () => props.onSprint("all") },
-    { label: t("sprint.none"), checked: props.sprint === "none", onSelect: () => props.onSprint("none") },
-    ...props.sprints.map((name, i) => ({ label: name, checked: props.sprint === `sprint:${name}`, divided: i === 0, onSelect: () => props.onSprint(`sprint:${name}`) })),
+    { label: t("sprint.all"), checked: props.sprint === "all", dot: props.reveals.sprint.has("all"), onSelect: () => props.onSprint("all") },
+    { label: t("sprint.none"), checked: props.sprint === "none", dot: props.reveals.sprint.has("none"), onSelect: () => props.onSprint("none") },
+    ...props.sprints.map((name, i) => ({ label: name, checked: props.sprint === `sprint:${name}`, divided: i === 0, dot: props.reveals.sprint.has(`sprint:${name}`), onSelect: () => props.onSprint(`sprint:${name}`) })),
   ];
   return (
     <section className={`assigned${whenColumn}`} ref={section}>
       <header className="pane-header" data-tauri-drag-region>
         <h1>{props.title}</h1>
         <span className="header-controls" aria-hidden />
-        <HeaderMenu icon={<IterationCw size={13} />} label={sprintLabel} title={t("sprint.title")} entries={sprintEntries} disabled={props.sprints.length === 0} />
+        <HeaderMenu icon={<IterationCw size={13} />} label={sprintLabel} title={t("sprint.title")} entries={sprintEntries} disabled={props.sprints.length === 0} hiding={props.reveals.sprint.size > 0} />
         <div className="segmented compact" role="radiogroup" aria-label={t("list.kind")}>
           {KINDS.map((k) => (
             <button key={k.id} role="radio" aria-checked={props.kind === k.id} className={props.kind === k.id ? "on" : ""} onClick={() => props.onKind(k.id)}>
               {k.title}
+              {props.reveals.kind.has(k.id) && <span className="fresh-dot" title={t("hiddenUnread.here")} aria-label={t("hiddenUnread.here")} />}
             </button>
           ))}
         </div>
@@ -262,14 +271,17 @@ export function AssignedTable(props: Props) {
                 <ChevronRight size={14} className="bar-chevron" />
                 {label(group, entries)}
                 <span>{entries.length}</span>
+                {collapsed.has(group) && isActiveBar(group as PlateGroup) && entries.some((e) => Object.values(freshOf(e)).some(Boolean)) && <span className="fresh-dot" title={t("hiddenUnread.inBar")} aria-label={t("hiddenUnread.inBar")} />}
                 {HINTS[group] && <small className="bar-hint">{t(HINTS[group])}</small>}
               </button>
               {!collapsed.has(group) && entries.map(row)}
             </div>
           ))}
+          {groups.length > 0 && <HiddenUnreadHint count={props.hiddenUnread} onShow={props.onShowHidden} />}
           {groups.length === 0 && (
             <div className="assigned-empty">
               <p>{t(`list.empty.${props.mode}`)}</p>
+              <HiddenUnreadHint count={props.hiddenUnread} onShow={props.onShowHidden} />
               <Elsewhere counts={props.counts} current={props.mode} onJump={props.onJump} />
             </div>
           )}

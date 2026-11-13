@@ -67,6 +67,7 @@ import { authoredCount, groupAuthored } from "./ui/authored";
 import { setLogContext } from "./log";
 import { seenStep, unreadAssignment, unreadInInbox } from "./ui/unread";
 import { ASK_FILTERS, ASK_VIEWS, matchesAsk, type AskFilter } from "./ui/inboxFilter";
+import { hiddenUnread } from "./ui/hiddenUnread";
 import "./ui/styles/shell.css";
 import "./ui/styles/inbox.css";
 import "./ui/styles/detail.css";
@@ -86,6 +87,7 @@ const SEEN_AFTER_MS = 2500;
 
 /** No calendar links while no calendar is chosen; one object, so `dated` keeps its identity. */
 const NO_LINKS: Record<string, string> = {};
+const NO_REVEALS: ReadonlySet<string> = new Set();
 const LAUNCHED_AT = Date.now();
 
 /** A change with its undo, as the toasts take them. */
@@ -228,6 +230,24 @@ export default function App() {
     return inRepos.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
+  // What the view's filters hide of the unread items its sidebar count announces; the views without a count hide nothing.
+  const hiding = useMemo(() => {
+    const ids = bucket === "inbox" ? unreadInboxIds : bucket === "assigned" ? unreadPlateIds : new Set<string>();
+    const unread = inRepos.filter((c) => ids.has(c.item.id));
+    const kinds = { options: KINDS.map((k) => k.id), chosen: kind, passes: (c: Classified, k: string) => k === "all" || c.item.kind === k };
+    const sprintOptions = ["all", "none", ...plateSprints.map((name) => `sprint:${name}`)];
+    const found =
+      bucket === "inbox"
+        ? hiddenUnread(unread, { ask: { options: ASK_FILTERS, chosen: ask, passes: (c, f) => matchesAsk(c, f as AskFilter, me) } })
+        : hiddenUnread(unread, { kind: kinds, sprint: { options: sprintOptions, chosen: sprints.assigned, passes: (c, s) => matchesSprint(c.item, s as SprintFilter, plateSprints, hidden) } });
+    // The hint only when no shown row is unread; otherwise the dots on the controls say enough.
+    return { ...found, hint: found.count === unread.length ? found.count : 0 };
+  }, [bucket, unreadInboxIds, unreadPlateIds, inRepos, ask, kind, me, plateSprints, sprints.assigned, hidden]);
+  const showHidden = () => {
+    setKind("all");
+    setAsk("all");
+    setSprints((current) => ({ ...current, assigned: "all" }));
+  };
   const movesUp = inbox.settings.movesUp;
   const rowTime = useCallback((c: Classified) => sortTime(c, me, movesUp), [me, movesUp]);
   // Planned lists everything with a date, soonest first; the sort button turns the dated ones around.
@@ -1307,6 +1327,9 @@ export default function App() {
           searchRef={searchRef}
           kind={kind}
           onKind={setKind}
+          reveals={{ kind: hiding.reveals.kind ?? NO_REVEALS, sprint: hiding.reveals.sprint ?? NO_REVEALS }}
+          hiddenUnread={hiding.hint}
+          onShowHidden={showHidden}
           sort={sort.of(bucket)}
           onSort={() => sort.flip(bucket)}
           selected={selection.selected}
@@ -1339,6 +1362,9 @@ export default function App() {
           ask={ask}
           askCounts={askCounts}
           onAsk={setAsk}
+          reveals={hiding.reveals.ask ?? hiding.reveals.kind ?? NO_REVEALS}
+          hiddenUnread={hiding.hint}
+          onShowHidden={showHidden}
           sort={sort.of(bucket)}
           onSort={() => sort.flip(bucket)}
           timeGroups={timeGroups}

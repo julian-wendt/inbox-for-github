@@ -22,6 +22,7 @@ import { LayoutSwitch } from "./LayoutSwitch";
 import { HeaderMenu } from "./HeaderMenu";
 import type { MenuEntry } from "./ContextMenu";
 import { SearchField } from "./SearchField";
+import { HiddenUnreadHint } from "./HiddenUnreadHint";
 
 interface Props {
   /** The search bar ⌘F opens: null while closed, else the typed text; `searchRef` is its input. */
@@ -40,6 +41,12 @@ interface Props {
   ask: AskFilter;
   askCounts: Record<AskFilter, number>;
   onAsk: (ask: AskFilter) => void;
+  /** The options of the ask or kind switch that would show unread items the current one hides (see `hiddenUnread`). */
+  reveals: ReadonlySet<string>;
+  /** Unread items the filter hides while no shown row is unread; 0 hides the hint. */
+  hiddenUnread: number;
+  /** Sets the filters back to "all". */
+  onShowHidden: () => void;
   sort: SortOrder;
   /** Time groups over the entries, each a foldable bar. Absent: a plain list. */
   timeGroups?: { group: string; heading: string; entries: Classified[] }[];
@@ -75,7 +82,7 @@ interface Props {
   onJump: (bucket: View) => void;
 }
 
-export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, search, onSearch, searchCount, searchRef }: Props) {
+export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind, ask, askCounts, onAsk, reveals, hiddenUnread, onShowHidden, sort, onSort, timeGroups, folded, onToggleGroup, onToggleAll, selectedGroup, onKind, selected, loading, onSelect, onOpen, onMenu, counts, onJump, timeOf, unread, datedOf, pinnedOn, today, layout, onLayout, search, onSearch, searchCount, searchRef }: Props) {
   const section = useRef<HTMLElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const empty = useRef<HTMLDivElement>(null);
@@ -97,8 +104,8 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
   const asking = ASK_VIEWS.includes(bucket);
   const byReturn = bucket === "planned" || bucket === "snoozed";
   const filterEntries: MenuEntry[] = asking
-    ? ASK_FILTERS.map((f) => ({ label: f === "all" ? t(`inbox.filter.${f}`) : `${t(`inbox.filter.${f}`)} · ${askCounts[f]}`, checked: ask === f, onSelect: () => onAsk(f) }))
-    : KINDS.map((k) => ({ label: k.title, checked: kind === k.id, onSelect: () => onKind(k.id) }));
+    ? ASK_FILTERS.map((f) => ({ label: f === "all" ? t(`inbox.filter.${f}`) : `${t(`inbox.filter.${f}`)} · ${askCounts[f]}`, checked: ask === f, dot: reveals.has(f), onSelect: () => onAsk(f) }))
+    : KINDS.map((k) => ({ label: k.title, checked: kind === k.id, dot: reveals.has(k.id), onSelect: () => onKind(k.id) }));
   const filterLabel = asking ? t(`inbox.filter.${ask}`) : KINDS.find((k) => k.id === kind)!.title;
   const orders = [
     { order: "newest", label: t(byReturn ? "sort.menu.soonest" : "sort.menu.newest") },
@@ -122,7 +129,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
         <h1>{title}</h1>
         <span className="header-controls" aria-hidden />
         <span className="header-compact">
-          <HeaderMenu icon={<ListFilter size={13} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} />
+          <HeaderMenu icon={<ListFilter size={13} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} hiding={reveals.size > 0} />
         </span>
         <span className="header-full">
         {asking ? (
@@ -131,6 +138,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
               <button key={f} role="radio" aria-checked={ask === f} className={ask === f ? "on" : ""} onClick={() => onAsk(f)}>
                 {t(`inbox.filter.${f}`)}
                 {f !== "all" && <span className="segment-count">{askCounts[f]}</span>}
+                {reveals.has(f) && <span className="fresh-dot" title={t("hiddenUnread.here")} aria-label={t("hiddenUnread.here")} />}
               </button>
             ))}
           </div>
@@ -139,6 +147,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             {KINDS.map((k) => (
               <button key={k.id} role="radio" aria-checked={kind === k.id} className={kind === k.id ? "on" : ""} onClick={() => onKind(k.id)}>
                 {k.title}
+                {reveals.has(k.id) && <span className="fresh-dot" title={t("hiddenUnread.here")} aria-label={t("hiddenUnread.here")} />}
               </button>
             ))}
           </div>
@@ -170,6 +179,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
               {loading ? <LoaderCircle size={20} className="spin" /> : "✓"}
             </span>
             <p>{loading ? t("list.loading") : t(`list.empty.${bucket}`)}</p>
+            {!loading && <HiddenUnreadHint count={hiddenUnread} onShow={onShowHidden} />}
             {!loading && <Elsewhere counts={counts} current={bucket} onJump={onJump} />}
           </div>
         )}
@@ -200,6 +210,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                           <ChevronRight size={14} className="bar-chevron" />
                           {heading}
                           <span>{rows.length}</span>
+                          {group !== DONE_GROUP && folded(group) && (bucket === "inbox" || byReturn) && rows.some((e) => unread.has(e.item.id)) && <span className="fresh-dot" title={t("hiddenUnread.inBar")} aria-label={t("hiddenUnread.inBar")} />}
                         </button>
                       </motion.li>,
                     ]
@@ -230,6 +241,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             </AnimatePresence>
           </ul>
         )}
+        {anyRows && !idle && <HiddenUnreadHint count={hiddenUnread} onShow={onShowHidden} />}
       </div>
     </section>
   );
