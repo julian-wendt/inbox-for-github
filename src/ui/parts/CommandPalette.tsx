@@ -112,7 +112,7 @@ export function CommandPalette(props: Props) {
                 )}
                 {props.onRemoveFollowUp && (
                   <Item onSelect={run(props.onRemoveFollowUp)} keys="X">
-                    {t("reminder.remove")}
+                    {t("followUp.remove")}
                   </Item>
                 )}
                 {props.onRemovePlan && (

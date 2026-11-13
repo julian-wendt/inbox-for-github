@@ -191,7 +191,7 @@ export function rowContext({ item, mention, answered, asks, updates, pushedBy, r
   if (asks?.includes("update") && updates) return t("row.update", { what: updateSummary(updates) });
   if (asks?.includes("closed") && closedBy) return t("row.closedBy", { name: closedBy });
   if (item.closed) return t(item.closed.state === "merged" ? "row.merged" : "row.closed");
-  if (mention) return mention.self ? t("row.reminder") : t("row.mentioned", { name: mention.by });
+  if (mention) return mention.self ? t("row.selfMention") : t("row.mentioned", { name: mention.by });
   if (asks?.includes("feedback") && feedback) return t(`row.feedback.${feedback.kind}`, { name: feedback.by });
   if (asks?.includes("reply") && repliedBy) return t("row.replied", { name: repliedBy });
   if (asks?.includes("commits") && pushedBy) return t(pushedBy.length > 1 ? "row.commitsMany" : "row.commits", { name: pushedBy.at(-1)! });

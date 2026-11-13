@@ -91,6 +91,7 @@ export function askKey({ asks, mention, feedback }: Pick<Classified, "asks" | "m
 }
 
 /** Why an item notifies; each has its own switch in the settings. */
+// "reminder" is a self-mention; the id is stored in `notifyOn`, so it keeps its name.
 export type NotifyReason = "mention" | "review" | "reminder" | "update" | "feedback";
 
 /** The reasons in the order the settings list them. */
@@ -134,7 +135,7 @@ export function notificationTitle(entry: Pick<Classified, "asks" | "mention"> & 
       if (entry.repliedBy && !entry.feedback) return t("notify.replied", { name: entry.repliedBy });
       return t(`notify.feedback.${entry.feedback?.kind ?? "commented"}`, { name: entry.feedback?.by ?? "" });
     case "reminder":
-      return t("notify.reminder");
+      return t("notify.selfMention");
     case "update":
       return t("notify.update");
     case "review":

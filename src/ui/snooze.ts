@@ -78,11 +78,11 @@ export function untilShort(until: string, now = new Date()): string {
 }
 
 /**
- * A reminder's full date and time in 24-hour form, for the detail's reminder chip.
+ * A follow-up's full date and time in 24-hour form, for the follow-up chip.
  *
  * @example
- *   reminderText("2026-10-26T08:00:00Z"); // "Mon, 26 Oct, 09:00" (in Berlin, English)
+ *   followUpText("2026-10-26T08:00:00Z"); // "Mon, 26 Oct, 09:00" (in Berlin, English)
  */
-export function reminderText(at: string): string {
+export function followUpText(at: string): string {
   return new Date(at).toLocaleString(dateLocale(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 }

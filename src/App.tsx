@@ -717,7 +717,7 @@ export default function App() {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.endFollowUp(c.item.id, replaced ? "hidden" : undefined), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
-  const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c), ...(c.updates ? [] : [unhandled(c)])]);
+  const removeFollowUp = (c: Classified) => bulk(t("toast.followUpRemoved", { number: c.item.number }), [followUpStep(c), ...(c.updates ? [] : [unhandled(c)])]);
   /** X gives back what a follow-up or plan handled: handled-until goes, so what is still pending asks again, as at a due date. */
   const unhandled = (c: Classified) => {
     const previous = inbox.handledUntil.get(c.item.id);
@@ -835,7 +835,7 @@ export default function App() {
         return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
       }
       case "clear": {
-        if (bucket === "snoozed") return change(t("toast.reminderRemoved", { number }), () => void inbox.endFollowUp(id));
+        if (bucket === "snoozed") return change(t("toast.followUpRemoved", { number }), () => void inbox.endFollowUp(id));
         const handling = handled(c);
         const filed = logStep(c, "filed");
         return change(t("toast.filed", { number }), () => (handling.run(), filed.run(), void inbox.clearStatus(id, undefined, "hidden")), () => (handling.undo(), filed.undo()));
@@ -874,7 +874,7 @@ export default function App() {
       ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 && !afternoon ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until, notify) }) },
       { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-      { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
+      { label: t("followUp.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
     ];
   };
   /** F on an item: the follow-up choices open below its row, also to move the date. */
@@ -1036,7 +1036,7 @@ export default function App() {
     const statuses: MenuEntry[] = statusesFor(c, doneIn(c) === "closed")
       .filter((s) => !(s.id === "done" && doneIn(c) === "hidden"))
       .map((s) => ({
-      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("reminder.remove") : s.title,
+      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("followUp.remove") : s.title,
       hint: statusHint(doneKind(s.id, c)),
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
@@ -1051,7 +1051,7 @@ export default function App() {
       ...planItem,
       ...statuses.slice(1),
       ...(leavable(c) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => leave(c) }] : []),
-      ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
+      ...(hasFollowUp(c) ? [{ label: t("followUp.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
       ...(planned ? [{ label: t("plan.remove"), keys: "X", icon: <X size={14} />, onSelect: () => planFor(c, null, "") }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
