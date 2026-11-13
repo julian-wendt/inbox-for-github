@@ -1,5 +1,4 @@
 import Database from "@tauri-apps/plugin-sql";
-import type { FeedbackMode } from "./feedback";
 import { deriveHandledUntil } from "./handledUntil";
 import { afterFollowUp } from "./handoff";
 import type { Viewer } from "./github/fetch";
@@ -126,8 +125,6 @@ export type BotComments = "folded" | "open" | "hidden";
 export interface Settings {
   /** Owner logins to watch: organizations, and the viewer's own login for their personal repositories. */
   orgs: string[];
-  /** Rule id → enabled; missing ids fall back to the rule's default. */
-  rules: Record<string, boolean>;
   theme: Theme;
   /** Show the relevant person's avatar at the start of each list row. */
   /** The interface language; English unless chosen otherwise. */
@@ -143,14 +140,6 @@ export interface Settings {
   reopenOn: Reopen;
   /** A pull request the viewer reviewed comes back into the inbox when someone else pushes to it (see `pushedSinceReview`). */
   reviewOnCommits: boolean;
-  /** Which posts and reviews by others bring the viewer's own items into the inbox (see `feedbackSince`). */
-  ownFeedback: FeedbackMode;
-  /** Posts and reviews by others bring the viewer's assignments into the inbox. */
-  assignedFeedback: boolean;
-  /** An answer in a review thread the viewer wrote in brings a pull request of others into the inbox (see `threadReply`). */
-  threadReplies: boolean;
-  /** An own item closed by someone else without merging comes into the inbox (see `closedByOther`). */
-  ownClosed: boolean;
   /** Per item, when the viewer last filed its asks with D without finishing it (ISO 8601); only an ask since then shows it in the inbox (see `classify`). */
   filedAt: Record<string, string>;
   /** Which activity besides others' posts and reviews moves an item up in its list. */
@@ -250,7 +239,7 @@ export interface UntrackedItem {
   at: string;
 }
 
-export const DEFAULT_SETTINGS: Settings = { orgs: [], rules: {}, theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, ownFeedback: "any", assignedFeedback: true, threadReplies: true, ownClosed: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
+export const DEFAULT_SETTINGS: Settings = { orgs: [], theme: "system", language: "en", avatars: true, hiddenBoards: [], repoFilters: {}, directOnly: {}, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, filedAt: {}, movesUp: MOVES_UP_DEFAULT, refreshMinutes: 5, notifications: true, notifyOn: {}, notifyInFront: false, notifyDelivery: DEFAULT_DELIVERY, notifyCollected: [], notifyLastSummary: null, dockBadge: true, recentComments: 8, botComments: "folded", openAt: "top", descriptionMode: "collapsed", groupByTime: true, tabToButtons: false, viewCounts: true, repoCounts: true, refreshInRepos: true, tableGrouping: "type", authoredGrouping: "status", stickyReply: false, untracked: [], focus: [], focusDay: null, planned: [], pinnedOn: {}, plannedAt: {}, followUpTime: "09:00", workdays: [1, 2, 3, 4, 5], calendarId: "", calendarMinutes: 60, calendarEvents: {}, statusMap: {}, plateOrder: [], typeOrder: [], tableAttributes: null, tableColumns: {}, detailAttributes: null, loadBoards: true, closedDays: 7, repoFolder: "", logging: "off", orbLooks: {} };
 
 /**
  * Local persistence for manual statuses, settings and the last fetch. Nothing here is ever sent

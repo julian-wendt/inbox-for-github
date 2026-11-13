@@ -4,15 +4,13 @@ import { motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Budget } from "../../github/client";
 import { revealLog, type LogLevel } from "../../log";
-import type { FeedbackMode } from "../../feedback";
 import type { Org, Reopen } from "../../model";
 import type { MovesUp } from "../assignments";
 import type { RepoFilter } from "../../repoFilter";
-import { RULES, ruleSwitches } from "../../rules";
 import type { BotComments, Settings } from "../../store";
 import { agoInSentence } from "../labels";
 import { NOTIFY_REASONS, notifies } from "../attention";
-import { t, type Lang, type MessageKey } from "../i18n";
+import { t, type Lang } from "../i18n";
 import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
 import { HOURS, MINUTES } from "../segments";
@@ -70,11 +68,9 @@ const DESCRIPTION_MODES = ["collapsed", "expandable", "full"] as const;
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
-const FEEDBACK_MODES: FeedbackMode[] = ["any", "changes", "off"];
 const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
 
 /** The dictionary key of a rule's title or description; every rule id must have both. */
-const ruleText = (id: string, part: "title" | "description") => t(`rule.${id}.${part}` as MessageKey);
 
 interface Props {
   settings: Settings;
@@ -117,8 +113,8 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   };
   const body = useRef<HTMLDivElement>(null);
   useGutter(() => body.current);
-  const [draft, setDraft] = useState<Settings>({ ...settings, rules: ruleSwitches(settings.rules) });
-  const { orgs, rules, theme, avatars, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
+  const [draft, setDraft] = useState<Settings>(settings);
+  const { orgs, theme, avatars, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
   const owners: Org[] = me && memberOrgs.length > 0 ? [{ login: me, name: t("orgs.personal"), avatarUrl: isDemo() ? avatarUrl(me) : `https://github.com/${me}.png` }, ...memberOrgs] : memberOrgs;
   const [chosenOrg, setRepoOrg] = useState<string | null>(null);
   const repoOrg = chosenOrg && orgs.includes(chosenOrg) ? chosenOrg : (orgs[0] ?? "");
@@ -452,29 +448,12 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
-                  <Toggle isNew={isNew("threadReplies")} title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
-                </div>
-              </Field>
-              <Field isNew={isNew("ownFeedback")} label={t("settings.ownFeedback")} hint={t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}>
-                <Choice options={FEEDBACK_MODES} value={draft.ownFeedback} label={(mode) => t(`settings.ownFeedback.${mode}`)} onChange={(ownFeedback) => change({ ownFeedback })} />
-              </Field>
-              <Field label={t("settings.group.yourWork")}>
-                <div className="toggle-card">
-                  <Toggle isNew={isNew("assignedFeedback")} title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
-                  <Toggle isNew={isNew("ownClosed")} title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
                 </div>
               </Field>
               <Field label={t("settings.movesUp")} hint={t("settings.movesUpHint")}>
                 <div className="toggle-card">
                   {MOVES_UP.map((id) => (
                     <Toggle key={id} title={t(`settings.movesUp.${id}`)} hint={t(`settings.movesUp.${id}Hint`)} checked={draft.movesUp[id]} onChange={(on) => change({ movesUp: { ...draft.movesUp, [id]: on } })} />
-                  ))}
-                </div>
-              </Field>
-              <Field label={t("settings.automation")}>
-                <div className="toggle-card">
-                  {RULES.map((rule) => (
-                    <Toggle key={rule.id} title={ruleText(rule.id, "title")} hint={ruleText(rule.id, "description")} checked={rules[rule.id]} onChange={(on) => change({ rules: { ...rules, [rule.id]: on } })} />
                   ))}
                 </div>
               </Field>
