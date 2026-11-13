@@ -129,6 +129,9 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   loses the reason "review" and, left without a reason, the cache (`withdrawReviews`); an id the
   cache does not hold as a review request is loaded by id and gets it (`unseenReviews`,
   `addRequested`, at most 50 per delta), whether or not the request moved `updatedAt`.
+- **Pending writes:** assigning or unassigning oneself shows at once; until the queued write
+  settles, every fetch or reload puts that change back on the item (`withPending`), so one that
+  ran before GitHub had the write does not take it back.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;
   `encodeScope`). Narrowing a setting filters locally. A longer closed window runs a delta plus
   the closed searches over the added days only (`widensClosed`, `closedBefore`); switching boards
@@ -142,7 +145,12 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   view) a `nodes` query; both put the answer in through `takeReloaded`, which also takes over a
   transfer the answer shows. For an id GitHub no longer resolves (`NOT_FOUND`), the cached issues
   that may be its transferred copy are loaded by id (`transferCandidates`, about a point each);
-  failing that, a refresh runs, and what is still unresolved leaves the cache (`dropGone`).
+  failing that, a refresh runs, and what is still unresolved leaves the cache and loses its pin
+  or plan (`dropGone`), unless the token's scopes are unknown or lacking, when GitHub answers
+  `NOT_FOUND` for private items as well. Once per launch and day, after the launch's first
+  refresh, the pinned and planned items that are not loaded go through `reloadItems` too, so a
+  deleted one or one the viewer lost access to drops its plan; one that is only outside the item
+  limit or a filtered repository still resolves and keeps it.
 - **Budget:** below `LOW_BUDGET` (400 points) automatic refreshes pause until GitHub's reset
   (`pausedUntil`); a manual refresh still runs.
 - **In the background:** the refresh timer is a plain `setInterval` and keeps running only

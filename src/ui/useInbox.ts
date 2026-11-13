@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { classify, type Classified } from "../classify";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage } from "../github/delta";
+import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withPending, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage, type PendingChange } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -16,6 +16,7 @@ import { log, logContext, setLogLevel } from "../log";
 import { openStorage } from "../storage";
 import { movedKeys, movedLists, movedSettings } from "../transfer";
 import { lockedDone } from "./statusPlan";
+import { todayOf, unplan } from "./plan";
 import { DEFAULT_SETTINGS, type CachedFetch, type Persistence, type Settings } from "../store";
 
 
@@ -51,8 +52,11 @@ export interface Inbox {
   reloadItem: (id: string) => Promise<void>;
   /** Reloads many items in few requests; resolves to how many came back. Those GitHub no longer resolves leave the cache, like in `reloadItem`. */
   reloadItems: (ids: string[]) => Promise<number>;
-  /** Changes one item locally and in the cache, e.g. right after a write to GitHub. */
-  updateItem: (id: string, change: (item: Item) => Item) => void;
+  /**
+   * Changes one item locally and in the cache, e.g. right after a write to GitHub. With `until`
+   * (the queued write), a fetch or reload that lands before it settles keeps the change.
+   */
+  updateItem: (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => void;
   /** Item id → its status history, oldest first. */
   statusLog: Map<string, StatusChange[]>;
   /** Item id → when the viewer last opened it. */
@@ -183,6 +187,8 @@ export function useInbox(): Inbox {
   const [myName, setMyName] = useState<string | null>(null);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const [missing, setMissing] = useState<Scope[]>([]);
+  /** The scopes the token lacks; null while unknown (also for fine-grained tokens), which keeps plans in `dropGone`. */
+  const lacking = useRef<Scope[] | null>(null);
   const [paused, setPaused] = useState<Date | null>(null);
   const [usage, setUsage] = useState<Inbox["usage"]>({ budget: null, lastCost: null });
   const pausedRef = useRef<Date | null>(null);
@@ -203,6 +209,7 @@ export function useInbox(): Inbox {
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
   const lastFetch = useRef<CachedFetch | null>(null);
+  const pending = useRef<PendingChange[]>([]);
   const storedStatuses = useRef(statuses);
   useEffect(() => {
     storedStatuses.current = statuses;
@@ -225,6 +232,29 @@ export function useInbox(): Inbox {
     latestSettings.current = settings;
   }, [settings]);
 
+  // The SQL plugin's pool runs writes on several connections, so two saves at once could land out of order.
+  const settingsWrites = useRef<Promise<void>>(Promise.resolve());
+  const saveSettings = useCallback(
+    async (next: Settings) => {
+      if (!store) return;
+      latestSettings.current = next;
+      const write = settingsWrites.current.then(() => store.saveSettings(next));
+      settingsWrites.current = write.catch(() => undefined);
+      await write;
+      if (latestSettings.current === next) setSettings(next);
+    },
+    [store],
+  );
+
+  const updateSettings = useCallback(
+    (change: (current: Settings) => Settings) => {
+      // Set at once, so a second update in the same tick builds on this one instead of the last render.
+      latestSettings.current = change(latestSettings.current);
+      return saveSettings(latestSettings.current);
+    },
+    [saveSettings],
+  );
+
   /**
    * Carries the local state of transferred issues to their new ids, in the store; the returned
    * function moves the state, built on what it holds then, for the caller to run with the items.
@@ -234,7 +264,10 @@ export function useInbox(): Inbox {
       if (!store) return () => undefined;
       await store.moveItems(moves);
       const moved = movedSettings(latestSettings.current, moves, items);
-      if (moved !== latestSettings.current) await store.saveSettings(moved);
+      if (moved !== latestSettings.current) {
+        latestSettings.current = moved;
+        await store.saveSettings(moved);
+      }
       return () => {
         setSettings((current) => movedSettings(current, moves, items));
         setStatuses((current) => movedKeys(current, moves));
@@ -301,9 +334,10 @@ export function useInbox(): Inbox {
       const token = await ghToken();
       void tokenScopes(token).then(
         (scopes) => {
-          const lacking = missingScopes(scopes);
-          log.debug("token scopes", { known: scopes !== null, missing: lacking.join(",") || "none" });
-          setMissing(lacking);
+          const absent = missingScopes(scopes);
+          lacking.current = scopes === null ? null : absent;
+          log.debug("token scopes", { known: scopes !== null, missing: absent.join(",") || "none" });
+          setMissing(absent);
         },
         () => undefined,
       );
@@ -349,7 +383,7 @@ export function useInbox(): Inbox {
       const fetchedAt = new Date();
       const result: CachedFetch = {
         viewer: { ...viewer, avatar },
-        items,
+        items: withPending(items, pending.current),
         fetchedAt,
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
@@ -445,11 +479,19 @@ export function useInbox(): Inbox {
     setLoading(false);
   }, []);
 
-  /** Changes one cached item locally, e.g. right after a write, until the next fetch has it from GitHub. */
+  /** Changes one cached item locally, e.g. right after a write, until the next fetch has it from GitHub; with `until`, fetches put it back on until that write settles (see `withPending`). */
   const updateItem = useCallback(
-    (id: string, change: (item: Item) => Item) => {
+    (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => {
       const last = lastFetch.current;
       if (!store || !last) return;
+      if (until) {
+        const entry = { id, change };
+        pending.current = [...pending.current, entry];
+        const settle = () => {
+          pending.current = pending.current.filter((e) => e !== entry);
+        };
+        void until.then(settle, settle);
+      }
       const next = { ...last, items: last.items.map((item) => (item.id === id ? change(item) : item)) };
       lastFetch.current = next;
       setItems(next.items);
@@ -461,13 +503,16 @@ export function useInbox(): Inbox {
   /**
    * Handles items GitHub no longer resolves and no cached item turned out to be their transferred
    * copy: a refresh first, which finds an issue transferred to a place not cached yet and carries
-   * its state over, then what is still cached under these ids goes.
+   * its state over, then what is still cached under these ids goes, and so do their pins and
+   * plans (a calendar link follows as an orphan, see `orphanLinks`). Plans stay while the token's
+   * scopes are unknown or lacking, since GitHub then answers `NOT_FOUND` for private items too.
    * A refresh that fails or is stopped keeps them, so a later one can still pair them.
    */
   const dropGone = useCallback(
     async (ids: string[]) => {
       log.debug("items gone", { ids: ids.join(",") });
       if (!(await refresh())) return;
+      if (lacking.current?.length === 0) await updateSettings((s) => ({ ...s, ...unplan(todayOf(s), ids) }));
       const last = lastFetch.current;
       const gone = new Set(ids);
       if (!store || !last?.items.some((item) => gone.has(item.id))) return;
@@ -476,7 +521,7 @@ export function useInbox(): Inbox {
       setItems(next.items);
       await store.saveFetch(next);
     },
-    [store, refresh],
+    [store, refresh, updateSettings],
   );
 
   /**
@@ -497,7 +542,7 @@ export function useInbox(): Inbox {
       if (moves.size > 0) logTransfers(last.items, fresh, moves);
       const showMoved = moves.size > 0 ? await carryOver(moves, fresh) : null;
       const current = lastFetch.current ?? last;
-      const next = { ...current, items: mergeReloaded(current.items, fresh, moves) };
+      const next = { ...current, items: withPending(mergeReloaded(current.items, fresh, moves), pending.current) };
       lastFetch.current = next;
       showMoved?.();
       setItems(next.items);
@@ -734,29 +779,6 @@ export function useInbox(): Inbox {
       log.verbose("classify", { item: ref(c.item), why, reasons: c.item.reasons.join("+"), title: c.item.title });
     }
   }, [classified]);
-
-  // The SQL plugin's pool runs writes on several connections, so two saves at once could land out of order.
-  const settingsWrites = useRef<Promise<void>>(Promise.resolve());
-  const saveSettings = useCallback(
-    async (next: Settings) => {
-      if (!store) return;
-      latestSettings.current = next;
-      const write = settingsWrites.current.then(() => store.saveSettings(next));
-      settingsWrites.current = write.catch(() => undefined);
-      await write;
-      if (latestSettings.current === next) setSettings(next);
-    },
-    [store],
-  );
-
-  const updateSettings = useCallback(
-    (change: (current: Settings) => Settings) => {
-      // Set at once, so a second update in the same tick builds on this one instead of the last render.
-      latestSettings.current = change(latestSettings.current);
-      return saveSettings(latestSettings.current);
-    },
-    [saveSettings],
-  );
 
   return {
     ready: store !== null,
