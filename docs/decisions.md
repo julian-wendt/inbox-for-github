@@ -101,8 +101,8 @@ question, and D follows that intent (2026-11-11); the table of views is in
 - **One follow-up, which can ring** (2026-10-24, 2026-11-12). "Snooze" and "reminder" were two
   ways to say "bring this back at a date", and an item could carry both. The follow-up has a date
   or none. A passed date brings the item back as an ask, quietly. "Remind me" on a follow-up with
-  a date (R in the F menu) makes it ring once and stand in a Reminders bar at the top of the
-  inbox, also on own items and assignments: a review handed to someone who has time only
+  a date (R in the F menu) makes it ring once, also on own items and assignments (2026-11-13: no
+  Reminders bar any more; a returning follow-up is unread like any return, which says enough): a review handed to someone who has time only
   tomorrow is worth a nudge then, and in a full inbox a quiet return sinks. It is opt-in per
   follow-up, so the rest stays quiet, and in-app only: no Reminders app or calendar to depend on,
   and the app must run (below). In code it is `notify` (column `item_status.notify`), as

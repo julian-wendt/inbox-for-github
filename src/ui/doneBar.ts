@@ -3,8 +3,6 @@ import { lastReplyAt, latest, mentionsOf, sameLogin } from "../timeline";
 import { onPlate } from "./assignments";
 import { isOwnOpen } from "./authored";
 import { isWaiting } from "./followUp";
-import { RINGING_GROUP, ringing } from "./attention";
-import { t } from "./i18n";
 
 /** How many days the Done bar keeps an open item after it was handled; fixed, no setting. */
 export const DONE_DAYS = 7;
@@ -59,36 +57,4 @@ export function handledAt(c: Classified, handledUntil: string | undefined, me: s
 export function inDoneBar(c: Classified, handledUntil: string | undefined, me: string, now: number, dated: boolean): boolean {
   const at = dated ? null : handledAt(c, handledUntil, me);
   return !!at && (!!c.item.closed || now - Date.parse(at) < DONE_DAYS * DAY_MS);
-}
-
-/** A bar of a list: its fold key ("" for rows under no bar), its heading and its rows. */
-export interface ListBar {
-  group: string;
-  heading: string;
-  entries: Classified[];
-}
-
-/**
- * The bars of a list view around its rows: the Reminders bar on top with the inbox rows that ring
- * (see `ringing`) and are still unread, the other rows in their time groups, and the Done bar last. Without time groups
- * the other rows stand under no bar, or under "Inbox" when the Reminders bar is above them. Empty
- * bars are left out.
- *
- * @param rows   The view's rows, sorted.
- * @param unread  The inbox's unread ids, or null outside the inbox; rows ring only there, and only until read.
- * @param done   The Done bar's rows; empty outside the inbox.
- * @param timed  Splits rows into time groups with their headings, or null without time groups.
- * @returns The bars, or undefined without time groups when there is no bar to draw.
- *
- * @example
- *   listBars(listed, unreadInboxIds, doneRows, (rows) => groupByTime(rows, rowTime).map((g) => ({ ...g, heading: t(`time.group.${g.group}`) })));
- */
-export function listBars(rows: Classified[], unread: ReadonlySet<string> | null, done: Classified[], timed: ((rows: Classified[]) => ListBar[]) | null): ListBar[] | undefined {
-  const rings = unread ? rows.filter((c) => ringing(c) && unread.has(c.item.id)) : [];
-  const rest = rings.length > 0 ? rows.filter((c) => !rings.includes(c)) : rows;
-  const top = rings.length > 0 ? [{ group: RINGING_GROUP, heading: t("inbox.ringingBar"), entries: rings }] : [];
-  const bottom = done.length > 0 ? [{ group: DONE_GROUP, heading: t("bucket.done"), entries: done }] : [];
-  if (timed) return [...top, ...timed(rest), ...bottom];
-  const main = top.length === 0 ? [{ group: "", heading: "", entries: rest }] : rest.length > 0 ? [{ group: "rest", heading: t("bucket.inbox"), entries: rest }] : [];
-  return top.length > 0 || bottom.length > 0 ? [...top, ...main, ...bottom] : undefined;
 }

@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DAY, HOUR, MINUTE, simulation } from "../github/simulate/vitest";
 import type { InboxSession } from "../github/simulate/session";
 import type { Ref } from "../github/simulate/world";
-import type { Classified } from "../classify";
-import type { Item } from "../model";
-import { handledAt, inDoneBar, listBars } from "./doneBar";
-import { setLang } from "./i18n";
+import { handledAt, inDoneBar } from "./doneBar";
 
 const ME = "octocat";
 
@@ -193,33 +190,5 @@ describe("inDoneBar", () => {
     world.advance(20 * DAY);
     expect(app.entry(issue).bucket).toBe("involved");
     expect(inBar(app, issue)).toBe(false);
-  });
-});
-
-describe("listBars", () => {
-  setLang("en");
-  const row = (id: string, ring = false): Classified => ({ item: { id } as Item, bucket: "inbox", status: "open", mention: null, answered: null, asks: ring ? ["due"] : ["review"], statusAt: null, asked: {}, ...(ring && { notify: true as const }) });
-  const timed = (rows: Classified[]) => [{ group: "today", heading: "Today", entries: rows }];
-  const shape = (bars: ReturnType<typeof listBars>) => bars?.map((b) => `${b.group}:${b.heading}:${b.entries.map((c) => c.item.id).join(",")}`);
-  const rows = [row("I_1"), row("I_2", true)];
-  const unread = new Set(["I_1", "I_2"]);
-
-  it("puts the rows that ring on top, the rest in their time groups, and the Done bar last", () => {
-    expect(shape(listBars(rows, unread, [row("I_3")], timed))).toEqual(["ringing:Reminders:I_2", "today:Today:I_1", "done:Done:I_3"]);
-  });
-
-  it("keeps a row in the Reminders bar only until it is read", () => {
-    expect(shape(listBars(rows, new Set(["I_1"]), [], timed))).toEqual(["today:Today:I_1,I_2"]);
-  });
-
-  it("rings only in the inbox", () => {
-    expect(shape(listBars(rows, null, [], timed))).toEqual(["today:Today:I_1,I_2"]);
-  });
-
-  it("without time groups: rows under no bar, under Inbox below Reminders, and no bars at all when there are none", () => {
-    expect(listBars([row("I_1")], unread, [], null)).toBeUndefined();
-    expect(shape(listBars([row("I_1")], unread, [row("I_3")], null))).toEqual(["::I_1", "done:Done:I_3"]);
-    expect(shape(listBars(rows, unread, [], null))).toEqual(["ringing:Reminders:I_2", "rest:Inbox:I_1"]);
-    expect(shape(listBars([row("I_2", true)], unread, [], null))).toEqual(["ringing:Reminders:I_2"]);
   });
 });

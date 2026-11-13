@@ -57,7 +57,7 @@ import { useSeenSettings } from "./ui/useSeenSettings";
 import { useSortOrders, type SortOrder } from "./ui/useSortOrders";
 import { useViewLayout } from "./ui/useViewLayout";
 import { groupBySnoozeEnd, groupByTime, type SnoozeGroup, type TimeGroup } from "./ui/timeGroups";
-import { DONE_GROUP, handledAt, inDoneBar, listBars } from "./ui/doneBar";
+import { DONE_GROUP, handledAt, inDoneBar } from "./ui/doneBar";
 import { matchesSprint, sprintChoices, type SprintFilter } from "./ui/sprints";
 import { filterGroups, matchesText } from "./ui/textFilter";
 import { AssignedTable } from "./ui/parts/AssignedTable";
@@ -298,9 +298,11 @@ export default function App() {
     if (table) return undefined;
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
     if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
-    const timed = inbox.settings.groupByTime ? (rows: Classified[]) => groupByTime(rows, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })) : null;
-    return listBars(listed, bucket === "inbox" ? unreadInboxIds : null, doneRows, timed);
-  }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, unreadInboxIds, inbox.settings.groupByTime, sort, rowTime]);
+    const bar = doneRows.length > 0 ? [{ group: DONE_GROUP, heading: t("bucket.done"), entries: doneRows }] : [];
+    if (inbox.settings.groupByTime) return [...groupByTime(listed, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })), ...bar];
+    // Without time groups the rows stand under no bar ("") and only the Done bar's under theirs.
+    return bar.length > 0 ? [{ group: "", heading: "", entries: listed }, ...bar] : undefined;
+  }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Planned stays open in the inbox.
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : bucket === "snoozed" ? followUpTable : authored;

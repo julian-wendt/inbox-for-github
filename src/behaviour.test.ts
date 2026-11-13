@@ -11,6 +11,7 @@ import { datedOf } from "./ui/plan";
 import { doneAccess } from "./ui/statusPlan";
 import { inDoneBar } from "./ui/doneBar";
 import { dueReminders, ringing } from "./ui/attention";
+import { unreadInInbox } from "./ui/unread";
 
 // Walks the table in docs/reference/behaviour.md, one describe per rule.
 const ME = "octocat";
@@ -670,7 +671,7 @@ describe("rule 7: news by someone else makes an item unread; an unassignment is 
   ]);
 });
 
-describe("rule 8: a follow-up with Remind me rings once when it comes due and stands in the Reminders bar", () => {
+describe("rule 8: a follow-up with Remind me rings once when it comes due, and comes back unread like any", () => {
   /** An own pull request reviewed by bob, waiting a day for a follow-up, with or without Remind me. */
   async function waitingOnReview(world: GitHubSimulator, app: InboxSession, notify: boolean): Promise<Ref> {
     const pr = world.pullRequest({ author: ME });
@@ -701,6 +702,17 @@ describe("rule 8: a follow-up with Remind me rings once when it comes due and st
       },
     },
     {
+      situation: "with or without Remind me, it comes back unread though it was seen when F was set",
+      run: async (world, app) => {
+        for (const notify of [true, false]) {
+          const pr = await waitingOnReview(world, app, notify);
+          const seen = new Map([[pr.id, world.now.toISOString()]]);
+          world.advance(2 * DAY);
+          expect(unreadInInbox(app.entry(pr), seen, ME)).toBe(true);
+        }
+      },
+    },
+    {
       situation: "it notifies once, and at start only when it came due after the last fetch",
       run: async (world, app) => {
         const pr = await waitingOnReview(world, app, true);
@@ -713,7 +725,7 @@ describe("rule 8: a follow-up with Remind me rings once when it comes due and st
       },
     },
     {
-      situation: "D files it: out of the inbox and the bar, into the Done bar",
+      situation: "D files it: out of the inbox, into the Done bar",
       run: async (world, app) => {
         const pr = await waitingOnReview(world, app, true);
         world.advance(2 * DAY);
