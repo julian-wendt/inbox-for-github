@@ -65,15 +65,11 @@ const watchers = new Set<() => void>();
  * @param item    The issue or pull request to comment on.
  * @param me      The viewer's login, to highlight self-mentions in the preview.
  * @param onSent  Called after GitHub accepted the comment or the state change, with the state change if there was one.
- * @param fieldHeight  Set when docked below the thread: the field's height in pixels, sized by
- *                     the dock's drag handle; the heading is left out.
  *
  * @example
  *   <Reply item={item} me={me} onSent={() => void inbox.reloadItem(item.id)} />
  */
-export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: string; onSent: (change?: StateWrite) => void; fieldHeight?: number }) {
-  const docked = fieldHeight !== undefined;
-  const sized = docked ? { height: fieldHeight } : undefined;
+export function Reply({ item, me, onSent }: { item: Item; me: string; onSent: (change?: StateWrite) => void }) {
   const itemId = item.id;
   const [text, setText] = useState(() => drafts.get(itemId) ?? "");
   const [tab, setTab] = useState<Tab>("write");
@@ -158,8 +154,8 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
   };
 
   return (
-    <section className={`reply${docked ? " docked" : ""}`} onKeyDown={onKeyDown} aria-label={t("reply.title")}>
-      {!docked && <h3 className="section-title">{t("reply.title")}</h3>}
+    <section className="reply" onKeyDown={onKeyDown} aria-label={t("reply.title")}>
+      <h3 className="section-title">{t("reply.title")}</h3>
       <div className="comment-box">
         <div className="comment-head">
           <div className="comment-tabs" role="tablist">
@@ -192,11 +188,10 @@ export function Reply({ item, me, onSent, fieldHeight }: { item: Item; me: strin
               onChange={(e) => edit(e.target.value)}
               placeholder={t("reply.placeholder")}
               rows={5}
-              style={sized}
               disabled={sending}
             />
           ) : (
-            <div className="reply-preview" style={sized}>{text.trim() ? <Markdown source={text} me={me} /> : <p className="md-empty">{t("reply.nothing")}</p>}</div>
+            <div className="reply-preview">{text.trim() ? <Markdown source={text} me={me} /> : <p className="md-empty">{t("reply.nothing")}</p>}</div>
           )}
         </div>
       </div>

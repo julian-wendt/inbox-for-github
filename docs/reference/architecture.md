@@ -95,8 +95,8 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 - **Feedback, thread replies, closings** (asks `feedback`, `reply`, `closed`; `src/feedback.ts`):
   posts and reviews by others since the viewer's last answer (`lastAnswerAt`) on an item of the
   tables, answers in a review thread the viewer wrote in on another's pull request, and an own item
-  closed by someone else. The settings `ownFeedback`, `assignedFeedback`, `threadReplies` and
-  `ownClosed` switch them (`AskRules`). D on such an item finishes nothing (`planStatus` "file"):
+  closed by someone else. They always ask (`ASK_RULES_DEFAULT`); `AskRules` stays a parameter of
+  `classify` so tests can switch them off one by one. D on such an item finishes nothing (`planStatus` "file"):
   it sets handled-until, and `classify` drops the asks from before it. A
   reply or feedback after it asks again like a push does, and leaves a follow-up running.
 - **Plan** (P, a day) and **Today** (T, a pin) are settings, not statuses (`planned`, `focus`,

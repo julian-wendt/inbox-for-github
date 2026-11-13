@@ -341,6 +341,18 @@ returns only through an ask newer than its handled-until. The reasons:
   to "mention"). Keys are deleted by name, not "every unknown key", because builds of different
   branches share one database and would delete each other's new settings. Dropping a key needs
   approval.
+- **Fewer settings** (2026-11-13). Switches whose other position nobody used went, and their
+  values became fixed:
+  - always on: the inbox asks for feedback, thread answers and own items closed by others, and a
+    mention counts as answered once you comment after it;
+  - always on: the counts next to views and repositories, avatars in the list, and the
+    repository filter for "Refresh the items of this view";
+  - always off: the docked comment box;
+  - grouping by time is switched only with ⌘G in the list.
+
+  Each switch doubled the cases the rulebook and the tests have to cover. Their stored rows stay
+  in the database until one cleanup removes them together with `maxItems` (#136), as an
+  exception to the rule above.
 - **New settings say "New" until their section was open once** (2026-11-02). A quiet blue chip on
   the field and its section, and a dot on the settings button, so a setting that came with an
   update is found without the release notes. Seen is a per-device convenience in localStorage; a

@@ -17,7 +17,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 /
 ├── src/
 │   ├── github/        # GraphQL client, rate limits, search, deltas, boards, comments
-│   ├── rules/         # optional inbox rules
+│   ├── rules/         # inbox rules: when a mention counts as answered, direct requests only
 │   ├── classify.ts    # which view an item belongs in (with reopen.ts, review.ts, timeline.ts)
 │   ├── store.ts       # SQLite: settings, statuses and their log, notes, seen, cache
 │   └── ui/            # hooks and helpers; parts/ = components, styles/ = CSS, locales/ = texts

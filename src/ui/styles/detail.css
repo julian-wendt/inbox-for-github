@@ -878,25 +878,6 @@
   color: var(--text-muted);
 }
 
-.reply-dock {
-  position: relative;
-  flex: none;
-  padding: 12px 40px 14px;
-  border-top: 1px solid var(--divider);
-  background: var(--panel);
-}
-
-.reply.docked {
-  margin-top: 0;
-}
-
-.reply.docked .reply-field,
-.reply.docked .reply-preview {
-  min-height: 0;
-  overflow-y: auto;
-  resize: none;
-}
-
 .since-divider {
   display: flex;
   gap: 10px;

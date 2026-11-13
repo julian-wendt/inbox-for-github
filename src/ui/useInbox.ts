@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
-import { classify, type Classified } from "../classify";
+import { ASK_RULES_DEFAULT, classify, type Classified } from "../classify";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
 import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withPending, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage, type PendingChange } from "../github/delta";
 import { fetchBoards } from "../github/boards";
@@ -618,11 +618,9 @@ export function useInbox(): Inbox {
     return () => window.clearInterval(timer);
   }, []);
 
-  const { ownFeedback, assignedFeedback, threadReplies, ownClosed } = settings;
-  const askRules = useMemo(() => ({ ownFeedback, assignedFeedback, threadReplies, ownClosed }), [ownFeedback, assignedFeedback, threadReplies, ownClosed]);
   const classified = useMemo(() => {
     if (!me) return [];
-    const switches = ruleSwitches(settings.rules);
+    const switches = ruleSwitches();
     const untracked = new Set(settings.untracked.map((u) => u.id));
     const dated = new Set([...settings.focus, ...settings.planned.map((p) => p.id)]);
     // The cache may hold more than the settings ask for (see `Coverage`); show only that.
@@ -630,8 +628,8 @@ export function useInbox(): Inbox {
       .filter((item) => repoVisible(item.repo, settings.repoFilters) && !untracked.has(item.id))
       .map((item) => directOnly(item, me, settings.directOnly))
       .map((item) => (settings.loadBoards ? item : { ...item, boards: [] }))
-      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits, handledUntil.get(item.id), askRules, dated.has(item.id)));
-  }, [items, me, statuses, settings.rules, settings.reopenOn, settings.reviewOnCommits, askRules, handledUntil, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, now]);
+      .map((item) => classify(item, me, statuses.get(item.id), switches, settings.reopenOn, now, settings.reviewOnCommits, handledUntil.get(item.id), ASK_RULES_DEFAULT, dated.has(item.id)));
+  }, [items, me, statuses, settings.reopenOn, settings.reviewOnCommits, handledUntil, settings.repoFilters, settings.directOnly, settings.untracked, settings.closedDays, settings.loadBoards, settings.focus, settings.planned, now]);
 
   const writeStatus = useCallback(
     async (nodeId: string, status: Status, automatic: boolean, extra: StatusExtra = {}, source = manualSource()) => {

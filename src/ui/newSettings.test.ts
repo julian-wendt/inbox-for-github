@@ -6,6 +6,6 @@ describe("unseenSettings", () => {
     expect(unseenSettings([])).toHaveLength(NEW_SETTINGS.length);
     expect(unseenSettings(NEW_SETTINGS.map((s) => s.key))).toEqual([]);
     expect(unseenSettings([], "general")).toEqual([]);
-    expect(unseenSettings(["ownClosed"], "rules")).not.toContain("ownClosed");
+    expect(unseenSettings(["tabToButtons"], "look")).not.toContain("tabToButtons");
   });
 });

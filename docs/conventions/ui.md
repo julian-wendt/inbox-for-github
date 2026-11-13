@@ -95,6 +95,6 @@ acts on an item, in the right-click menu and the palette.
 | `ContextMenu` | right-click menus and key-driven menus (snooze choices); submenus via `items` |
 | `Toast` via `useStatusActions` | feedback with undo (`apply`, `announce`, `notify`) |
 | `SortButton`, segmented controls (`.segmented`) | header switches |
-| `Resizer`, `useStoredSize` | draggable sizes remembered locally |
+| `Resizer`, `useColumnWidths` | draggable column widths remembered locally |
 | `ErrorBoundary` | the crash page around the app |
 | `Avatar` | GitHub avatars; identicons become gradient orbs |

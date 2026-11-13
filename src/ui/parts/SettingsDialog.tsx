@@ -4,15 +4,13 @@ import { motion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Budget } from "../../github/client";
 import { revealLog, type LogLevel } from "../../log";
-import type { FeedbackMode } from "../../feedback";
 import type { Org, Reopen } from "../../model";
 import type { MovesUp } from "../assignments";
 import type { RepoFilter } from "../../repoFilter";
-import { RULES, ruleSwitches } from "../../rules";
 import type { BotComments, Settings } from "../../store";
 import { agoInSentence } from "../labels";
 import { NOTIFY_REASONS, notifies } from "../attention";
-import { t, type Lang, type MessageKey } from "../i18n";
+import { t, type Lang } from "../i18n";
 import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
 import { HOURS, MINUTES } from "../segments";
@@ -70,11 +68,7 @@ const DESCRIPTION_MODES = ["collapsed", "expandable", "full"] as const;
 
 /** The choices offered; see `Reopen` for the one left out. */
 const REOPEN = ["mention", "any-post"] as const satisfies Reopen[];
-const FEEDBACK_MODES: FeedbackMode[] = ["any", "changes", "off"];
-const MOVES_UP = ["events", "commits", "bots"] as const satisfies (keyof MovesUp)[];
-
-/** The dictionary key of a rule's title or description; every rule id must have both. */
-const ruleText = (id: string, part: "title" | "description") => t(`rule.${id}.${part}` as MessageKey);
+const MOVES_UP = ["commits", "bots", "events"] as const satisfies (keyof MovesUp)[];
 
 interface Props {
   settings: Settings;
@@ -117,8 +111,8 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
   };
   const body = useRef<HTMLDivElement>(null);
   useGutter(() => body.current);
-  const [draft, setDraft] = useState<Settings>({ ...settings, rules: ruleSwitches(settings.rules) });
-  const { orgs, rules, theme, avatars, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
+  const [draft, setDraft] = useState<Settings>(settings);
+  const { orgs, theme, reopenOn, hiddenBoards, repoFilters, directOnly } = draft;
   const owners: Org[] = me && memberOrgs.length > 0 ? [{ login: me, name: t("orgs.personal"), avatarUrl: isDemo() ? avatarUrl(me) : `https://github.com/${me}.png` }, ...memberOrgs] : memberOrgs;
   const [chosenOrg, setRepoOrg] = useState<string | null>(null);
   const repoOrg = chosenOrg && orgs.includes(chosenOrg) ? chosenOrg : (orgs[0] ?? "");
@@ -395,15 +389,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </Field>
               <Field label={t("settings.group.lists")}>
                 <div className="toggle-card">
-                  <Toggle title={t("settings.groupByTime")} hint={t("settings.groupByTimeHint")} checked={draft.groupByTime} onChange={(on) => change({ groupByTime: on })} />
                   <Toggle isNew={isNew("tabToButtons")} title={t("settings.tabToButtons")} hint={t("settings.tabToButtonsHint")} checked={draft.tabToButtons} onChange={(on) => change({ tabToButtons: on })} />
-                </div>
-              </Field>
-              <Field label={t("settings.group.sidebar")}>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.viewCounts")} hint={t("settings.viewCountsHint")} checked={draft.viewCounts} onChange={(on) => change({ viewCounts: on })} />
-                  <Toggle title={t("settings.repoCounts")} hint={t("settings.repoCountsHint")} checked={draft.repoCounts} onChange={(on) => change({ repoCounts: on })} />
-                  <Toggle title={t("settings.refreshInRepos")} hint={t("settings.refreshInReposHint")} checked={draft.refreshInRepos} onChange={(on) => change({ refreshInRepos: on })} />
                 </div>
               </Field>
               <AttributeList
@@ -423,21 +409,11 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.descriptionMode")} hint={t("settings.descriptionModeHint")}>
                 <Choice options={DESCRIPTION_MODES} value={draft.descriptionMode} label={(id) => t(`settings.descriptionMode.${id}`)} onChange={(descriptionMode) => change({ descriptionMode })} />
               </Field>
-              <Field>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.stickyReply")} hint={t("settings.stickyReplyHint")} checked={draft.stickyReply} onChange={(on) => change({ stickyReply: on })} />
-                </div>
-              </Field>
             </>
           )}
 
           {section === "avatars" && (
             <>
-              <Field>
-                <div className="toggle-card">
-                  <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
-                </div>
-              </Field>
               <Field label={t("settings.orbs")} hint={t("settings.orbsHint")}>
                 <OrbShuffle looks={draft.orbLooks} onChange={(orbLooks) => change({ orbLooks })} />
               </Field>
@@ -452,29 +428,12 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               <Field label={t("settings.group.reviewed")}>
                 <div className="toggle-card">
                   <Toggle title={t("settings.reviewOnCommits")} hint={t("settings.reviewOnCommitsHint")} checked={draft.reviewOnCommits} onChange={(on) => change({ reviewOnCommits: on })} />
-                  <Toggle isNew={isNew("threadReplies")} title={t("settings.threadReplies")} hint={t("settings.threadRepliesHint")} checked={draft.threadReplies} onChange={(on) => change({ threadReplies: on })} />
-                </div>
-              </Field>
-              <Field isNew={isNew("ownFeedback")} label={t("settings.ownFeedback")} hint={t(`settings.ownFeedback.${draft.ownFeedback}Hint`)}>
-                <Choice options={FEEDBACK_MODES} value={draft.ownFeedback} label={(mode) => t(`settings.ownFeedback.${mode}`)} onChange={(ownFeedback) => change({ ownFeedback })} />
-              </Field>
-              <Field label={t("settings.group.yourWork")}>
-                <div className="toggle-card">
-                  <Toggle isNew={isNew("assignedFeedback")} title={t("settings.assignedFeedback")} hint={t("settings.assignedFeedbackHint")} checked={draft.assignedFeedback} onChange={(on) => change({ assignedFeedback: on })} />
-                  <Toggle isNew={isNew("ownClosed")} title={t("settings.ownClosed")} hint={t("settings.ownClosedHint")} checked={draft.ownClosed} onChange={(on) => change({ ownClosed: on })} />
                 </div>
               </Field>
               <Field label={t("settings.movesUp")} hint={t("settings.movesUpHint")}>
                 <div className="toggle-card">
                   {MOVES_UP.map((id) => (
                     <Toggle key={id} title={t(`settings.movesUp.${id}`)} hint={t(`settings.movesUp.${id}Hint`)} checked={draft.movesUp[id]} onChange={(on) => change({ movesUp: { ...draft.movesUp, [id]: on } })} />
-                  ))}
-                </div>
-              </Field>
-              <Field label={t("settings.automation")}>
-                <div className="toggle-card">
-                  {RULES.map((rule) => (
-                    <Toggle key={rule.id} title={ruleText(rule.id, "title")} hint={ruleText(rule.id, "description")} checked={rules[rule.id]} onChange={(on) => change({ rules: { ...rules, [rule.id]: on } })} />
                   ))}
                 </div>
               </Field>
@@ -608,7 +567,7 @@ function Choice<T extends string | number>({ options, value, label, onChange }: 
  * Compact rows are for short lists of plain choices, such as notification reasons or boards.
  *
  * @example
- *   <Toggle title={t("settings.avatars")} hint={t("settings.avatarsHint")} checked={avatars} onChange={(on) => change({ avatars: on })} />
+ *   <Toggle title={t("settings.tabToButtons")} hint={t("settings.tabToButtonsHint")} checked={draft.tabToButtons} onChange={(on) => change({ tabToButtons: on })} />
  */
 function Toggle({ title, hint, checked, onChange, compact = false, isNew = false }: { title: string; hint?: string; checked: boolean; onChange: (on: boolean) => void; compact?: boolean; isNew?: boolean }) {
   return (
