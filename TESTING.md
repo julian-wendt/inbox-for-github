@@ -528,6 +528,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
       Minuten über D: zur Zeit kommt eine Mitteilung „Deine Wiedervorlage ist fällig“, auch bei
       Fenster vorn und im Modus „Nur Zusammenfassungen“, und das Item steht oben in der Leiste
       „Erinnerungen“ über den Zeitgruppen. Ohne „Erinnern“ dasselbe still und ohne Leiste.
+- [ ] Auf einer Wiedervorlage mit Datum ohne „Erinnern“: F, R, Esc. Die Glocke steht sofort statt
+      des Pfeils, das Datum bleibt; F, R, Esc nimmt sie wieder weg.
 - [ ] Im Menü „Optionen“ der Mitteilung: „In 1 Stunde“, vor 14 Uhr „Heute Nachmittag“, „Nächster
       Arbeitstag“; jede setzt die Wiedervorlage neu mit „Erinnern“, das Item verlässt die Leiste.
       Ein Klick auf „Optionen“ selbst oder „Öffnen“ öffnet das Item.
