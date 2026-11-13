@@ -127,6 +127,10 @@
   align-items: center;
 }
 
+.header-actions .group-start {
+  margin-left: 6px;
+}
+
 .status-switch button {
   display: inline-flex;
   gap: 6px;

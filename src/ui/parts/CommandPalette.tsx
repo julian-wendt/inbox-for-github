@@ -127,7 +127,7 @@ export function CommandPalette(props: Props) {
                     {t("palette.status", { status: s.title })}
                   </Item>
                 ))}
-                <Item onSelect={run(props.onOpenCurrent)} keys="⌃O">
+                <Item onSelect={run(props.onOpenCurrent)} keys="G">
                   {t("action.openOnGitHub")}
                 </Item>
                 {props.onOrca && (
