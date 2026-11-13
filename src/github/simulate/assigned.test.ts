@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { groupByType, isNewAssignment, assignedAt } from "../../ui/assignments";
-import { backChange, historyText } from "../../ui/activities";
+import { backEvent, eventText, historyText } from "../../ui/activities";
 import { groupAuthored } from "../../ui/authored";
 import { rowContext } from "../../ui/labels";
 import { DAY, HOUR, MINUTE, simulation } from "./vitest";
@@ -484,9 +484,9 @@ describe("Follow-ups", () => {
     app.classified();
 
     expect(app.log.get(issue.id)?.map((l) => historyText(l))).toEqual(["history.snoozed"]);
-    expect(historyText(backChange(app.entry(issue))!)).toBe("history.back.due");
+    expect(eventText(backEvent(app.entry(issue))!)).toBe("history.back.due");
     app.done(issue);
-    expect(backChange(app.entry(issue))).toBeNull();
+    expect(backEvent(app.entry(issue))).toBeNull();
   });
 
   it("files the returned item with D without finishing it: it leaves the inbox and stays in its table", async () => {

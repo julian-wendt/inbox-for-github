@@ -2,18 +2,18 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
-import type { Reopen, Status, StatusChange, WriteFailure } from "../../model";
+import type { LogEvent, Reopen, Status, StatusChange, WriteFailure } from "../../model";
 import type { BotComments, DescriptionMode, OpenAt } from "../../store";
 import { findMention, isBot, latest, posts, sameLogin } from "../../timeline";
 import { explain } from "../explain";
 import { t } from "../i18n";
-import { backChange, shownActivities, shownHistory } from "../activities";
+import { backEvent, localLines, shownActivities } from "../activities";
 import type { DoneAccess } from "../statusPlan";
 import { agoInSentence, firstLine, statusesFor, type LinkFormat } from "../labels";
 import { followUpOf } from "../followUp";
 import { datedText, type Dated } from "../plan";
 import { reviewLines, reviewNote, type ReviewLine } from "../reviewLines";
-import { ActivityRow, OpenedRow, ReviewRow, StatusChangeRow, WriteFailureRow } from "./ActivityRow";
+import { ActivityRow, LocalLineRow, OpenedRow, ReviewRow, WriteFailureRow } from "./ActivityRow";
 import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
@@ -42,6 +42,8 @@ interface Props {
   hiddenBoards: string[];
   /** The item's status changes made in this app, oldest first. */
   history: StatusChange[];
+  /** The item's log besides its status (plans, filing, returns), oldest first. */
+  events: LogEvent[];
   /** Writes to GitHub that failed for this item, shown in its timeline. */
   failures: WriteFailure[];
   /** When the viewer last opened the item; in Assigned to me, older comments fold behind it. */
@@ -101,7 +103,13 @@ export function Detail({ entry, ...rest }: Props) {
   return <DetailBody key={entry.item.id} entry={entry} {...rest} />;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+/** The log with the classification's return to the inbox added, until `useInbox` has stored one since the last decision. */
+function withReturn(events: LogEvent[], history: StatusChange[], back: LogEvent | null): LogEvent[] {
+  const decided = [...history.map((c) => c.at), ...events.filter((e) => e.kind !== "back").map((e) => e.at)].sort().at(-1) ?? "";
+  return back && !events.some((e) => e.kind === "back" && e.at > decided) ? [...events, back] : events;
+}
+
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, events, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, stickyReply, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -130,7 +138,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
     ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} /> })),
     ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} itemUrl={item.url} /> })),
     ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} /> })),
-    ...[...shownHistory(history, item), ...[backChange(entry)].filter((c) => c !== null)].filter((c) => !since || c.at >= since).map((change, i) => ({ at: change.at, node: <StatusChangeRow key={`s-${change.at}-${i}`} change={change} /> })),
+    ...localLines(history, withReturn(events, history, backEvent(entry)), item).filter((l) => !since || l.at >= since).map((line, i) => ({ at: line.at, node: <LocalLineRow key={`s-${line.at}-${i}`} line={line} /> })),
     ...failures.filter((f) => !since || f.at >= since).map((failure, i) => ({ at: failure.at, node: <WriteFailureRow key={`f-${failure.at}-${i}`} failure={failure} /> })),
   ].sort((a, b) => a.at.localeCompare(b.at));
   const dividerAt = seenAt ? timeline.findIndex((row) => row.at > seenAt) : -1;

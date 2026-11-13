@@ -1,11 +1,12 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ArrowRightLeft, ArrowUpFromLine, Check, CheckCheck, CircleCheck, CircleDot, CircleSlash, Copy, Eye, EyeOff, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestDraft, MessageSquare, Reply, TriangleAlert, UserMinus, UserRound, X, type LucideIcon } from "lucide-react";
+import { ArrowRightLeft, ArrowUpFromLine, Bell, CalendarDays, Check, CheckCheck, CircleCheck, CircleDot, CircleSlash, Copy, Eye, EyeOff, GitCommitHorizontal, GitMerge, GitPullRequest, GitPullRequestDraft, MessageSquare, Reply, TriangleAlert, UserMinus, UserRound, X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { reviewNote, type ReviewLine } from "../reviewLines";
 import { sameLogin } from "../../timeline";
-import type { Item, StateChange, StatusChange, WriteFailure } from "../../model";
-import { historyText, type ShownActivity } from "../activities";
-import { t, tRich, type MessageKey } from "../i18n";
+import type { Item, StateChange, WriteFailure } from "../../model";
+import { eventText, historyText, type LocalLine, type ShownActivity } from "../activities";
+import { dateLocale, t, tRich, type MessageKey } from "../i18n";
+import { dateOf } from "../plan";
 import { ago } from "../labels";
 import { KindIcon } from "./ItemMarks";
 import { StatusIcon } from "./StatusIcon";
@@ -208,23 +209,35 @@ export function ReviewRow({ line, me }: { line: ReviewLine; me: string }) {
 }
 
 /**
- * A timeline line for a status change made in this app, which GitHub never sees: the status icon
- * and a sentence like "You snoozed it · 2 hours ago".
+ * A timeline line for something the viewer did in this app, which GitHub never sees, or a return
+ * to the inbox: an icon and a sentence like "You set a follow-up for Mon, 16 Nov, 09:00 · 2 hours ago".
+ * Dates are absolute, as the line stays.
  *
  * @example
- *   <StatusChangeRow change={{ status: "snoozed", at: "2026-10-22T10:00:00Z", automatic: false }} />
+ *   <LocalLineRow line={{ at: "2026-10-22T10:00:00Z", change: { status: "snoozed", at: "2026-10-22T10:00:00Z", automatic: false, until: "" } }} />
  */
-export function StatusChangeRow({ change }: { change: StatusChange }) {
+export function LocalLineRow({ line }: { line: LocalLine }) {
   return (
     <li className="activity">
-      <span className="activity-icon">
-        <StatusIcon status={change.status} size={13} />
-      </span>
+      <span className="activity-icon">{lineIcon(line)}</span>
       <span className="activity-text">
-        {t(historyText(change))} <span className="activity-time">· {ago(change.at)}</span>
+        {t("change" in line ? historyText(line.change) : eventText(line.event), lineVars(line))} <span className="activity-time">· {ago(line.at)}</span>
       </span>
     </li>
   );
+}
+
+function lineVars(line: LocalLine): Record<string, string> {
+  if ("change" in line) return line.change.until ? { until: new Date(line.change.until).toLocaleString(dateLocale(), { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) } : {};
+  return line.event.value && line.event.kind !== "back" ? { day: dateOf(line.event.value).toLocaleDateString(dateLocale(), { weekday: "short", day: "numeric", month: "short" }) } : {};
+}
+
+function lineIcon(line: LocalLine): ReactNode {
+  if ("change" in line) return line.change.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" aria-hidden /> : <StatusIcon status={line.change.status} size={13} />;
+  const { kind } = line.event;
+  if (kind === "filed") return <StatusIcon status="done" size={13} />;
+  if (kind === "back") return <StatusIcon status="open" size={13} />;
+  return <CalendarDays size={13} strokeWidth={2.2} color="var(--st-planned)" aria-hidden />;
 }
 
 /**
