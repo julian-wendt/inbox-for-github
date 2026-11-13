@@ -56,8 +56,9 @@ Independent of each other:
 8. A follow-up with "Remind me" (R in the follow-up menu, only with a date) rings once when it
    comes due: a notification, at the next start if the app was quit then, whatever the delivery
    mode, the reason switches or the window in front say; only the main switch stops it. While it
-   asks as due, it stands in the Reminders bar at the top of the inbox and leaves as any due
-   follow-up does (a reply, D, F, O). The notification's "Later" choices (in 1 hour, this
+   asks as due and is unread, it stands in the Reminders bar at the top of the inbox: the bar
+   says why it is back, so reading it is enough to move it to its time group. The ask leaves as
+   any due follow-up does (a reply, D, F, O). The notification's "Later" choices (in 1 hour, this
    afternoon, the next workday) set the follow-up anew with "Remind me". Without it a follow-up
    comes due quietly (rule 2).
 
@@ -77,7 +78,7 @@ Independent of each other:
 | An own issue assigned to me | Assigned to me and Created by me | in Assigned to me: my part done; in Created by me: not offered | as for an assignment | as for an assignment | takes off the when |
 | Waits for a follow-up | Follow-up (and its table) | ends the follow-up | a new date | the plan replaces the follow-up | takes off the follow-up; handled-until stays |
 | A follow-up comes due | Inbox, also for table items | as for any ask | as for any ask | as for any ask | – |
-| A follow-up with "Remind me" comes due | Inbox, in the Reminders bar on top, one notification | as for any ask | a new date; "Later" in the notification too | as for any ask | – |
+| A follow-up with "Remind me" comes due | Inbox, in the Reminders bar on top until read, one notification | as for any ask | a new date; "Later" in the notification too | as for any ask | – |
 | Planned or pinned | Planned (and its table) | as in its home view | the follow-up replaces the plan | a new day | takes off the plan; handled-until stays |
 
 ## Where the code differs

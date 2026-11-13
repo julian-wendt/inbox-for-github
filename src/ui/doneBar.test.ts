@@ -202,19 +202,24 @@ describe("listBars", () => {
   const timed = (rows: Classified[]) => [{ group: "today", heading: "Today", entries: rows }];
   const shape = (bars: ReturnType<typeof listBars>) => bars?.map((b) => `${b.group}:${b.heading}:${b.entries.map((c) => c.item.id).join(",")}`);
   const rows = [row("I_1"), row("I_2", true)];
+  const unread = new Set(["I_1", "I_2"]);
 
   it("puts the rows that ring on top, the rest in their time groups, and the Done bar last", () => {
-    expect(shape(listBars(rows, true, [row("I_3")], timed))).toEqual(["ringing:Reminders:I_2", "today:Today:I_1", "done:Done:I_3"]);
+    expect(shape(listBars(rows, unread, [row("I_3")], timed))).toEqual(["ringing:Reminders:I_2", "today:Today:I_1", "done:Done:I_3"]);
+  });
+
+  it("keeps a row in the Reminders bar only until it is read", () => {
+    expect(shape(listBars(rows, new Set(["I_1"]), [], timed))).toEqual(["today:Today:I_1,I_2"]);
   });
 
   it("rings only in the inbox", () => {
-    expect(shape(listBars(rows, false, [], timed))).toEqual(["today:Today:I_1,I_2"]);
+    expect(shape(listBars(rows, null, [], timed))).toEqual(["today:Today:I_1,I_2"]);
   });
 
   it("without time groups: rows under no bar, under Inbox below Reminders, and no bars at all when there are none", () => {
-    expect(listBars([row("I_1")], true, [], null)).toBeUndefined();
-    expect(shape(listBars([row("I_1")], true, [row("I_3")], null))).toEqual(["::I_1", "done:Done:I_3"]);
-    expect(shape(listBars(rows, true, [], null))).toEqual(["ringing:Reminders:I_2", "rest:Inbox:I_1"]);
-    expect(shape(listBars([row("I_2", true)], true, [], null))).toEqual(["ringing:Reminders:I_2"]);
+    expect(listBars([row("I_1")], unread, [], null)).toBeUndefined();
+    expect(shape(listBars([row("I_1")], unread, [row("I_3")], null))).toEqual(["::I_1", "done:Done:I_3"]);
+    expect(shape(listBars(rows, unread, [], null))).toEqual(["ringing:Reminders:I_2", "rest:Inbox:I_1"]);
+    expect(shape(listBars([row("I_2", true)], unread, [], null))).toEqual(["ringing:Reminders:I_2"]);
   });
 });

@@ -299,8 +299,8 @@ export default function App() {
     const heading = (group: TimeGroup | SnoozeGroup) => t(`time.group.${group}`);
     if (byReturn) return byReturnGroups.map((g) => ({ ...g, heading: heading(g.group) }));
     const timed = inbox.settings.groupByTime ? (rows: Classified[]) => groupByTime(rows, rowTime, sort.of(bucket) === "oldest").map((g) => ({ ...g, heading: heading(g.group) })) : null;
-    return listBars(listed, bucket === "inbox", doneRows, timed);
-  }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, inbox.settings.groupByTime, sort, rowTime]);
+    return listBars(listed, bucket === "inbox" ? unreadInboxIds : null, doneRows, timed);
+  }, [bucket, byReturn, table, listed, byReturnGroups, doneRows, unreadInboxIds, inbox.settings.groupByTime, sort, rowTime]);
   // The bars of the current view: status or time bars of the table, or a list's time groups.
   // Lists remember their folded groups per view, so "Today" folded in Planned stays open in the inbox.
   const tableGroups = bucket === "assigned" ? plate : bucket === "planned" ? plannedTable : bucket === "snoozed" ? followUpTable : authored;
