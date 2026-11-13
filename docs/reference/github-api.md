@@ -14,8 +14,8 @@ numbers below go stale when fields are added.
 
 | Request | Where | Cost |
 |---|---|---|
-| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29) |
-| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29) |
+| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29; and by `issueCount` and `sort:updated-desc`, dry run 2026-11-13) |
+| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29, and by `issueCount` and the sort, 2026-11-13) |
 | Open review requests, ids only | `REVIEW_IDS_QUERY` (`fetchReviewIds`, every delta), page of 100 | 1 point (dry run and `x-ratelimit-used`, 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
 | Many items by node id | `NODES_QUERY` (`fetchItemsById`, right click on a view), `REFRESH_CHUNK = 50` | 19 points for 50, 37 for 100, 9 for 25, 4 for 10 (measured 2026-10-26 with `rateLimit(dryRun: true)`); a single `node` costs 1, so from about three items the bulk request is cheaper |
@@ -24,7 +24,9 @@ numbers below go stale when fields are added.
 | `rate_limit` REST endpoint | — | free |
 
 A full fetch pages through every search to its end (at most GitHub's 1000 hits, `SEARCH_STOP`;
-two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits. A delta
+two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits.
+Every search sorts by `sort:updated-desc`, so a search past the stop misses only the oldest items
+and the same ones each time; `issueCount` tells that it was cut (the sidebar says "Not all loaded"). A delta
 runs the same searches with one page of 20 each, about 7 points per search, plus one point for
 the ids of the open review requests. Widening the
 closed window adds the two closed searches over the added days only, paged like a full fetch:
@@ -38,6 +40,11 @@ Each was checked against the live API during development.
 - Repeated `org:` and `user:` qualifiers in one search combine with **OR**, so one search covers
   all watched owners (`fetchItems`).
 - Long search queries work; queries over 1000 characters were accepted.
+- `sort:updated-desc` in the search string orders the hits by `updatedAt`, newest first; without
+  it GitHub orders by best match, which shifts between requests (checked 2026-11-13).
+- A search stops at 1000 hits: after ten pages of 100, `hasNextPage` is false, while
+  `issueCount` still gives the full number, e.g. 258917 for `is:issue repo:microsoft/vscode`
+  (checked 2026-11-13). `fetchItems` compares the two to report a cut search.
 - `updated:>=` accepts a full datetime (`2026-10-23T10:00:00Z`), not only a date; deltas rely on it.
 - `closed:A..B` includes both days: the counts for `closed:2026-09-01..2026-10-21` and
   `closed:>=2026-10-22` added up to the one for `closed:>=2026-09-01` (checked 2026-10-29). A

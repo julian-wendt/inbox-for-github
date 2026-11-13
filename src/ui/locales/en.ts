@@ -40,6 +40,8 @@ export const en = {
   "sidebar.repos": "Filter by repository",
   "sidebar.refreshing": "Refreshing…",
   "sidebar.updated": "Updated {ago}",
+  "sidebar.cut": "Not all loaded · {ago}",
+  "sidebar.cutHint": "A search found more than the 1000 items GitHub returns, so the oldest are missing. Watch fewer organizations to load them all.",
   "sidebar.notLoaded": "Not loaded yet",
   "sidebar.rules": "Help",
   "sidebar.settings": "Settings (⌘,)",

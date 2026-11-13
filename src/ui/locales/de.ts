@@ -42,6 +42,8 @@ export const de: Messages = {
   "sidebar.repos": "Nach Repository filtern",
   "sidebar.refreshing": "Aktualisiere…",
   "sidebar.updated": "Zuletzt aktualisiert {ago}",
+  "sidebar.cut": "Nicht alles geladen · {ago}",
+  "sidebar.cutHint": "Eine Suche fand mehr als die 1000 Items, die GitHub liefert, daher fehlen die ältesten. Beobachte weniger Organisationen, um alle zu laden.",
   "sidebar.notLoaded": "Noch nicht geladen",
   "sidebar.rules": "Hilfe",
   "sidebar.settings": "Einstellungen (⌘,)",
