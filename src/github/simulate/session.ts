@@ -15,7 +15,7 @@ import { lockedDone, planStatus } from "../../ui/statusPlan";
 import { inDoneBar } from "../../ui/doneBar";
 import { addComment, assignSelf, setOpen, unassignSelf, type CloseReason } from "../comment";
 import { addRequested, canDelta, DELTA_OVERLAP_MS, findTransfers, mergeDelta, mergeReloaded, transferCandidates, unseenReviews, withdrawReviews, withinClosedWindow } from "../delta";
-import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds } from "../fetch";
+import { fetchItem, fetchItems, fetchItemsById, fetchReviewIds, SEARCH_STOP } from "../fetch";
 import type { GitHubSimulator, Ref } from "./world";
 
 const TOKEN = "simulated-token";
@@ -70,7 +70,7 @@ export class InboxSession {
     settings: SessionSettings = {},
   ) {
     this.me = world.viewer;
-    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: 200, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, askRules: ASK_RULES_DEFAULT, rules: {}, directOnly: {}, ...settings };
+    this.settings = { orgs: world.orgs, closedDays: 7, loadBoards: true, maxItems: SEARCH_STOP, reopenOn: REOPEN_DEFAULT, reviewOnCommits: true, askRules: ASK_RULES_DEFAULT, rules: {}, directOnly: {}, ...settings };
   }
 
   private get nowMs(): number {

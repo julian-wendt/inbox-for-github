@@ -289,6 +289,14 @@ returns only through an ask newer than its handled-until. The reasons:
   200 items costs about 120 points, so four an hour plus a delta every minute stay near 1,400 of
   GitHub's 5,000. The budget is shared with every other tool on the same token, which is why it
   is not tighter.
+- **No item limit** (2026-11-13). Every search pages to its end, up to GitHub's 1000 hits.
+  "Items loaded at most" (200) cut a search with more hits, and GitHub orders hits by best
+  match, which shifts between fetches. So the cut items changed: an item dropped out and
+  notified as new when it came back. A page of 50 costs about 19 points, so 250 hits instead
+  of 200 cost one page more. Near GitHub's 1000 a full fetch costs well over a thousand points,
+  and four of them an hour would use up the budget; the pause before it runs out (`LOW_BUDGET`)
+  covers that rare case. The stored key stays in the database for now, so older versions can
+  still read it.
 - **A transferred issue is recognized by repository, creation time and title.** GitHub gives it a
   new node id and keeps no link to the old one, but keeps `createdAt` and the title, and names
   the old repository in a `TransferredEvent`. The match also needs exactly one candidate, and the

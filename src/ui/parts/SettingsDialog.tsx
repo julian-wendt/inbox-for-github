@@ -59,7 +59,6 @@ const THEMES: Theme[] = ["system", "light", "dark"];
 const RECENT_COMMENTS = [3, 8, 20, 0];
 const BOT_COMMENTS: BotComments[] = ["folded", "open", "hidden"];
 
-const MAX_ITEMS = [100, 200, 500, 1000];
 const CLOSED_DAYS = [0, 1, 7, 30];
 
 /** Refresh intervals to choose from, in minutes; 0 is off. */
@@ -305,9 +304,6 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
               </Field>
               <Field label={t("usage.title")} hint={t("usage.hint")}>
                 <UsageMeter usage={usage} refreshMinutes={draft.refreshMinutes} />
-              </Field>
-              <Field label={t("settings.maxItems")} hint={t("settings.maxItemsHint")}>
-                <Choice options={MAX_ITEMS} value={draft.maxItems} label={String} onChange={(maxItems) => change({ maxItems })} />
               </Field>
               <Field label={t("settings.closedDays")} hint={t("settings.closedDaysHint")}>
                 <Choice
