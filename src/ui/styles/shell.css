@@ -49,25 +49,6 @@
   transition: opacity 120ms var(--ease);
 }
 
-.resizer.row {
-  top: -4px;
-  right: 0;
-  bottom: auto;
-  left: 0;
-  width: auto;
-  height: 7px;
-  cursor: row-resize;
-}
-
-.resizer.row::after {
-  top: 3px;
-  right: 0;
-  bottom: auto;
-  left: 0;
-  width: auto;
-  height: 1px;
-}
-
 .resizer:hover::after,
 .resizing .resizer:active::after {
   opacity: 0.5;
@@ -78,11 +59,6 @@
   cursor: col-resize !important;
   -webkit-user-select: none;
   user-select: none;
-}
-
-.resizing.rows,
-.resizing.rows * {
-  cursor: row-resize !important;
 }
 
 .boot {
@@ -139,7 +115,15 @@
 
 .search-pill span {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
   text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-pill kbd {
+  flex: none;
 }
 
 .nav {
@@ -213,6 +197,13 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.nav-heading span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav.repos {

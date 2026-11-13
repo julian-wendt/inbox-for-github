@@ -1,12 +1,13 @@
 import { GripVertical } from "lucide-react";
 import { useState } from "react";
-import { moveAttribute, type AttributeOption, type CombinedAttribute } from "../attributes";
+import { moveAttribute, TABLE_ONLY, type AttributeOption, type CombinedAttribute } from "../attributes";
 import { t, type MessageKey } from "../i18n";
 
 /**
  * The attribute settings in one list: one order for the detail and the tables, reorderable by
  * drag and drop, and the detail's switch in each row; the tables switch theirs in their header.
  * Board fields show their name (and board, when given); built-in attributes their translated name.
+ * The repository is left out: the detail never shows it, and the tables keep its stored place.
  *
  * @param list      The attributes in order, from `combineAttributes`.
  * @param options   From `attributeOptions`, for the names.
@@ -25,7 +26,7 @@ export function AttributeList({ list, options, onChange }: { list: CombinedAttri
         <small>{t("settings.attributes.detail")}</small>
       </span>
       <ul className="attribute-list">
-        {list.map((a) => {
+        {list.filter((a) => a.key !== TABLE_ONLY).map((a) => {
           const option = options.find((o) => o.key === a.key)!;
           const name = option.field ? option.name : t(`attr.${a.key}` as MessageKey);
           return (

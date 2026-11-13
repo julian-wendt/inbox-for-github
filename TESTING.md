@@ -46,6 +46,11 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] ⌘R: Icon dreht sich mit kleinem Quadrat. Klick darauf stoppt, die Liste bleibt, unten
       steht wieder „Zuletzt aktualisiert …“.
 - [ ] ⌃R mit ausgewähltem Item: nur dieses Item lädt neu (1 Punkt, mit Boards 2), der Button im Detail-Kopf dreht sich, die Liste bleibt stehen.
+- [ ] Detail-Kopf von links: Status-Umschalter, 💡, dann mit kleinem Abstand GitHub und Orca, Link und Aktualisieren,
+      „Mich zuweisen“ (nur wenn möglich) und im Pop-up ×. Erscheint „Mich zuweisen“, verrutscht davor nichts.
+- [ ] Detail-Spalte schmaler ziehen: unter etwa 700 px wandern GitHub bis „Mich zuweisen“ in das „…“-Menü (mit Tasten
+      rechts), 💡 und × bleiben; unter etwa 560 px zeigt der Umschalter nur Icons, Tooltips nennen den Status.
+      „org/repo #Nummer“ steht immer ganz über dem Titel.
 - [ ] Rechtsklick auf eine Ansicht: Inbox und „Mir zugewiesen“ bieten „Alle als gelesen markieren“
       (danach „… als ungelesen“; ⌘Z holt es zurück) und „Items dieses Views aktualisieren“, die
       anderen Ansichten nur das Aktualisieren. Das Aktualisieren lädt alle Items der Ansicht
@@ -125,8 +130,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Eine Wiedervorlage, deren Datum vorbei ist, auch auf einer Zuweisung: das Item steht in der Inbox („Deine Wiedervorlage ist … fällig geworden“, als erste Zeile der Erklärung), im Verlauf „Zurück in der Inbox: deine Wiedervorlage ist fällig“, und es kommt keine Benachrichtigung. D legt es ab, die Verlaufszeile verschwindet; ins Protokoll wird nichts geschrieben.
 - [ ] D auf einer Zeile der Leiste „Erledigt“ ändert nichts und fehlt im Menü; D in „Mir zugewiesen“ auf einem Item mit fertigem Teil zeigt „Dein Teil ist schon erledigt; O nimmt ihn zurück“; D in der Wiedervorlage beendet sie („Wiedervorlage entfernt“, das Item kehrt zurück); F auf einem in Wiedervorlage öffnet die Zeiten,
       eine neue Zeit verschiebt das Datum. Zurück auf Offen geht nur mit O (oder über das Menü).
-- [ ] ⌃O öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O allein öffnet
-      nichts im Browser. Im Kommentarfeld tut ⌃O nichts an der App.
+- [ ] G öffnet das Item auf GitHub (auch Kontextmenü, ⌘K, Button im Detail); O öffnet
+      nichts im Browser. Im Kommentarfeld tippt G nur den Buchstaben.
 - [ ] ⌘Z nimmt die letzte Änderung exakt zurück und sagt, welche („Rückgängig: #5 → Erledigt“),
       und mit jedem weiteren ⌘Z geht es die Kette weiter zurück, bis zu fünfzig Änderungen; danach
       steht dort „Nichts zum Rückgängigmachen“. ⌘Y macht Zurückgenommenes in der alten Reihenfolge
@@ -206,7 +211,7 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 
 - [ ] Tasten wirken nur auf die Auswahl, nie auf die Zeile unter der Maus.
 - [ ] Ohne Auswahl (Pop-up per Klick geöffnet und geschlossen, Esc, oder eine Leiste ausgewählt) melden D, F, O, X,
-      T, P, U, R, W, C, ⌃A, ⌃U, ⌃O und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
+      T, P, U, R, W, G, C, ⌃A, ⌃U und ⌃R per Toast „Kein Item ausgewählt“; in einer leeren Ansicht kommt kein Toast.
 - [ ] Einstellungen › Darstellung › Listen › „Tab erreicht Knöpfe“ aus (Standard): Tab und ⇧Tab tun im Hauptfenster
       nichts, auch nicht in der Suche oder im Kommentarfeld. An: Tab erreicht die Knöpfe; Enter und Leertaste drücken den fokussierten Knopf (z. B. Sortierung), statt
       das Pop-up zu öffnen. Nach einem Mausklick auf einen Knopf öffnen Enter und Leertaste wieder das Pop-up der Auswahl.
