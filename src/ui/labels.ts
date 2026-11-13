@@ -179,27 +179,59 @@ export function updateSummary(updates: Update[]): string {
   return parts.join("; ");
 }
 
+type RowEntry = Pick<Classified, "item" | "mention" | "answered"> &
+  Partial<Pick<Classified, "asks" | "asked" | "updates" | "pushedBy" | "requestedBy" | "assignedBy" | "feedback" | "repliedBy" | "closedBy" | "reopenedBy" | "postedBy">>;
+
 /**
- * One short line saying why an item concerns the viewer: who mentioned them, a note to self, an
- * answered or open review request and who asked, new commits since the viewer's review, an
- * assignment and who made it, or otherwise who posted last.
+ * One short line saying what someone wants from the viewer. In the inbox it names the newest ask
+ * (see `newestAsk`), the one the row is dated by and the explanation starts with, with who made
+ * it; an ask without a time stands in when none has one. Elsewhere, and for an ask whose author
+ * is unknown: closed or merged, a waiting mention, an answered or open review request and who
+ * asked, an assignment and who made it, or otherwise who posted last.
  *
  * @example
- *   rowContext(classified); // "@alice mentioned you"
+ *   rowContext(classified); // "@alice mentioned you", "Reopened by @bob", "Your follow-up came due"
  */
-export function rowContext({ item, mention, answered, asks, updates, pushedBy, requestedBy, assignedBy, feedback, repliedBy, closedBy }: Pick<Classified, "item" | "mention" | "answered"> & Partial<Pick<Classified, "asks" | "updates" | "pushedBy" | "requestedBy" | "assignedBy" | "feedback" | "repliedBy" | "closedBy">>): string {
-  if (asks?.includes("update") && updates) return t("row.update", { what: updateSummary(updates) });
-  if (asks?.includes("closed") && closedBy) return t("row.closedBy", { name: closedBy });
+export function rowContext(entry: RowEntry): string {
+  const { item, answered, requestedBy, assignedBy, asks = [] } = entry;
+  const newest = newestAsk({ asks, asked: entry.asked ?? {} })?.ask ?? asks[0];
+  const named = newest && askText(newest, entry);
+  if (named) return named;
   if (item.closed) return t(item.closed.state === "merged" ? "row.merged" : "row.closed");
-  if (mention) return mention.self ? t("row.reminder") : t("row.mentioned", { name: mention.by });
-  if (asks?.includes("feedback") && feedback) return t(`row.feedback.${feedback.kind}`, { name: feedback.by });
-  if (asks?.includes("reply") && repliedBy) return t("row.replied", { name: repliedBy });
-  if (asks?.includes("commits") && pushedBy) return t(pushedBy.length > 1 ? "row.commitsMany" : "row.commits", { name: pushedBy.at(-1)! });
+  if (entry.mention) return askText("mention", entry)!;
   if (answered) return answered === "review" ? t("row.reviewAnswered") : t("row.answered");
   if (item.reasons.includes("review")) return requestedBy ? t("row.reviewRequestedBy", { name: requestedBy }) : t("row.reviewRequested");
   if (item.reasons.includes("assigned")) return assignedBy ? t("row.assignedBy", { name: assignedBy }) : t("row.assigned");
   const last = item.comments.at(-1);
   return last ? t("row.commented", { name: last.author }) : t("row.openedBy", { name: item.author });
+}
+
+/** The row's line for one ask, or null when the entry lacks who made it. */
+function askText(ask: Ask, { mention, updates, closedBy, feedback, repliedBy, pushedBy, requestedBy, reopenedBy, postedBy }: RowEntry): string | null {
+  switch (ask) {
+    case "update":
+      return updates ? t("row.update", { what: updateSummary(updates) }) : null;
+    case "closed":
+      return closedBy ? t("row.closedBy", { name: closedBy }) : null;
+    case "mention":
+      return mention ? (mention.self ? t("row.reminder") : t("row.mentioned", { name: mention.by })) : null;
+    case "feedback":
+      return feedback ? t(`row.feedback.${feedback.kind}`, { name: feedback.by }) : null;
+    case "reply":
+      return repliedBy ? t("row.replied", { name: repliedBy }) : null;
+    case "commits":
+      return pushedBy ? t(pushedBy.length > 1 ? "row.commitsMany" : "row.commits", { name: pushedBy.at(-1)! }) : null;
+    case "review":
+      return requestedBy ? t("row.reviewRequestedBy", { name: requestedBy }) : t("row.reviewRequested");
+    case "reopened":
+      return reopenedBy ? t("row.reopenedBy", { name: reopenedBy }) : null;
+    case "post":
+      return postedBy ? t("row.posted", { name: postedBy }) : null;
+    case "opened":
+      return t("row.openedAgain");
+    case "due":
+      return t("row.due");
+  }
 }
 
 /**

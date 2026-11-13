@@ -68,8 +68,7 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
             </span>
           )}
           {dated && <DayMark dated={dated} />}
-          {/* "Assigned to you · app"; in Assigned to me the group heading names the repo already. */}
-          <span className="row-text">{`${rowContext(entry)} · ${item.repo.split("/")[1]}`}</span>
+          <span className="row-text">{rowContext(entry)}</span>
           {event && <span aria-hidden>·</span>}
           {event && <EventMark dated={event} className="row-mark" />}
         </span>
