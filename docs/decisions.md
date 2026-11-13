@@ -286,6 +286,10 @@ returns only through an ask newer than its handled-until. The reasons:
   inline comments, how many are resolved), linked to the review on GitHub, instead of each
   comment as a post; only one mentioning the viewer stays a post. Resolving has no time on GitHub,
   so it changes the line's state in brackets and never adds a line of its own.
+- **X gives back what a when handled** (2026-11-13). F, P and T count as handling, so a review
+  request parked with F and then taken off with X used to land in the Done bar, unreviewed. X now
+  removes handled-until, so what is still pending asks again, as when the date comes; with
+  nothing pending nothing comes back, and a finished part stays done. To be rid of an item, D.
 - **The timeline tells the viewer's own decisions too** (2026-11-13). Plans, follow-ups with
   their dates, filing and each return to the inbox get a line that stays, so an item's place can
   always be read from its log: before, a plan left no trace, X on a follow-up read "Reopened

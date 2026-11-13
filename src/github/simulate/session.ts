@@ -253,15 +253,25 @@ export class InboxSession {
     this.choose(ref, "snoozed", until, undefined, notify);
   }
 
-  /** X or the × in the chip: takes the follow-up off; a finished part stays done. */
+  /** X or the × in the chip: takes the follow-up off and, unless a finished part stays done, gives back what it handled, as `App.removeFollowUp`. */
   clearFollowUp(ref: Ref): void {
     const previous = this.statuses.get(ref.id);
     const logged = this.log.get(ref.id) ?? [];
+    const handledBefore = this.handledUntil.get(ref.id);
+    const finished = !!this.entry(ref).updates;
     this.endFollowUp(ref.id);
+    if (!finished) this.handledUntil.delete(ref.id);
     this.undoStep = () => {
       this.log.set(ref.id, logged);
       if (previous) this.statuses.set(ref.id, previous);
+      if (handledBefore) this.handledUntil.set(ref.id, handledBefore);
     };
+  }
+
+  /** X on a planned or pinned item, as `App.planFor(c, null)`: the plan goes and gives back what it handled. */
+  clearPlan(ref: Ref): void {
+    this.today = unplan(this.today, [ref.id]);
+    this.handledUntil.delete(ref.id);
   }
 
   /** A new pin or plan, where T and P take the item (see `isPinnable`); its follow-up ends, as `App.followUpEnds` has it. */
