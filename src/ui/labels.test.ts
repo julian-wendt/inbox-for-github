@@ -27,6 +27,21 @@ describe("rowContext", () => {
     expect(rowContext({ item, answered: null, mention: null, asks: ["commits"], pushedBy: ["bob", "alice"] })).toBe("Neue Commits von alice und anderen");
   });
 
+  it("names the asks that bring an item back: a reopen, O, any post and a due follow-up", () => {
+    const back = { item: { ...item, comments: [{ author: "tobias-k", body: "", createdAt: at }] }, answered: null, mention: null };
+    expect(rowContext({ ...back, asks: ["reopened"], asked: { reopened: at }, reopenedBy: "priya-n" })).toBe("Von @priya-n wieder geöffnet");
+    expect(rowContext({ ...back, asks: ["opened"], asked: { opened: at } })).toBe("Von dir wieder geöffnet");
+    expect(rowContext({ ...back, asks: ["post"], asked: { post: at }, postedBy: "bob" })).toBe("@bob hat geschrieben");
+    expect(rowContext({ ...back, asks: ["due"], asked: { due: at } })).toBe("Deine Wiedervorlage ist fällig");
+  });
+
+  it("names the newest of several asks, the one the row is dated by", () => {
+    const mention = { by: "bob", at: "2026-10-01T00:00:00Z", excerpt: "", self: false };
+    const entry = { item: { ...item, closed: { state: "closed" as const, at } }, answered: null, mention, reopenedBy: "priya-n" };
+    expect(rowContext({ ...entry, asks: ["mention", "reopened"], asked: { mention: mention.at, reopened: at } })).toBe("Von @priya-n wieder geöffnet");
+    expect(rowContext({ ...entry, asks: ["mention", "reopened"], asked: { mention: "2026-10-09T00:00:00Z", reopened: at } })).toBe("@bob hat dich erwähnt");
+  });
+
   it("falls back to the search reason, then to the last poster", () => {
     const base: Pick<Classified, "item" | "mention" | "answered"> = {
       item: { ...item, reasons: ["review", "assigned"] },

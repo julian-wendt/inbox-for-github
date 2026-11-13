@@ -62,8 +62,10 @@ darkens instead.
   when a placeholder is markup.
 - English UI copy in sentence case; German uses "du".
 - A row's context line names the person who wants something from the viewer: who mentioned,
-  asked for the review, pushed or assigned them (`rowContext`). Only when GitHub does not say,
-  e.g. a commit without a linked user, does the line go without a name.
+  asked for the review, pushed, reopened or assigned them (`rowContext`). In the inbox it names
+  the newest ask, the one the row is dated by and the explanation starts with. Only when GitHub
+  does not say, e.g. a commit without a linked user, does the line go without a name. It carries
+  no repository: the row's tooltip, the detail and the sidebar filter have it.
 
 ## Keyboard
 

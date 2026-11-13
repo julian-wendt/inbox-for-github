@@ -270,6 +270,11 @@ returns only through an ask newer than its handled-until. The reasons:
 
 ## Tables and lists
 
+- **A list row's second line names the newest ask, without the repository** (2026-11-13, #132).
+  The line, the row's time and the explanation follow the same ask (`newestAsk`), so a reopen
+  reads "Reopened by @priya-n" and not who commented last; a due follow-up says so. Only the
+  newest ask shows, no "+1": the explanation lists them all. The repository left the line, also
+  for two rows of the same title: the tooltip and the detail name it.
 - **Assigned to me is a status table** grouped by the board status, normalized per board, with
   linked pull requests as the fallback. Grouped by issue type (the default), bugs come first,
   then other types, tasks, features, stories, with pull requests from others on top; GitHub issue
