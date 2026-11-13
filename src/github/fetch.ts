@@ -83,6 +83,7 @@ const ISSUE_FIELDS = `
 const QUERY = `
 query ($q: String!, $first: Int!, $after: String) {
   search(type: ISSUE, query: $q, first: $first, after: $after) {
+    issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
       __typename
@@ -174,7 +175,7 @@ export interface RawEvent {
 }
 
 interface SearchResult {
-  search: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: RawItem[] };
+  search: { issueCount: number; pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: RawItem[] };
 }
 
 export interface Viewer {
@@ -285,6 +286,8 @@ export interface FetchOptions {
   pageSize?: number;
   /** Only items closed before then, and no open ones: widening the closed window loads just the days missing. */
   closedBefore?: Date;
+  /** Called with each search string that found more hits than were read, e.g. past `SEARCH_STOP`. */
+  onCut?: (query: string) => void;
 }
 
 /**
@@ -311,8 +314,9 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * Runs one search per qualifier in `QUALIFIERS` over all owners (GitHub ORs repeated `org:` and
  * `user:` qualifiers) and merges the hits by node id; "assigned" and "mentioned" come from the
  * item's assignees and posts, so an item carries all its reasons.
- * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50; only the
- * last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
+ * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50, the most
+ * recently updated first, so a search cut at `SEARCH_STOP` misses only the oldest and the same
+ * ones each time; `onCut` hears of every cut search. Only the last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
  * `fetchBoards`), skipped when `boards` is false.
  *
  * @param token  GitHub token with `repo` and `read:org` scope.
@@ -329,7 +333,7 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * @example
  *   const items = await fetchItems(token, ["octo-org", "octo-labs"], { me: "octocat", closedDays: 7 });
  */
-export async function fetchItems(token: string, orgs: string[], { limit = SEARCH_STOP, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore }: FetchOptions = {}): Promise<Item[]> {
+export async function fetchItems(token: string, orgs: string[], { limit = SEARCH_STOP, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore, onCut }: FetchOptions = {}): Promise<Item[]> {
   if (orgs.length === 0) return [];
   const scope = scopeOf(orgs, me);
   const byId = new Map<string, Item>();
@@ -338,7 +342,10 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
 
   await Promise.all(
     searches.map(async ({ state, reason }) => {
-      for (const raw of await search(token, `${state} ${QUALIFIERS[reason]} ${scope}${updated}`, limit, pageSize, signal)) {
+      const q = `${state} ${QUALIFIERS[reason]} ${scope}${updated} sort:updated-desc`;
+      const { hits, cut } = await search(token, q, limit, pageSize, signal);
+      if (cut) onCut?.(q);
+      for (const raw of hits) {
         const item = byId.get(raw.id) ?? toItem(raw);
         for (const r of [reason, ...reasonsOf(item, me)]) if (!item.reasons.includes(r)) item.reasons.push(r);
         byId.set(raw.id, item);
@@ -497,8 +504,10 @@ let pageCap = Number.POSITIVE_INFINITY;
  * size that worked holds for every later page and search (`pageCap`), so a slow organization
  * costs the wait once and not on every refresh.
  */
-async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<RawItem[]> {
+async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<{ hits: RawItem[]; cut: boolean }> {
   const hits: RawItem[] = [];
+  let read = 0;
+  let found = 0;
   let after: string | null = null;
   let size = pageSize;
   for (let asked = 0; asked < limit; asked += size) {
@@ -513,11 +522,13 @@ async function search(token: string, q: string, limit: number, pageSize: number,
         log.debug("search page timed out", { first: size, next: pageCap });
       }
     }
+    read += data.search.nodes.length;
+    found = data.search.issueCount;
     hits.push(...data.search.nodes.filter((node) => node?.id));
     if (!data.search.pageInfo.hasNextPage) break;
     after = data.search.pageInfo.endCursor;
   }
-  return hits;
+  return { hits, cut: found > read };
 }
 
 /**

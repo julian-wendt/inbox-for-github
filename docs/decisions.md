@@ -318,6 +318,10 @@ returns only through an ask newer than its handled-until. The reasons:
   and four of them an hour would use up the budget; the pause before it runs out (`LOW_BUDGET`)
   covers that rare case. The stored key stays in the database for now, so older versions can
   still read it.
+  Past the 1000, searches sort by last update, so only the oldest items are missing and always
+  the same ones; the sidebar says "Not all loaded" instead of a notice block, since nothing
+  needs doing at once. And an ask older than the fetch before no longer notifies, so an item
+  that was missing for a while comes back quietly.
 - **A transferred issue is recognized by repository, creation time and title.** GitHub gives it a
   new node id and keeps no link to the old one, but keeps `createdAt` and the title, and names
   the old repository in a `TransferredEvent`. The match also needs exactly one candidate, and the

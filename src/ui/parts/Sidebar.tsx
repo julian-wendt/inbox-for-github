@@ -34,6 +34,8 @@ interface Props {
   calendarAccess: CalendarAccess;
   loading: boolean;
   fetchedAt: Date | null;
+  /** A search found more than GitHub returns, so the oldest items are missing. */
+  cut: boolean;
   usage: { budget: Budget | null; lastCost: number | null };
   refreshMinutes: number;
   /** Automatic refreshes wait until then because GitHub's hourly budget is low. */
@@ -158,6 +160,8 @@ export function Sidebar(props: Props) {
             <small className="offline" title={error}>
               {t("sidebar.offline", { ago: since })}
             </small>
+          ) : since && props.cut ? (
+            <small title={t("sidebar.cutHint")}>{t("sidebar.cut", { ago: since })}</small>
           ) : (
             <small>{since ? t("sidebar.updated", { ago: since }) : t("sidebar.notLoaded")}</small>
           )}

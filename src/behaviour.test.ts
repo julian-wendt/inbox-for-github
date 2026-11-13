@@ -10,7 +10,7 @@ import { VIEWS, type View } from "./ui/labels";
 import { datedOf } from "./ui/plan";
 import { doneAccess } from "./ui/statusPlan";
 import { inDoneBar } from "./ui/doneBar";
-import { dueReminders, ringing } from "./ui/attention";
+import { arrivals, askKey, dueReminders, ringing } from "./ui/attention";
 import { unreadInInbox } from "./ui/unread";
 
 // Walks the table in docs/reference/behaviour.md, one describe per rule.
@@ -765,6 +765,26 @@ describe("rule 8: a follow-up with Remind me rings once when it comes due, and c
         expect(app.entry(pr)).toMatchObject({ status: "snoozed", notify: true, asks: [] });
         world.advance(2 * HOUR);
         expect(ringing(app.entry(pr))).toBe(true);
+      },
+    },
+  ]);
+});
+
+describe("rule 10: an ask notifies only when it is newer than the fetch before", () => {
+  walk([
+    {
+      situation: "an item missing from a fetch comes back quietly with its old ask, a new mention notifies",
+      run: async (world, app) => {
+        const issue = await mentioned(world, app);
+        const lastFetch = world.now.toISOString();
+        const missing = new Map(app.classified().filter((c) => c.bucket === "inbox" && c.item.id !== issue.id).map((c) => [c.item.id, askKey(c)]));
+        world.advance(HOUR);
+        await app.refresh();
+        expect(arrivals(app.classified(), missing, lastFetch)).toEqual([]);
+        const other = world.issue();
+        world.comment(other, "bob", "@octocat a quick one?");
+        await app.refresh();
+        expect(arrivals(app.classified(), missing, lastFetch).map((c) => c.item.id)).toEqual([other.id]);
       },
     },
   ]);
