@@ -23,13 +23,13 @@ numbers below go stale when fields are added.
 | Budget read | `x-ratelimit-*` response headers | free |
 | `rate_limit` REST endpoint | — | free |
 
-A full fetch pages through every search up to the item limit (default 200 per search; two
-qualifiers, for open and, with a closed window, closed items), a few hundred points. A delta
+A full fetch pages through every search to its end (at most GitHub's 1000 hits, `SEARCH_STOP`;
+two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits. A delta
 runs the same searches with one page of 20 each, about 7 points per search, plus one point for
 the ids of the open review requests. Widening the
 closed window adds the two closed searches over the added days only, paged like a full fetch:
-the same `QUERY` with another search string, so ~19 points per page of 50, at most 8 pages
-(about 150 points) at the default limit and usually one or two per search.
+the same `QUERY` with another search string, so ~19 points per page of 50, usually one or two
+pages per search.
 
 ## Verified behavior (2026-10-23)
 

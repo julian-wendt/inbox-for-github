@@ -44,7 +44,8 @@ describe("combined attributes", () => {
       { key: "pr", table: true, detail: false },
       { key: "repo", table: false, detail: true },
     ]);
-    expect(shownKeys(list, "detail")[0]).toBe("repo");
+    expect(shownKeys(list, "detail")).not.toContain("repo");
+    expect(shownKeys(list, "table")).toContain("pr");
     expect(splitAttributes(list).detailAttributes.slice(0, 2)).toEqual([
       { key: "pr", shown: false },
       { key: "repo", shown: true },

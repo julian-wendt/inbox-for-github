@@ -5,6 +5,9 @@ import { mentionsOf, sameLogin } from "../timeline";
 
 const PAGE_SIZE = 50;
 
+/** Where GitHub's search stops: it returns no hits past the first 1000. */
+export const SEARCH_STOP = 1000;
+
 /**
  * One search per qualifier. `involves:@me` already covers assignments, mentions, authorship and
  * comments, so those reasons are read from the item itself (see `reasonsOf`); only review
@@ -307,13 +310,13 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * Runs one search per qualifier in `QUALIFIERS` over all owners (GitHub ORs repeated `org:` and
  * `user:` qualifiers) and merges the hits by node id; "assigned" and "mentioned" come from the
  * item's assignees and posts, so an item carries all its reasons.
- * Each search reads at most `limit` hits, in pages of 50; only the last 100 comments per item
- * are loaded. Boards come from a second, failure-tolerant query (see `fetchBoards`), skipped when
- * `boards` is false.
+ * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50; only the
+ * last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
+ * `fetchBoards`), skipped when `boards` is false.
  *
  * @param token  GitHub token with `repo` and `read:org` scope.
  * @param orgs   Owner logins, e.g. `["octo-org"]`. An empty list returns no items.
- * @param options.limit       Hits per search (two per state); GitHub's search stops at 1000.
+ * @param options.limit       Hits per search (two per state); GitHub's search stops at `SEARCH_STOP`.
  * @param options.closedDays  How far back closed and merged items are loaded; 0 loads none.
  * @param options.closedBefore  Loads only the closed items from `closedDays` back up to that day
  *                            (see `searchStates`), e.g. the days a wider window adds.
@@ -325,7 +328,7 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * @example
  *   const items = await fetchItems(token, ["octo-org", "octo-labs"], { me: "octocat", closedDays: 7 });
  */
-export async function fetchItems(token: string, orgs: string[], { limit = 200, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore }: FetchOptions = {}): Promise<Item[]> {
+export async function fetchItems(token: string, orgs: string[], { limit = SEARCH_STOP, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore }: FetchOptions = {}): Promise<Item[]> {
   if (orgs.length === 0) return [];
   const scope = scopeOf(orgs, me);
   const byId = new Map<string, Item>();

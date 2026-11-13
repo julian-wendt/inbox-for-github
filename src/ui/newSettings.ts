@@ -9,10 +9,6 @@ export type SettingsSection = "general" | "notify" | "calendar" | "orgs" | "repo
  * a release or two have passed; a fresh install sees none of them as new.
  */
 export const NEW_SETTINGS: { key: keyof Settings; section: SettingsSection }[] = [
-  { key: "threadReplies", section: "rules" },
-  { key: "ownFeedback", section: "rules" },
-  { key: "assignedFeedback", section: "rules" },
-  { key: "ownClosed", section: "rules" },
   { key: "tabToButtons", section: "look" },
 ];
 
@@ -23,7 +19,7 @@ export const NEW_SETTINGS: { key: keyof Settings; section: SettingsSection }[] =
  * @param section  Only the new settings in this section; all sections without it.
  *
  * @example
- *   unseenSettings(["ownClosed"], "rules"); // ["threadReplies", "ownFeedback", "assignedFeedback"]
+ *   unseenSettings([], "look"); // ["tabToButtons"]
  */
 export function unseenSettings(seen: readonly string[], section?: SettingsSection): (keyof Settings)[] {
   return NEW_SETTINGS.filter((s) => (!section || s.section === section) && !seen.includes(s.key)).map((s) => s.key);

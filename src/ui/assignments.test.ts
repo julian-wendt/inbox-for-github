@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Classified } from "../classify";
 import type { Item } from "../model";
-import { assignedAt, hasNewActivity, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, withoutLocalEvent, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
+import { assignedAt, hasNewActivity, groupByRepo, groupByType, groupPlate, isNewAssignment, lastOthersActivity, MOVES_UP_DEFAULT, withAssignees, withSelfAssigned, withSelfUnassigned, withoutLocalEvent, localDay, moveBar, moveTypeBar, onPlate, orderBars, withSaved, plateCount, shownStatus, type PlateGroup } from "./assignments";
 
 
 function entry(id: string, overrides: Partial<Classified> = {}, item: Partial<Item> = {}): Classified {
@@ -179,6 +179,15 @@ describe("withSelfAssigned", () => {
     expect(assigned.reasons).toEqual(["involved", "assigned"]);
     expect(isNewAssignment({ item: assigned, statusAt: null }, new Map(), "me")).toBe(false);
     expect(withSelfAssigned(assigned, "me", "2026-10-25T11:00:00Z")).toBe(assigned);
+  });
+});
+
+describe("withSelfUnassigned", () => {
+  it("takes the viewer off with an unassignment event, and leaves an item they are not on alone", () => {
+    const item = entry("a", {}, { assignees: ["bob", "Me"], reasons: ["involved", "assigned"], activities: [] }).item;
+    const left = withSelfUnassigned(item, "me", "2026-10-25T10:00:00Z");
+    expect(left).toMatchObject({ assignees: ["bob"], reasons: ["involved"], activities: [{ kind: "unassigned", actor: "me", assignee: "me" }] });
+    expect(withSelfUnassigned(left, "me", "2026-10-25T11:00:00Z")).toBe(left);
   });
 });
 

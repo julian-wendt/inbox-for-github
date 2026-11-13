@@ -24,7 +24,6 @@ interface Props {
   carriedSince?: string;
   /** What the row shows at its end instead of the time: in Planned the day, for a follow-up when it comes back. */
   when?: RowWhen;
-  avatar: boolean;
   onSelect: () => void;
   onOpen: () => void;
   onMenu: (e: React.MouseEvent) => void;
@@ -36,7 +35,7 @@ interface Props {
   still: boolean;
 }
 
-export function InboxRow({ entry, selected, unread, dated, event, carriedSince, when, avatar, onSelect, onOpen, onMenu, time, query, still }: Props) {
+export function InboxRow({ entry, selected, unread, dated, event, carriedSince, when, onSelect, onOpen, onMenu, time, query, still }: Props) {
   const { item, mention, status } = entry;
   const person = mention?.by ?? item.author;
   const ref = useScrollIntoView<HTMLLIElement>(selected);
@@ -58,7 +57,7 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       ref={ref}
     >
       {unread && <span className="fresh-dot" title={t("row.unread")} aria-label={t("row.unread")} />}
-      {avatar && <Avatar login={person} src={item.avatars[person]} size={34} />}
+      <Avatar login={person} src={item.avatars[person]} size={34} />
       <span className="row-main">
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
         <span className={`row-context${mention?.self ? " reminder" : ""}`}>

@@ -15,7 +15,7 @@ const ANYWHERE_KEYS = new Set(["Escape", "Tab"]);
 
 /**
  * Binds window-wide shortcuts. Plain keys and "ctrl+" keys are ignored while focus is in a text
- * field, so typing never triggers actions (⌃A, ⌃O and the like edit text there); "mod+"
+ * field, so typing never triggers actions (⌃A, ⌃E and the like edit text there); "mod+"
  * shortcuts, Escape and Tab always fire, except ⌘Z and ⌘Y, which a text field keeps for undoing and redoing its typing.
  * Enter and Space stay with a button or link Tab moved the focus to (with the "tabToButtons"
  * setting on), so it can be pressed; after a click they are shortcuts again.
