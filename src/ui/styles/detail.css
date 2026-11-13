@@ -70,7 +70,7 @@
 /* Always a scrollbar track: WebKit ignores scrollbar-gutter, and content must not shift. */
 .detail-scroll {
   flex: 1;
-  padding: 28px max(0px, calc(40px - var(--gutter, 0px))) 56px 40px;
+  padding: 28px max(0px, calc(16px - var(--gutter, 0px))) 56px 16px;
   overflow-y: scroll;
 }
 
