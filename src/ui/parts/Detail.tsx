@@ -1,5 +1,5 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Link, RefreshCw, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Ellipsis, Link, RefreshCw, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
 import type { Reopen, Status, StatusChange, WriteFailure } from "../../model";
@@ -18,6 +18,8 @@ import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
 import { OrcaMark } from "./OrcaMark";
+import { HeaderMenu } from "./HeaderMenu";
+import type { MenuEntry } from "./ContextMenu";
 import { KindIcon, FollowUpChip, PlanChip } from "./ItemMarks";
 import type { StatusMap } from "../../workStatus";
 import { AttributeChips } from "./AttributeChips";
@@ -142,12 +144,17 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
   // A plan is the item's "when" while it is open, so Plan, not Open, shows as chosen.
   const dated = datedOf(entry);
   const plan = dated ? datedText(dated) : null;
+  const assignable = !!onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me));
+  const tools: MenuEntry[] = [
+    { label: t("detail.openOnGitHub"), icon: <GitHubMark />, keys: "G", onSelect: () => void openUrl(item.url) },
+    ...(onOrca ? [{ label: t(orcaHint ? "orca.addOpen" : "orca.open"), icon: <OrcaMark size={16} />, keys: "W", onSelect: onOrca }] : []),
+    { label: t("menu.copyLink"), icon: <Link size={14} />, keys: "C", divided: true, onSelect: () => onCopy("url") },
+    { label: t("action.refreshItem"), icon: <RefreshCw size={14} />, keys: "⌃R", disabled: reloading, onSelect: onReload },
+    ...(assignable ? [{ label: t("assign.action"), icon: <UserPlus size={14} />, keys: "⌃A", divided: true, onSelect: onAssignMe }] : []),
+  ];
   return (
     <section className="detail">
       <header className="pane-header" data-tauri-drag-region>
-        <span className="crumb">
-          {item.repo} <span className="crumb-sep">/</span> #{item.number}
-        </span>
         <div className="header-actions">
           {item.closed && (
             <span className="chip closed-chip" title={t("closed.statusHint")}>
@@ -169,7 +176,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
                     <CalendarDays size={13} strokeWidth={1.75} color="var(--st-planned)" aria-hidden />
-                    {plan?.text ?? t("detail.plan")}
+                    <span className="segment-label">{plan?.text ?? t("detail.plan")}</span>
                     <ChevronDown size={12} className="segment-more" />
                   </button>
                 ),
@@ -182,32 +189,39 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
                   <StatusIcon status={s.id} size={13} />
-                  {s.title}
+                  <span className="segment-label">{s.title}</span>
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
                 </button>,
               ])}
             </div>
           )}
           <WhyHint why={explain(entry, reopenOn, me, dated)} />
-          <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
-            <GitHubMark />
-          </button>
-          {onOrca && (
-            <button className="chip-btn" title={`${t(orcaHint ? "orca.addOpen" : "orca.open")} (W)${orcaHint ? `\n${orcaHint}` : ""}`} aria-label={t(orcaHint ? "orca.addOpen" : "orca.open")} onClick={onOrca}>
-              <OrcaMark size={18} />
+        </div>
+        <div className="header-actions">
+          <span className="header-full">
+            <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
+              <GitHubMark />
             </button>
-          )}
-          <button className="chip-btn group-start" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
-            <Link size={15} />
-          </button>
-          <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>
-            <RefreshCw size={15} className={reloading ? "spin" : undefined} />
-          </button>
-          {onAssignMe && !item.closed && !item.assignees.some((a) => sameLogin(a, me)) && (
-            <button className="chip-btn group-start" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
-              <UserPlus size={15} />
+            {onOrca && (
+              <button className="chip-btn" title={`${t(orcaHint ? "orca.addOpen" : "orca.open")} (W)${orcaHint ? `\n${orcaHint}` : ""}`} aria-label={t(orcaHint ? "orca.addOpen" : "orca.open")} onClick={onOrca}>
+                <OrcaMark size={18} />
+              </button>
+            )}
+            <button className="chip-btn group-start" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
+              <Link size={15} />
             </button>
-          )}
+            <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>
+              <RefreshCw size={15} className={reloading ? "spin" : undefined} />
+            </button>
+            {assignable && (
+              <button className="chip-btn group-start" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
+                <UserPlus size={15} />
+              </button>
+            )}
+          </span>
+          <span className="header-compact">
+            <HeaderMenu icon={<Ellipsis size={15} />} title={t("detail.more")} entries={tools} />
+          </span>
           {onClose && (
             <button className="chip-btn group-start" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
               <X size={15} />
@@ -217,6 +231,9 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, failu
       </header>
       <div className="detail-scroll" ref={scroll}>
         <div className="detail-column">
+          <p className="detail-crumb">
+            {item.repo} #{item.number}
+          </p>
           <h2 className="detail-title">{item.title}</h2>
           <div className="detail-meta">
             <KindIcon item={item} size={18} />

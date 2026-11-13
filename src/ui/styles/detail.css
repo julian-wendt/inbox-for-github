@@ -3,6 +3,7 @@
   flex-direction: column;
   min-width: 0;
   background: var(--panel);
+  container: detail / inline-size;
 }
 
 .detail-empty {
@@ -28,17 +29,31 @@
   justify-content: space-between;
 }
 
-.crumb {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The tools fold into a menu before the status switch has to squeeze; narrower still, the
+   switch keeps only its icons. */
+@container detail (max-width: 699px) {
+  .detail .header-full {
+    display: none;
+  }
+
+  .detail .header-compact {
+    display: contents;
+  }
 }
 
-.crumb-sep {
-  color: var(--text-faint);
+@container detail (max-width: 559px) {
+  .status-switch :is(.segment-label, .segment-more) {
+    display: none;
+  }
+}
+
+.detail-crumb {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .btn.ghost {
@@ -55,7 +70,7 @@
 /* Always a scrollbar track: WebKit ignores scrollbar-gutter, and content must not shift. */
 .detail-scroll {
   flex: 1;
-  padding: 28px max(0px, calc(40px - var(--gutter, 0px))) 56px 40px;
+  padding: 28px max(0px, calc(16px - var(--gutter, 0px))) 56px 16px;
   overflow-y: scroll;
 }
 
