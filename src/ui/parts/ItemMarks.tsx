@@ -45,7 +45,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
   const title = t("snooze.reminderAt", { until: text });
   return (
     <span className="chip" title={entry.notify ? `${title} · ${t("snooze.notify")}` : title}>
-      {entry.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" aria-hidden style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={13} />}
+      {entry.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={13} />}
       {text}
       {onRemove && (
         <button className="chip-x" title={`${t("reminder.remove")} (X)`} aria-label={t("reminder.remove")} onClick={onRemove}>
@@ -104,6 +104,7 @@ const WHEN_ICONS = { plan: CalendarDays, followUp: RotateCw, remind: Bell };
 export function WhenIcon({ when }: { when: RowWhen }) {
   if (!when.icon) return null;
   const Icon = WHEN_ICONS[when.icon];
+  if (when.icon === "remind") return <Icon size={13} strokeWidth={1.75} role="img" aria-label={t("snooze.notify")} />;
   return <Icon size={13} strokeWidth={1.75} aria-hidden />;
 }
 
