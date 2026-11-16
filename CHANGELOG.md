@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.7.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.6.0...v0.7.0) (2026-11-16)
+
+
+### Features
+
+* drop nine settings and fix them to their usual value ([#138](https://github.com/julian-wendt/inbox-for-github/issues/138)) ([fba5695](https://github.com/julian-wendt/inbox-for-github/commit/fba569570c5523a0e7aec048425400b845e62ae8))
+* fold the detail's tools into a menu when the column is narrow ([#140](https://github.com/julian-wendt/inbox-for-github/issues/140)) ([39bd715](https://github.com/julian-wendt/inbox-for-github/commit/39bd715eead18a905fe940bb664eea54424f69a4))
+* let a list row name the newest ask, without the repository ([#153](https://github.com/julian-wendt/inbox-for-github/issues/153)) ([4cf1321](https://github.com/julian-wendt/inbox-for-github/commit/4cf13210c6292124cce0c9b78114a5bc3525321e))
+* let X on a follow-up or plan bring back what is pending ([#146](https://github.com/julian-wendt/inbox-for-github/issues/146)) ([23c9436](https://github.com/julian-wendt/inbox-for-github/commit/23c9436d8b19bd6499170c59c795b592043780a7))
+* name the detail's kind in its header, buttons on the right ([#157](https://github.com/julian-wendt/inbox-for-github/issues/157)) ([eb27e71](https://github.com/julian-wendt/inbox-for-github/commit/eb27e71772a707b61993b5d37bf581ca1fbf66aa))
+* notify on due follow-ups with Remind me ([#135](https://github.com/julian-wendt/inbox-for-github/issues/135)) ([07381c2](https://github.com/julian-wendt/inbox-for-github/commit/07381c29ea5360866ace850b18240b5bf0a6a32e))
+* order the detail's buttons, G opens on GitHub ([#139](https://github.com/julian-wendt/inbox-for-github/issues/139)) ([b5808ea](https://github.com/julian-wendt/inbox-for-github/commit/b5808ea88ded28f0da8daabd258564e9fde45eb3))
+* show plans, follow-ups and returns in the activity log ([#145](https://github.com/julian-wendt/inbox-for-github/issues/145)) ([f8a97e0](https://github.com/julian-wendt/inbox-for-github/commit/f8a97e02d57926fb81bd4732418bf6a00f982bd0))
+* show where a filter hides unread items ([#152](https://github.com/julian-wendt/inbox-for-github/issues/152)) ([8e2ae05](https://github.com/julian-wendt/inbox-for-github/commit/8e2ae05d9140361d559afb94cd05a4256d1b48c8))
+
+
+### Bug Fixes
+
+* drop plans of gone items and keep pending assignments ([#134](https://github.com/julian-wendt/inbox-for-github/issues/134)) ([c6bea0c](https://github.com/julian-wendt/inbox-for-github/commit/c6bea0c54606261281644c88212ca6524c647741))
+* keep a due follow-up quiet with the asks it raises again ([#142](https://github.com/julian-wendt/inbox-for-github/issues/142)) ([e243c21](https://github.com/julian-wendt/inbox-for-github/commit/e243c2111d0a08c40b878c590ae4dc5762d3eec5))
+* keep the sidebar's search and headings on one line ([#141](https://github.com/julian-wendt/inbox-for-github/issues/141)) ([2442f59](https://github.com/julian-wendt/inbox-for-github/commit/2442f5917c19a0ddea90df7de00b1391a1001c15))
+* let O end a follow-up that came due ([#143](https://github.com/julian-wendt/inbox-for-github/issues/143)) ([f6d5d88](https://github.com/julian-wendt/inbox-for-github/commit/f6d5d88df9e4349a02127bd45e1df76c79a1b08b))
+* load every item a search finds, up to GitHub's 1000 ([#137](https://github.com/julian-wendt/inbox-for-github/issues/137)) ([5a8770f](https://github.com/julian-wendt/inbox-for-github/commit/5a8770f413353f771a2796a37e76567b735669a2))
+* load searches by last update and keep returning items quiet ([#150](https://github.com/julian-wendt/inbox-for-github/issues/150)) ([79a88cf](https://github.com/julian-wendt/inbox-for-github/commit/79a88cf0b7c2f85536722b4c610ca083da3e5874))
+* read a search in smaller pages when GitHub times one out ([#155](https://github.com/julian-wendt/inbox-for-github/issues/155)) ([57a0a4c](https://github.com/julian-wendt/inbox-for-github/commit/57a0a4c4f792862e9763e69140a8b18774ecc5ad))
+
 ## [0.6.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.5.0...v0.6.0) (2026-11-12)
 
 
