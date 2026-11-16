@@ -1,3 +1,5 @@
+import type { MenuAt } from "./menuPosition";
+
 /**
  * The middle of the pane that shows the selected item, for menus opened by a key: the detail
  * pop-up when open, else the detail pane, else the table, else the window.
@@ -21,9 +23,9 @@ export function paneCenter(): { x: number; y: number } {
  * @example
  *   setMenu({ entries, ...keyMenuAt(c.item.id) });
  */
-export function keyMenuAt(id: string): { x: number; y: number; centered: boolean; centerX?: boolean } {
+export function keyMenuAt(id: string): MenuAt {
   const row = document.querySelector(".item-popup") ? null : document.querySelector(`[data-id="${CSS.escape(id)}"]`);
   const box = row?.getBoundingClientRect();
-  if (box && box.bottom > 0 && box.top < window.innerHeight) return { x: box.left + box.width / 2, y: box.bottom + 4, centered: false, centerX: true };
+  if (box && box.bottom > 0 && box.top < window.innerHeight) return { anchor: box, centerX: true };
   return { ...paneCenter(), centered: true };
 }

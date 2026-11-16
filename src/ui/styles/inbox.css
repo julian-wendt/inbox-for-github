@@ -105,7 +105,7 @@
 
 .popover {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + var(--pop-gap));
   right: 0;
   z-index: 26;
   width: var(--popover-w);
@@ -126,8 +126,8 @@
 /* Bridges the gap to the button, so a hover-opened popover stays open on the way over. */
 .popover::before {
   position: absolute;
-  inset: -8px 0 auto;
-  height: 8px;
+  inset: calc(-1 * var(--pop-gap)) 0 auto;
+  height: var(--pop-gap);
   content: "";
 }
 
@@ -859,10 +859,16 @@
   position: relative;
 }
 
+/* Level with its row and --pop-gap beside the menu: the slot sits inside 4px padding and a 1px border. */
 .submenu {
   position: absolute;
   top: calc(-4px - 1px);
-  left: calc(100% + 2px);
+  left: calc(100% + 4px + 1px + var(--pop-gap));
+}
+
+.submenu.left {
+  right: calc(100% + 4px + 1px + var(--pop-gap));
+  left: auto;
 }
 
 .menu-row {

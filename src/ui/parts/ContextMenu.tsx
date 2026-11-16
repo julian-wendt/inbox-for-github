@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { t } from "../i18n";
 import { noteInput } from "../inputTrail";
 import { keyMatches } from "../keyMatch";
+import { menuPosition, type MenuAt } from "../menuPosition";
 
 /** One entry of a context menu; `items` makes it open a submenu instead of running. */
 export interface MenuEntry {
@@ -26,36 +27,47 @@ export interface MenuEntry {
 }
 
 /**
- * A right-click menu at the pointer, kept inside the window. It takes the keyboard while open:
+ * A menu at the pointer or hanging from the control that opened it, kept inside the window. It takes the keyboard while open:
  * ↑/↓ move, Enter or → runs or opens a submenu, ← closes the submenu, Escape closes, and an
  * entry's shortcut runs it. A click outside, scrolling or resizing closes it.
  *
  * @param x, y      Where the pointer was, in viewport pixels; with `centered`, the menu's middle.
+ * @param anchor    The opening control's box instead: the menu hangs below it, or above where the
+ *                  window ends, lined up with its left edge, or with `end` its right edge.
  * @param entries   The menu, top to bottom.
  * @param onClose   Called when the menu should go away, also after an entry ran.
  * @param centered  Centers the menu on x, y, for menus a key opens in a pane (see `paneCenter`),
  *                  and sets it larger, as it stands on its own like a dialog.
- * @param centerX   Centers the menu on x only, below y (see `keyMenuAt`); implied by `centered`.
+ * @param centerX   Centers the menu on x, or on the anchor's width (see `keyMenuAt`).
  * @param fit       Grows the menu so every hint stays on one line, for the menus a key opens.
  *
  * @example
  *   <ContextMenu x={e.clientX} y={e.clientY} entries={[{ label: "Done", keys: "D", onSelect: done }]} onClose={close} />
+ *   <ContextMenu anchor={button.getBoundingClientRect()} end entries={entries} onClose={close} />
  */
-export function ContextMenu(props: { x: number; y: number; entries: MenuEntry[]; onClose: () => void; centered?: boolean; centerX?: boolean; fit?: boolean }) {
-  const { x, y, entries, onClose, centered = false, centerX = centered, fit = false } = props;
+export function ContextMenu(props: MenuAt & { entries: MenuEntry[]; onClose: () => void; fit?: boolean }) {
+  const { x = 0, y = 0, anchor, end, entries, onClose, centered = false, centerX, fit = false } = props;
   const [active, setActive] = useState(0);
   const [sub, setSub] = useState<number | null>(null);
   const [subActive, setSubActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x, y });
+  const submenu = useRef<HTMLDivElement>(null);
+  // Measured at the window's corner first, where nothing squeezes it, then placed.
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [subLeft, setSubLeft] = useState(false);
+  const token = (name: string) => parseFloat(getComputedStyle(root.current!).getPropertyValue(name));
 
   useLayoutEffect(() => {
     const box = root.current?.getBoundingClientRect();
     if (!box) return;
-    const left = centerX ? x - box.width / 2 : x;
-    const top = centered ? y - box.height / 2 : y;
-    setPos({ x: Math.max(8, Math.min(left, window.innerWidth - box.width - 8)), y: Math.max(8, Math.min(top, window.innerHeight - box.height - 8)) });
-  }, [x, y, centered, centerX]);
+    setPos(menuPosition(box, { x, y, anchor, end, centered, centerX }, { width: window.innerWidth, height: window.innerHeight }, token("--pop-gap"), token("--window-margin")));
+  }, [x, y, anchor, end, centered, centerX]);
+
+  useLayoutEffect(() => {
+    const width = submenu.current?.offsetWidth;
+    if (!width || !root.current) return;
+    setSubLeft(root.current.getBoundingClientRect().right + token("--pop-gap") + width > window.innerWidth - token("--window-margin"));
+  }, [sub]);
 
   const run = (entry: MenuEntry) => {
     if (entry.disabled) return;
@@ -136,7 +148,7 @@ export function ContextMenu(props: { x: number; y: number; entries: MenuEntry[];
             onSelect={() => (entry.items ? setSub(i) : run(entry))}
           />
           {sub === i && entry.items && (
-            <div className="context-menu submenu" role="menu">
+            <div ref={submenu} className={`context-menu submenu${subLeft ? " left" : ""}`} role="menu">
               {entry.items.map((child, j) => (
                 <div key={child.label} className="menu-slot">
                   {child.divided && <hr />}

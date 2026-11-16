@@ -718,7 +718,7 @@
 
 .org-select-menu {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + var(--pop-gap));
   right: 0;
   left: 0;
   z-index: 26;

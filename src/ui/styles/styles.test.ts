@@ -128,6 +128,11 @@ describe("style guide", () => {
     expect(fractions).toEqual([]);
   });
 
+  it("hangs pop-ups --pop-gap from their control", () => {
+    const placed = sheets.flatMap((sheet) => sheet.declarations).filter((d) => /^(top|right|bottom|left)$/.test(d.property) && d.value.startsWith("calc(100% +"));
+    expect(placed.filter((d) => !d.value.includes("var(--pop-gap)")).map((d) => `${d.at} ${d.value}`)).toEqual([]);
+  });
+
   it("keeps rgb() and hsl() colors in tokens.css", () => {
     const raw = sheets
       .filter((sheet) => sheet.name !== "tokens.css")

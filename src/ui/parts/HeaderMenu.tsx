@@ -6,7 +6,7 @@ import { ContextMenu, type MenuEntry } from "./ContextMenu";
 
 /**
  * A button in a list or table header that opens a menu below it, like a select: the sprint
- * filter, the table's properties. Shows `label` next to `icon` when given, else the icon alone.
+ * filter, the table's properties. It sits at the bar's right end, so the menu lines up with its right edge. Shows `label` next to `icon` when given, else the icon alone.
  *
  * @param title     The button's tooltip and accessible name.
  * @param disabled  Greyed out instead of hidden when there is nothing to choose, so the header keeps its layout.
@@ -36,7 +36,7 @@ export function HeaderMenu({ icon, label, title, entries, disabled = false, hidi
         <ChevronDown size={12} aria-hidden />
       </button>
       {/* On the body, outside the header's stacking context, so the pane resizers cannot show through the menu. */}
-      {at && createPortal(<ContextMenu x={at.left} y={at.bottom + 4} entries={entries} onClose={() => setAt(null)} />, document.body)}
+      {at && createPortal(<ContextMenu anchor={at} end entries={entries} onClose={() => setAt(null)} />, document.body)}
     </>
   );
 }

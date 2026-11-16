@@ -15,6 +15,7 @@ import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
 import { OrcaMark } from "./ui/parts/OrcaMark";
 import { repoList } from "./ui/repoList";
 import { keyMenuAt, paneCenter } from "./ui/paneCenter";
+import type { MenuAt } from "./ui/menuPosition";
 import { useOrbLogins } from "./ui/avatarKinds";
 import { setOrbLooks } from "./ui/orbLookStore";
 import { assignLooks } from "./ui/orbLooks";
@@ -654,7 +655,7 @@ export default function App() {
     });
   /** P on an item: the plan choices open below its row, like the follow-up ones, or below the detail's Plan button. */
   const plan = (c: Classified, at?: DOMRect) =>
-    pinnable(c) ? setMenu({ of: { id: c.item.id, kind: "plan" }, fit: true, ...(at ? { x: at.left, y: at.bottom + 4 } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
+    pinnable(c) ? setMenu({ of: { id: c.item.id, kind: "plan" }, fit: true, ...(at ? { anchor: at } : { ...paneCenter(), centered: true }) }) : actions.notify(t("noop.notPlannable", { number: c.item.number }));
 
   /** Stops tracking an item for good, with undo; the settings list it for tracking again. */
   const untrack = (c: Classified) => {
@@ -676,10 +677,10 @@ export default function App() {
     rememberDemo(!isDemo());
     window.location.reload();
   };
-  const [menu, setMenu] = useState<{ entries?: MenuEntry[]; of?: { id: string; kind: "item" | "plan" }; x: number; y: number; centered?: boolean; centerX?: boolean; fit?: boolean } | null>(null);
+  const [menu, setMenu] = useState<(MenuAt & { entries?: MenuEntry[]; of?: { id: string; kind: "item" | "plan" }; fit?: boolean }) | null>(null);
   /** A menu of one item is built from the item as it is now, not as it was when the menu opened. */
   const menuItem = menu?.of ? inbox.classified.find((c) => c.item.id === menu.of?.id) : undefined;
-  const [snoozeMenu, setSnoozeMenu] = useState<{ entry: Classified; x: number; y: number; centered?: boolean; centerX?: boolean } | null>(null);
+  const [snoozeMenu, setSnoozeMenu] = useState<(MenuAt & { entry: Classified }) | null>(null);
   const snoozeItem = snoozeMenu ? inbox.classified.find((c) => c.item.id === snoozeMenu.entry.item.id) : undefined;
   // "Remind me" as flipped in the open follow-up menu, until a choice stores it; else the item's own.
   const [notifyChoice, setNotifyChoice] = useState<{ id: string; on: boolean } | null>(null);
@@ -1417,7 +1418,7 @@ export default function App() {
             orcaHint={current ? orcaHint(current) : undefined}
             onAssignMe={() => current && assignMe(current)}
             onPlan={(at: DOMRect) => current && plan(current, at)}
-            onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
+            onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, anchor: at })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
           />
@@ -1453,7 +1454,7 @@ export default function App() {
             orcaHint={current ? orcaHint(current) : undefined}
             onAssignMe={() => current && assignMe(current)}
             onPlan={(at: DOMRect) => current && plan(current, at)}
-            onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
+            onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, anchor: at })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
                 onClose={closePopup}
@@ -1468,9 +1469,9 @@ export default function App() {
         </div>
       )}
       <Toast toast={actions.toast} />
-      {menu && menuEntriesNow && <ContextMenu x={menu.x} y={menu.y} centered={menu.centered} centerX={menu.centerX} fit={menu.fit} entries={menuEntriesNow} onClose={() => (setMenu(null), setNotifyChoice(null))} />}
+      {menu && menuEntriesNow && <ContextMenu {...menu} entries={menuEntriesNow} onClose={() => (setMenu(null), setNotifyChoice(null))} />}
       {snoozeMenu && (
-        <ContextMenu x={snoozeMenu.x} y={snoozeMenu.y} centered={snoozeMenu.centered} centerX={snoozeMenu.centerX} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => (setSnoozeMenu(null), setNotifyChoice(null))} />
+        <ContextMenu {...snoozeMenu} fit entries={snoozeEntries(snoozeItem ?? snoozeMenu.entry)} onClose={() => (setSnoozeMenu(null), setNotifyChoice(null))} />
       )}
       {calendarFor && (
         <CalendarDay

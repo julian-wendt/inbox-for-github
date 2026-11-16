@@ -168,6 +168,23 @@ selectors their values in order.
 | Label `.label` | 20 (table 24, detail 28) | `0 8px` (table and detail `0 12px`) | `xs`/500 (detail `m`) | label color at `--tint` | full |
 | Dot | 6 or 8 | — | — | a hue | full |
 
+## Placing pop-ups and menus
+
+| Opened by | Where it opens |
+|---|---|
+| a control (button, chip, dropdown) | `--pop-gap` (6px) below it, left edges lined up |
+| a control at the right end of a bar (after the header's spacer, the info bulbs, the close button) | `--pop-gap` below it, right edges lined up |
+| a dropdown field | `--pop-gap` below it, as wide as the field |
+| a key on a list row (P, F) | `--pop-gap` below the row, centered on it; the middle of the pane when the row is hidden |
+| a key with no row to hang from | centered in the pane |
+| a right click | at the pointer |
+| a menu entry with a submenu | `--pop-gap` beside the menu, its first row level with the entry |
+
+Where the window ends, a menu takes the other edge of its control, opens above it when only
+that fits, and keeps `--window-margin` (8px) to the window's edges; a submenu opens to the left.
+Menus place themselves with `menuPosition` (`src/ui/menuPosition.ts`), pop-ups in CSS with
+`calc(100% + var(--pop-gap))`; no component adds offsets of its own.
+
 ## Surfaces and effects
 
 - **Backgrounds** are tokens only: `--panel` for cards, menus and dialogs, `--surface` for raised

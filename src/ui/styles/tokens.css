@@ -57,7 +57,8 @@
   --weekday-w: 84px;
   --reply-h: 110px;
   --code-max-h: 240px;
-  /* What a menu keeps free to the window's edges. */
+  /* A menu or pop-up's distance to the control that opened it, and what it keeps free to the window's edges. */
+  --pop-gap: 6px;
   --window-margin: 8px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
