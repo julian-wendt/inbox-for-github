@@ -746,7 +746,7 @@
 
 /* As tall as the time and segmented fields next to it, not like the organization picker. */
 .calendar-select .org-select-button {
-  height: 30px;
+  height: var(--control-h);
   border-color: transparent;
   background: var(--control-fill);
 }
@@ -876,7 +876,7 @@
 
 .org-add input {
   flex: 1;
-  height: 30px;
+  height: var(--control-h);
   padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
@@ -930,7 +930,7 @@
 }
 
 .time-field .segment-field {
-  height: 30px;
+  height: var(--control-h);
   padding: 0 12px;
   border-color: transparent;
   background: var(--control-fill);
