@@ -82,6 +82,20 @@ describe("searching the world", () => {
 
     expect(await fetchAll({ pageSize: 3 })).toHaveLength(7);
   });
+
+  it("reads the most recently updated first and reports a search it had to cut", async () => {
+    const issues = Array.from({ length: 5 }, () => {
+      world.advance(60_000);
+      return world.issue({ assignees: ["octocat"] });
+    });
+    const cut: string[] = [];
+
+    const items = await fetchAll({ limit: 3, pageSize: 3, onCut: (q) => cut.push(q) });
+
+    expect(items.map((i) => i.id)).toEqual(issues.slice(2).reverse().map((i) => i.id));
+    expect(cut).toEqual([expect.stringContaining("involves:@me")]);
+    expect(cut[0]).toContain("sort:updated-desc");
+  });
 });
 
 describe("what a request costs", () => {

@@ -378,12 +378,12 @@
   font-weight: 600;
 }
 
-/* Yellow only reaches 3:1, so the reminder tag keeps neutral text and colors its bell. */
-.post.reminder .mention-tag {
+/* Yellow only reaches 3:1, so the self-mention tag keeps neutral text and colors its bell. */
+.post.self-mention .mention-tag {
   color: var(--text-muted);
 }
 
-.post.reminder .mention-tag svg {
+.post.self-mention .mention-tag svg {
   color: var(--yellow);
 }
 
@@ -901,7 +901,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  color: var(--st-accepted);
+  color: var(--unread);
   font-size: 12px;
   font-weight: 600;
 }
@@ -909,7 +909,7 @@
 .since-divider::after {
   flex: 1;
   height: 1px;
-  background: var(--st-accepted);
+  background: var(--unread);
   content: "";
   opacity: 0.5;
 }

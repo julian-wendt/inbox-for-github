@@ -1,6 +1,7 @@
 import type { Activity, Comment, Item, Org, PullState, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
 import { fetchBoards } from "./boards";
-import { graphql } from "./client";
+import { graphql, TimeoutError } from "./client";
+import { log } from "../log";
 import { mentionsOf, sameLogin } from "../timeline";
 
 const PAGE_SIZE = 50;
@@ -82,6 +83,7 @@ const ISSUE_FIELDS = `
 const QUERY = `
 query ($q: String!, $first: Int!, $after: String) {
   search(type: ISSUE, query: $q, first: $first, after: $after) {
+    issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
       __typename
@@ -173,7 +175,7 @@ export interface RawEvent {
 }
 
 interface SearchResult {
-  search: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: RawItem[] };
+  search: { issueCount: number; pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: RawItem[] };
 }
 
 export interface Viewer {
@@ -284,6 +286,8 @@ export interface FetchOptions {
   pageSize?: number;
   /** Only items closed before then, and no open ones: widening the closed window loads just the days missing. */
   closedBefore?: Date;
+  /** Called with each search string that found more hits than were read, e.g. past `SEARCH_STOP`. */
+  onCut?: (query: string) => void;
 }
 
 /**
@@ -310,8 +314,10 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * Runs one search per qualifier in `QUALIFIERS` over all owners (GitHub ORs repeated `org:` and
  * `user:` qualifiers) and merges the hits by node id; "assigned" and "mentioned" come from the
  * item's assignees and posts, so an item carries all its reasons.
- * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50; only the
- * last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
+ * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50 (smaller
+ * after GitHub timed one out, see `search`; a full fetch tries 50 again), the most
+ * recently updated first, so a search cut at `SEARCH_STOP` misses only the oldest and the same
+ * ones each time; `onCut` hears of every cut search. Only the last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
  * `fetchBoards`), skipped when `boards` is false.
  *
  * @param token  GitHub token with `repo` and `read:org` scope.
@@ -328,16 +334,20 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * @example
  *   const items = await fetchItems(token, ["octo-org", "octo-labs"], { me: "octocat", closedDays: 7 });
  */
-export async function fetchItems(token: string, orgs: string[], { limit = SEARCH_STOP, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore }: FetchOptions = {}): Promise<Item[]> {
+export async function fetchItems(token: string, orgs: string[], { limit = SEARCH_STOP, closedDays = 0, me = "", boards = true, now = new Date(), signal, since, pageSize = PAGE_SIZE, closedBefore, onCut }: FetchOptions = {}): Promise<Item[]> {
   if (orgs.length === 0) return [];
   const scope = scopeOf(orgs, me);
   const byId = new Map<string, Item>();
   const updated = since ? ` updated:>=${since.toISOString().slice(0, 19)}Z` : "";
+  if (!since && !closedBefore) pageCap = Number.POSITIVE_INFINITY;
   const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ state, reason })));
 
   await Promise.all(
     searches.map(async ({ state, reason }) => {
-      for (const raw of await search(token, `${state} ${QUALIFIERS[reason]} ${scope}${updated}`, limit, pageSize, signal)) {
+      const q = `${state} ${QUALIFIERS[reason]} ${scope}${updated} sort:updated-desc`;
+      const { hits, cut } = await search(token, q, limit, pageSize, signal);
+      if (cut) onCut?.(q);
+      for (const raw of hits) {
         const item = byId.get(raw.id) ?? toItem(raw);
         for (const r of [reason, ...reasonsOf(item, me)]) if (!item.reasons.includes(r)) item.reasons.push(r);
         byId.set(raw.id, item);
@@ -484,16 +494,43 @@ export function reasonsOf(item: Item, me: string): Reason[] {
   return reasons;
 }
 
-async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<RawItem[]> {
+/** The smallest search page; below it a timeout is the search's failure. */
+const MIN_PAGE_SIZE = 5;
+
+/** What search pages are held to once GitHub timed one out: half the size that failed, until the next full fetch. */
+let pageCap = Number.POSITIVE_INFINITY;
+
+/**
+ * Reads up to `limit` hits of one search, in pages of `pageSize`. A page GitHub drops after its
+ * ten seconds (`TimeoutError`) is asked again at half the size, down to `MIN_PAGE_SIZE`; the
+ * size that worked holds for every later page and search (`pageCap`) until the next full fetch,
+ * so a slow organization costs the wait once per full fetch and not on every delta.
+ */
+async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<{ hits: RawItem[]; cut: boolean }> {
   const hits: RawItem[] = [];
+  let read = 0;
+  let found = 0;
   let after: string | null = null;
-  for (let page = 0; page < Math.ceil(limit / pageSize); page++) {
-    const data: SearchResult = await graphql<SearchResult>(token, QUERY, { q, first: pageSize, after }, signal);
+  let size = pageSize;
+  for (let asked = 0; asked < limit; asked += size) {
+    let data: SearchResult | undefined;
+    while (!data) {
+      size = Math.min(size, pageCap);
+      try {
+        data = await graphql<SearchResult>(token, QUERY, { q, first: size, after }, signal);
+      } catch (e) {
+        if (!(e instanceof TimeoutError) || size <= MIN_PAGE_SIZE) throw e;
+        pageCap = Math.min(pageCap, Math.max(MIN_PAGE_SIZE, Math.ceil(size / 2)));
+        log.debug("search page timed out", { first: size, next: pageCap });
+      }
+    }
+    read += data.search.nodes.length;
+    found = data.search.issueCount;
     hits.push(...data.search.nodes.filter((node) => node?.id));
     if (!data.search.pageInfo.hasNextPage) break;
     after = data.search.pageInfo.endCursor;
   }
-  return hits;
+  return { hits, cut: found > read };
 }
 
 /**

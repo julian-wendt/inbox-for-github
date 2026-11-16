@@ -456,7 +456,20 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--st-accepted);
+  background: var(--unread);
+}
+
+/* In a segmented control's text, where the dot is not a flex item. */
+.segmented .fresh-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.hidden-unread {
+  margin: 14px auto;
 }
 
 /* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
@@ -523,7 +536,7 @@
 
 /* Where a dragged bar will land: just above this one. */
 .bar-group.drop-target {
-  box-shadow: 0 -2px 0 var(--st-accepted);
+  box-shadow: 0 -2px 0 var(--blue);
 }
 
 .bar {
@@ -757,7 +770,7 @@
 }
 
 .option-blue {
-  --option: var(--st-accepted);
+  --option: var(--blue);
 }
 
 .option-green {

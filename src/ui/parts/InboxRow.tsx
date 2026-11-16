@@ -60,7 +60,7 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       <Avatar login={person} src={item.avatars[person]} size={34} />
       <span className="row-main">
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
-        <span className={`row-context${mention?.self ? " reminder" : ""}`}>
+        <span className={`row-context${mention?.self ? " self-mention" : ""}`}>
           <KindIcon item={item} size={13} status={status} />
           {carriedSince && (
             <span className="row-mark carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>

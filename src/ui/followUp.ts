@@ -3,7 +3,7 @@ import { snapshotOf } from "../handoff";
 import type { StatusExtra } from "../model";
 import { t } from "./i18n";
 import { datedText, type Dated } from "./plan";
-import { reminderText, untilShort } from "./snooze";
+import { followUpText, untilShort } from "./snooze";
 
 /**
  * The follow-up date of an item that waits for one, which is what its row and chip show: the
@@ -39,7 +39,7 @@ export function isWaiting(entry: Pick<Classified, "status" | "item">): boolean {
  */
 export function followUpWhen(entry: Pick<Classified, "status" | "until">, now = new Date()): { text: string; title: string } | undefined {
   const followUp = followUpOf(entry);
-  return followUp ? { text: untilShort(followUp.at, now), title: t("snooze.reminderAt", { until: reminderText(followUp.at) }) } : undefined;
+  return followUp ? { text: untilShort(followUp.at, now), title: t("snooze.followUpAt", { until: followUpText(followUp.at) }) } : undefined;
 }
 
 /** What a row shows at its end instead of its age, with the icon that says what kind of "when" it is. */

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { graphql, lastBudget, missingScopes, pointsSpent, RateLimitError } from "./client";
+import { graphql, lastBudget, missingScopes, pointsSpent, RateLimitError, TimeoutError } from "./client";
 
 describe("missingScopes", () => {
   it("lists the required scopes a token lacks", () => {
@@ -63,5 +63,54 @@ describe("graphql rate limits", () => {
     await expect(graphql("t", "{ node }")).rejects.toThrow("Could not resolve");
     respond(200, { data: { node: null }, errors: [...gone.errors, { type: "FORBIDDEN", message: "Resource not accessible" }] }, {});
     await expect(graphql("t", "{ node }", {}, undefined, { allowNotFound: true })).rejects.toThrow("Resource not accessible");
+  });
+});
+
+describe("graphql timeouts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  /** The request starts at 0 and fails or answers `ms` later. */
+  const after = (ms: number) => vi.spyOn(Date, "now").mockReturnValueOnce(0).mockReturnValue(ms);
+  const unreachable = () => vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))));
+
+  it("takes a fetch that fails after GitHub's ten seconds as its timeout, which the web view cannot read", async () => {
+    unreachable();
+    after(10_500);
+    await expect(graphql("t", "{ ok }")).rejects.toBeInstanceOf(TimeoutError);
+  });
+
+  it("leaves a fetch that fails at once as it is: no network", async () => {
+    unreachable();
+    after(40);
+    const error = await graphql("t", "{ ok }").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(TypeError);
+    expect(error).not.toBeInstanceOf(TimeoutError);
+  });
+
+  it("leaves a fetch that fails long after the ten seconds as it is: a Mac that slept, a network lost", async () => {
+    unreachable();
+    after(60_000);
+    const error = await graphql("t", "{ ok }").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(TypeError);
+    expect(error).not.toBeInstanceOf(TimeoutError);
+  });
+
+  it("leaves a stopped request as it is, however late", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new DOMException("signal is aborted without reason", "AbortError"))));
+    after(10_500);
+    await expect(graphql("t", "{ ok }")).rejects.toThrow("aborted");
+  });
+
+  it("takes a late 502 as the timeout where its status can be read, and an early one as an error", async () => {
+    respond(502, "<html>502 Bad Gateway</html>", {});
+    after(10_500);
+    await expect(graphql("t", "{ ok }")).rejects.toBeInstanceOf(TimeoutError);
+    vi.restoreAllMocks();
+    respond(502, "<html>502 Bad Gateway</html>", {});
+    after(40);
+    await expect(graphql("t", "{ ok }")).rejects.toThrow("GitHub API 502");
   });
 });

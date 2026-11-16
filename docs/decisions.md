@@ -267,6 +267,12 @@ returns only through an ask newer than its handled-until. The reasons:
 - **The picked repositories narrow the counts next to the views; no other filter does,** and the
   list header shows no count (2026-10-26). With a repo picked, a count of 4 beside a list of 1
   read as a bug; the dock badge still counts everything.
+- **The unread dot travels to the control that hides it** (2026-11-13, #133). When the kind,
+  sprint or ask filter hides unread items the sidebar counts, the options that would show them
+  carry the dot, and so does the sprint button; a folded bar holding unread rows does too, except
+  the parked ones (Blocked, Follow-up, Finished), which the badge does not count. Only when no
+  shown row is unread does a line under the list say how many are hidden, with "Show all". The
+  sidebar's repository filter gets no dot: its own counts say where items are.
 
 ## Tables and lists
 
@@ -323,6 +329,10 @@ returns only through an ask newer than its handled-until. The reasons:
   and four of them an hour would use up the budget; the pause before it runs out (`LOW_BUDGET`)
   covers that rare case. The stored key stays in the database for now, so older versions can
   still read it.
+  Past the 1000, searches sort by last update, so only the oldest items are missing and always
+  the same ones; the sidebar says "Not all loaded" instead of a notice block, since nothing
+  needs doing at once. And an ask older than the fetch before no longer notifies, so an item
+  that was missing for a while comes back quietly.
 - **A transferred issue is recognized by repository, creation time and title.** GitHub gives it a
   new node id and keeps no link to the old one, but keeps `createdAt` and the title, and names
   the old repository in a `TransferredEvent`. The match also needs exactly one candidate, and the
@@ -384,9 +394,9 @@ returns only through an ask newer than its handled-until. The reasons:
   - always off: the docked comment box;
   - grouping by time is switched only with ⌘G in the list.
 
-  Each switch doubled the cases the rulebook and the tests have to cover. Their stored rows stay
-  in the database until one cleanup removes them together with `maxItems` (#136), as an
-  exception to the rule above.
+  Each switch doubled the cases the rulebook and the tests have to cover. Their stored rows,
+  and `maxItems`'s, are deleted by `dropLeftovers` since #114; an older version reading the
+  database again falls back to its defaults, which are the fixed values.
 - **New settings say "New" until their section was open once** (2026-11-02). A quiet blue chip on
   the field and its section, and a dot on the settings button, so a setting that came with an
   update is found without the release notes. Seen is a per-device convenience in localStorage; a

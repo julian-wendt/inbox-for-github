@@ -67,6 +67,7 @@ import { authoredCount, groupAuthored } from "./ui/authored";
 import { setLogContext } from "./log";
 import { seenStep, unreadAssignment, unreadInInbox } from "./ui/unread";
 import { ASK_FILTERS, ASK_VIEWS, matchesAsk, type AskFilter } from "./ui/inboxFilter";
+import { hiddenUnread } from "./ui/hiddenUnread";
 import "./ui/styles/shell.css";
 import "./ui/styles/inbox.css";
 import "./ui/styles/detail.css";
@@ -86,6 +87,7 @@ const SEEN_AFTER_MS = 2500;
 
 /** No calendar links while no calendar is chosen; one object, so `dated` keeps its identity. */
 const NO_LINKS: Record<string, string> = {};
+const NO_REVEALS: ReadonlySet<string> = new Set();
 const LAUNCHED_AT = Date.now();
 
 /** A change with its undo, as the toasts take them. */
@@ -228,6 +230,24 @@ export default function App() {
     return inRepos.filter((c) => c.bucket === view);
   };
   const unreadCounts = useMemo(() => ({ inbox: unreadInboxIds.size, assigned: unreadPlateIds.size }), [unreadInboxIds, unreadPlateIds]);
+  // What the view's filters hide of the unread items its sidebar count announces; the views without a count hide nothing.
+  const hiding = useMemo(() => {
+    const ids = bucket === "inbox" ? unreadInboxIds : bucket === "assigned" ? unreadPlateIds : new Set<string>();
+    const unread = inRepos.filter((c) => ids.has(c.item.id));
+    const kinds = { options: KINDS.map((k) => k.id), chosen: kind, passes: (c: Classified, k: string) => k === "all" || c.item.kind === k };
+    const sprintOptions = ["all", "none", ...plateSprints.map((name) => `sprint:${name}`)];
+    const found =
+      bucket === "inbox"
+        ? hiddenUnread(unread, { ask: { options: ASK_FILTERS, chosen: ask, passes: (c, f) => matchesAsk(c, f as AskFilter, me) } })
+        : hiddenUnread(unread, { kind: kinds, sprint: { options: sprintOptions, chosen: sprints.assigned, passes: (c, s) => matchesSprint(c.item, s as SprintFilter, plateSprints, hidden) } });
+    // The hint only when no shown row is unread; otherwise the dots on the controls say enough.
+    return { ...found, hint: found.count === unread.length ? found.count : 0 };
+  }, [bucket, unreadInboxIds, unreadPlateIds, inRepos, ask, kind, me, plateSprints, sprints.assigned, hidden]);
+  const showHidden = () => {
+    setKind("all");
+    setAsk("all");
+    setSprints((current) => ({ ...current, assigned: "all" }));
+  };
   const movesUp = inbox.settings.movesUp;
   const rowTime = useCallback((c: Classified) => sortTime(c, me, movesUp), [me, movesUp]);
   // Planned lists everything with a date, soonest first; the sort button turns the dated ones around.
@@ -717,7 +737,7 @@ export default function App() {
     const previous = inbox.statuses.get(c.item.id);
     return { run: () => void inbox.endFollowUp(c.item.id, replaced ? "hidden" : undefined), undo: () => void inbox.restoreStatus(c.item.id, previous) };
   };
-  const removeFollowUp = (c: Classified) => bulk(t("toast.reminderRemoved", { number: c.item.number }), [followUpStep(c), ...(c.updates ? [] : [unhandled(c)])]);
+  const removeFollowUp = (c: Classified) => bulk(t("toast.followUpRemoved", { number: c.item.number }), [followUpStep(c), ...(c.updates ? [] : [unhandled(c)])]);
   /** X gives back what a follow-up or plan handled: handled-until goes, so what is still pending asks again, as at a due date. */
   const unhandled = (c: Classified) => {
     const previous = inbox.handledUntil.get(c.item.id);
@@ -835,7 +855,7 @@ export default function App() {
         return change(t("toast.handedOffFiled", { number }), () => (hand(), filing.run()), filing.undo);
       }
       case "clear": {
-        if (bucket === "snoozed") return change(t("toast.reminderRemoved", { number }), () => void inbox.endFollowUp(id));
+        if (bucket === "snoozed") return change(t("toast.followUpRemoved", { number }), () => void inbox.endFollowUp(id));
         const handling = handled(c);
         const filed = logStep(c, "filed");
         return change(t("toast.filed", { number }), () => (handling.run(), filed.run(), void inbox.clearStatus(id, undefined, "hidden")), () => (handling.undo(), filed.undo()));
@@ -874,7 +894,7 @@ export default function App() {
       ...dayEntries((day) => followUp(c, followUpOn(day, inbox.settings.followUpTime), notify), c.status === "snoozed" && c.until ? localDay(new Date(c.until)) : undefined).map((e, i) => (i === 0 && !afternoon ? { ...e, divided: true } : e)),
       { label: t("snooze.pick"), keys: "D", divided: true, onSelect: () => setPickingDate({ pick: (until) => followUp(c, until, notify) }) },
       { label: t("snooze.none"), hint: t("hint.snooze.none"), keys: "F", checked: c.status === "snoozed" && !c.until, onSelect: () => followUp(c, "") },
-      { label: t("reminder.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
+      { label: t("followUp.remove"), keys: "X", divided: true, disabled: !hasFollowUp(c), onSelect: () => removeFollowUp(c) },
     ];
   };
   /** F on an item: the follow-up choices open below its row, also to move the date. */
@@ -1036,7 +1056,7 @@ export default function App() {
     const statuses: MenuEntry[] = statusesFor(c, doneIn(c) === "closed")
       .filter((s) => !(s.id === "done" && doneIn(c) === "hidden"))
       .map((s) => ({
-      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("reminder.remove") : s.title,
+      label: doneKind(s.id, c) === "handOff" ? t("action.handOff") : doneKind(s.id, c) === "file" ? t("action.file") : doneKind(s.id, c) === "clear" ? t("followUp.remove") : s.title,
       hint: statusHint(doneKind(s.id, c)),
       keys: s.key,
       icon: <StatusIcon status={s.id} size={14} />,
@@ -1051,7 +1071,7 @@ export default function App() {
       ...planItem,
       ...statuses.slice(1),
       ...(leavable(c) ? [{ label: t("unassign.action"), keys: "⌃U", icon: <UserMinus size={14} />, onSelect: () => leave(c) }] : []),
-      ...(hasFollowUp(c) ? [{ label: t("reminder.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
+      ...(hasFollowUp(c) ? [{ label: t("followUp.remove"), keys: "X", icon: <X size={14} />, onSelect: () => removeFollowUp(c) }] : []),
       ...(planned ? [{ label: t("plan.remove"), keys: "X", icon: <X size={14} />, onSelect: () => planFor(c, null, "") }] : []),
       { label: t(isUnread(c) ? "menu.markRead" : "menu.markUnread"), keys: "R", icon: isUnread(c) ? <MailOpen size={14} /> : <Mail size={14} />, onSelect: () => toggleRead([c]) },
       ...(assignable(c) ? [{ label: t("assign.action"), keys: "⌃A", icon: <UserPlus size={14} />, divided: true, onSelect: () => assignMe(c) }] : []),
@@ -1248,6 +1268,7 @@ export default function App() {
         calendarAccess={calendarAccess}
         loading={inbox.loading}
         fetchedAt={inbox.fetchedAt}
+        cut={inbox.cut}
         error={inbox.error}
         pausedUntil={inbox.pausedUntil}
         usage={inbox.usage}
@@ -1307,6 +1328,9 @@ export default function App() {
           searchRef={searchRef}
           kind={kind}
           onKind={setKind}
+          reveals={{ kind: hiding.reveals.kind ?? NO_REVEALS, sprint: hiding.reveals.sprint ?? NO_REVEALS }}
+          hiddenUnread={hiding.hint}
+          onShowHidden={showHidden}
           sort={sort.of(bucket)}
           onSort={() => sort.flip(bucket)}
           selected={selection.selected}
@@ -1339,6 +1363,9 @@ export default function App() {
           ask={ask}
           askCounts={askCounts}
           onAsk={setAsk}
+          reveals={hiding.reveals.ask ?? hiding.reveals.kind ?? NO_REVEALS}
+          hiddenUnread={hiding.hint}
+          onShowHidden={showHidden}
           sort={sort.of(bucket)}
           onSort={() => sort.flip(bucket)}
           timeGroups={timeGroups}

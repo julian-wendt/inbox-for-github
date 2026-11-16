@@ -14,8 +14,8 @@ numbers below go stale when fields are added.
 
 | Request | Where | Cost |
 |---|---|---|
-| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29) |
-| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29) |
+| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29; and by `issueCount` and `sort:updated-desc`, dry run 2026-11-13) |
+| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29, and by `issueCount` and the sort, 2026-11-13) |
 | Open review requests, ids only | `REVIEW_IDS_QUERY` (`fetchReviewIds`, every delta), page of 100 | 1 point (dry run and `x-ratelimit-used`, 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
 | Many items by node id | `NODES_QUERY` (`fetchItemsById`, right click on a view), `REFRESH_CHUNK = 50` | 19 points for 50, 37 for 100, 9 for 25, 4 for 10 (measured 2026-10-26 with `rateLimit(dryRun: true)`); a single `node` costs 1, so from about three items the bulk request is cheaper |
@@ -24,7 +24,9 @@ numbers below go stale when fields are added.
 | `rate_limit` REST endpoint | — | free |
 
 A full fetch pages through every search to its end (at most GitHub's 1000 hits, `SEARCH_STOP`;
-two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits. A delta
+two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits.
+Every search sorts by `sort:updated-desc`, so a search past the stop misses only the oldest items
+and the same ones each time; `issueCount` tells that it was cut (the sidebar says "Not all loaded"). A delta
 runs the same searches with one page of 20 each, about 7 points per search, plus one point for
 the ids of the open review requests. Widening the
 closed window adds the two closed searches over the added days only, paged like a full fetch:
@@ -38,6 +40,11 @@ Each was checked against the live API during development.
 - Repeated `org:` and `user:` qualifiers in one search combine with **OR**, so one search covers
   all watched owners (`fetchItems`).
 - Long search queries work; queries over 1000 characters were accepted.
+- `sort:updated-desc` in the search string orders the hits by `updatedAt`, newest first; without
+  it GitHub orders by best match, which shifts between requests (checked 2026-11-13).
+- A search stops at 1000 hits: after ten pages of 100, `hasNextPage` is false, while
+  `issueCount` still gives the full number, e.g. 258917 for `is:issue repo:microsoft/vscode`
+  (checked 2026-11-13). `fetchItems` compares the two to report a cut search.
 - `updated:>=` accepts a full datetime (`2026-10-23T10:00:00Z`), not only a date; deltas rely on it.
 - `closed:A..B` includes both days: the counts for `closed:2026-09-01..2026-10-21` and
   `closed:>=2026-10-22` added up to the one for `closed:>=2026-09-01` (checked 2026-10-29). A
@@ -111,6 +118,31 @@ Checked against a real transfer:
 `graphql` in `src/github/client.ts` throws `RateLimitError` with the time GitHub allows queries
 again: `retry-after` for secondary limits, else `x-ratelimit-reset`. `useInbox` pauses automatic
 refreshes until then and below 400 remaining points (`LOW_BUDGET`).
+
+## Timeouts
+
+GitHub gives a request ten seconds. One that takes longer gets `502 Bad Gateway` from the gateway
+in front of the API: an HTML page without `access-control-allow-origin`, so the web view's
+`fetch` rejects with a `TypeError` ("Failed to fetch" in WebView2) and has no status to read.
+Measured 2026-11-11 from Node, where the status shows: a search page came back as that 502 after
+10.9 s. In the app the same failures were logged 10.5 to 11 s after the request went out, and the
+sidebar read "Offline" on a working network.
+
+The search page is what runs into it. In an organization whose pull requests carry many reviews
+and threads, a page of 50 took 7 to 11 s, a page of 25 4 to 8 s and a page of 10 2 to 3 s, and
+the later pages of a search were slower than its first (measured 2026-11-11).
+
+`graphql` throws `TimeoutError` for a request that fails 9 to 20 s after it went out
+(`GAVE_UP_MS`, `GAVE_UP_UNTIL_MS`): a missing network fails at once, and a fetch caught by a Mac
+going to sleep fails much later; both stay what they are. `search` in `src/github/fetch.ts` asks
+for the page again at half the size, down to 5 hits, and holds every later page and search to
+that size until the next full fetch, which tries 50 again: a slow organization costs one dropped
+page per full fetch, not one per delta. GitHub's search cursor is an offset, so a page asked
+again at another size with the same `after` neither skips nor repeats hits (as the simulator
+models it; not checked against GitHub beyond the refresh going through). Smaller pages cost the same per hit: 19 points for 50, 9 for 25, 5 for 13, 3 for 7 and
+2 for 5 (dry run 2026-11-11). The dropped request is not free: `x-ratelimit-used` rose by 39
+over a dropped page of 50 and the page of 25 after it, where a page of 25 alone adds 9 or 10
+(seen 2026-11-11).
 
 ## Token scopes
 
