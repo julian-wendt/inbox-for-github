@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { t } from "../i18n";
+import { MOVE } from "../motion";
 
 export interface ToastMessage {
   id: number;
@@ -18,7 +19,7 @@ export function Toast({ toast }: { toast: ToastMessage | null }) {
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+          transition={MOVE}
         >
           <span>{toast.text}</span>
           {toast.undo && (

@@ -30,6 +30,7 @@ import { OrgPicker } from "./OrgPicker";
 import { OrgSelect } from "./OrgSelect";
 import { RepoFilterEditor } from "./RepoFilterEditor";
 import { UsageMeter } from "./UsageMeter";
+import { DIALOG_MOTION } from "../motion";
 
 type Section = SettingsSection;
 
@@ -181,9 +182,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
         className={`dialog settings${welcome ? " welcome" : ""}`}
         role="dialog"
         aria-label={t("settings.title")}
-        initial={{ opacity: 0, scale: 0.97, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter" && e.metaKey && welcome) start();

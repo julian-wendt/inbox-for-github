@@ -22,6 +22,7 @@ import { LayoutSwitch } from "./LayoutSwitch";
 import { HeaderMenu } from "./HeaderMenu";
 import type { MenuEntry } from "./ContextMenu";
 import { SearchField } from "./SearchField";
+import { MOVE } from "../motion";
 
 interface Props {
   /** The search bar ⌘F opens: null while closed, else the typed text; `searchRef` is its input. */
@@ -187,8 +188,8 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                         layout={moving ? false : "position"}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.16 } }}
-                        transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+                        exit={{ opacity: 0, transition: MOVE }}
+                        transition={MOVE}
                       >
                         <button
                           className={`bar${selectedGroup === group ? " selected" : ""}`}

@@ -10,6 +10,7 @@ import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
 import { EventMark, KindIcon, NotifyMark, WhenIcon } from "./ItemMarks";
 import type { RowWhen } from "../followUp";
+import { MOVE } from "../motion";
 
 interface Props {
   entry: Classified;
@@ -45,8 +46,8 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       layout={still ? false : "position"}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -24, transition: { duration: 0.16 } }}
-      transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+      exit={{ opacity: 0, x: -24, transition: MOVE }}
+      transition={MOVE}
       className={`inbox-row${selected ? " selected" : ""}${unread ? " unread" : ""}`}
       aria-selected={selected}
       data-id={item.id}

@@ -7,6 +7,7 @@ import { localDay } from "../assignments";
 import { firstFree, midnight, momentOf, placeSpans, snap, spansOf, STEP, stepWorkday, type Span } from "../calendarSlot";
 import { dateLocale, t } from "../i18n";
 import { dayLong } from "../plan";
+import { DIALOG_MOTION } from "../motion";
 
 /** Height of one hour in the grid, in pixels. */
 const HOUR = 44;
@@ -159,9 +160,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
         className="dialog calendar-day"
         role="dialog"
         aria-label={t(linked ? "calendarDay.titleChange" : "calendarDay.title")}
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.16 }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="calendar-day-head">
