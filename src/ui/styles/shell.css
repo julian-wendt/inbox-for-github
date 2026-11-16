@@ -372,7 +372,7 @@
 .dialog {
   width: min(560px, calc(100vw - 32px));
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-l);
   background: var(--panel);
   box-shadow: var(--shadow-pop);
 }
@@ -519,7 +519,7 @@
 
 .dialog h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -653,8 +653,8 @@
   user-select: text;
 }
 
-/* Controls of one kind stand equally tall in every section. */
-.dialog.settings :is(.btn, .repo-search, .org-add input, .segment-field) {
+/* Controls of one kind stand equally tall in every dialog. */
+.dialog :is(.btn, .repo-search, .org-add input, .segment-field) {
   height: var(--control-h);
 }
 
