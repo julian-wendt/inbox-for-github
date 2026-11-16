@@ -7,8 +7,10 @@ review. An item stays in the inbox until you act on it.
 ![The inbox in dark mode with an issue open in the detail, on the demo mode's made-up data](docs/images/inbox-dark.png)
 
 This is a personal project: I build it for my own work and publish it so others can use it too.
-Issues with bugs or ideas are welcome. Pull requests are not expected, and updates come when
-there is something to ship, not on a schedule.
+Issues with bugs or ideas are welcome. Pull requests are not expected, except from the
+[Windows edition](https://github.com/andremieth/inbox-for-github): a fork that sends its shared
+changes here, and the place for bugs that only happen on Windows. Updates come when there is
+something to ship, not on a schedule.
 
 ## What it does
 
