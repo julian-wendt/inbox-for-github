@@ -166,6 +166,7 @@ selectors their values in order.
 | Tag `.bot-tag`, `.draft`, `.review-tag`, `.new-chip`, `.new-mark`, `.table-planned`, `.table-carried` | line 16, so 18 | `1px 8px` (with a line `0 8px`) | `xs`/600 | own fill, line and color only; shared rule in `base.css` | full |
 | Chip `.chip` | 24 (detail 28) | `0 12px` | the table's `s`, the detail's `m` | `--text`, `--border-strong` line | full |
 | Label `.label` | 20 (table 24, detail 28) | `0 8px` (table and detail `0 12px`) | `xs`/500 (detail `m`) | label color at `--tint` | full |
+| Reaction `.reaction` | 24 | `0 8px` | `s` | `--text-muted`, `--border-strong` line; the viewer's own `--text` on `--blue` at `--tint` with a `--blue` line | full |
 | Dot | 6 or 8 | — | — | a hue | full |
 
 ## Placing pop-ups and menus
