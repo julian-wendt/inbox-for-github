@@ -209,7 +209,7 @@ Menus place themselves with `menuPosition` (`src/ui/menuPosition.ts`), pop-ups i
 
 | Property | Allowed |
 |---|---|
-| `line-height` | `1` for one-line boxes, `1.3` for tight multi-line text and titles, `1.5` body, `1.6` Markdown, px only where it sets a tag's or label's height |
+| `line-height` | `1` for one-line boxes, `1.3` for tight multi-line text and titles, `1.5` body, `1.6` Markdown, px only where the line sets a box's height: `16px` tags, `18px` labels, `24px` the Settings heading |
 | `opacity` | `0`, `0.5` (disabled, dimmed marks), `1` |
 | `letter-spacing` | `0.04em` small caps, `-0.012em` the detail title, `normal`/`0` to reset |
 

@@ -36,13 +36,13 @@ describe("components", () => {
     expect(fixed.map((f) => `${f.name} ${f.value.trim()}`)).toEqual([]);
   });
 
-  it("take every duration from motion.ts", () => {
-    expect(parts.filter(({ text }) => /duration:\s*\d|ease:\s*\[/.test(text)).map((p) => p.name)).toEqual([]);
+  it("take every duration and curve from motion.ts", () => {
+    expect(parts.filter(({ text }) => /duration:\s*\d|ease:\s*[["'`]/.test(text)).map((p) => p.name)).toEqual([]);
   });
 
   it("place menus with menuPosition, not with offsets of their own", () => {
     const placing = [...parts, ...["../App.tsx", "paneCenter.ts"].map((name) => ({ name, text: readFileSync(new URL(name, new URL("./", import.meta.url)), "utf8") }))];
-    const offsets = placing.flatMap(({ name, text }) => (text.match(/\.(top|right|bottom|left) [+-] \d+/g) ?? []).map((m) => `${name} ${m}`));
+    const offsets = placing.flatMap(({ name, text }) => (text.match(/\.(top|right|bottom|left)\s*[+-]\s*\d+/g) ?? []).map((m) => `${name} ${m}`));
     expect(offsets).toEqual([]);
   });
 });

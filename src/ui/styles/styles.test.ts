@@ -9,21 +9,20 @@ const HEX_ALLOWED = new Set(["#fff", "#000"]);
 const SPACES = new Set([0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48]);
 const SIZES = new Set([0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 40, 44, 48, 60, 64]);
 const BORDER_WIDTHS = new Set(["1px", "1.5px", "3px"]);
-const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|\d+px)$/;
+const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|16px|18px|24px)$/;
 const Z_LAYERS = new Set(["1", "2", "5", "25", "26", "30", "35", "40"]);
 const OPACITIES = new Set(["0", "0.5", "1"]);
 const LETTER_SPACINGS = new Set(["0.04em", "-0.012em", "normal", "0"]);
 
-/** Every `property: value` of the given property in all sheets, as "file:line value". */
-function declared(property: string): { at: string; value: string }[] {
-  const pattern = new RegExp(`^\\s*${property}:\\s*([^;]+);`);
-  return sheets.flatMap((sheet) =>
-    sheet.lines.flatMap((line, i) => {
-      const match = pattern.exec(line);
-      return match ? [{ at: `${sheet.name}:${i + 1}`, value: match[1].trim() }] : [];
-    }),
-  );
-}
+const all = sheets.flatMap((sheet) => sheet.declarations);
+const outsideTokens = sheets.filter((sheet) => sheet.name !== "tokens.css").flatMap((sheet) => sheet.declarations);
+
+/** Every declaration of the properties `property` matches, in all sheets. */
+const declared = (property: string | RegExp) => all.filter((d) => (typeof property === "string" ? d.property === property : property.test(d.property)));
+
+/** The declarations among `found` with a px number outside `allowed`, as "file:line value". */
+const offScale = (allowed: Set<number>, found: { at: string; value: string }[]) =>
+  found.filter((d) => [...d.value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].some((m) => !allowed.has(Math.abs(Number(m[1]))))).map((d) => `${d.at} ${d.value}`);
 
 const outside = (allowed: (value: string) => boolean, found: { at: string; value: string }[]) =>
   found.filter((d) => !allowed(d.value)).map((d) => `${d.at} ${d.value}`);
@@ -52,43 +51,23 @@ describe("style guide", () => {
   });
 
   it("spaces with the spacing scale", () => {
-    const spacing = /^\s*((gap|row-gap|column-gap|padding|margin)(-[a-z-]+)?|inset):\s*([^;]+);/;
-    const off = sheets.flatMap((sheet) =>
-      sheet.lines.flatMap((line, i) => {
-        const value = spacing.exec(line)?.[4] ?? "";
-        const bad = [...value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((m) => Math.abs(Number(m[1]))).filter((n) => !SPACES.has(n));
-        return bad.length ? [`${sheet.name}:${i + 1} ${value}`] : [];
-      }),
-    );
-    expect(off).toEqual([]);
+    expect(offScale(SPACES, declared(/^((gap|row-gap|column-gap|padding|margin)(-[a-z-]+)?|inset)$/))).toEqual([]);
   });
 
   it("sizes and places boxes with the size steps, and anything above 64px with a layout token", () => {
-    const sizing = /^\s*(width|height|min-width|min-height|max-width|max-height|top|left|right|bottom|inset|translate|grid-template-columns):\s*([^;]+);/;
-    const off = sheets.flatMap((sheet) =>
-      sheet.lines.flatMap((line, i) => {
-        const value = sizing.exec(line)?.[2] ?? "";
-        const bad = [...value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((m) => Math.abs(Number(m[1]))).filter((n) => !SIZES.has(n));
-        return bad.length ? [`${sheet.name}:${i + 1} ${value}`] : [];
-      }),
-    );
-    expect(off).toEqual([]);
+    const sizing = /^((min-|max-)?(width|height)|top|left|right|bottom|inset|translate|transform|flex-basis|grid-template-columns)$/;
+    expect(offScale(SIZES, declared(sizing))).toEqual([]);
   });
 
   it("keeps custom properties with a px value in tokens.css", () => {
-    const own = sheets
-      .filter((sheet) => sheet.name !== "tokens.css")
-      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (/^\s*--[\w-]+:[^;]*\d+px/.test(line) ? [`${sheet.name}:${i + 1}`] : [])));
-    expect(own).toEqual([]);
+    expect(outsideTokens.filter((d) => d.property.startsWith("--") && /\d+px/.test(d.value)).map((d) => d.at)).toEqual([]);
   });
 
   it("draws borders 1px, or 1.5px for a drawn check and 3px for an edge", () => {
-    const widths = sheets.flatMap((sheet) =>
-      sheet.lines.flatMap((line, i) => {
-        const width = /^\s*border(-(top|right|bottom|left))?(-width)?:\s*(\d+(?:\.\d+)?px)/.exec(line)?.[4];
-        return width ? [{ at: `${sheet.name}:${i + 1}`, value: width }] : [];
-      }),
-    );
+    const widths = declared(/^border(-(top|right|bottom|left))?(-width)?$/).flatMap((d) => {
+      const width = /^(\d+(?:\.\d+)?px)/.exec(d.value)?.[1];
+      return width ? [{ at: d.at, value: width }] : [];
+    });
     expect(outside((v) => BORDER_WIDTHS.has(v), widths)).toEqual([]);
   });
 
@@ -113,23 +92,21 @@ describe("style guide", () => {
   });
 
   it("mixes colors with the tint tokens, apart from the avatar placeholder's drawing", () => {
-    const mixes = sheets
-      .filter((sheet) => sheet.name !== "tokens.css")
-      .flatMap((sheet) => sheet.declarations)
+    const mixes = outsideTokens
       .filter((d) => !d.selectors.includes(".avatar-placeholder"))
-      .flatMap((d) => [...d.value.matchAll(/color-mix\(in srgb, (?:var\(--[\w-]+\)|#\w+|\w+) (\d+(?:\.\d+)?%)/g)].map((m) => `${d.at} ${m[1]}`));
+      .flatMap((d) => [...d.value.matchAll(/color-mix\(([^()]|\([^()]*\))*\)/g)].flatMap((mix) => (mix[0].match(/(?<!\* )\b\d+(\.\d+)?%/g) ?? []).map((share) => `${d.at} ${share}`)));
     expect(mixes).toEqual([]);
   });
 
   it("keeps fractions of the window in tokens.css", () => {
     const fractions = sheets
       .filter((sheet) => sheet.name !== "tokens.css")
-      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (line.match(/\b(?!100v)\d+(\.\d+)?v[hw]\b/g) ?? []).map((value) => `${sheet.name}:${i + 1} ${value}`)));
+      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (line.match(/\b(?!100[a-z])\d+(\.\d+)?[dsl]?v(h|w|min|max)\b/g) ?? []).map((value) => `${sheet.name}:${i + 1} ${value}`)));
     expect(fractions).toEqual([]);
   });
 
   it("hangs pop-ups --pop-gap from their control", () => {
-    const placed = sheets.flatMap((sheet) => sheet.declarations).filter((d) => /^(top|right|bottom|left)$/.test(d.property) && d.value.startsWith("calc(100% +"));
+    const placed = all.filter((d) => /^(top|right|bottom|left)$/.test(d.property) && d.value.startsWith("calc(100% +"));
     expect(placed.filter((d) => !d.value.includes("var(--pop-gap)")).map((d) => `${d.at} ${d.value}`)).toEqual([]);
   });
 
