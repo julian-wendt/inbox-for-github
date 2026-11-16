@@ -723,6 +723,8 @@ export const en = {
   "snooze.time": "Time",
   "snooze.hour": "Hour",
   "snooze.minute": "Minute",
+  "snooze.previousMonth": "Previous month",
+  "snooze.nextMonth": "Next month",
   "snooze.followUpAt": "Follow-up {until}",
   "snooze.cancel": "Cancel",
   "snooze.confirm": "Set follow-up",

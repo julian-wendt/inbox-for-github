@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysInMonth, daysOf, HOURS, MINUTES, MONTHS, padSegment, stepSegment, typeSegment, yearsFrom } from "./segments";
+import { daysInMonth, daysOf, HOURS, MINUTES, MONTHS, padSegment, stepSegment, typeSegment, weeksOf, yearsFrom } from "./segments";
 
 describe("stepSegment", () => {
   it("steps within the range", () => {
@@ -61,5 +61,23 @@ describe("padSegment", () => {
   it("pads to the part's length", () => {
     expect(padSegment(7, HOURS)).toBe("07");
     expect(padSegment(2027, yearsFrom(2026))).toBe("2027");
+  });
+});
+
+describe("weeksOf", () => {
+  it("lays a month out in weeks from Monday, padded with 0", () => {
+    const weeks = weeksOf(2026, 11);
+    expect(weeks[0]).toEqual([0, 0, 0, 0, 0, 0, 1]);
+    expect(weeks).toHaveLength(6);
+    expect(weeks[5]).toEqual([30, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("fills a month that starts on a Monday from the first cell", () => {
+    expect(weeksOf(2027, 2)).toEqual([
+      [1, 2, 3, 4, 5, 6, 7],
+      [8, 9, 10, 11, 12, 13, 14],
+      [15, 16, 17, 18, 19, 20, 21],
+      [22, 23, 24, 25, 26, 27, 28],
+    ]);
   });
 });

@@ -192,6 +192,66 @@
   gap: 8px;
 }
 
+.month-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.month-grid-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.month-grid-head strong {
+  flex: 1;
+  font-weight: 600;
+  text-align: center;
+}
+
+.month-grid-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.month-grid-weekday {
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.month-grid-day {
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-grid-day:hover:not(:disabled, [aria-pressed="true"]) {
+  background: var(--hover);
+}
+
+.month-grid-day.today {
+  border-color: var(--text-faint);
+}
+
+.month-grid-day[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.month-grid-day:disabled {
+  opacity: 0.5;
+}
+
 .segment-field {
   display: flex;
   align-items: center;

@@ -4,6 +4,7 @@ import { t } from "../i18n";
 import { daysInMonth, daysOf, HOURS, MINUTES, MONTHS, yearsFrom } from "../segments";
 import { localDay } from "../assignments";
 import { followUpOn } from "../snooze";
+import { MonthGrid } from "./MonthGrid";
 import { SegmentField } from "./SegmentField";
 import { DIALOG_MOTION } from "../motion";
 
@@ -26,8 +27,8 @@ function momentOf(when: When): Date | null {
  * A small dialog to snooze until a chosen date and time, starting at tomorrow 09:00, or with
  * `day` to plan for a chosen day. Date (DD.MM.YYYY) and time (24-hour HH:MM) are `SegmentField`s,
  * whatever the system's format; a day past the end of a newly chosen month moves to its last day.
- * Enter or the button confirms, Escape or a click outside cancels. Past times are not accepted,
- * and without a time neither is today.
+ * Below them a `MonthGrid` picks the day with the pointer. Enter or the button confirms, Escape or
+ * a click outside cancels. Past times are not accepted, and without a time neither is today.
  *
  * @param onPick  Called with the chosen time as ISO 8601; with `day`, local midnight of the day.
  * @param day     Asks for a day only, to plan for it: the dialog says so and has no time field.
@@ -106,6 +107,11 @@ export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (un
             />
           )}
         </div>
+        <MonthGrid
+          value={{ year: when.year, month: Math.min(Math.max(when.month, MONTHS.min), MONTHS.max), day: when.day }}
+          from={localDay(new Date(openedAt + (day ? 86_400_000 : 0)))}
+          onPick={(picked) => setWhen((w) => ({ ...w, ...picked }))}
+        />
         <div className="dialog-actions">
           <button type="button" className="btn" onClick={onClose}>
             {t("snooze.cancel")}

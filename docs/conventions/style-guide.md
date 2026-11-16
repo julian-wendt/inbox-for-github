@@ -157,6 +157,7 @@ selectors their values in order.
 | Search bar `.search-dock .search-bar` | 36 | `0 8px 0 12px` | 10 | `m` | `--text-muted` (icon), input `--text`, placeholder `--text-muted` | `--control-fill`, no line | `m` |
 | Switch `.switch` | 18 × 32 | knob 14 at 2 | — | — | — | off `--border-strong`, on `--green-fill`, knob white + `--shadow-knob` | full |
 | Link button `.link-btn` | — | 0 | — | `s`/600 | `--text`, underline `--border-strong` | — | — |
+| Day in a month `.month-grid-day` | 30 | — | — | `m` (chosen 600) | `--text`, chosen `--on-accent` | none, hover `--hover`, chosen `--accent`, today a `--text-faint` line | `m` |
 | Key `kbd` | 18 | `0 4px` | — | `xs`/500 | `--text-muted` | `--panel`, `--border` | `s` |
 
 **Marks**

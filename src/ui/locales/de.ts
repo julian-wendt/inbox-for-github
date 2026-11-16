@@ -725,6 +725,8 @@ export const de: Messages = {
   "snooze.time": "Uhrzeit",
   "snooze.hour": "Stunde",
   "snooze.minute": "Minute",
+  "snooze.previousMonth": "Vorheriger Monat",
+  "snooze.nextMonth": "Nächster Monat",
   "snooze.followUpAt": "Wiedervorlage {until}",
   "snooze.cancel": "Abbrechen",
   "snooze.confirm": "Vorlegen",

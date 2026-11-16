@@ -83,3 +83,20 @@ export function typeSegment(typed: string, digit: string, segment: Segment): Typ
 export function padSegment(value: number, segment: Segment): string {
   return String(value).padStart(segment.length, "0");
 }
+
+/**
+ * The weeks of `month` (1–12) in `year` as rows of seven days from Monday, 0 where a day belongs
+ * to the month before or after.
+ *
+ * @example
+ *   weeksOf(2026, 11)[0]; // [0, 0, 0, 0, 0, 0, 1]: November 2026 starts on a Sunday
+ */
+export function weeksOf(year: number, month: number): number[][] {
+  const lead = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+  const days = [...Array<number>(lead).fill(0), ...Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1)];
+  const weeks: number[][] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  const last = weeks[weeks.length - 1];
+  last.push(...Array<number>(7 - last.length).fill(0));
+  return weeks;
+}
