@@ -1,3 +1,6 @@
+/// <reference types="node" />
+// Vitest blanks CSS imports, so the sheets are read from disk.
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /** The style guide's value sets (docs/conventions/style-guide.md); a value outside them fails. */
@@ -6,8 +9,10 @@ const FONT_WEIGHTS = new Set(["450", "500", "600", "700"]);
 const RADIUS = /^(0|50%|999px|var\(--radius-[sml]\)|calc\(var\(--radius-[sml]\) - [12]px\)|[0-3](\.5)?px)$/;
 const HEX_ALLOWED = new Set(["#fff", "#000"]);
 
-const files = import.meta.glob<string>("./*.css", { query: "?raw", import: "default", eager: true });
-const sheets = Object.entries(files).map(([path, text]) => ({ name: path.slice(2), lines: text.split("\n") }));
+const dir = new URL(".", import.meta.url);
+const sheets = readdirSync(dir)
+  .filter((name) => name.endsWith(".css"))
+  .map((name) => ({ name, lines: readFileSync(new URL(name, dir), "utf8").split("\n") }));
 
 /** Every `property: value` of the given property in all sheets, as "file:line value". */
 function declared(property: string): { at: string; value: string }[] {
@@ -24,6 +29,10 @@ const outside = (allowed: (value: string) => boolean, found: { at: string; value
   found.filter((d) => !allowed(d.value)).map((d) => `${d.at} ${d.value}`);
 
 describe("style guide", () => {
+  it("reads the sheets it checks", () => {
+    expect(sheets.map((sheet) => sheet.name)).toEqual(expect.arrayContaining(["base.css", "shell.css", "tokens.css"]));
+  });
+
   it("uses only the font sizes of the type scale", () => {
     const shorthand = declared("font").map((d) => ({ at: d.at, value: /(\d+(\.\d+)?(px|em))/.exec(d.value)?.[1] ?? "inherit" }));
     expect(outside((v) => FONT_SIZES.has(v) || v === "inherit", [...declared("font-size"), ...shorthand])).toEqual([]);
