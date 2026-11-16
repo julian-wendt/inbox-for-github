@@ -81,7 +81,7 @@ describe("explain", () => {
   });
 
   it("marks a lone self-reminder with the reminder tone", () => {
-    expect(why(item({ comments: [comment(ME, "@me later", 2)] })).tone).toBe("reminder");
+    expect(why(item({ comments: [comment(ME, "@me later", 2)] })).tone).toBe("selfMention");
   });
 
   it("says why an answered item is done and what brings it back", () => {

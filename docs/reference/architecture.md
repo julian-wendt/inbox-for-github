@@ -175,16 +175,17 @@ before `Builder::setup` runs. The web view's localStorage (collapsed bars, sort 
 notification permission are not carried over.
 
 `SCHEMA` in `src/store.ts` creates every table in its current shape; `dropLeftovers` removes
-what older builds' databases still hold: the table `item_reminder`, the column
-`item_status.keep_open`, the settings keys `snoozeAuthored`, `orbSeeds`, `hoverActs` and
-`calendarTime`, and rewrites the retired values `tableGrouping` "time" and `reopenOn`
-"mention-or-assigned-post". No column has been added since the schema was created; a new one
-would be added with `ALTER TABLE` in `Store.open`, guarded by a `PRAGMA table_info` check.
+what older builds' databases still hold: the table `item_reminder`, the columns
+`item_status.keep_open` and `item_status.due` (written last by 0.2.0), the settings keys
+`Settings` no longer has (named one by one), and rewrites the retired values `tableGrouping`
+"time" and `reopenOn` "mention-or-assigned-post". It also adds the columns added since the schema
+was created (`item_status.notify`; `status_log.until`, `notify`, `log_as`), each guarded by a
+`PRAGMA table_info` check.
 
 | Table | Holds |
 |---|---|
 | `settings` | one row per settings key, JSON values (`Settings` in `src/store.ts`) |
-| `item_status` | the current status per item, `until`, `handoff`; `due` is left over from the due state, not read since 2026-10-28 |
+| `item_status` | the current status per item, `until`, `handoff`, and `notify` for a follow-up with "Remind me" |
 | `item_handled` | one `handled_until` per item: asks from before it are not new, the only cutoff `classify` reads. Filled once when the table is created, from `filedAt`, `plannedAt` (while pinned or planned), a stored done without hand-off and a follow-up start (`deriveHandledUntil`), into `item_handled_fill`, 400 rows per INSERT, then renamed, so the table exists only whole; a fill cut short is redone on the next start. Reset statuses clears it; a transfer moves it |
 | `status_log` | every status change, with `automatic` for changes by the app and `source` for what caused it (see [`local-development.md`](local-development.md#the-local-database)); since 2026-11-13 a follow-up's `until` ("" for none) and `notify`, and `log_as` where the timeline names a change by what the viewer did (`LogAs`) |
 | `item_log` | the timeline's lines besides statuses (`LogEvent`): `plan`, `plan-removed`, `plan-kept` with the day in `value`, `filed`, and `back` with the ask that brought the item back into the inbox; an undo deletes its row; a transfer moves it |

@@ -14,7 +14,7 @@ export interface Mention {
   by: string;
   at: string;
   excerpt: string;
-  /** True when the viewer mentioned themselves as a reminder. */
+  /** True when the viewer mentioned themselves as a note to self. */
   self: boolean;
 }
 
@@ -69,7 +69,7 @@ export function mentionsOf(item: Item, me: string): Mention[] {
 
 /**
  * Time of the viewer's last post that counts as a reply. A post in which the viewer mentions
- * themselves is a reminder, not a reply, and is skipped.
+ * themselves is a note to self, not a reply, and is skipped.
  */
 export function lastReplyAt(item: Item, me: string): string | null {
   const replies = posts(item).filter(

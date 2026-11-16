@@ -8,7 +8,7 @@ import { untilText } from "./snooze";
 import { dayLong, type Dated } from "./plan";
 
 export interface Explanation {
-  tone: "inbox" | "reminder" | "done" | "snoozed" | "planned" | "involved" | "authored" | "assigned";
+  tone: "inbox" | "selfMention" | "done" | "snoozed" | "planned" | "involved" | "authored" | "assigned";
   title: string;
   /** One sentence per reason: why the item is here and what moves it on. */
   lines: string[];
@@ -66,14 +66,14 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
           return t("explain.due", { ago: agoInSentence(entry.asked.due ?? "") });
         case "mention":
           return mention!.self
-            ? t("explain.reminder", { ago: agoInSentence(mention!.at) })
+            ? t("explain.selfMention", { ago: agoInSentence(mention!.at) })
             : t("explain.mention", { name: mention!.by, ago: agoInSentence(mention!.at) });
       }
     });
     if (waitsInPlace) lines.push(stillWaiting);
     lines.push(...planLine);
-    const reminderOnly = asks.length === 1 && mention?.self;
-    return { tone: reminderOnly ? "reminder" : "inbox", title: t("explain.inboxTitle"), lines };
+    const selfMentionOnly = asks.length === 1 && mention?.self;
+    return { tone: selfMentionOnly ? "selfMention" : "inbox", title: t("explain.inboxTitle"), lines };
   }
 
   if (entry.updates) {
