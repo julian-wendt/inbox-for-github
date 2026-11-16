@@ -27,6 +27,7 @@ let latestBudget: Budget | null = null;
 let spent = 0;
 /** Reset time (ms) → the lowest `remaining` seen in that window; GitHub can answer from two windows in turn. */
 const windows = new Map<number, number>();
+const HOUR_MS = 3_600_000;
 
 /**
  * GraphQL points this app has used since it started, as far as the headers show: per hourly
@@ -45,13 +46,14 @@ export function lastBudget(): Budget | null {
 }
 
 function noteHeaders(headers: Headers, now = Date.now()): void {
-  const remaining = Number(headers.get("x-ratelimit-remaining"));
+  const remaining = Number(headers.get("x-ratelimit-remaining") ?? NaN);
   const reset = Number(headers.get("x-ratelimit-reset"));
-  if (headers.get("x-ratelimit-resource") !== "graphql" || !reset) return;
+  if (headers.get("x-ratelimit-resource") !== "graphql" || !reset || !Number.isFinite(remaining)) return;
   const limit = Number(headers.get("x-ratelimit-limit")) || 5000;
   const resetAt = new Date(reset * 1000);
   const lowest = windows.get(resetAt.getTime());
-  const newHour = [...windows.keys()].every((at) => at <= now);
+  // GitHub's own times, not the local clock: a window opened after the others ended resets an hour after them.
+  const newHour = [...windows.keys()].every((at) => resetAt.getTime() >= at + HOUR_MS);
   if (lowest !== undefined) spent += Math.max(0, lowest - remaining);
   else if (latestBudget && newHour) spent += limit - remaining;
   windows.set(resetAt.getTime(), Math.min(lowest ?? remaining, remaining));
