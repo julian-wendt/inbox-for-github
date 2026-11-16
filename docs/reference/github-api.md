@@ -14,8 +14,8 @@ numbers below go stale when fields are added.
 
 | Request | Where | Cost |
 |---|---|---|
-| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29; and by `issueCount` and `sort:updated-desc`, dry run 2026-11-13) |
-| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29, and by `issueCount` and the sort, 2026-11-13) |
+| Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29; and by `issueCount` and `sort:updated-desc`, dry run 2026-11-13; and by the reaction counts and post ids, dry run 2026-11-16) |
+| Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29, and by `issueCount` and the sort, 2026-11-13, and by the reaction counts, 2026-11-16) |
 | Open review requests, ids only | `REVIEW_IDS_QUERY` (`fetchReviewIds`, every delta), page of 100 | 1 point (dry run and `x-ratelimit-used`, 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
 | Many items by node id | `NODES_QUERY` (`fetchItemsById`, right click on a view), `REFRESH_CHUNK = 50` | 19 points for 50, 37 for 100, 9 for 25, 4 for 10 (measured 2026-10-26 with `rateLimit(dryRun: true)`); a single `node` costs 1, so from about three items the bulk request is cheaper |
@@ -75,6 +75,19 @@ Each was checked against the live API during development.
   `last: 20` on issues). Commits have their own (`commitItems`, `last: 20`), since `last` counts
   across all types and a long run of commits would otherwise push review requests out; it costs
   one point per search page of 50 and none on a delta page (dry run 2026-10-25).
+
+## Reactions (2026-11-16)
+
+- `reactionGroups` on an issue, a pull request, a comment, a review and an inline review comment
+  lists all eight emoji in a fixed order (`THUMBS_UP`, `THUMBS_DOWN`, `LAUGH`, `HOORAY`,
+  `CONFUSED`, `HEART`, `ROCKET`, `EYES`), unused ones with `reactors { totalCount: 0 }`
+  (read on a public issue). `reactionsOf` keeps only the used ones.
+- `viewerHasReacted` and `reactors { totalCount }` on every post left a search page at 19 points
+  for 50 and 7 for 20 (dry run). Names of the reactors through `reactors(first: 3) { nodes { … on
+  User { login } } }` raised it to 69 and 27, so the app loads counts only and its tooltip says
+  "You and 2 others", not who.
+- Whether a reaction moves the item's `updatedAt` is not verified; the simulator assumes it does
+  not, so a delta may show others' new reactions only with the next full fetch or a reload.
 
 ## What moves `updatedAt` (2026-10-29)
 

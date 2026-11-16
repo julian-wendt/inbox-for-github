@@ -1,4 +1,4 @@
-import type { Activity, Comment, Item, Org, PullState, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
+import type { Activity, Comment, Item, Org, PullState, Reaction, ReactionContent, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
 import { fetchBoards } from "./boards";
 import { graphql, TimeoutError } from "./client";
 import { log } from "../log";
@@ -19,14 +19,17 @@ const QUALIFIERS: Partial<Record<Reason, string>> = {
   review: "is:pr review-requested:@me",
 };
 
+/** Counts only: `reactors(first: n)` for names would triple a search page (see `docs/reference/github-api.md`). */
+const REACTIONS = "reactionGroups { content viewerHasReacted reactors { totalCount } }";
+
 // GraphQL fragments cannot span Issue and PullRequest, so the shared selection is inlined twice.
 const ITEM_FIELDS = `
-  id number title url createdAt updatedAt body closed closedAt
+  id number title url createdAt updatedAt body closed closedAt ${REACTIONS}
   author { login __typename avatarUrl }
   repository { nameWithOwner }
   labels(first: 20) { nodes { name color } }
   assignees(first: 10) { nodes { login } }
-  comments(last: 100) { nodes { author { login __typename avatarUrl } body createdAt } }
+  comments(last: 100) { nodes { id author { login __typename avatarUrl } body createdAt ${REACTIONS} } }
 `;
 
 const ASSIGNED =
@@ -58,11 +61,11 @@ const PR_FIELDS = `
   }
   # Own window, so a long run of commits cannot push review requests and other events out.
   commitItems: timelineItems(itemTypes: [PULL_REQUEST_COMMIT], last: 20) { nodes { ... on PullRequestCommit { commit { committedDate author { user { login } } } } } }
-  reviews(last: 30) { nodes { id url author { login __typename avatarUrl } body state submittedAt } }
+  reviews(last: 30) { nodes { id url author { login __typename avatarUrl } body state submittedAt ${REACTIONS} } }
   reviewThreads(last: 30) {
     nodes {
       path line originalLine isResolved isOutdated resolvedBy { login }
-      comments(last: 20) { nodes { author { login __typename avatarUrl } body createdAt url replyTo { id } pullRequestReview { id } } }
+      comments(last: 20) { nodes { id author { login __typename avatarUrl } body createdAt ${REACTIONS} url replyTo { id } pullRequestReview { id } } }
     }
   }
 `;
@@ -104,10 +107,19 @@ interface RawReviewer {
   slug?: string;
 }
 
+/** GitHub lists all eight emoji, also those nobody used. */
+export interface RawReactionGroup {
+  content: ReactionContent;
+  viewerHasReacted: boolean;
+  reactors: { totalCount: number };
+}
+
 interface RawComment {
+  id?: string;
   author: RawAuthor | null;
   body: string;
   createdAt: string;
+  reactionGroups?: RawReactionGroup[];
 }
 
 interface RawThreadComment extends RawComment {
@@ -125,6 +137,7 @@ export interface RawItem {
   createdAt: string;
   updatedAt: string;
   body: string;
+  reactionGroups?: RawReactionGroup[];
   closed?: boolean;
   closedAt?: string | null;
   merged?: boolean;
@@ -133,7 +146,7 @@ export interface RawItem {
   labels: { nodes: { name: string; color: string }[] };
   assignees: { nodes: { login: string }[] };
   comments: { nodes: RawComment[] };
-  reviews?: { nodes: { id?: string; url?: string; author: RawAuthor | null; body: string; state: ReviewState; submittedAt: string | null }[] };
+  reviews?: { nodes: { id?: string; url?: string; author: RawAuthor | null; body: string; state: ReviewState; submittedAt: string | null; reactionGroups?: RawReactionGroup[] }[] };
   reviewThreads?: {
     nodes: {
       path: string;
@@ -555,6 +568,7 @@ export function toItem(raw: RawItem): Item {
     url: raw.url,
     author: toLogin(raw.author),
     body: raw.body,
+    reactions: reactionsOf(raw.reactionGroups),
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     labels: raw.labels.nodes,
@@ -585,13 +599,24 @@ function transferOf(raw: RawItem): Pick<Item, "transferredFrom"> {
 }
 
 function toComment(raw: RawComment, where?: string): Comment {
-  return { author: toLogin(raw.author), body: raw.body, createdAt: raw.createdAt, ...(where && { where }) };
+  return { ...(raw.id && { id: raw.id }), author: toLogin(raw.author), body: raw.body, createdAt: raw.createdAt, ...(where && { where }), reactions: reactionsOf(raw.reactionGroups) };
+}
+
+/**
+ * The emoji someone used, in GitHub's order, as `Reaction`s; also for a mutation's answer.
+ *
+ * @example
+ *   reactionsOf([{ content: "HEART", viewerHasReacted: true, reactors: { totalCount: 2 } }, { content: "EYES", viewerHasReacted: false, reactors: { totalCount: 0 } }]);
+ *   // [{ content: "HEART", count: 2, mine: true }]
+ */
+export function reactionsOf(groups: RawReactionGroup[] = []): Reaction[] {
+  return groups.filter((g) => g.reactors.totalCount > 0).map((g) => ({ content: g.content, count: g.reactors.totalCount, mine: g.viewerHasReacted }));
 }
 
 function reviewComments(raw: RawItem): Comment[] {
   const summaries = (raw.reviews?.nodes ?? [])
     .filter((r) => r.submittedAt && r.body.trim())
-    .map((r) => ({ ...toComment({ author: r.author, body: r.body, createdAt: r.submittedAt! }, "Review"), reviewState: r.state }));
+    .map((r) => ({ ...toComment({ id: r.id, author: r.author, body: r.body, createdAt: r.submittedAt!, reactionGroups: r.reactionGroups }, "Review"), reviewState: r.state }));
   const inline = (raw.reviewThreads?.nodes ?? []).flatMap((thread) => {
     const line = thread.line ?? thread.originalLine;
     const where = line ? `${thread.path}:${line}` : thread.path;

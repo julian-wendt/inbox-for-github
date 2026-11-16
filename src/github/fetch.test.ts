@@ -291,8 +291,29 @@ describe("toItem", () => {
 
   it("leaves issues without review data unchanged", () => {
     const item = toItem({ ...rawPr(), __typename: "Issue" });
-    expect(item.comments).toEqual([{ author: "carol", body: "Nice", createdAt: "2026-10-02T00:00:00Z" }]);
+    expect(item.comments).toEqual([{ author: "carol", body: "Nice", createdAt: "2026-10-02T00:00:00Z", reactions: [] }]);
     expect(item.reviewRequests).toEqual([]);
+  });
+
+  it("keeps the used reactions with their subject's id, on the description, comments, reviews and inline comments", () => {
+    const groups = (count: number, mine = false) => [
+      { content: "THUMBS_UP" as const, viewerHasReacted: false, reactors: { totalCount: 0 } },
+      { content: "HEART" as const, viewerHasReacted: mine, reactors: { totalCount: count } },
+    ];
+    const item = toItem(
+      rawPr({
+        reactionGroups: groups(1),
+        comments: { nodes: [{ id: "IC_1", author: { login: "carol" }, body: "Nice", createdAt: "2026-10-02T00:00:00Z", reactionGroups: groups(2, true) }] },
+        reviews: { nodes: [{ id: "R_1", author: { login: "bob" }, body: "Two nits", state: "COMMENTED", submittedAt: "2026-10-03T00:00:00Z", reactionGroups: groups(3) }] },
+        reviewThreads: { nodes: [{ path: "src/app.ts", line: 3, originalLine: 3, comments: { nodes: [{ id: "RC_1", author: { login: "bob" }, body: "why?", createdAt: "2026-10-04T00:00:00Z", reactionGroups: groups(0) }] } }] },
+      }),
+    );
+    expect(item.reactions).toEqual([{ content: "HEART", count: 1, mine: false }]);
+    expect(item.comments.map((c) => [c.id, c.reactions])).toEqual([
+      ["IC_1", [{ content: "HEART", count: 2, mine: true }]],
+      ["R_1", [{ content: "HEART", count: 3, mine: false }]],
+      ["RC_1", []],
+    ]);
   });
 });
 

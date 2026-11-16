@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { reactionsOf } from "../fetch";
 import { GitHubSimulator, avatarUrl } from "./world";
 
 const HOUR = 3_600_000;
@@ -68,5 +69,25 @@ describe("transfer", () => {
     expect(raw).toMatchObject({ number: 1, title: "Broken link", createdAt: "2026-10-25T10:00:00Z", updatedAt: "2026-10-25T13:00:00Z", repository: { nameWithOwner: "octo-org/portal" }, url: "https://github.com/octo-org/portal/issues/1" });
     expect(raw.comments.nodes.map((c) => c.body)).toEqual(["Still broken"]);
     expect(raw.assignments?.nodes.at(-1)).toMatchObject({ __typename: "TransferredEvent", fromRepository: { nameWithOwner: "octo-org/docs" } });
+  });
+});
+
+describe("react", () => {
+  it("keeps one reaction per person and emoji, says whether the viewer is among them, and leaves updatedAt alone", () => {
+    const world = new GitHubSimulator({ viewer: "octocat", now: new Date("2026-10-25T12:00:00Z") });
+    const issue = world.issue();
+    const comment = world.comment(issue, "bob", "Shipped");
+    world.advance(HOUR);
+
+    world.react(comment, "alice", "HEART");
+    world.react(comment, "alice", "HEART");
+    world.react(comment, "octocat", "HEART");
+    world.react(issue.id, "bob", "EYES");
+    world.react(comment, "octocat", "HEART", false);
+
+    expect(reactionsOf(world.raw(issue).comments.nodes[0].reactionGroups)).toEqual([{ content: "HEART", count: 1, mine: false }]);
+    expect(reactionsOf(world.raw(issue).reactionGroups)).toEqual([{ content: "EYES", count: 1, mine: false }]);
+    expect(world.raw(issue).updatedAt).toBe("2026-10-25T12:00:00Z");
+    expect(() => world.react("IC_404", "bob", "EYES")).toThrow("Could not resolve");
   });
 });

@@ -1,8 +1,9 @@
-import type { ReviewState } from "../../model";
+import type { ReactionContent, ReviewState } from "../../model";
 import type { RawBoardNode } from "../boards";
-import type { RawEvent, RawItem } from "../fetch";
+import type { RawEvent, RawItem, RawReactionGroup } from "../fetch";
 
 import { avatarUrl } from "../../demo/avatar";
+import { REACTION_ORDER } from "../../ui/reactions";
 
 export { avatarUrl };
 
@@ -92,6 +93,8 @@ export class GitHubSimulator {
   budget = { limit: 5000, remaining: 5000, resetAt: new Date(0) };
 
   readonly entries = new Map<string, Entry>();
+  /** Who reacted with what, per node id of an item or post. */
+  private reactors = new Map<string, Map<ReactionContent, Set<string>>>();
   private counter = 0;
   private numbers = new Map<string, number>();
 
@@ -117,12 +120,12 @@ export class GitHubSimulator {
     this.fixed = value;
   }
 
-  /** Runs `scenario` with the clock `ago` ms in the past, so what it writes carries older times; the clock is put back after. */
-  at(ago: number, scenario: () => void): void {
+  /** Runs `scenario` with the clock `ago` ms in the past, so what it writes carries older times; the clock is put back after. Returns what `scenario` returns. */
+  at<T>(ago: number, scenario: () => T): T {
     const before = this.fixed;
     this.fixed = new Date(this.now.getTime() - ago);
     try {
-      scenario();
+      return scenario();
     } finally {
       this.fixed = before;
     }
@@ -152,10 +155,41 @@ export class GitHubSimulator {
     return this.open("pr", draft);
   }
 
-  comment(ref: Ref, author: string, body: string): void {
+  /** @returns The comment's node id, for `react`. */
+  comment(ref: Ref, author: string, body: string): string {
     const raw = this.raw(ref);
-    raw.comments.nodes.push({ author: this.author(author), body, createdAt: this.stamp() });
+    const id = `IC_${++this.counter}`;
+    raw.comments.nodes.push({ id, author: this.author(author), body, createdAt: this.stamp() });
     this.touch(raw);
+    return id;
+  }
+
+  /**
+   * Adds or takes back `login`'s reaction on an item's description or one of its posts, as
+   * GitHub keeps them: one per person and emoji. Leaves `updatedAt` alone (not verified).
+   *
+   * @param subject  The node id of the item, comment, review or inline comment.
+   * @throws Error for an id that is none of these, like GitHub's `NOT_FOUND`.
+   */
+  react(subject: string, login: string, content: ReactionContent, on = true): void {
+    const target = this.reactable(subject);
+    const byContent = this.reactors.get(subject) ?? new Map<ReactionContent, Set<string>>();
+    this.reactors.set(subject, byContent);
+    const who = byContent.get(content) ?? new Set<string>();
+    byContent.set(content, who);
+    if (on) who.add(login);
+    else who.delete(login);
+    target.reactionGroups = REACTION_ORDER.map((c) => ({ content: c, viewerHasReacted: !!byContent.get(c)?.has(this.viewer), reactors: { totalCount: byContent.get(c)?.size ?? 0 } }));
+  }
+
+  /** The item, comment, review or inline comment with this node id, which reactions attach to. */
+  reactable(id: string): { reactionGroups?: RawReactionGroup[] } {
+    for (const { raw } of this.entries.values()) {
+      const posts = [raw, ...raw.comments.nodes, ...(raw.reviews?.nodes ?? []), ...(raw.reviewThreads?.nodes ?? []).flatMap((t) => t.comments.nodes)];
+      const found = posts.find((p) => p.id === id);
+      if (found) return found;
+    }
+    throw new Error(`Could not resolve to a node with the global id of '${id}'`);
   }
 
   assign(ref: Ref, actor: string, assignee: string): void {
@@ -206,7 +240,7 @@ export class GitHubSimulator {
         isResolved: false,
         isOutdated: false,
         resolvedBy: null,
-        comments: { nodes: [{ author: this.author(author), body: c.body, createdAt: at, url: `${raw.url}#discussion_r${++this.counter}`, replyTo: null, pullRequestReview: { id } }] },
+        comments: { nodes: [{ id: `PRRC_${++this.counter}`, author: this.author(author), body: c.body, createdAt: at, url: `${raw.url}#discussion_r${++this.counter}`, replyTo: null, pullRequestReview: { id } }] },
       });
     }
     entry.requested.delete(author);
@@ -220,6 +254,7 @@ export class GitHubSimulator {
     const target = this.thread(raw, thread);
     const first = target.comments.nodes[0];
     target.comments.nodes.push({
+      id: `PRRC_${++this.counter}`,
       author: this.author(author),
       body,
       createdAt: this.stamp(),

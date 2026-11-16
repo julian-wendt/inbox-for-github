@@ -51,15 +51,19 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
   // Mentions and reviews waiting for an answer
   const retries = world.issue({ repo: REPO.relay, title: "Webhook retries flood the queue after a 503", author: "tobias-k", ago: 3 * DAY, labels: [BUG], type: "Bug", body: "After a 503 from the receiver, every retry fires at once instead of backing off.\n\n- [x] reproduced on staging\n- [ ] add a regression test" });
   roadmap(retries, "In progress");
-  world.at(2 * HOUR, () => world.comment(retries, "tobias-k", "@juniper you touched the retry logic last month. Does the backoff cap still apply here?\n\n```ts\nconst delay = Math.min(base * 2 ** attempt, cap);\n```"));
+  const retriesAsk = world.at(2 * HOUR, () => world.comment(retries, "tobias-k", "@juniper you touched the retry logic last month. Does the backoff cap still apply here?\n\n```ts\nconst delay = Math.min(base * 2 ** attempt, cap);\n```"));
+  for (const who of ["lena-f", "ines-d"]) world.react(retriesAsk, who, "EYES");
 
   const csvExport = world.pullRequest({ repo: REPO.atlas, title: "Add CSV export to the reports table", author: "priya-n", ago: 2 * DAY, additions: 184, deletions: 27, body: "Adds an **Export CSV** button to the reports table.\n\n## What changes\n\n- [x] respects the active filters and the sort order\n- [x] column headers use the labels shown on screen, not the field names\n- [ ] large exports stream instead of buffering\n\n## How it works\n\nThe table collects its visible rows, `formatCell` turns each value into text, and the browser saves the result as a file. Dates keep the ISO form so a spreadsheet sorts them correctly.\n\n```ts\nconst csv = rows.map((row) => columns.map((c) => formatCell(row[c.key])).join(\",\")).join(\"\\n\");\n```\n\n## Not in this PR\n\nExcel needs a byte order mark to read umlauts; that follows once we know how many people open the file there.\n\n## Testing\n\nRun the reports table with 10, 1,000 and 50,000 rows and compare the downloaded file with the screen." });
   world.at(47 * HOUR, () => world.commit(csvExport));
   world.at(26 * HOUR, () => world.requestReview(csvExport, "priya-n", me));
   world.at(25 * HOUR, () => world.comment(csvExport, "ci-sentinel[bot]", "✅ All 212 checks passed."));
+  for (const who of ["marcus-o", "sam-r", me]) world.react(csvExport.id, who, "HOORAY");
+  world.react(csvExport.id, "lena-f", "ROCKET");
   world.at(20 * HOUR, () => {
-    world.review(csvExport, "marcus-o", "COMMENTED", { body: "Looks good overall, a few small things.", inline: [{ path: "src/reports/export.ts", line: 42, body: "Could this reuse `formatCell` instead of a second formatter?" }, { path: "src/reports/export.ts", line: 77, body: "Nit: name this `rows`, not `data`." }, { path: "src/reports/Table.tsx", line: 18, body: "The button needs a label for screen readers." }] });
+    const summary = world.review(csvExport, "marcus-o", "COMMENTED", { body: "Looks good overall, a few small things.", inline: [{ path: "src/reports/export.ts", line: 42, body: "Could this reuse `formatCell` instead of a second formatter?" }, { path: "src/reports/export.ts", line: 77, body: "Nit: name this `rows`, not `data`." }, { path: "src/reports/Table.tsx", line: 18, body: "The button needs a label for screen readers." }] });
     world.resolveThread(csvExport, 1, "priya-n");
+    world.react(summary, "priya-n", "THUMBS_UP");
   });
 
   const dateFns = world.pullRequest({ repo: REPO.atlas, title: "Replace moment with date-fns", author: "sam-r", ago: DAY, additions: 96, deletions: 148 });
@@ -79,7 +83,9 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
   const rounding = world.issue({ repo: REPO.ledger, title: "Fix rounding in the monthly statement", author: "ines-d", ago: 8 * DAY, type: "Bug", assignees: [me, "ines-d"] });
   world.at(8 * DAY - MIN, () => world.assign(rounding, "ines-d", me));
   roadmap(rounding, "In review", "Sprint 24");
-  world.at(40 * MIN, () => world.comment(rounding, "ines-d", "Verified the fix on the staging data, the totals match now."));
+  const verified = world.at(40 * MIN, () => world.comment(rounding, "ines-d", "Verified the fix on the staging data, the totals match now."));
+  for (const who of [me, "tobias-k"]) world.react(verified, who, "THUMBS_UP");
+  world.react(verified, "lena-f", "HEART");
 
   // Assigned to me, by type and board status
   const leak = world.issue({ repo: REPO.relay, title: "Memory leak in the worker pool", author: "tobias-k", ago: 4 * DAY, type: "Bug", labels: [BUG] });
@@ -127,7 +133,7 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
   const buildTooling = world.pullRequest({ repo: REPO.atlas, title: "Bump the build tooling", author: me, ago: 3 * DAY, additions: 12, deletions: 12 });
   world.at(2 * DAY + HOUR, () => world.enableAutoMerge(buildTooling, me));
   world.at(2 * DAY, () => {
-    world.comment(buildTooling, "priya-n", "@juniper thanks for the quick turnaround!");
+    world.react(world.comment(buildTooling, "priya-n", "@juniper thanks for the quick turnaround!"), me, "HEART");
     world.merge(buildTooling, "priya-n");
   });
 

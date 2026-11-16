@@ -7,6 +7,8 @@ export type Bucket = "inbox" | "planned" | "assigned" | "involved" | "authored" 
 export type Status = "open" | "snoozed" | "done";
 
 export interface Comment {
+  /** The comment's node id, for reacting to it; absent in caches from before it was kept. */
+  id?: string;
   author: string;
   body: string;
   createdAt: string;
@@ -14,6 +16,18 @@ export interface Comment {
   where?: string;
   /** Review summaries only: the review's verdict. Absent in caches from before it was kept. */
   reviewState?: ReviewState;
+  /** The emoji used under it; absent in caches from before they were loaded, which reads as none. */
+  reactions?: Reaction[];
+}
+
+/** GitHub's eight reaction emoji, by its names. */
+export type ReactionContent = "THUMBS_UP" | "THUMBS_DOWN" | "LAUGH" | "HOORAY" | "CONFUSED" | "HEART" | "ROCKET" | "EYES";
+
+/** One emoji under a post: how many reacted with it, and whether the viewer is among them. GitHub's reactors are not loaded, only their count. */
+export interface Reaction {
+  content: ReactionContent;
+  count: number;
+  mine: boolean;
 }
 
 export interface Label {
@@ -126,6 +140,8 @@ export interface Item {
   url: string;
   author: string;
   body: string;
+  /** The emoji used under the description; absent in caches from before they were loaded. */
+  reactions?: Reaction[];
   createdAt: string;
   updatedAt: string;
   labels: Label[];
