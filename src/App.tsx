@@ -988,7 +988,6 @@ export default function App() {
       },
     );
   };
-  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   /**
    * Adds or takes back the viewer's reaction on a post of item `id`: at once here, then on GitHub,
    * queued; GitHub's counts replace the local guess. A failure takes the guess back and says so.
@@ -1004,6 +1003,7 @@ export default function App() {
       },
     );
   };
+  /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   const replied = (id: string, change?: StateWrite) => {
     void inbox.reloadItem(id);
     const c = classifiedById(id);

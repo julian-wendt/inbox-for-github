@@ -2,7 +2,8 @@ import { SmilePlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Reaction, ReactionContent } from "../../model";
 import { t } from "../i18n";
-import { REACTION_ORDER, REACTIONS, reactionLabel } from "../reactions";
+import { REACTION_ORDER } from "../../github/fetch";
+import { REACTIONS, reactionLabel } from "../reactions";
 
 /**
  * The emoji under a post, as on GitHub: one pill per emoji someone used, with its count, marked
@@ -11,9 +12,9 @@ import { REACTION_ORDER, REACTIONS, reactionLabel } from "../reactions";
  *
  * With `onToggle`, a pill adds or takes back the viewer's reaction, and a smiley button after the
  * pills opens the eight emoji in the same row (no pop-up, so the post's card cannot clip it). The
- * picker closes on a choice, Escape, the smiley again or a click elsewhere. It takes no focus of
- * its own: Tab walks on from the smiley into the emoji, and only focus from Tab keeps Enter for
- * the button (see `useHotkeys`).
+ * picker closes on a choice, Escape, the smiley again or a click elsewhere; a choice and Escape
+ * give the focus back to the smiley. Opening takes no focus: Tab walks on from the smiley into the
+ * emoji, and only focus from Tab keeps Enter for the button (see `useHotkeys`).
  *
  * @param reactions  The used emoji, in GitHub's order; absent reads as none.
  * @param onToggle   Called with the emoji and whether the viewer's reaction is to be on; without
@@ -40,6 +41,7 @@ export function Reactions({ reactions = [], onToggle }: { reactions?: Reaction[]
   const mine = (content: ReactionContent) => reactions.some((r) => r.content === content && r.mine);
   const pick = (content: ReactionContent) => {
     setPicking(false);
+    opener.current?.focus();
     onToggle?.(content, !mine(content));
   };
 

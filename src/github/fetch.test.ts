@@ -309,6 +309,7 @@ describe("toItem", () => {
       }),
     );
     expect(item.reactions).toEqual([{ content: "HEART", count: 1, mine: false }]);
+    expect(toItem(rawPr({ reactionGroups: null })).reactions).toEqual([]);
     expect(item.comments.map((c) => [c.id, c.reactions])).toEqual([
       ["IC_1", [{ content: "HEART", count: 2, mine: true }]],
       ["R_1", [{ content: "HEART", count: 3, mine: false }]],

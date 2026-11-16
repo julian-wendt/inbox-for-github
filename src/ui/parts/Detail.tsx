@@ -254,7 +254,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             {item.draft && <span className="draft">{t("detail.draft")}</span>}
           </div>
 
-          <Description body={opening.body} reactions={opening.reactions} onReact={onReact && ((content, on) => onReact(item.id, content, on))} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
+          <Description body={opening.body} reactions={opening.reactions} onReact={opening.id && onReact ? (content, on) => onReact(opening.id!, content, on) : undefined} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
 
           <PrivateNote key={item.id} note={note} onSave={(text) => onNote(item.id, text)} />
 

@@ -1,7 +1,8 @@
+import { REACTION_ORDER } from "../github/fetch";
 import type { Item, Reaction, ReactionContent } from "../model";
 import { t } from "./i18n";
 
-/** GitHub's eight reactions with their emoji, in the order GitHub lists and shows them. */
+/** The emoji of GitHub's eight reactions. */
 export const REACTIONS: Record<ReactionContent, string> = {
   THUMBS_UP: "👍",
   THUMBS_DOWN: "👎",
@@ -12,8 +13,6 @@ export const REACTIONS: Record<ReactionContent, string> = {
   ROCKET: "🚀",
   EYES: "👀",
 };
-
-export const REACTION_ORDER = Object.keys(REACTIONS) as ReactionContent[];
 
 /**
  * Who reacted, as far as the counts tell: the app loads no reactor names (see

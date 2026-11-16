@@ -1,9 +1,8 @@
 import type { ReactionContent, ReviewState } from "../../model";
 import type { RawBoardNode } from "../boards";
-import type { RawEvent, RawItem, RawReactionGroup } from "../fetch";
+import { REACTION_ORDER, type RawEvent, type RawItem, type RawReactionGroup } from "../fetch";
 
 import { avatarUrl } from "../../demo/avatar";
-import { REACTION_ORDER } from "../../ui/reactions";
 
 export { avatarUrl };
 
@@ -183,7 +182,7 @@ export class GitHubSimulator {
   }
 
   /** The item, comment, review or inline comment with this node id, which reactions attach to. */
-  reactable(id: string): { reactionGroups?: RawReactionGroup[] } {
+  reactable(id: string): { reactionGroups?: RawReactionGroup[] | null } {
     for (const { raw } of this.entries.values()) {
       const posts = [raw, ...raw.comments.nodes, ...(raw.reviews?.nodes ?? []), ...(raw.reviewThreads?.nodes ?? []).flatMap((t) => t.comments.nodes)];
       const found = posts.find((p) => p.id === id);

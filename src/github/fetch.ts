@@ -19,6 +19,9 @@ const QUALIFIERS: Partial<Record<Reason, string>> = {
   review: "is:pr review-requested:@me",
 };
 
+/** GitHub's eight reactions, in the order it lists them in `reactionGroups`. */
+export const REACTION_ORDER: ReactionContent[] = ["THUMBS_UP", "THUMBS_DOWN", "LAUGH", "HOORAY", "CONFUSED", "HEART", "ROCKET", "EYES"];
+
 /** Counts only: `reactors(first: n)` for names would triple a search page (see `docs/reference/github-api.md`). */
 const REACTIONS = "reactionGroups { content viewerHasReacted reactors { totalCount } }";
 
@@ -119,7 +122,7 @@ interface RawComment {
   author: RawAuthor | null;
   body: string;
   createdAt: string;
-  reactionGroups?: RawReactionGroup[];
+  reactionGroups?: RawReactionGroup[] | null;
 }
 
 interface RawThreadComment extends RawComment {
@@ -137,7 +140,7 @@ export interface RawItem {
   createdAt: string;
   updatedAt: string;
   body: string;
-  reactionGroups?: RawReactionGroup[];
+  reactionGroups?: RawReactionGroup[] | null;
   closed?: boolean;
   closedAt?: string | null;
   merged?: boolean;
@@ -146,7 +149,7 @@ export interface RawItem {
   labels: { nodes: { name: string; color: string }[] };
   assignees: { nodes: { login: string }[] };
   comments: { nodes: RawComment[] };
-  reviews?: { nodes: { id?: string; url?: string; author: RawAuthor | null; body: string; state: ReviewState; submittedAt: string | null; reactionGroups?: RawReactionGroup[] }[] };
+  reviews?: { nodes: { id?: string; url?: string; author: RawAuthor | null; body: string; state: ReviewState; submittedAt: string | null; reactionGroups?: RawReactionGroup[] | null }[] };
   reviewThreads?: {
     nodes: {
       path: string;
@@ -609,8 +612,8 @@ function toComment(raw: RawComment, where?: string): Comment {
  *   reactionsOf([{ content: "HEART", viewerHasReacted: true, reactors: { totalCount: 2 } }, { content: "EYES", viewerHasReacted: false, reactors: { totalCount: 0 } }]);
  *   // [{ content: "HEART", count: 2, mine: true }]
  */
-export function reactionsOf(groups: RawReactionGroup[] = []): Reaction[] {
-  return groups.filter((g) => g.reactors.totalCount > 0).map((g) => ({ content: g.content, count: g.reactors.totalCount, mine: g.viewerHasReacted }));
+export function reactionsOf(groups: RawReactionGroup[] | null | undefined): Reaction[] {
+  return (groups ?? []).filter((g) => g.reactors.totalCount > 0).map((g) => ({ content: g.content, count: g.reactors.totalCount, mine: g.viewerHasReacted }));
 }
 
 function reviewComments(raw: RawItem): Comment[] {
