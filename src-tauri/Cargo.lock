@@ -1903,7 +1903,7 @@ dependencies = [
 
 [[package]]
 name = "inbox-for-github"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "block2",
  "objc2",
