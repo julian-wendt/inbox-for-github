@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.1](https://github.com/julian-wendt/inbox-for-github/compare/v0.8.0...v0.8.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* correct the help on view counts and the Today mark ([#164](https://github.com/julian-wendt/inbox-for-github/issues/164)) ([bfd8d2d](https://github.com/julian-wendt/inbox-for-github/commit/bfd8d2d94a9140cd8e61e4f1949a3e0b13f971aa))
+* keep the usage ring on the window with less left ([#167](https://github.com/julian-wendt/inbox-for-github/issues/167)) ([bc63120](https://github.com/julian-wendt/inbox-for-github/commit/bc63120aed9c4d6317e07f595ebdc3fa703442d0))
+* log the points a refresh spent when GitHub alternates windows ([#166](https://github.com/julian-wendt/inbox-for-github/issues/166)) ([5104ceb](https://github.com/julian-wendt/inbox-for-github/commit/5104ceb9d96a2668925e0c2f44ddd582203473b5))
+
 ## [0.8.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.7.0...v0.8.0) (2026-11-16)
 
 

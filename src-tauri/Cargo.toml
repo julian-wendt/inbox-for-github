@@ -1,6 +1,6 @@
 [package]
 name = "inbox-for-github"
-version = "0.8.0"
+version = "0.8.1"
 description = "Personal inbox for GitHub assignments, mentions and review requests"
 authors = ["Julian Wendt"]
 license = "MIT"
