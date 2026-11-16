@@ -248,7 +248,7 @@
 /* The label's own color, so it keeps the label's contrast. */
 .segment-count {
   margin-left: 5px;
-  font-weight: 400;
+  font-weight: 450;
   font-variant-numeric: tabular-nums;
 }
 
@@ -549,7 +549,7 @@
   overflow: hidden;
   color: var(--text-faint);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 450;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
