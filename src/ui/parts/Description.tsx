@@ -1,6 +1,6 @@
 import { AlignLeft, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
-import type { Reaction } from "../../model";
+import type { Reaction, ReactionContent } from "../../model";
 import type { DescriptionMode } from "../../store";
 import { t } from "../i18n";
 import { Markdown } from "./Markdown";
@@ -21,6 +21,7 @@ const CLAMP_PX = 176;
  *
  * @param body      The description's Markdown.
  * @param reactions The emoji used under it, shown below the text.
+ * @param onReact   Adds or takes back the viewer's reaction there (see `Reactions`).
  * @param me        The viewer's login, to highlight their mentions.
  * @param mode      How the card shows the text.
  * @param innerRef  Ref to the card, for scrolling to it.
@@ -28,7 +29,7 @@ const CLAMP_PX = 176;
  * @example
  *   <Description body={item.body} me="octocat" mode="expandable" />
  */
-export function Description({ body, reactions, me, mode, innerRef }: { body: string; reactions?: Reaction[]; me: string; mode: DescriptionMode; innerRef?: Ref<HTMLDivElement> }) {
+export function Description({ body, reactions, onReact, me, mode, innerRef }: { body: string; reactions?: Reaction[]; onReact?: (content: ReactionContent, on: boolean) => void; me: string; mode: DescriptionMode; innerRef?: Ref<HTMLDivElement> }) {
   const [open, setOpen] = useState(false);
   const [longer, setLonger] = useState(false);
   const content = useRef<HTMLDivElement>(null);
@@ -75,7 +76,7 @@ export function Description({ body, reactions, me, mode, innerRef }: { body: str
               <ChevronDown size={15} />
             </button>
           )}
-          <Reactions reactions={reactions} />
+          <Reactions reactions={reactions} onToggle={onReact} />
         </div>
       )}
     </div>

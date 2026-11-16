@@ -184,6 +184,8 @@ export const en = {
   "reaction.youAndOthers": "You and {count} others reacted with {emoji}",
   "reaction.one": "1 person reacted with {emoji}",
   "reaction.many": "{count} people reacted with {emoji}",
+  "reaction.add": "Add reaction",
+  "reaction.failed": "The reaction could not be saved on GitHub and was taken back: {error}",
   "reaction.list": "Reactions",
   "props.statusOn": "Status on the board {board}",
   "props.branch": "Branch: {head} → {base}",

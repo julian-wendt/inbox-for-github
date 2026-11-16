@@ -1,14 +1,15 @@
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { ghToken } from "./github/token";
-import { assignSelf, setOpen, unassignSelf, type CloseReason } from "./github/comment";
+import { assignSelf, setOpen, setReaction, unassignSelf, type CloseReason } from "./github/comment";
 import { snapshotOf } from "./handoff";
 import { queueWrite } from "./github/queue";
 import { sameLogin } from "./timeline";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Classified } from "./classify";
 import { handledStep } from "./handledUntil";
-import type { LogEvent, Status, StatusChange, StatusExtra, WriteFailure } from "./model";
+import type { LogEvent, ReactionContent, Status, StatusChange, StatusExtra, WriteFailure } from "./model";
 import { setLang, t, type MessageKey } from "./ui/i18n";
+import { withReaction, withReactions } from "./ui/reactions";
 import { itemLink, statusHint, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
 import { covers, setCovered } from "./rules/directOnly";
 import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
@@ -994,6 +995,24 @@ export default function App() {
     inbox.updateItem(id, (item) => withSelfUnassigned(item, me, at), write);
   };
   /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
+  /**
+   * Adds or takes back the viewer's reaction on a post of item `id`: at once here, then on GitHub,
+   * queued; GitHub's counts replace the local guess. A failure takes the guess back and says so.
+   */
+  const react = (id: string, subject: string, content: ReactionContent, on: boolean) => {
+    const write = queueWrite(() =>
+      ghToken()
+        .then((token) => setReaction(token, subject, content, on))
+        .then(
+          (fresh) => inbox.updateItem(id, (item) => withReactions(item, subject, fresh)),
+          (e) => {
+            inbox.updateItem(id, (item) => withReaction(item, subject, content, !on));
+            actions.notify(t("reaction.failed", { error: String(e) }));
+          },
+        ),
+    );
+    inbox.updateItem(id, (item) => withReaction(item, subject, content, on), write);
+  };
   const replied = (id: string, change?: StateWrite) => {
     void inbox.reloadItem(id);
     const c = classifiedById(id);
@@ -1420,6 +1439,7 @@ export default function App() {
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
+            onReact={(subject, content, on) => current && react(current.item.id, subject, content, on)}
           />
         </>
       )}
@@ -1456,6 +1476,7 @@ export default function App() {
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
+            onReact={(subject, content, on) => current && react(current.item.id, subject, content, on)}
                 onClose={closePopup}
               />
           </div>

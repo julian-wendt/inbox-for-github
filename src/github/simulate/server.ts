@@ -1,3 +1,4 @@
+import type { ReactionContent } from "../../model";
 import { addressedText } from "../../timeline";
 import { avatarUrl, type GitHubSimulator } from "./world";
 
@@ -44,6 +45,8 @@ const OPERATIONS: Operation[] = [
   { name: "addComment", matches: /\baddComment\(input:/, answer: (w, v) => ({ data: { addComment: { commentEdge: { node: { url: addComment(w, v) } } } }, cost: 1 }) },
   { name: "addAssigneesToAssignable", matches: /\baddAssigneesToAssignable\(input:/, answer: (w, v) => assignees(w, v, "add") },
   { name: "removeAssigneesFromAssignable", matches: /\bremoveAssigneesFromAssignable\(input:/, answer: (w, v) => assignees(w, v, "remove") },
+  { name: "addReaction", matches: /\baddReaction\(input:/, answer: (w, v) => reaction(w, v, "addReaction", true) },
+  { name: "removeReaction", matches: /\bremoveReaction\(input:/, answer: (w, v) => reaction(w, v, "removeReaction", false) },
   { name: "closeIssue", matches: /\bcloseIssue\(input:/, answer: (w, v) => state(w, v, "closeIssue", () => w.close(w.refOf(String(v.id)), w.viewer, typeof v.reason === "string" ? v.reason : "COMPLETED")) },
   { name: "closePullRequest", matches: /\bclosePullRequest\(input:/, answer: (w, v) => state(w, v, "closePullRequest", () => w.close(w.refOf(String(v.id)), w.viewer)) },
   { name: "reopenIssue", matches: /\breopenIssue\(input:/, answer: (w, v) => state(w, v, "reopenIssue", () => w.reopen(w.refOf(String(v.id)), w.viewer)) },
@@ -126,6 +129,12 @@ function assignees(world: GitHubSimulator, vars: Variables, change: "add" | "rem
   if (change === "remove" && has) world.unassign(ref, world.viewer, world.viewer);
   const payload = { assignable: { assignees: { nodes: clone(raw.assignees.nodes) } } };
   return { data: change === "add" ? { addAssigneesToAssignable: payload } : { removeAssigneesFromAssignable: payload }, cost: 1 };
+}
+
+function reaction(world: GitHubSimulator, vars: Variables, field: string, on: boolean): Answer {
+  const subject = String(vars.id);
+  world.react(subject, world.viewer, vars.content as ReactionContent, on);
+  return { data: { [field]: { subject: { reactionGroups: clone(world.reactable(subject).reactionGroups) } } }, cost: 1 };
 }
 
 function state(world: GitHubSimulator, vars: Variables, field: string, change: () => void): Answer {

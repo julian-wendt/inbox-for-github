@@ -186,6 +186,8 @@ export const de: Messages = {
   "reaction.youAndOthers": "Du und {count} weitere habt mit {emoji} reagiert",
   "reaction.one": "1 Person hat mit {emoji} reagiert",
   "reaction.many": "{count} Personen haben mit {emoji} reagiert",
+  "reaction.add": "Reaktion hinzufügen",
+  "reaction.failed": "Die Reaktion konnte auf GitHub nicht gespeichert werden und ist zurückgenommen: {error}",
   "reaction.list": "Reaktionen",
   "props.statusOn": "Status auf dem Board {board}",
   "props.branch": "Branch: {head} → {base}",

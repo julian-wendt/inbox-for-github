@@ -1003,3 +1003,27 @@
   background: color-mix(in srgb, var(--blue) 10%, transparent);
   color: var(--text);
 }
+
+.reaction-add {
+  padding: 0 7px;
+}
+
+.reaction-pick {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  background: none;
+  font-size: 15px;
+}
+
+.reaction-pick:hover {
+  background: var(--hover);
+}
+
+.reaction-pick.mine {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}

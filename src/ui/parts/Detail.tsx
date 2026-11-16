@@ -2,7 +2,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { AtSign, Bell, CalendarDays, ChevronDown, ChevronRight, Ellipsis, Link, RefreshCw, UserPlus, X } from "lucide-react";
 import { useEffect, useRef, useState, type Ref } from "react";
 import type { Classified } from "../../classify";
-import type { LogEvent, Reopen, Status, StatusChange, WriteFailure } from "../../model";
+import type { LogEvent, ReactionContent, Reopen, Status, StatusChange, WriteFailure } from "../../model";
 import type { BotComments, DescriptionMode, OpenAt } from "../../store";
 import { findMention, isBot, latest, posts, sameLogin } from "../../timeline";
 import { explain } from "../explain";
@@ -83,6 +83,8 @@ interface Props {
   reloading: boolean;
   /** Set when the detail shows as a pop-up: a close button joins the header actions. */
   onClose?: () => void;
+  /** Adds (`on`) or takes back the viewer's reaction on the description (`subject` is the item's id) or a comment. */
+  onReact?: (subject: string, content: ReactionContent, on: boolean) => void;
 }
 
 export function Detail({ entry, ...rest }: Props) {
@@ -105,7 +107,7 @@ function withReturn(events: LogEvent[], history: StatusChange[], back: LogEvent 
   return back && !events.some((e) => e.kind === "back" && e.at > decided) ? [...events, back] : events;
 }
 
-function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, events, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose }: Props & { entry: Classified }) {
+function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, events, failures, seenAt: lastSeen, attributes, statusMap, note, onNote, recentComments, botComments, openAt, descriptionMode, onReplied, onStatus, done = "on", onCopy, onReload, onOrca, orcaHint, onAssignMe, onPlan, onSnooze, onRemoveFollowUp, reloading, onClose, onReact }: Props & { entry: Classified }) {
   const { item, status } = entry;
   const [opening, ...allPosts] = posts(item);
   // Inline comments stand behind their review's line, unless one mentions the viewer.
@@ -131,7 +133,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
     .filter((s) => s.activity.kind !== "reviewed" || !covered.has(`${s.activity.actor}@${s.activity.at}`))
     .filter((s) => !since || s.activity.at >= since);
   const timeline = [
-    ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} /> })),
+    ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} onReact={onReact} /> })),
     ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} itemUrl={item.url} /> })),
     ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} /> })),
     ...localLines(history, withReturn(events, history, backEvent(entry)), item).filter((l) => !since || l.at >= since).map((line, i) => ({ at: line.at, node: <LocalLineRow key={`s-${line.at}-${i}`} line={line} /> })),
@@ -252,7 +254,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             {item.draft && <span className="draft">{t("detail.draft")}</span>}
           </div>
 
-          <Description body={opening.body} reactions={opening.reactions} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
+          <Description body={opening.body} reactions={opening.reactions} onReact={onReact && ((content, on) => onReact(item.id, content, on))} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
 
           <PrivateNote key={item.id} note={note} onSave={(text) => onNote(item.id, text)} />
 
@@ -289,10 +291,11 @@ interface PostProps {
   /** Bot comments start folded. */
   botsFolded?: boolean;
   innerRef?: Ref<HTMLLIElement>;
+  onReact?: Props["onReact"];
 }
 
 /** One post; comments by bots can fold to their first line, since they are mostly reports. */
-function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef }: PostProps) {
+function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef, onReact }: PostProps) {
   const note = review && reviewNote(review);
   const bot = isBot(post.author);
   const [open, setOpen] = useState(!bot || !botsFolded);
@@ -329,7 +332,7 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
         )}
       </div>
       <div className="post-body">{open ? <Markdown source={post.body} me={me} /> : <p className="post-summary">{firstLine(post.body)}</p>}</div>
-      <Reactions reactions={post.reactions} />
+      <Reactions reactions={post.reactions} onToggle={post.id && onReact ? (content, on) => onReact(post.id!, content, on) : undefined} />
     </li>
   );
 }

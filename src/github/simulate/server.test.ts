@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RateLimitError, lastBudget, missingScopes, tokenScopes } from "../client";
-import { addComment, assignSelf, setOpen, unassignSelf } from "../comment";
+import { addComment, assignSelf, setOpen, setReaction, unassignSelf } from "../comment";
 import { fetchItem, fetchItems, fetchItemsById, fetchOrgRepos, fetchViewer } from "../fetch";
 import { installSimulator } from "./server";
 import { GitHubSimulator } from "./world";
@@ -162,6 +162,18 @@ describe("writing to the world", () => {
     expect(await assignSelf("t", issue.id)).toEqual(["alice", "octocat"]);
     expect(await assignSelf("t", issue.id)).toEqual(["alice", "octocat"]);
     expect(await unassignSelf("t", issue.id)).toEqual(["alice"]);
+  });
+
+  it("adds and takes back the viewer's reaction, keeping others', and answers with the counts", async () => {
+    const issue = world.issue();
+    const comment = world.comment(issue, "alice", "Shipped");
+    world.react(comment, "bob", "HEART");
+
+    expect(await setReaction("t", comment, "HEART", true)).toEqual([{ content: "HEART", count: 2, mine: true }]);
+    expect(await setReaction("t", issue.id, "EYES", true)).toEqual([{ content: "EYES", count: 1, mine: true }]);
+    expect(await setReaction("t", comment, "HEART", false)).toEqual([{ content: "HEART", count: 1, mine: false }]);
+    await expect(setReaction("t", "IC_404", "HEART", true)).rejects.toThrow("Could not resolve");
+    expect((await fetchItem("t", issue.id))?.comments[0].reactions).toEqual([{ content: "HEART", count: 1, mine: false }]);
   });
 
   it("closes with a reason, reopens, and refuses to reopen a merged pull request", async () => {

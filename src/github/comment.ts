@@ -1,4 +1,6 @@
+import type { Reaction, ReactionContent } from "../model";
 import { graphql } from "./client";
+import { reactionsOf, type RawReactionGroup } from "./fetch";
 
 const ADD_COMMENT = `
 mutation ($subjectId: ID!, $body: String!) {
@@ -111,4 +113,32 @@ const MUTATIONS = {
 export async function setOpen(token: string, item: { id: string; kind: "issue" | "pr" }, action: "close" | "reopen", reason: CloseReason = "COMPLETED"): Promise<void> {
   const name: keyof typeof MUTATIONS = `${action}${item.kind === "pr" ? "PullRequest" : "Issue"}`;
   await graphql(token, MUTATIONS[name], item.kind === "issue" && action === "close" ? { id: item.id, reason } : { id: item.id });
+}
+
+const REACTION_GROUPS = "subject { reactionGroups { content viewerHasReacted reactors { totalCount } } }";
+const ADD_REACTION = `mutation ($id: ID!, $content: ReactionContent!) { addReaction(input: { subjectId: $id, content: $content }) { ${REACTION_GROUPS} } }`;
+const REMOVE_REACTION = `mutation ($id: ID!, $content: ReactionContent!) { removeReaction(input: { subjectId: $id, content: $content }) { ${REACTION_GROUPS} } }`;
+
+type ReactionPayload = { subject: { reactionGroups: RawReactionGroup[] } };
+
+/**
+ * Adds or takes back the token owner's reaction on an issue's or pull request's description, a
+ * comment, a review or an inline review comment, like GitHub's emoji picker. Only the viewer's
+ * own reaction; one request of 1 point. Adding one that is there, or removing one that is not,
+ * changes nothing.
+ *
+ * @param token    A token with the `repo` scope (`public_repo` suffices for public repos).
+ * @param subject  The node id of the item (`Item.id`) or the post (`Comment.id`).
+ * @param content  The emoji, e.g. "HEART".
+ * @param on       True adds, false removes.
+ * @returns The post's reactions after the change, as GitHub has them (see `reactionsOf`).
+ * @throws Error with GitHub's message, e.g. for a locked conversation or a node that is gone.
+ *
+ * @example
+ *   await setReaction(token, comment.id, "THUMBS_UP", true); // [{ content: "THUMBS_UP", count: 3, mine: true }]
+ */
+export async function setReaction(token: string, subject: string, content: ReactionContent, on: boolean): Promise<Reaction[]> {
+  const variables = { id: subject, content };
+  if (on) return reactionsOf((await graphql<{ addReaction: ReactionPayload }>(token, ADD_REACTION, variables)).addReaction.subject.reactionGroups);
+  return reactionsOf((await graphql<{ removeReaction: ReactionPayload }>(token, REMOVE_REACTION, variables)).removeReaction.subject.reactionGroups);
 }
