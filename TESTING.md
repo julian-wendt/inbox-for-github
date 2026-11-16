@@ -112,7 +112,8 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Unter einem Kommentar und unter der aufgeklappten Beschreibung: je Emoji eine Pille mit Zahl, die eigene blau umrandet; Tooltip „Du und 2 weitere …“.
 - [ ] Klick auf eine Pille nimmt die eigene Reaktion dazu oder zurück, die Zahl springt sofort; auf GitHub steht danach dasselbe.
 - [ ] Smiley öffnet die acht Emoji in derselben Zeile; Auswahl, Esc oder Klick daneben schließt sie.
-- [ ] Reaktion ohne WLAN: die Pille springt zurück, Hinweis „Die Reaktion konnte auf GitHub nicht gespeichert werden …“.
+- [ ] Jede Reaktion zeigt „#12: mit 👍 reagiert“; ⌘Z nimmt sie auch auf GitHub zurück, ⌘Y setzt sie wieder.
+- [ ] Reaktion ohne WLAN: die Pille springt zurück, Hinweis „Die Reaktion auf #12 konnte auf GitHub nicht gespeichert werden …“, im Verlauf „Reagieren auf GitHub fehlgeschlagen“.
 - [ ] Eine Reaktion auf eine Erwähnung lässt das Item in der Inbox; eine fremde Reaktion macht nichts ungelesen und meldet nichts.
 
 ## Schließen und Wiedereröffnen (Test-Issue, Test-PR)

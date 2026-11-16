@@ -77,7 +77,7 @@ question, and D follows that intent (2026-11-11); the table of views is in
   bar; after a click they are shortcuts again. Keyboard focus shows as a fill that meets 3:1, not
   a ring, and only after keyboard use.
 - **Undo is a chain, not a single step.** Every change the viewer makes (status, follow-up date,
-  read and unread, Today, assigning and leaving, close and reopen, hiding an item) is a step with
+  read and unread, Today, assigning and leaving, close and reopen, reactions, hiding an item) is a step with
   what takes it back and what does it again, kept for the window's lifetime (the last fifty). ⌘Z
   walks back, ⌘Y forward, and ⌘K lists the chain to jump several steps. A step restores what it
   replaced exactly, not "the previous status". Writes to GitHub are undone with the opposite

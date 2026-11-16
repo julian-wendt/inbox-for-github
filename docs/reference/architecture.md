@@ -195,7 +195,7 @@ was created (`item_status.notify`; `status_log.until`, `notify`, `log_as`), each
 | `item_seen` | when the viewer last looked at an item, for "since you were last here" |
 | `item_unread` | items the viewer marked unread by hand (U), with `marked_at`; opening the item removes the row |
 | `item_note` | private notes per item |
-| `item_write_failure` | writes to GitHub that failed (assign, unassign), with the error, for the item's timeline |
+| `item_write_failure` | writes to GitHub that failed (`kind` assign, unassign, react), with the error, for the item's timeline |
 | `item_cache` | the last fetch: viewer, items (JSON), `fetched_at`, `full_at`, `scope` |
 
 Schema changes are additive: a new column would be added in `Store.open` when missing.

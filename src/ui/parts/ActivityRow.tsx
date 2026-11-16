@@ -240,6 +240,8 @@ function lineIcon(line: LocalLine): ReactNode {
   return <CalendarDays size={13} strokeWidth={2.2} color="var(--st-planned)" aria-hidden />;
 }
 
+const FAILED = { assign: "activity.assignFailed", unassign: "activity.unassignFailed", react: "activity.reactFailed" } as const;
+
 /**
  * A timeline line for a write to GitHub that failed and was undone here; the message as tooltip.
  *
@@ -254,7 +256,7 @@ export function WriteFailureRow({ failure }: { failure: WriteFailure }) {
         <TriangleAlert size={13} />
       </span>
       <span className="activity-text">
-        {t(failure.kind === "assign" ? "activity.assignFailed" : "activity.unassignFailed")} <span className="activity-time">· {ago(failure.at)}</span>
+        {t(FAILED[failure.kind])} <span className="activity-time">· {ago(failure.at)}</span>
       </span>
     </li>
   );

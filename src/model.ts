@@ -228,7 +228,8 @@ export type StatusExtra = Pick<StoredStatus, "until" | "notify" | "handoff">;
 
 /** A write to GitHub that failed and was undone here, kept for the item's timeline. */
 export interface WriteFailure {
-  kind: "assign" | "unassign";
+  /** "react": adding or taking back the viewer's reaction on a post. */
+  kind: "assign" | "unassign" | "react";
   at: string;
   /** GitHub's or the network's message. */
   error: string;

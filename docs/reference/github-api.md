@@ -165,7 +165,8 @@ over a dropped page of 50 and the page of 25 after it, where a page of 25 alone 
 ## Writes
 
 Only `src/github/comment.ts`: add a comment, close or reopen an issue or pull request (with a
-reason for issues), and add the viewer to the assignees (`assignSelf`: `addAssigneesToAssignable`,
+reason for issues), add or take back the viewer's reaction on a post (`setReaction`, below), and
+add the viewer to the assignees (`assignSelf`: `addAssigneesToAssignable`,
 1 point, returning the assignees; the viewer's node id once per session, 1 point; the query was
 validated against the live schema 2026-10-25 with an unknown node id, which GitHub rejects as
 `NOT_FOUND` without writing). No review actions and no edits of other people's text, by design

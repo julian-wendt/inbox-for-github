@@ -9,7 +9,7 @@ import type { Classified } from "./classify";
 import { handledStep } from "./handledUntil";
 import type { LogEvent, ReactionContent, Status, StatusChange, StatusExtra, WriteFailure } from "./model";
 import { setLang, t, type MessageKey } from "./ui/i18n";
-import { withReaction, withReactions } from "./ui/reactions";
+import { REACTIONS, withReaction, withReactions } from "./ui/reactions";
 import { itemLink, statusHint, KINDS, nextOf, sortTime, statusesFor, viewOf, VIEWS, type KindFilter, type LinkFormat, type View } from "./ui/labels";
 import { covers, setCovered } from "./rules/directOnly";
 import { ContextMenu, type MenuEntry } from "./ui/parts/ContextMenu";
@@ -990,16 +990,26 @@ export default function App() {
   };
   /**
    * Adds or takes back the viewer's reaction on a post of item `id`: at once here, then on GitHub,
-   * queued; GitHub's counts replace the local guess. A failure takes the guess back and says so.
+   * queued; GitHub's counts replace the local guess. A failure takes the guess back, logs it in the
+   * item's timeline and says so. Undo sends the opposite write through the same queue.
    */
-  const react = (id: string, subject: string, content: ReactionContent, on: boolean) => {
+  const react = (id: string, number: number, subject: string, content: ReactionContent, on: boolean, quiet = false) => {
+    const text = t(on ? "reaction.added" : "reaction.removed", { number, emoji: REACTIONS[content] });
+    if (quiet) actions.notify(text);
+    else
+      actions.announce(
+        text,
+        () => react(id, number, subject, content, !on, true),
+        () => react(id, number, subject, content, on, true),
+      );
     const write = queueWrite(() => ghToken().then((token) => setReaction(token, subject, content, on)));
     inbox.updateItem(id, (item) => withReaction(item, subject, content, on), write);
     write.then(
       (fresh) => inbox.updateItem(id, (item) => withReactions(item, subject, fresh)),
       (e) => {
         inbox.updateItem(id, (item) => withReaction(item, subject, content, !on));
-        actions.notify(t("reaction.failed", { error: String(e) }));
+        void inbox.logWriteFailure(id, "react", String(e));
+        actions.notify(t("reaction.failed", { number, error: String(e) }));
       },
     );
   };
@@ -1430,7 +1440,7 @@ export default function App() {
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
-            onReact={(subject, content, on) => current && react(current.item.id, subject, content, on)}
+            onReact={(subject, content, on) => current && react(current.item.id, current.item.number, subject, content, on)}
           />
         </>
       )}
@@ -1467,7 +1477,7 @@ export default function App() {
             onSnooze={(at: DOMRect) => current && setSnoozeMenu({ entry: current, x: at.left, y: at.bottom + 4 })}
             onRemoveFollowUp={() => current && removeFollowUp(current)}
             reloading={reloading === current?.item.id}
-            onReact={(subject, content, on) => current && react(current.item.id, subject, content, on)}
+            onReact={(subject, content, on) => current && react(current.item.id, current.item.number, subject, content, on)}
                 onClose={closePopup}
               />
           </div>
