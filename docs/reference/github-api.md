@@ -137,7 +137,9 @@ refreshes until then and below 400 remaining points (`LOW_BUDGET`).
 The responses of one refresh can come from two hourly windows in turn, each with its own
 `x-ratelimit-reset` and `x-ratelimit-used` (seen 2026-11-10 and 2026-11-11 with one token).
 `pointsSpent` therefore counts the drop in `remaining` per window, and what a window used before
-the app saw it only when the earlier windows have reset, i.e. on a real new hour.
+the app saw it only on a real new hour: when its reset lies an hour or more after every window it
+knows. Only GitHub's reset times decide, so a Mac clock that runs ahead cannot bring back the
+overcount.
 
 ## Timeouts
 

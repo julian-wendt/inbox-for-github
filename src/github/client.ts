@@ -45,7 +45,7 @@ export function lastBudget(): Budget | null {
   return latestBudget;
 }
 
-function noteHeaders(headers: Headers, now = Date.now()): void {
+function noteHeaders(headers: Headers): void {
   const remaining = Number(headers.get("x-ratelimit-remaining") ?? NaN);
   const reset = Number(headers.get("x-ratelimit-reset"));
   if (headers.get("x-ratelimit-resource") !== "graphql" || !reset || !Number.isFinite(remaining)) return;
@@ -57,7 +57,7 @@ function noteHeaders(headers: Headers, now = Date.now()): void {
   if (lowest !== undefined) spent += Math.max(0, lowest - remaining);
   else if (latestBudget && newHour) spent += limit - remaining;
   windows.set(resetAt.getTime(), Math.min(lowest ?? remaining, remaining));
-  for (const at of windows.keys()) if (at <= now && at !== resetAt.getTime()) windows.delete(at);
+  for (const at of windows.keys()) if (resetAt.getTime() >= at + HOUR_MS) windows.delete(at);
   latestBudget = { remaining, limit, resetAt };
 }
 

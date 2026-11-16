@@ -74,8 +74,7 @@ describe("graphql rate limits", () => {
       respond(200, { data: {} }, headers(remaining, reset));
       await graphql("t", "{ ok }");
     }
-    // Both resets lie in the local past, so the second window's drop of 10 is lost, never an hour's worth.
-    expect(pointsSpent() - before).toBe(20);
+    expect(pointsSpent() - before).toBe(30);
   });
 
   it("skips a response without a remaining count", async () => {
