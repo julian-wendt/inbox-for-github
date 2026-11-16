@@ -46,7 +46,7 @@
   background: var(--text-faint);
   content: "";
   opacity: 0;
-  transition: opacity 120ms var(--ease);
+  transition: opacity var(--dur-fade) var(--ease);
 }
 
 .resizer:hover::after,
@@ -110,7 +110,6 @@
   border-radius: var(--radius-m);
   background: var(--panel);
   color: var(--text-faint);
-  box-shadow: 0 1px 1px rgb(0 0 0 / 0.03);
 }
 
 .search-pill span {
@@ -148,7 +147,7 @@
   color: var(--text-muted);
   font-weight: 500;
   text-align: left;
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .nav-item span:not(.nav-count, .repo-dot, .repo-check, .new-chip) {
@@ -234,7 +233,7 @@
   height: 7px;
   border-radius: 2px;
   background: var(--text-faint);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .scope-notice {
@@ -313,7 +312,7 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .foot-text strong {
@@ -496,7 +495,7 @@
   justify-self: start;
   padding: 0;
   border: 0;
-  background: none;
+  background: transparent;
   color: var(--text);
   font-size: var(--fs-s);
   font-weight: 600;
@@ -610,7 +609,7 @@
   height: 100%;
   padding: 0 8px 0 10px;
   border-color: transparent;
-  background: none;
+  background: transparent;
   font-weight: 500;
 }
 
@@ -690,7 +689,7 @@
   align-items: center;
   width: 100%;
   border: 0;
-  background: none;
+  background: transparent;
   color: var(--text);
   text-align: left;
 }
@@ -833,7 +832,7 @@
   border: 1.5px solid var(--text-faint);
   border-radius: 50%;
   appearance: none;
-  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), border-color var(--dur-fade) var(--ease);
 }
 
 .radio input:checked {
@@ -916,7 +915,7 @@
   background: transparent;
   color: var(--text-muted);
   font-weight: 500;
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 /* A choice that has its place but nothing to do here, greyed out like header controls. */
@@ -961,7 +960,7 @@
   background: var(--panel);
   color: var(--text);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  box-shadow: var(--shadow-raised);
 }
 
 .toggle-row {
@@ -1040,7 +1039,7 @@
   margin: 0;
   border-radius: 999px;
   background: var(--border-strong);
-  transition: background 140ms var(--ease);
+  transition: background var(--dur-move) var(--ease);
   appearance: none;
 }
 
@@ -1052,9 +1051,9 @@
   height: 14px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  box-shadow: var(--shadow-knob);
   content: "";
-  transition: translate 160ms var(--ease);
+  transition: translate var(--dur-move) var(--ease);
 }
 
 .switch:checked {
@@ -1072,7 +1071,7 @@
 }
 
 .dialog-actions kbd {
-  border-color: rgb(255 255 255 / 0.3);
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
   background: transparent;
   color: inherit;
 }
@@ -1098,7 +1097,7 @@
 
 .usage-left {
   stroke-linecap: round;
-  transition: stroke-dasharray 300ms var(--ease);
+  transition: stroke-dasharray var(--dur-slow) var(--ease);
 }
 
 .usage-ring.ok .usage-left {
@@ -1140,7 +1139,7 @@
   border-radius: var(--radius-s);
   background: transparent;
   color: var(--text-muted);
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .heading-action:hover {
@@ -1214,7 +1213,7 @@
 .status-map-choice button.auto:hover {
   background: var(--panel);
   color: var(--text);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+  box-shadow: var(--shadow-raised);
 }
 
 .attribute-list {
@@ -1335,7 +1334,7 @@
   overflow: hidden;
   padding: 0;
   border: 0;
-  background: none;
+  background: transparent;
   color: var(--text);
   font-weight: 500;
   text-align: left;

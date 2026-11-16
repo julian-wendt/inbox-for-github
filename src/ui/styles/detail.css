@@ -156,7 +156,7 @@
   padding: 0 11px;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: none;
+  background: transparent;
   color: var(--text);
 }
 
@@ -174,12 +174,12 @@
   height: 18px;
   margin: 0 -6px 0 -2px;
   padding: 0;
-  border: none;
+  border: 0;
   border-radius: 999px;
-  background: none;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .chip-x:hover {
@@ -225,7 +225,7 @@
   padding: 0 8px;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--label) 14%, transparent);
+  background: color-mix(in srgb, var(--label) var(--tint), transparent);
   font-size: var(--fs-xs);
   font-weight: 500;
   line-height: 18px;
@@ -290,7 +290,7 @@
   padding: 0 20px;
   border-radius: calc(var(--radius-m) - 1px);
   border: 0;
-  background: none;
+  background: transparent;
   color: var(--text);
   font-weight: 600;
   text-align: left;
@@ -303,7 +303,7 @@
 .fold-desc {
   margin-left: auto;
   color: var(--text-muted);
-  transition: rotate 140ms var(--ease);
+  transition: rotate var(--dur-move) var(--ease);
 }
 
 .description-head:hover .fold-desc {
@@ -339,7 +339,7 @@
   margin-top: 10px;
   padding: 0;
   border: 0;
-  background: none;
+  background: transparent;
   color: var(--accent);
   font-weight: 600;
   cursor: pointer;
@@ -350,7 +350,7 @@
 }
 
 .description-more svg {
-  transition: rotate 140ms var(--ease);
+  transition: rotate var(--dur-move) var(--ease);
 }
 
 .description-more[aria-expanded="true"] svg {
@@ -401,7 +401,7 @@
   flex: none;
   margin-left: -4px;
   color: var(--text-faint);
-  transition: rotate 140ms var(--ease);
+  transition: rotate var(--dur-move) var(--ease);
 }
 
 .post-head[aria-expanded="true"] .post-chevron {
@@ -465,7 +465,7 @@
 .post-review-note {
   padding: 0;
   border: 0;
-  background: none;
+  background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
@@ -592,7 +592,7 @@
 
 .md pre code {
   padding: 0;
-  background: none;
+  background: transparent;
 }
 
 .md blockquote {
@@ -936,5 +936,4 @@
 
 .segment-more {
   margin-left: -2px;
-  opacity: 0.7;
 }

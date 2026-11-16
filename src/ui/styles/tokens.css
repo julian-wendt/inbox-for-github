@@ -19,6 +19,15 @@
   --control-h: 30px;
   --row-h: 62px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
+  --dur-fade: 120ms;
+  --dur-move: 160ms;
+  --dur-slow: 400ms;
+  /* A hue's wash behind --text: tags, labels, calendar events. */
+  --tint: 14%;
+  /* A selected segment lifted off its track, and a switch's knob. */
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-knob: 0 1px 2px rgb(0 0 0 / 0.25);
 
   --bg: #f3f4f6;
   --panel: #f9fafb;

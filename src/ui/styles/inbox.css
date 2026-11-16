@@ -67,7 +67,7 @@
   border-radius: var(--radius-m);
   background: var(--control-fill);
   color: var(--text-muted);
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .chip-btn.header-select {
@@ -370,7 +370,7 @@
 }
 
 .inbox-empty-mark.loading {
-  background: none;
+  background: transparent;
   color: var(--text-muted);
 }
 
@@ -403,7 +403,7 @@
   border-radius: var(--radius-m);
   background: var(--control-fill);
   color: var(--text-muted);
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .toast-undo:hover {
@@ -562,7 +562,7 @@
 .bar-chevron {
   margin-right: 3px;
   color: var(--text-faint);
-  transition: rotate 140ms var(--ease);
+  transition: rotate var(--dur-move) var(--ease);
 }
 
 .bar[aria-expanded="true"] .bar-chevron {
@@ -649,7 +649,7 @@
 
 /* Badges after the title: the planned day blue, like Plan elsewhere. */
 .table-planned {
-  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  background: color-mix(in srgb, var(--blue) var(--tint), transparent);
   color: var(--text);
 }
 
@@ -659,7 +659,7 @@
 
 /* A follow-up's return time after the title, pink like Follow-up elsewhere. */
 .table-planned.table-followup {
-  background: color-mix(in srgb, var(--pink) 14%, transparent);
+  background: color-mix(in srgb, var(--pink) var(--tint), transparent);
 }
 
 .table-followup svg {
@@ -673,7 +673,7 @@
 
 /* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
 .table-carried {
-  background: color-mix(in srgb, var(--red) 16%, transparent);
+  background: color-mix(in srgb, var(--red) var(--tint), transparent);
   color: var(--text);
 }
 
@@ -716,7 +716,7 @@
 
 .people .assignee-avatar + .assignee-avatar {
   margin-left: -5px;
-  transition: margin-left 140ms var(--ease);
+  transition: margin-left var(--dur-move) var(--ease);
 }
 
 .assignee-pill:hover .assignee-avatar + .assignee-avatar {
@@ -820,7 +820,7 @@
 
 /* Marks an assignment the viewer has not opened since it was made. */
 .new-mark {
-  background: color-mix(in srgb, var(--yellow) 18%, transparent);
+  background: color-mix(in srgb, var(--yellow) var(--tint), transparent);
   color: var(--text);
 }
 
@@ -861,7 +861,7 @@
   padding: 5px 8px;
   border: 0;
   border-radius: var(--radius-m);
-  background: none;
+  background: transparent;
   color: var(--text);
   font-size: var(--fs-m);
   text-align: left;
@@ -917,7 +917,7 @@
 .menu-hint {
   color: var(--text-muted);
   font-size: var(--fs-s);
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .menu-row kbd,

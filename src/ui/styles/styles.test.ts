@@ -8,6 +8,10 @@ const FONT_SIZE = /^(var\(--fs-(xs|s|m|l|xl|2xl)\)|inherit|0\.85em)$/;
 const FONT_WEIGHTS = new Set(["450", "500", "600", "700"]);
 const RADIUS = /^(0|50%|999px|var\(--radius-[sml]\)|calc\(var\(--radius-[sml]\) - [12]px\)|[0-3](\.5)?px)$/;
 const HEX_ALLOWED = new Set(["#fff", "#000"]);
+const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|\d+px)$/;
+const Z_LAYERS = new Set(["1", "2", "5", "25", "26", "30", "35", "40"]);
+const OPACITIES = new Set(["0", "0.5", "1"]);
+const LETTER_SPACINGS = new Set(["0.04em", "-0.012em", "normal", "0"]);
 
 const dir = new URL(".", import.meta.url);
 const sheets = readdirSync(dir)
@@ -49,6 +53,29 @@ describe("style guide", () => {
   it("rounds corners with the radius tokens, full rounding or a drawn mark's few pixels", () => {
     const corners = ["border-radius", "border-top-left-radius", "border-top-right-radius", "border-bottom-left-radius", "border-bottom-right-radius"];
     expect(outside((v) => RADIUS.test(v), corners.flatMap((p) => declared(p)))).toEqual([]);
+  });
+
+  it("moves with the duration tokens on the app's curve", () => {
+    const parts = declared("transition").flatMap((d) => d.value.split(/,\s*(?![^(]*\))/).map((part) => ({ at: d.at, value: part })));
+    expect(outside((v) => /\svar\(--dur-(fade|move|slow)\) var\(--ease\)$/.test(v), parts)).toEqual([]);
+  });
+
+  it("uses the shadow tokens", () => {
+    expect(outside((v) => v === "none" || !/rgb|hsl|#/.test(v), declared("box-shadow"))).toEqual([]);
+  });
+
+  it("keeps line heights, layers, opacities and letter spacing to their sets", () => {
+    expect(outside((v) => LINE_HEIGHTS.test(v), declared("line-height"))).toEqual([]);
+    expect(outside((v) => Z_LAYERS.has(v), declared("z-index"))).toEqual([]);
+    expect(outside((v) => OPACITIES.has(v), declared("opacity"))).toEqual([]);
+    expect(outside((v) => LETTER_SPACINGS.has(v), declared("letter-spacing"))).toEqual([]);
+  });
+
+  it("keeps rgb() and hsl() colors in tokens.css", () => {
+    const raw = sheets
+      .filter((sheet) => sheet.name !== "tokens.css")
+      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (/\b(rgba?|hsla?)\(/.test(line) ? [`${sheet.name}:${i + 1}`] : [])));
+    expect(raw).toEqual([]);
   });
 
   it("keeps hex colors in tokens.css", () => {

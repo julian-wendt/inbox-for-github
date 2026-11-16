@@ -303,7 +303,7 @@
   padding: 2px 6px;
   border-left: 3px solid var(--event, var(--text-faint));
   border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--event, var(--text-faint)) 16%, var(--panel));
+  background: color-mix(in srgb, var(--event, var(--text-faint)) var(--tint), var(--panel));
   color: var(--text-content);
   font-size: var(--fs-xs);
   line-height: 1.3;
@@ -317,7 +317,7 @@
 
 /* Events marked free leave the time open, so they stay lighter. */
 .calendar-event.free {
-  background: color-mix(in srgb, var(--event, var(--text-faint)) 6%, var(--panel));
+  background: color-mix(in srgb, var(--event, var(--text-faint)) calc(var(--tint) / 2), var(--panel));
 }
 
 .calendar-slot {
@@ -334,7 +334,7 @@
   box-shadow: var(--shadow-pop);
   color: var(--on-accent);
   font-size: var(--fs-s);
-  line-height: 1.35;
+  line-height: 1.3;
   cursor: grab;
 }
 

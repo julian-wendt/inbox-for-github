@@ -2,8 +2,7 @@
 
 Binding for every CSS change. Before choosing a value, find the element of the same kind below
 and copy its spec; a new value needs asking first, then an entry here. `src/ui/styles/styles.test.ts`
-checks font sizes, font weights, corner radii and hex colors against this page; the rest is for
-review. Tokens and contrast are in [`ui.md`](ui.md).
+and `src/ui/motion.test.ts` check every value set on this page; the rest is for review. Tokens and contrast are in [`ui.md`](ui.md).
 
 ## Type
 
@@ -101,8 +100,46 @@ heads, as GitHub does.
 
 **Rows:** hover `--hover`, selected `--selected`, `--radius-m`, no transition.
 
-**Motion:** 120ms for hover fades, 140ms for chevron rotations, 160ms for the switch knob, all
-`var(--ease)`.
+**Motion:** CSS takes `--dur-fade` (120ms: hover, fades), `--dur-move` (160ms: chevrons, the
+switch knob, slides) or `--dur-slow` (400ms: scrollbar, usage meter), always with `var(--ease)`.
+Animated elements in components take `MOVE` or `DIALOG_MOTION` from `src/ui/motion.ts`; every
+dialog opens the same way.
+
+## Surfaces and effects
+
+- **Backgrounds** are tokens only: `--panel` for cards, menus and dialogs, `--surface` for raised
+  heads, `--bg` for fields, `--control-fill` for filled controls, `--hover` and `--selected` for
+  rows and items, `--track` for small grey tags. No fill is `transparent`, never `none`.
+- **Tints:** a hue behind `--text` mixes `--tint` (14%) of the hue with `transparent` (tags,
+  labels) or `--panel` (calendar events; a free event half of it). The only other washes are the
+  search hit (yellow 30%) and the warning notice (yellow 8%).
+- **Colored borders** mix the hue 50% with `transparent` (error bar, review verdicts).
+- **Shadows:** `--shadow-pop` for everything that floats, `--shadow-raised` for a selected segment,
+  `--shadow-knob` for a switch's knob. Nothing else casts a shadow.
+- **Borders** are `1px solid` in `--border`, `--border-strong` or `--divider` (lines between
+  panes); `border: 0` to remove one. Drawn check marks use `1.5px solid var(--text-faint)`.
+- **Raw colors** (`#…`, `rgb()`, `hsl()`) live in `tokens.css`; elsewhere only `#fff` and `#000`.
+
+## Other value sets
+
+| Property | Allowed |
+|---|---|
+| `line-height` | `1` for one-line boxes, `1.3` for tight multi-line text and titles, `1.5` body, `1.6` Markdown, px only where it sets a tag's or label's height |
+| `opacity` | `0`, `0.5` (disabled, dimmed marks), `1` |
+| `letter-spacing` | `0.04em` small caps, `-0.012em` the detail title, `normal`/`0` to reset |
+
+**Layers** (`z-index`):
+
+| Layer | What |
+|---|---|
+| 1 | the calendar's slot over its events |
+| 2 | sticky heads over scrolling content |
+| 5 | column resizers |
+| 25 | a pop-up's backdrop |
+| 26 | pop-ups and dropdowns |
+| 30 | dialogs and their overlay |
+| 35 | the toast |
+| 40 | context menus |
 
 ## Cascade
 

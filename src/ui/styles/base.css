@@ -98,7 +98,7 @@ small {
 .repo-list,
 .org-select-menu,
 .reply-preview {
-  transition: --thumb-alpha 400ms var(--ease);
+  transition: --thumb-alpha var(--dur-slow) var(--ease);
 }
 
 [data-scrolling] {
@@ -129,7 +129,7 @@ kbd {
   border-radius: var(--radius-m);
   background: var(--panel);
   font-weight: 500;
-  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), border-color var(--dur-fade) var(--ease);
 }
 
 .btn:hover {
@@ -157,7 +157,7 @@ kbd {
   border-radius: var(--radius-m);
   background: transparent;
   color: var(--text-muted);
-  transition: background 120ms var(--ease), color 120ms var(--ease);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .icon-btn:hover:not(:disabled) {
@@ -212,7 +212,7 @@ kbd {
   line-height: 1;
   user-select: none;
   background:
-    radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.2), transparent 45%),
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, #fff 20%, transparent), transparent 45%),
     radial-gradient(
       circle at var(--xa) var(--ya),
       color-mix(in srgb, var(--ca) 70%, transparent),
@@ -228,7 +228,7 @@ kbd {
 .avatar-pending {
   position: relative;
   display: inline-block;
-  background: none;
+  background: transparent;
 }
 
 .avatar-pending > img {
