@@ -639,18 +639,6 @@
   align-items: center;
 }
 
-.field textarea {
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--bg);
-  font-family: var(--font-mono);
-  font-size: var(--fs-s);
-  resize: vertical;
-  -webkit-user-select: text;
-  user-select: text;
-}
-
 /* Controls of one kind stand equally tall in every dialog. */
 .dialog :is(.btn, .repo-search, .org-add input, .segment-field) {
   height: var(--control-h);

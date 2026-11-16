@@ -99,23 +99,31 @@ dialog opens the same way.
 
 The exact spec of every building block. Columns: height, padding, gap between its parts, type
 (size token / weight), text color, fill, corner. "—" means none is set; a missing state uses the
-row above. A change to a block changes its row here.
+row above. A change to a block changes its row here: `catalog.test.ts` holds each row's leading
+values to the CSS of the selectors it names, so name the selector that carries the value and
+write parts and variants after it ("title `m`/600", "(detail 28)"). "a / b" gives the row's
+selectors their values in order.
 
 **Containers**
 
 | Block | Height | Padding | Gap | Type | Color | Fill and line | Corner |
 |---|---|---|---|---|---|---|---|
 | Pane header `.pane-header` | 44 | `0 16px` | 8 | title `m`/600 | `--text` | `--panel`, `--divider` below | — |
-| Dialog `.dialog` | — | `20px 24px` | 12 | title `l`/600 | `--text` | `--panel`, `--border`, `--shadow-pop` | `l` |
+| Dialog `.dialog` | — | — | — | title `l`/600 | `--text` | `--panel`, `--border`, `--shadow-pop` | `l` |
+| Dialog content `.dialog.help`, `.dialog.snooze-picker`, `.dialog.calendar-day` (the palette and Settings lay out their own parts) | — | `20px 24px` | 12 | | | | |
 | Popover `.popover` | — | `12px 16px` | — | `s` | `--text-muted` | as dialog | `l` |
 | Menu `.context-menu`, dropdowns | — | 4 | — | — | — | as dialog | `l` |
 | Toast `.toast` | 40 | `0 6px 0 16px` | 16 | `m`/500 | `--text` | as dialog | `l` |
 | Error bar `.error-bar` | — | `12px 16px` | — | `m` | `--new` | `--panel`, red 50% line, `--shadow-pop` | `l` |
-| Card in Settings `.toggle-row`, `.toggle-card`, `.status-map`, `.delivery-card` | `--row-h` min (switch rows) | `10px 12px` | 12 | `m`, hint `s` | `--text`, hint `--text-faint` | `--border`, `--border` lines between parts | `m` |
+| Card in Settings `.toggle-row` | `--row-h` min | `10px 12px` | 12 | `m`, hint `s` | `--text`, hint `--text-faint` | `--border` | `m` |
+| Card group `.toggle-card`, `.delivery-card` | — | — | — | | | `--border`, `--border` lines between its rows | `m` |
+| Status map `.status-map` | — | `10px 12px` | 2 | `m`, title 500 | `--text` | `--border` | `m` |
 | Attribute row `.attribute-row` | — | `8px 12px 8px 6px` | 12 | `m` | `--text` | `--panel`, `--border` | `m` |
 | Sidebar notice `.scope-notice` | — | `10px 12px` | 6 | `s`, title 600 | `--text-muted` | `--surface`, `--border-strong` | `m` |
-| Post, description `.post`, `.description` | head 40 min | head `6px 16px` / `0 16px`, body `12px 16px` / `0 16px 12px` | 8 | `m`, name 600 | `--text` | `--panel` or `--surface`, `--border-strong`, head `--surface` | `m` |
-| Comment box `.comment-box` | tabs 36 | tabs `0 12px`, body 8 | — | `m` | `--text-muted`, active `--text` | `--border-strong`, head `--surface` | `m` |
+| Post, description `.post`, `.description` | — | — | — | `m`, name 600 | `--text` | `--panel` / `--surface`, `--border-strong` | `m` |
+| Their head `.post-head`, `.description-head` | 40 min / 40 | `6px 16px` / `0 16px` | 8 | | | | |
+| Their body `.post-body`, `.description-body` | — | `12px 16px` / `0 16px 12px` | — | | | | |
+| Comment box `.comment-box` | tabs 36 | tabs `0 12px`, body 8 | — | `m` | tabs `--text-muted`, active `--text` | `--border-strong`, head `--surface` | `m` |
 | Empty state `.inbox-empty`, `.detail-empty` | — | — | 6 | `m` | `--text-faint` | — | — |
 
 **Rows and items** (hover `--hover`, selected `--selected`, no transition)
@@ -129,7 +137,7 @@ row above. A change to a block changes its row here.
 | Sidebar item `.nav-item` | 30 | `0 8px` | 8 | `m`/500 (unread 700), count `xs` | `--text-muted`, on `--text` | `m`, on `--hover` with a `--border` ring |
 | Sidebar heading `.nav-heading` | — | margin `20px 8px 6px` | — | small caps | `--text-faint` | — |
 | Menu item `.menu-row`, dropdown and close-menu items | 30 min (dropdown with avatar 36) | `6px 8px` (dropdowns `0 8px` at their fixed height) | 8 | `m`, hint `s` | `--text`, hint `--text-muted` | `m` |
-| Palette item `[cmdk-item]` | 36 min | `6px 10px` | 10 | `m`, hint `s` | `--text-muted`, selected `--text` | `m` |
+| Palette item `.palette [cmdk-item]` | 36 min | `6px 10px` | 10 | `m`, hint `s` | `--text-muted`, selected `--text` | `m` |
 | Activity `.activity` | — | `0 12px` | 10 | `s`, names 600 | `--text-muted`, time `--text-faint` | icon circle 24 |
 
 **Controls** (hover fades `--dur-fade`; disabled `opacity: 0.5`)
@@ -140,13 +148,13 @@ row above. A change to a block changes its row here.
 | Primary / success `.btn.primary`, `.btn.success` | as `.btn` | | | | `--on-accent` / white | `--accent` / `--green-fill` | `m` |
 | Ghost `.btn.ghost` | as `.btn` | | | | `--text-muted`, hover `--text` | none, hover `--hover` | `m` |
 | Icon button `.icon-btn` | 26 (small × 22) | 0 | — | icon 16 | `--text-muted`, hover `--text` | none, hover `--hover` | `m` |
-| Filled button `.chip-btn` | 26 | 0, with label `0 8px` | 4 | label `s` | `--text-muted`, hover `--text` | `--control-fill`, hover and open `--control-hover` | `m` |
-| Segmented `.segmented` | 26 (+2 track) | track 2, segment `0 12px` | — | `m`/500, on 600 | `--text-muted`, on `--text` | track `--control-fill`, on `--panel` + `--shadow-raised` | `m`, segment `m − 2px` |
-| Compact segmented `.compact` | 22 | `0 10px` | — | `s` | as above | | |
-| Field (input, select, segment field) | 30 | `0 10px` | — | `m` | `--text` | `--bg`, `--border`; focus `--text-faint` | `m` |
-| Text area | — | `8px 10px` | — | `m`, comment mono | `--text` | `--bg` (comment: `--panel` in its box) | `m` |
+| Filled button `.chip-btn`, with a label `.chip-btn.header-select` | 26 | 0 / `0 8px` | — / 4 | — / `s` | `--text-muted`, hover `--text` | `--control-fill`, hover and open `--control-hover` | `m` |
+| Segmented `.segmented`, its segment `.segmented button` | — / 26 | 2 / `0 12px` | — | — / `m`/500 (on 600) | — / `--text-muted` (on `--text`) | track `--control-fill`, on `--panel` + `--shadow-raised` | `m` / `m − 2px` |
+| Compact segment `.segmented.compact button` | 22 | `0 10px` | — | `s` | as above | | |
+| Field (input, select, segment field) `.repo-search`, `.org-add input` | 30 | `0 10px` | — | `m` | `--text` | `--bg`, `--border`; focus `--text-faint` | `m` |
+| Text area `.reply-field`, `.private-note textarea` | — | `8px 10px` | — | `m`, comment mono | `--text` | `--bg` (comment: `--panel` in its box) | `m` |
 | Organization dropdown `.org-select-button` | 40 | `0 12px` | 8 | `m` | `--text` | as field | `m` |
-| Search bar `.search-bar` | 36 | `0 8px 0 12px` | 10 | `m` | `--text`, placeholder `--text-muted` | `--control-fill`, no line | `m` |
+| Search bar `.search-dock .search-bar` | 36 | `0 8px 0 12px` | 10 | `m` | `--text-muted` (icon), input `--text`, placeholder `--text-muted` | `--control-fill`, no line | `m` |
 | Switch `.switch` | 18 × 32 | knob 14 at 2 | — | — | — | off `--border-strong`, on `--green-fill`, knob white + `--shadow-knob` | full |
 | Link button `.link-btn` | — | 0 | — | `s`/600 | `--text`, underline `--border-strong` | — | — |
 | Key `kbd` | 18 | `0 4px` | — | `xs`/500 | `--text-muted` | `--panel`, `--border` | `s` |
@@ -155,8 +163,8 @@ row above. A change to a block changes its row here.
 
 | Block | Height | Padding | Type | Color and fill | Corner |
 |---|---|---|---|---|---|
-| Tag (bot, draft, review verdict, New, plan, follow-up, carried, new) | 18 | `1px 8px` (with a line `0 8px`) | `xs`/600 | own fill, line and color only; shared rule in `base.css` | full |
-| Chip `.chip` | 24 (detail 28) | `0 12px` | `s` (detail `m`) | `--text`, `--border-strong` line | full |
+| Tag `.bot-tag`, `.draft`, `.review-tag`, `.new-chip`, `.new-mark`, `.table-planned`, `.table-carried` | line 16, so 18 | `1px 8px` (with a line `0 8px`) | `xs`/600 | own fill, line and color only; shared rule in `base.css` | full |
+| Chip `.chip` | 24 (detail 28) | `0 12px` | the table's `s`, the detail's `m` | `--text`, `--border-strong` line | full |
 | Label `.label` | 20 (table 24, detail 28) | `0 8px` (table and detail `0 12px`) | `xs`/500 (detail `m`) | label color at `--tint` | full |
 | Dot | 6 or 8 | — | — | a hue | full |
 

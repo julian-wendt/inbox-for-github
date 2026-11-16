@@ -42,7 +42,7 @@ function declarations(name: string, text: string): Declaration[] {
       const prelude = chunk.trim();
       const conditional = !!inside?.conditional || /^@(media|container|supports)/.test(prelude);
       const skipped = /^@(keyframes|property)/.test(prelude) || inside?.selectors === null;
-      const selectors = skipped ? null : prelude.startsWith("@") ? [] : prelude.split(",").map((s) => s.trim().replace(/\s+/g, " "));
+      const selectors = skipped ? null : prelude.startsWith("@") ? [] : prelude.split(/,(?![^(]*\))/).map((s) => s.trim().replace(/\s+/g, " "));
       blocks.push({ selectors, conditional });
     } else if (inside?.selectors?.length && chunk.includes(":")) {
       const colon = chunk.indexOf(":");
