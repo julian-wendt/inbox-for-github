@@ -60,7 +60,7 @@ export function CloseButton(props: { item: Item; withText: boolean; busy: boolea
   if (item.closed) {
     return (
       <button className="btn" disabled={busy} onClick={() => onAction("reopen")}>
-        <CircleDot size={15} className="icon-open" />
+        <CircleDot size={14} className="icon-open" />
         {withText ? t("close.reopenWithComment") : t(`close.reopen.${kind}`)}
       </button>
     );
@@ -70,7 +70,7 @@ export function CloseButton(props: { item: Item; withText: boolean; busy: boolea
   if (kind === "pr") {
     return (
       <button className="btn" disabled={busy} onClick={() => onAction("close")}>
-        <GitPullRequestClosed size={15} className="icon-closed-pr" />
+        <GitPullRequestClosed size={14} className="icon-closed-pr" />
         {label}
       </button>
     );
@@ -78,7 +78,7 @@ export function CloseButton(props: { item: Item; withText: boolean; busy: boolea
   return (
     <div className="split-btn" ref={root}>
       <button className="btn" disabled={busy} onClick={() => onAction("close", "COMPLETED")}>
-        <CircleCheck size={15} className="icon-completed" />
+        <CircleCheck size={14} className="icon-completed" />
         {label}
       </button>
       <button className="btn" disabled={busy} aria-haspopup="menu" aria-expanded={menu} aria-label={t("close.reasons")} onClick={toggleMenu}>
@@ -87,14 +87,14 @@ export function CloseButton(props: { item: Item; withText: boolean; busy: boolea
       {menu && (
         <div className={`popover close-menu${upward ? " up" : ""}`} role="menu">
           <button role="menuitem" onClick={() => choose("COMPLETED")}>
-            <CircleCheck size={15} className="icon-completed" />
+            <CircleCheck size={14} className="icon-completed" />
             <span>
               <strong>{t("close.completed")}</strong>
               <small>{t("close.completedHint")}</small>
             </span>
           </button>
           <button role="menuitem" onClick={() => choose("NOT_PLANNED")}>
-            <CircleSlash size={15} className="icon-muted" />
+            <CircleSlash size={14} className="icon-muted" />
             <span>
               <strong>{t("close.notPlanned")}</strong>
               <small>{t("close.notPlannedHint")}</small>

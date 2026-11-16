@@ -140,7 +140,7 @@ export function ActivityRow({ shown, me, itemUrl }: { shown: ShownActivity; me: 
   return (
     <li className="activity">
       <span className={`activity-icon ${tone}`}>
-        <Icon size={13} />
+        <Icon size={12} />
       </span>
       <GitHubLink url={url}>
         {text} <span className="activity-time">· {ago(activity.at)}</span>
@@ -198,7 +198,7 @@ export function ReviewRow({ line, me }: { line: ReviewLine; me: string }) {
   return (
     <li className="activity">
       <span className={`activity-icon ${tone}`}>
-        <Icon size={13} />
+        <Icon size={12} />
       </span>
       <GitHubLink url={line.url}>
         {text}
@@ -233,11 +233,11 @@ function lineVars(line: LocalLine): Record<string, string> {
 }
 
 function lineIcon(line: LocalLine): ReactNode {
-  if ("change" in line) return line.change.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" aria-hidden /> : <StatusIcon status={line.change.status} size={13} />;
+  if ("change" in line) return line.change.notify ? <Bell size={12} strokeWidth={2.2} color="var(--st-snoozed)" aria-hidden /> : <StatusIcon status={line.change.status} size={12} />;
   const { kind } = line.event;
-  if (kind === "filed") return <StatusIcon status="done" size={13} />;
-  if (kind === "back") return <StatusIcon status="open" size={13} />;
-  return <CalendarDays size={13} strokeWidth={2.2} color="var(--st-planned)" aria-hidden />;
+  if (kind === "filed") return <StatusIcon status="done" size={12} />;
+  if (kind === "back") return <StatusIcon status="open" size={12} />;
+  return <CalendarDays size={12} strokeWidth={2.2} color="var(--st-planned)" aria-hidden />;
 }
 
 /**
@@ -251,7 +251,7 @@ export function WriteFailureRow({ failure }: { failure: WriteFailure }) {
   return (
     <li className="activity" title={failure.error}>
       <span className="activity-icon bad">
-        <TriangleAlert size={13} />
+        <TriangleAlert size={12} />
       </span>
       <span className="activity-text">
         {t(failure.kind === "assign" ? "activity.assignFailed" : "activity.unassignFailed")} <span className="activity-time">· {ago(failure.at)}</span>
@@ -272,7 +272,7 @@ export function OpenedRow({ item, me }: { item: Item; me: string }) {
   return (
     <li className="activity">
       <span className="activity-icon">
-        <KindIcon item={item} size={13} />
+        <KindIcon item={item} size={12} />
       </span>
       <span className="activity-text">
         {sameLogin(item.author, me) ? t("activity.openedSelf") : tRich("activity.opened", { name: <strong>{item.author}</strong> })}{" "}

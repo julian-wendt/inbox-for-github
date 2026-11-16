@@ -62,7 +62,7 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       <span className="row-main">
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
         <span className={`row-context${mention?.self ? " self-mention" : ""}`}>
-          <KindIcon item={item} size={13} status={status} />
+          <KindIcon item={item} size={12} status={status} />
           {carriedSince && (
             <span className="row-mark carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>
               {carriedText(carriedSince)}
@@ -97,7 +97,7 @@ function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <CalendarDays size={14} strokeWidth={1.75} aria-hidden />
+      <CalendarDays size={12} strokeWidth={1.75} aria-hidden />
       {text}
     </span>
   );

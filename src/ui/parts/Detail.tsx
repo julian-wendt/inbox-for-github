@@ -184,7 +184,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
                     title={`${plan?.title ?? t("detail.plan")} (P)`}
                     onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}
                   >
-                    <CalendarDays size={13} strokeWidth={1.75} color="var(--st-planned)" aria-hidden />
+                    <CalendarDays size={14} strokeWidth={1.75} color="var(--st-planned)" aria-hidden />
                     <span className="segment-label">{plan?.text ?? t("detail.plan")}</span>
                     <ChevronDown size={12} className="segment-more" />
                   </button>
@@ -197,7 +197,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
                   title={`${s.title} (${s.key})`}
                   onClick={(e) => (s.id === "snoozed" ? onSnooze(e.currentTarget.getBoundingClientRect()) : onStatus(s.id))}
                 >
-                  <StatusIcon status={s.id} size={13} />
+                  <StatusIcon status={s.id} size={14} />
                   <span className="segment-label">{s.title}</span>
                   {s.id === "snoozed" && <ChevronDown size={12} className="segment-more" />}
                 </button>,
@@ -207,31 +207,31 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
           <WhyHint why={explain(entry, reopenOn, me, dated)} />
           <span className="header-full">
             <button className="chip-btn" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
-              <GitHubMark />
+              <GitHubMark size={16} />
             </button>
             {onOrca && (
               <button className="chip-btn" title={`${t(orcaHint ? "orca.addOpen" : "orca.open")} (W)${orcaHint ? `\n${orcaHint}` : ""}`} aria-label={t(orcaHint ? "orca.addOpen" : "orca.open")} onClick={onOrca}>
-                <OrcaMark size={18} />
+                <OrcaMark size={16} />
               </button>
             )}
             <button className="chip-btn" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
-              <Link size={15} />
+              <Link size={16} />
             </button>
             <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>
-              <RefreshCw size={15} className={reloading ? "spin" : undefined} />
+              <RefreshCw size={16} className={reloading ? "spin" : undefined} />
             </button>
             {assignable && (
               <button className="chip-btn" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
-                <UserPlus size={15} />
+                <UserPlus size={16} />
               </button>
             )}
           </span>
           <span className="header-compact">
-            <HeaderMenu icon={<Ellipsis size={15} />} title={t("detail.more")} entries={tools} />
+            <HeaderMenu icon={<Ellipsis size={16} />} title={t("detail.more")} entries={tools} />
           </span>
           {onClose && (
             <button className="chip-btn" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
-              <X size={15} />
+              <X size={16} />
             </button>
           )}
         </div>
@@ -243,7 +243,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
           </p>
           <h2 className="detail-title">{item.title}</h2>
           <div className="detail-meta">
-            <KindIcon item={item} size={18} />
+            <KindIcon item={item} size={20} />
             {dated && <PlanChip dated={dated} onPlan={onPlan} />}
             <FollowUpChip entry={entry} onRemove={followUpOf(entry) ? onRemoveFollowUp : undefined} />
             <AttributeChips keys={attributes} item={item} me={me} hiddenBoards={hiddenBoards} statusMap={statusMap} interactive />
@@ -322,7 +322,7 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
         )}
         {kind && (
           <span className="mention-tag">
-            {kind === " self-mention" ? <Bell size={13} /> : <AtSign size={13} />}
+            {kind === " self-mention" ? <Bell size={12} /> : <AtSign size={12} />}
             {kind === " self-mention" ? t("post.selfMention") : t("post.mentioned")}
           </span>
         )}

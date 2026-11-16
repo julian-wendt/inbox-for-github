@@ -71,11 +71,11 @@ export function CalendarSettings({ settings, change }: { settings: Settings; cha
           <div className="org-select calendar-select">
             <button className="org-select-button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
               {chosen ? option(chosen, false) : <span className="calendar-placeholder">{t("settings.calendarNone")}</span>}
-              <ChevronDown size={15} className="org-select-chevron" />
+              <ChevronDown size={14} className="org-select-chevron" />
             </button>
             {settings.calendarId && (
               <button className="icon-btn calendar-clear" onClick={() => pick("")} title={t("settings.calendarClear")} aria-label={t("settings.calendarClear")}>
-                <X size={13} />
+                <X size={12} />
               </button>
             )}
             {open && (

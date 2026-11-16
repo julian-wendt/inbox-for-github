@@ -93,7 +93,7 @@ export function Sidebar(props: Props) {
           return (
             <li key={b.id}>
               <button className={`nav-item${bucket === b.id ? " on" : ""}${hasUnread ? " unread" : ""}`} onClick={() => props.onBucket(b.id)} onContextMenu={(e) => props.onViewMenu(b.id, e)} title={`${b.title} (${key})`}>
-                <Icon size={15} strokeWidth={1.8} />
+                <Icon size={16} strokeWidth={1.75} />
                 <span>{b.title}</span>
                 {counts[b.id] > 0 && <span className="nav-count">{counts[b.id]}</span>}
               </button>
@@ -168,10 +168,10 @@ export function Sidebar(props: Props) {
         </span>
         <UsageRing usage={props.usage} refreshMinutes={props.refreshMinutes} onClick={props.onSettings} />
         <button className={`icon-btn${props.settingsNew ? " has-new" : ""}`} onClick={props.onSettings} title={props.settingsNew ? t("sidebar.settingsNew") : t("sidebar.settings")}>
-          <Settings2 size={15} />
+          <Settings2 size={16} />
         </button>
         <button className="icon-btn" onClick={props.onRules} title={t("sidebar.rules")}>
-          <CircleHelp size={15} />
+          <CircleHelp size={16} />
         </button>
       </footer>
     </nav>

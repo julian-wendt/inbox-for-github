@@ -8,7 +8,7 @@ const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: RotateCw, don
  * (it comes back), a green check for done. Shape and color both tell the states apart, so neither alone carries it.
  *
  * @example
- *   <StatusIcon status="snoozed" size={13} />
+ *   <StatusIcon status="snoozed" size={12} />
  */
 export function StatusIcon({ status, size = 14 }: { status: Status; size?: number }) {
   const Icon = ICONS[status];

@@ -48,7 +48,7 @@ interface ChipProps {
 function Chip({ icon: Icon, title, tone = "", children }: ChipProps) {
   return (
     <span className="chip" title={title}>
-      <Icon size={13} className={`chip-icon ${tone}`} />
+      <Icon size={12} className={`chip-icon ${tone}`} />
       {children}
     </span>
   );

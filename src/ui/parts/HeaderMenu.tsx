@@ -14,7 +14,7 @@ import { ContextMenu, type MenuEntry } from "./ContextMenu";
  * @param hiding    The current choice hides unread items: the button carries the unread dot and says so.
  *
  * @example
- *   <HeaderMenu icon={<IterationCw size={13} />} label="Sprint 12" title="Sprint" entries={choices} />
+ *   <HeaderMenu icon={<IterationCw size={14} />} label="Sprint 12" title="Sprint" entries={choices} />
  */
 export function HeaderMenu({ icon, label, title, entries, disabled = false, hiding = false }: { icon: ReactNode; label?: string; title: string; entries: MenuEntry[]; disabled?: boolean; hiding?: boolean }) {
   const [at, setAt] = useState<DOMRect | null>(null);

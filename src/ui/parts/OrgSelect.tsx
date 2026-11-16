@@ -62,7 +62,7 @@ export function OrgSelect(props: { orgs: string[]; memberOrgs: Org[]; value: str
     <div className="org-select">
       <button className="org-select-button" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen(!open)}>
         {option(value)}
-        <ChevronDown size={15} className="org-select-chevron" />
+        <ChevronDown size={14} className="org-select-chevron" />
       </button>
       {open && (
         <>

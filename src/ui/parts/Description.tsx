@@ -49,13 +49,13 @@ export function Description({ body, me, mode, innerRef }: { body: string; me: st
     <div ref={innerRef} className={`description${folded && open ? " open" : ""}`}>
       {folded ? (
         <button className="description-head" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <AlignLeft size={15} />
+          <AlignLeft size={14} />
           <span>{t("detail.description")}</span>
-          <ChevronDown size={15} className="fold-desc" aria-label={open ? t("detail.fold") : t("detail.unfold")} />
+          <ChevronDown size={14} className="fold-desc" aria-label={open ? t("detail.fold") : t("detail.unfold")} />
         </button>
       ) : (
         <div className="description-head static">
-          <AlignLeft size={15} />
+          <AlignLeft size={14} />
           <span>{t("detail.description")}</span>
         </div>
       )}
@@ -69,7 +69,7 @@ export function Description({ body, me, mode, innerRef }: { body: string; me: st
           {mode === "expandable" && longer && (
             <button className="description-more" aria-expanded={open} onClick={() => setOpen(!open)}>
               {t(open ? "detail.descriptionLess" : "detail.descriptionMore")}
-              <ChevronDown size={15} />
+              <ChevronDown size={14} />
             </button>
           )}
         </div>

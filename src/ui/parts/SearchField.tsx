@@ -40,7 +40,7 @@ export function SearchField({ value, onChange, count, inputRef }: { value: strin
       />
       {value.trim() !== "" && <span className="search-count">{count === 0 ? t("search.none") : count === 1 ? t("search.one") : t("search.many", { count })}</span>}
       <button className="icon-btn search-close" onClick={() => onChange(null)} title={t("search.close")} aria-label={t("search.close")}>
-        <X size={15} />
+        <X size={16} />
       </button>
     </div>
   );

@@ -198,7 +198,7 @@ export function AssignedTable(props: Props) {
       <header className="pane-header" data-tauri-drag-region>
         <h1>{props.title}</h1>
         <span className="header-controls" aria-hidden />
-        <HeaderMenu icon={<IterationCw size={13} />} label={sprintLabel} title={t("sprint.title")} entries={sprintEntries} disabled={props.sprints.length === 0} hiding={props.reveals.sprint.size > 0} />
+        <HeaderMenu icon={<IterationCw size={14} />} label={sprintLabel} title={t("sprint.title")} entries={sprintEntries} disabled={props.sprints.length === 0} hiding={props.reveals.sprint.size > 0} />
         <div className="segmented compact" role="radiogroup" aria-label={t("list.kind")}>
           {KINDS.map((k) => (
             <button key={k.id} role="radio" aria-checked={props.kind === k.id} className={props.kind === k.id ? "on" : ""} onClick={() => props.onKind(k.id)}>
@@ -218,12 +218,12 @@ export function AssignedTable(props: Props) {
           </div>
         )}
         <HeaderMenu
-          icon={<Columns3 size={13} />}
+          icon={<Columns3 size={16} />}
           title={t("table.columns")}
           entries={props.columns.map((c) => ({ label: c.name, checked: c.shown, keepOpen: true, onSelect: () => props.onColumn(c.key, !c.shown) }))}
         />
         <button className="chip-btn" disabled={groups.length === 0} onClick={() => props.onToggleAll(anyOpen)} title={t(anyOpen ? "table.collapseAll" : "table.expandAll")} aria-label={t(anyOpen ? "table.collapseAll" : "table.expandAll")}>
-          {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
+          {anyOpen ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
         </button>
         <SortButton order={props.sort} onFlip={props.onSort} by={props.mode === "planned" || props.mode === "snoozed" ? "return" : undefined} />
         <BucketInfo key={props.mode} bucket={props.mode} reopenOn={props.reopenOn} onShowRules={props.onShowRules} />
@@ -355,7 +355,7 @@ function Row({ query, entry, me, attributes, hiddenBoards, statusMap, fresh, sel
         )}
         {dated && (
           <span className="table-planned" title={datedText(dated).title}>
-            <CalendarDays size={13} strokeWidth={1.75} aria-hidden />
+            <CalendarDays size={12} strokeWidth={1.75} aria-hidden />
             <span>{datedText(dated).text}</span>
           </span>
         )}

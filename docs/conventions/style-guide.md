@@ -2,7 +2,7 @@
 
 Binding for every CSS change. Before choosing a value, find the element of the same kind below
 and copy its spec; a new value needs asking first, then an entry here. `src/ui/styles/styles.test.ts`
-and `src/ui/motion.test.ts` check every value set on this page; the rest is for review. Tokens and contrast are in [`ui.md`](ui.md).
+and `src/ui/partsStyle.test.ts` check every value set on this page; the rest is for review. Tokens and contrast are in [`ui.md`](ui.md).
 
 ## Type
 
@@ -75,7 +75,19 @@ Pixel radii of 3px or less are only for drawn marks (repo dot, check box, stop s
 | 60px | inbox rows |
 | 62px (`--row-h`) | rows with a switch in Settings (minimum) |
 
-## Building blocks
+## Icons and avatars
+
+| Icon size | For |
+|---|---|
+| 12 | inside tags, chips, marks and lines of `--fs-xs`/`--fs-s` text (row context, activities, notices, × in small buttons) |
+| 14 | beside `--fs-m` text: menu items, buttons with a label (header menus included), segments, the description's head |
+| 16 | icon-only buttons (`.icon-btn`, `.chip-btn`), the sidebar's and Settings' navigation |
+| 20 | beside the detail title, the loading spinner |
+
+Strokes: Lucide's default (2), `1.75` for the thin day and time marks and the navigation icons,
+`2.2` for colored status icons (`StatusIcon`). Avatars are 18 (chips), 20 (posts, the sidebar's
+footer), 28 (Settings lists) or 34 (inbox rows).
+
 
 **Tags** (bot, draft, review verdict, New, the table's plan, follow-up, carried and new marks):
 one size, defined once in `base.css`, 18px tall, 11px semibold, `0 8px`. A tag sets only its

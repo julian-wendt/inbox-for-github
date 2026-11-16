@@ -193,7 +193,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
             <h2>{t("settings.title")}</h2>
             {SECTIONS.map(({ id, icon: Icon }) => (
               <button key={id} className={`nav-item${active === id ? " on" : ""}`} onClick={() => setActive(id)}>
-                <Icon size={15} strokeWidth={1.8} />
+                <Icon size={16} strokeWidth={1.75} />
                 <span>{t(`settings.section.${id}`)}</span>
                 {unseenSettings(seenSettings, id).length > 0 && <NewChip />}
               </button>
