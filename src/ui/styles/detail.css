@@ -453,12 +453,12 @@
 }
 
 .review-approved {
-  border-color: color-mix(in srgb, var(--st-done) 50%, transparent);
+  border-color: color-mix(in srgb, var(--st-done) var(--tint-half), transparent);
   color: var(--st-done);
 }
 
 .review-changes_requested {
-  border-color: color-mix(in srgb, var(--new) 50%, transparent);
+  border-color: color-mix(in srgb, var(--new) var(--tint-half), transparent);
   color: var(--new);
 }
 
@@ -633,7 +633,7 @@
 }
 
 .md tr:nth-child(2n) td {
-  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  background: color-mix(in srgb, var(--surface) var(--tint-half), transparent);
 }
 
 .md ul.contains-task-list {

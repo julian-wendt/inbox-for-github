@@ -24,15 +24,16 @@
   /* Layout: every size above 64px lives here, named by what it sizes (style-guide.md). */
   --dialog-margin: 32px;
   --dialog-max-h: 86vh;
+  --dialog-top: 12vh;
   --dialog-w: 560px;
   --dialog-s-w: 340px;
   --calendar-day-w: 520px;
-  --calendar-day-h: 440px;
+  --calendar-day-h: min(440px, 52vh);
   --calendar-hours-w: 52px;
   --help-w: 680px;
   --help-h: 720px;
   --palette-w: 760px;
-  --palette-list-h: 540px;
+  --palette-list-h: min(540px, 66vh);
   --settings-w: 880px;
   --settings-h: 620px;
   --settings-nav-w: 190px;
@@ -56,13 +57,19 @@
   --weekday-w: 84px;
   --reply-h: 110px;
   --code-max-h: 240px;
+  /* What a menu keeps free to the window's edges. */
+  --window-margin: 8px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
   --dur-fade: 120ms;
   --dur-move: 160ms;
   --dur-slow: 400ms;
-  /* A hue's wash behind --text: tags, labels, calendar events. */
+  /* How much of a hue a mix takes: a notice's wash, a wash behind --text (tags, labels, events),
+     the search hit, a colored line or a Markdown table's stripe. */
+  --tint-faint: 8%;
   --tint: 14%;
+  --tint-strong: 30%;
+  --tint-half: 50%;
   /* A selected segment lifted off its track, and a switch's knob. */
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
   --shadow-knob: 0 1px 2px rgb(0 0 0 / 0.25);
@@ -193,15 +200,15 @@
 
 /* Dev builds only (data-env is set in main.tsx): an orange tint marks the window; 8% keeps --text-faint at 4.5:1. */
 :root[data-env="dev"] {
-  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(240 241 244 / 0.85));
+  --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(240 241 244 / 0.85));
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-env="dev"]:not([data-theme="light"]) {
-    --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+    --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(25 26 29 / 0.8));
   }
 }
 
 :root[data-env="dev"][data-theme="dark"] {
-  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+  --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(25 26 29 / 0.8));
 }

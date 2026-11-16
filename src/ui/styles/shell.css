@@ -257,11 +257,11 @@
   font-weight: 600;
 }
 
-/* Something that does not work until acted on; at 8% the yellow icon keeps 3:1 and --text-muted 6.4:1 (light) and 5.1:1 (dark). */
+/* Something that does not work until acted on; at --tint-faint the yellow icon keeps 3:1 and --text-muted 6.4:1 (light) and 5.1:1 (dark). */
 .scope-notice.warn {
   margin-bottom: 12px;
   border-color: var(--yellow);
-  background: color-mix(in srgb, var(--yellow) 8%, var(--surface));
+  background: color-mix(in srgb, var(--yellow) var(--tint-faint), var(--surface));
 }
 
 .scope-notice.warn strong svg {
@@ -348,7 +348,7 @@
   right: 16px;
   max-width: var(--notice-w);
   padding: 12px 16px;
-  border: 1px solid color-mix(in srgb, var(--new) 50%, transparent);
+  border: 1px solid color-mix(in srgb, var(--new) var(--tint-half), transparent);
   border-radius: var(--radius-l);
   background: var(--panel);
   box-shadow: var(--shadow-pop);
@@ -363,7 +363,7 @@
   z-index: 30;
   display: grid;
   place-items: start center;
-  padding-top: 12vh;
+  padding-top: var(--dialog-top);
   background: var(--overlay);
   backdrop-filter: blur(2px);
 }
@@ -1069,7 +1069,7 @@
 }
 
 .dialog-actions kbd {
-  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  border-color: color-mix(in srgb, currentColor var(--tint-half), transparent);
   background: transparent;
   color: inherit;
 }

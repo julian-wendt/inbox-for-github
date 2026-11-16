@@ -52,6 +52,8 @@ nothing else: **0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48**.
   (`calc(44px + 8px)`: below the header, 8px apart).
 - Anything larger is a layout token in `tokens.css` (`--dialog-w`, `--menu-max-w`, …), named by
   what it sizes; a custom property with a px value lives nowhere else.
+- Fractions of the window (`vh`, `vw`) are layout tokens too (`--dialog-max-h`, `--dialog-top`);
+  only `100vw`/`100vh` appear elsewhere. A share of the parent (`max-height: 50%`) is fine.
 - Dots are 6px (on buttons and in text) or 8px (in rows and before options).
 - Borders are 1px; 1.5px only for a drawn check box or radio, 3px only for an edge that carries a
   color (blockquote, calendar event).
@@ -163,10 +165,15 @@ row above. A change to a block changes its row here.
 - **Backgrounds** are tokens only: `--panel` for cards, menus and dialogs, `--surface` for raised
   heads, `--bg` for fields, `--control-fill` for filled controls, `--hover` and `--selected` for
   rows and items, `--track` for small grey tags. No fill is `transparent`, never `none`.
-- **Tints:** a hue behind `--text` mixes `--tint` (14%) of the hue with `transparent` (tags,
-  labels) or `--panel` (calendar events; a free event half of it). The only other washes are the
-  search hit (yellow 30%) and the warning notice (yellow 8%).
-- **Colored borders** mix the hue 50% with `transparent` (error bar, review verdicts).
+- **Tints:** every `color-mix` takes one of four shares, never a number:
+  - `--tint-faint` (8%): the warning notice's wash over `--surface`, the dev build's sidebar
+  - `--tint` (14%): a hue behind `--text`, over `transparent` (tags, labels) or `--panel`
+    (calendar events; a free event half of it)
+  - `--tint-strong` (30%): the search hit
+  - `--tint-half` (50%): colored lines (error bar, review verdicts, a key on a filled button) and
+    the Markdown table's stripes
+
+  The avatar placeholder's drawing is the one exception.
 - **Shadows:** `--shadow-pop` for everything that floats, `--shadow-raised` for a selected segment,
   `--shadow-knob` for a switch's knob. Nothing else casts a shadow.
 - **Borders** are `1px solid` in `--border`, `--border-strong` or `--divider` (lines between

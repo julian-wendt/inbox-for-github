@@ -221,10 +221,10 @@
   color: var(--text-muted);
 }
 
-/* A yellow 30% wash keeps the row text above 5:1 in both themes, selected rows included. */
+/* A strong yellow wash keeps the row text above 5:1 in both themes, selected rows included. */
 .hit {
   border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--yellow) 30%, transparent);
+  background: color-mix(in srgb, var(--yellow) var(--tint-strong), transparent);
   color: inherit;
 }
 
@@ -905,7 +905,7 @@
 
 /* Text, so --text-muted: --text-faint is below 4.5:1 on the selected row in dark. */
 .context-menu.fit {
-  max-width: calc(100vw - 16px);
+  max-width: calc(100vw - 2 * var(--window-margin));
 }
 
 .context-menu.fit > .menu-slot > .menu-row .menu-hint {

@@ -1,7 +1,5 @@
-/// <reference types="node" />
-// Vitest blanks CSS imports, so the sheets are read from disk.
-import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { sheets } from "./sheets";
 
 /** The style guide's value sets (docs/conventions/style-guide.md); a value outside them fails. */
 const FONT_SIZE = /^(var\(--fs-(xs|s|m|l|xl|2xl)\)|inherit|0\.85em)$/;
@@ -15,11 +13,6 @@ const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|\d+px)$/;
 const Z_LAYERS = new Set(["1", "2", "5", "25", "26", "30", "35", "40"]);
 const OPACITIES = new Set(["0", "0.5", "1"]);
 const LETTER_SPACINGS = new Set(["0.04em", "-0.012em", "normal", "0"]);
-
-const dir = new URL(".", import.meta.url);
-const sheets = readdirSync(dir)
-  .filter((name) => name.endsWith(".css"))
-  .map((name) => ({ name, lines: readFileSync(new URL(name, dir), "utf8").split("\n") }));
 
 /** Every `property: value` of the given property in all sheets, as "file:line value". */
 function declared(property: string): { at: string; value: string }[] {
@@ -117,6 +110,22 @@ describe("style guide", () => {
     expect(outside((v) => Z_LAYERS.has(v), declared("z-index"))).toEqual([]);
     expect(outside((v) => OPACITIES.has(v), declared("opacity"))).toEqual([]);
     expect(outside((v) => LETTER_SPACINGS.has(v), declared("letter-spacing"))).toEqual([]);
+  });
+
+  it("mixes colors with the tint tokens, apart from the avatar placeholder's drawing", () => {
+    const mixes = sheets
+      .filter((sheet) => sheet.name !== "tokens.css")
+      .flatMap((sheet) => sheet.declarations)
+      .filter((d) => !d.selectors.includes(".avatar-placeholder"))
+      .flatMap((d) => [...d.value.matchAll(/color-mix\(in srgb, (?:var\(--[\w-]+\)|#\w+|\w+) (\d+(?:\.\d+)?%)/g)].map((m) => `${d.at} ${m[1]}`));
+    expect(mixes).toEqual([]);
+  });
+
+  it("keeps fractions of the window in tokens.css", () => {
+    const fractions = sheets
+      .filter((sheet) => sheet.name !== "tokens.css")
+      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (line.match(/\b(?!100v)\d+(\.\d+)?v[hw]\b/g) ?? []).map((value) => `${sheet.name}:${i + 1} ${value}`)));
+    expect(fractions).toEqual([]);
   });
 
   it("keeps rgb() and hsl() colors in tokens.css", () => {

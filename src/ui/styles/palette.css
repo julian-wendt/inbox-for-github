@@ -21,7 +21,7 @@
 }
 
 .palette [cmdk-list] {
-  max-height: min(var(--palette-list-h), 66vh);
+  max-height: var(--palette-list-h);
   padding: 6px max(0px, calc(6px - var(--gutter, 0px))) 6px 6px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -261,7 +261,7 @@
 }
 
 .calendar-scroller {
-  height: min(var(--calendar-day-h), 52vh);
+  height: var(--calendar-day-h);
   overflow-y: auto;
   border-top: 1px solid var(--divider);
   border-bottom: 1px solid var(--divider);
