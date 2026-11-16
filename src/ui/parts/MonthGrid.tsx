@@ -16,16 +16,18 @@ export interface Ymd {
  * A month to pick a day from with the pointer, beside the date field that stays the way for the
  * keyboard: its buttons are out of the Tab order. It shows the month of `value` and marks that
  * day and today; the arrows move `value` by a month, as the Mac's own date picker does, but not
- * before `from`, and no day before `from` can be picked. A click leaves the focus where it was.
+ * before `from` or past `lastYear`, and no day before `from` can be picked. A click leaves the
+ * focus where it was.
  *
- * @param value   The chosen day; the grid shows its month.
- * @param from    The first day that can be picked, a local date ("2026-11-17").
- * @param onPick  Called with the clicked day, or with `value` a month earlier or later from the arrows.
+ * @param value     The chosen day; the grid shows its month.
+ * @param from      The first day that can be picked, a local date ("2026-11-17").
+ * @param lastYear  The last year the arrows reach, the year field's end.
+ * @param onPick    Called with the clicked day, or with `value` a month earlier or later from the arrows.
  *
  * @example
- *   <MonthGrid value={{ year: 2026, month: 11, day: 17 }} from={localDay()} onPick={(d) => setWhen({ ...when, ...d })} />
+ *   <MonthGrid value={{ year: 2026, month: 11, day: 17 }} from={localDay()} lastYear={2035} onPick={(d) => setWhen({ ...when, ...d })} />
  */
-export function MonthGrid({ value, from, onPick }: { value: Ymd; from: string; onPick: (day: Ymd) => void }) {
+export function MonthGrid({ value, from, lastYear, onPick }: { value: Ymd; from: string; lastYear: number; onPick: (day: Ymd) => void }) {
   const { year, month } = value;
   const dayOf = (day: number) => localDay(new Date(year, month - 1, day));
   const today = localDay();
@@ -44,7 +46,7 @@ export function MonthGrid({ value, from, onPick }: { value: Ymd; from: string; o
           <ChevronLeft size={16} />
         </button>
         <strong>{new Date(year, month - 1, 1).toLocaleDateString(dateLocale(), { month: "long", year: "numeric" })}</strong>
-        <button type="button" className="icon-btn" tabIndex={-1} onClick={() => shift(1)} title={t("snooze.nextMonth")} aria-label={t("snooze.nextMonth")}>
+        <button type="button" className="icon-btn" tabIndex={-1} onClick={() => shift(1)} disabled={year >= lastYear && month === 12} title={t("snooze.nextMonth")} aria-label={t("snooze.nextMonth")}>
           <ChevronRight size={16} />
         </button>
       </div>

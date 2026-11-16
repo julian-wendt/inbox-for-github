@@ -42,7 +42,8 @@ export function SegmentField({ parts, separator, label, onChange, autoFocus = fa
     } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
       focus(index + (e.key === "ArrowLeft" ? -1 : 1));
     } else if (/^[0-9]$/.test(e.key)) {
-      const next = typeSegment(typed.current, e.key, segment);
+      // A value set from outside (the month grid) since the last digit starts the part over.
+      const next = typeSegment(Number(typed.current) === value ? typed.current : "", e.key, segment);
       onChange(index, next.value);
       typed.current = next.typed;
       if (next.done) focus(index + 1);

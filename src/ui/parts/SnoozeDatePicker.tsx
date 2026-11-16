@@ -40,10 +40,12 @@ function momentOf(when: When): Date | null {
 export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (until: string) => void; onClose: () => void; day?: boolean }) {
   const [openedAt] = useState(() => Date.now());
   const [when, setWhen] = useState<When>(() => {
-    const d = new Date(followUpOn(localDay(new Date(Date.now() + 86_400_000))));
+    const now = new Date();
+    const d = new Date(followUpOn(localDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1))));
     return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hours: day ? 0 : d.getHours(), minutes: day ? 0 : d.getMinutes() };
   });
-  const years = yearsFrom(new Date(openedAt).getFullYear());
+  const opened = new Date(openedAt);
+  const years = yearsFrom(opened.getFullYear());
   const at = momentOf(when);
   const valid = at !== null && at.getTime() > openedAt;
   const pick = () => {
@@ -109,7 +111,8 @@ export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (un
         </div>
         <MonthGrid
           value={{ year: when.year, month: Math.min(Math.max(when.month, MONTHS.min), MONTHS.max), day: when.day }}
-          from={localDay(new Date(openedAt + (day ? 86_400_000 : 0)))}
+          from={localDay(new Date(opened.getFullYear(), opened.getMonth(), opened.getDate() + (day ? 1 : 0)))}
+          lastYear={years.max}
           onPick={(picked) => setWhen((w) => ({ ...w, ...picked }))}
         />
         <div className="dialog-actions">
