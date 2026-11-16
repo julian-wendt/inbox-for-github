@@ -163,6 +163,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
   return (
     <section className="detail">
       <header className="pane-header" data-tauri-drag-region>
+        <span className="crumb">{t(item.kind === "pr" ? "detail.headingPr" : "detail.headingIssue")}</span>
         <div className="header-actions">
           {item.closed && (
             <span className="chip closed-chip" title={t("closed.statusHint")}>
@@ -204,10 +205,8 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             </div>
           )}
           <WhyHint why={explain(entry, reopenOn, me, dated)} />
-        </div>
-        <div className="header-actions">
           <span className="header-full">
-            <button className="chip-btn group-start" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
+            <button className="chip-btn" title={`${t("detail.openOnGitHub")} (G)`} aria-label={t("detail.openOnGitHub")} onClick={() => void openUrl(item.url)}>
               <GitHubMark />
             </button>
             {onOrca && (
@@ -215,14 +214,14 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
                 <OrcaMark size={18} />
               </button>
             )}
-            <button className="chip-btn group-start" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
+            <button className="chip-btn" title={`${t("menu.copyLink")} (C)`} aria-label={t("menu.copyLink")} onClick={() => onCopy("url")}>
               <Link size={15} />
             </button>
             <button className="chip-btn" title={`${t("action.refreshItem")} (⌃R)`} aria-label={t("action.refreshItem")} onClick={onReload} disabled={reloading}>
               <RefreshCw size={15} className={reloading ? "spin" : undefined} />
             </button>
             {assignable && (
-              <button className="chip-btn group-start" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
+              <button className="chip-btn" title={`${t("assign.action")} (⌃A)`} aria-label={t("assign.action")} onClick={onAssignMe}>
                 <UserPlus size={15} />
               </button>
             )}
@@ -231,7 +230,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             <HeaderMenu icon={<Ellipsis size={15} />} title={t("detail.more")} entries={tools} />
           </span>
           {onClose && (
-            <button className="chip-btn group-start" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
+            <button className="chip-btn" onClick={onClose} title={t("popup.close")} aria-label={t("popup.close")}>
               <X size={15} />
             </button>
           )}
