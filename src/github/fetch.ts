@@ -1,6 +1,7 @@
 import type { Activity, Comment, Item, Org, PullState, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
 import { fetchBoards } from "./boards";
-import { graphql } from "./client";
+import { graphql, TimeoutError } from "./client";
+import { log } from "../log";
 import { mentionsOf, sameLogin } from "../timeline";
 
 const PAGE_SIZE = 50;
@@ -313,7 +314,8 @@ export function searchStates(now: Date, closedDays: number, closedBefore?: Date)
  * Runs one search per qualifier in `QUALIFIERS` over all owners (GitHub ORs repeated `org:` and
  * `user:` qualifiers) and merges the hits by node id; "assigned" and "mentioned" come from the
  * item's assignees and posts, so an item carries all its reasons.
- * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50, the most
+ * Each search reads up to `limit` hits, by default all GitHub returns, in pages of 50 (smaller
+ * after GitHub timed one out, see `search`; a full fetch tries 50 again), the most
  * recently updated first, so a search cut at `SEARCH_STOP` misses only the oldest and the same
  * ones each time; `onCut` hears of every cut search. Only the last 100 comments per item are loaded. Boards come from a second, failure-tolerant query (see
  * `fetchBoards`), skipped when `boards` is false.
@@ -337,6 +339,7 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
   const scope = scopeOf(orgs, me);
   const byId = new Map<string, Item>();
   const updated = since ? ` updated:>=${since.toISOString().slice(0, 19)}Z` : "";
+  if (!since && !closedBefore) pageCap = Number.POSITIVE_INFINITY;
   const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ state, reason })));
 
   await Promise.all(
@@ -491,13 +494,36 @@ export function reasonsOf(item: Item, me: string): Reason[] {
   return reasons;
 }
 
+/** The smallest search page; below it a timeout is the search's failure. */
+const MIN_PAGE_SIZE = 5;
+
+/** What search pages are held to once GitHub timed one out: half the size that failed, until the next full fetch. */
+let pageCap = Number.POSITIVE_INFINITY;
+
+/**
+ * Reads up to `limit` hits of one search, in pages of `pageSize`. A page GitHub drops after its
+ * ten seconds (`TimeoutError`) is asked again at half the size, down to `MIN_PAGE_SIZE`; the
+ * size that worked holds for every later page and search (`pageCap`) until the next full fetch,
+ * so a slow organization costs the wait once per full fetch and not on every delta.
+ */
 async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<{ hits: RawItem[]; cut: boolean }> {
   const hits: RawItem[] = [];
   let read = 0;
   let found = 0;
   let after: string | null = null;
-  for (let page = 0; page < Math.ceil(limit / pageSize); page++) {
-    const data: SearchResult = await graphql<SearchResult>(token, QUERY, { q, first: pageSize, after }, signal);
+  let size = pageSize;
+  for (let asked = 0; asked < limit; asked += size) {
+    let data: SearchResult | undefined;
+    while (!data) {
+      size = Math.min(size, pageCap);
+      try {
+        data = await graphql<SearchResult>(token, QUERY, { q, first: size, after }, signal);
+      } catch (e) {
+        if (!(e instanceof TimeoutError) || size <= MIN_PAGE_SIZE) throw e;
+        pageCap = Math.min(pageCap, Math.max(MIN_PAGE_SIZE, Math.ceil(size / 2)));
+        log.debug("search page timed out", { first: size, next: pageCap });
+      }
+    }
     read += data.search.nodes.length;
     found = data.search.issueCount;
     hits.push(...data.search.nodes.filter((node) => node?.id));
