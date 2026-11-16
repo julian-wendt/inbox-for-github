@@ -462,18 +462,10 @@
 
 /* A setting from a recent release; blue holds 4.5:1 on the panel and the hover fill in both themes. */
 .new-chip {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  height: 16px;
   margin-left: 6px;
-  padding: 0 6px;
+  padding-block: 0;
   border: 1px solid var(--border-strong);
-  border-radius: 999px;
   color: var(--blue);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1;
   vertical-align: 1px;
 }
 

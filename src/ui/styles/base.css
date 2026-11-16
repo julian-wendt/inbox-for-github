@@ -169,6 +169,27 @@ kbd {
   color: var(--text-faint);
 }
 
+/* Small tags share one size, 18px tall; each keeps its own fill, border and color.
+   Height by line and padding, not a fixed height, so a text child can give the baseline. */
+.bot-tag,
+.draft,
+.review-tag,
+.new-chip,
+.new-mark,
+.table-planned,
+.table-carried {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
 .avatar {
   flex: none;
   border-radius: 50%;

@@ -643,18 +643,6 @@
 }
 
 /* Badges after the title: the planned day blue, like Plan elsewhere. */
-.table-planned,
-.table-carried {
-  display: inline-flex;
-  flex: none;
-  gap: 4px;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
 .table-planned {
   background: color-mix(in srgb, var(--blue) 14%, transparent);
   color: var(--text);
@@ -827,13 +815,8 @@
 
 /* Marks an assignment the viewer has not opened since it was made. */
 .new-mark {
-  flex: none;
-  padding: 1px 8px;
-  border-radius: 999px;
   background: color-mix(in srgb, var(--yellow) 18%, transparent);
   color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .context-menu {
