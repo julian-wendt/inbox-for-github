@@ -462,7 +462,7 @@ describe("Follow-ups", () => {
     expect(app.followUp(issue)).toBeNull();
   });
 
-  it("shows nothing about the end in the list once the item is back", async () => {
+  it("says in the list that the follow-up came due once the item is back", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
     await app.refresh();
@@ -471,7 +471,7 @@ describe("Follow-ups", () => {
 
     const label = rowContext(app.entry(issue));
 
-    expect(label).not.toMatch(/snooze|follow|reminder|ended|due/i);
+    expect(label).toMatch(/follow-up came due|Wiedervorlage ist fällig/);
   });
 
   it("writes nothing to the item's log when the follow-up comes due, and names it in the history", async () => {
