@@ -190,6 +190,12 @@ kbd {
   white-space: nowrap;
 }
 
+/* A border takes the padding's place; here, as base.css loads after the other sheets. */
+.review-tag,
+.new-chip {
+  padding-block: 0;
+}
+
 .avatar {
   flex: none;
   border-radius: 50%;

@@ -463,7 +463,6 @@
 /* A setting from a recent release; blue holds 4.5:1 on the panel and the hover fill in both themes. */
 .new-chip {
   margin-left: 6px;
-  padding-block: 0;
   border: 1px solid var(--border-strong);
   color: var(--blue);
   vertical-align: 1px;
@@ -623,7 +622,7 @@
   color: var(--text-muted);
 }
 
-.time-chip-x {
+.icon-btn.time-chip-x {
   width: 22px;
   height: 22px;
 }
@@ -781,7 +780,7 @@
 }
 
 /* Over the field, left of the chevron; a button inside the field's button would not be valid HTML. */
-.calendar-clear {
+.icon-btn.calendar-clear {
   position: absolute;
   top: 50%;
   right: 33px;

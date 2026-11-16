@@ -447,7 +447,6 @@
 
 /* A review summary's verdict, in place of the plain "Review" label. */
 .review-tag {
-  padding-block: 0;
   border: 1px solid var(--border-strong);
   color: var(--text-muted);
 }

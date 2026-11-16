@@ -108,3 +108,9 @@ heads, as GitHub does.
 
 **Motion:** 120ms for hover fades, 140ms for chevron rotations, 160ms for the switch knob, all
 `var(--ease)`.
+
+## Cascade
+
+`base.css` loads after the other sheets (`main.tsx` imports `App` first), so a rule there beats
+a rule of the same specificity elsewhere. A component that changes a building block from
+`base.css` names it in the selector: `.icon-btn.time-chip-x`, not `.time-chip-x`.
