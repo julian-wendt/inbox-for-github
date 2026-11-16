@@ -77,7 +77,7 @@
     --divider: #28292d;
     --hover: rgb(255 255 255 / 0.04);
     --track: rgb(255 255 255 / 0.09);
-  --control-fill: rgb(255 255 255 / 0.09);
+    --control-fill: rgb(255 255 255 / 0.09);
     --selected: rgb(255 255 255 / 0.065);
     --accent: #d6d8dc;
     --text-content: #d8dade;
@@ -93,7 +93,7 @@
     --blue: #4493f8;
     --red: #ff6b6f;
     --purple: #b796f5;
-  --pink: #f778ba;
+    --pink: #f778ba;
     --green-fill: #1a7a35;
     --surface: #212226;
     color-scheme: dark;

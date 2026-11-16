@@ -61,6 +61,10 @@ html:not([data-input="pointer"]) .btn.success:focus-visible {
   box-shadow: none;
 }
 
+small {
+  font-size: 12px;
+}
+
 ::selection {
   background: var(--accent-soft);
 }

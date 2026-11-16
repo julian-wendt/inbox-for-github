@@ -184,6 +184,7 @@
   background: none;
   color: var(--text-muted);
   cursor: pointer;
+  transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 
 .chip-x:hover {
@@ -556,10 +557,6 @@
   color: var(--new);
 }
 
-.activity-icon.bad {
-  color: var(--new);
-}
-
 .activity-text strong {
   color: var(--text);
   font-weight: 600;
@@ -862,7 +859,7 @@
   align-items: start;
   padding: 8px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-m);
   background: transparent;
   color: var(--text);
   text-align: left;

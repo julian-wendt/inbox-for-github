@@ -148,7 +148,7 @@
   color: var(--text-muted);
   font-weight: 500;
   text-align: left;
-  transition: background 100ms var(--ease), color 100ms var(--ease);
+  transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 
 .nav-item span:not(.nav-count, .repo-dot, .repo-check, .new-chip) {
@@ -247,7 +247,7 @@
   border-radius: var(--radius-m);
   background: var(--surface);
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .scope-notice strong {
@@ -288,7 +288,7 @@
   align-items: center;
   padding: 5px 7px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--radius-s);
   background: var(--track);
   color: var(--text);
   text-align: left;
@@ -491,7 +491,7 @@
   right: 4px;
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--blue);
   content: "";
 }
@@ -740,7 +740,7 @@
 
 .org-select-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   right: 0;
   left: 0;
   z-index: 26;
@@ -922,7 +922,7 @@
   height: 26px;
   padding: 0 14px;
   border: 0;
-  border-radius: 5px;
+  border-radius: calc(var(--radius-m) - 2px);
   background: transparent;
   color: var(--text-muted);
   font-weight: 500;
@@ -1148,9 +1148,10 @@
   padding: 0;
   place-items: center;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text-muted);
+  transition: background 120ms var(--ease), color 120ms var(--ease);
 }
 
 .heading-action:hover {
