@@ -29,27 +29,70 @@ export function mergeDelta(previous: Item[], changed: Item[], closedDays: number
   return withinClosedWindow([...byId.values()], closedDays, now);
 }
 
-/** A local change to one item, made at once for a write to GitHub that has not returned yet. */
+/** A local change to one item, made at once for a write to GitHub, kept while a fetch may still miss the write. */
 export interface PendingChange {
   id: string;
   change: (item: Item) => Item;
+  /** When GitHub confirmed the write (ms since epoch); unset while it is on its way. */
+  settledAt?: number;
 }
 
 /**
- * Puts the local changes of writes still pending onto items just fetched or reloaded, in the
- * order they were made, so a fetch that ran before GitHub had the write does not take them back.
- * Each change must leave an item alone that already shows it (see `withSelfAssigned`).
+ * Keeps a change in `pending` for the life of its write: while the write is on its way, and once
+ * GitHub confirmed it, with the time, so a fetch that started before can still be corrected (see
+ * `livePending`). A failed write drops its change at once: the caller rolls it back, and no fetch
+ * may bring it back.
  *
- * @param items    The items as fetched and merged.
- * @param pending  The changes whose write has not settled yet.
- * @returns The items with the changes on; the same array when none is pending.
+ * @param pending  The list to keep it in, e.g. a React ref; replaced, never mutated in place.
+ * @param entry    The change; `settledAt` is set on it when `write` resolves.
+ * @param write    Resolves when GitHub took the write, rejects when it failed.
+ * @param now      The clock, for tests.
+ * @returns When the entry is settled or dropped; never rejects.
  *
  * @example
- *   withPending(merged, [{ id: "I_1", change: (item) => withSelfAssigned(item, "octocat", at) }]);
+ *   trackPending(ref, { id: item.id, change }, queueWrite(() => assignSelf(token, item.id)));
  */
-export function withPending(items: Item[], pending: readonly PendingChange[]): Item[] {
-  if (pending.length === 0) return items;
-  return items.map((item) => pending.reduce((it, p) => (p.id === item.id ? p.change(it) : it), item));
+export function trackPending(pending: { current: PendingChange[] }, entry: PendingChange, write: Promise<unknown>, now = Date.now): Promise<void> {
+  pending.current = [...pending.current, entry];
+  return write.then(
+    () => {
+      entry.settledAt = now();
+    },
+    () => {
+      pending.current = pending.current.filter((e) => e !== entry);
+    },
+  );
+}
+
+/**
+ * The changes a fetch that started at `startedAt` may have missed: those still on their way and
+ * those GitHub confirmed after the fetch went out. Once such a fetch landed, the others can go.
+ *
+ * @example
+ *   pending.current = livePending(pending.current, startedAt); // after the fetch landed
+ */
+export function livePending(pending: readonly PendingChange[], startedAt: number): PendingChange[] {
+  return pending.filter((p) => p.settledAt === undefined || p.settledAt > startedAt);
+}
+
+/**
+ * Puts local changes onto items just fetched or reloaded, in the order they were made, so a fetch
+ * that ran before GitHub had a write does not take it back. Each change must leave an item alone
+ * that already shows it (see `withSelfAssigned`).
+ *
+ * @param items      The items as fetched and merged.
+ * @param pending    The kept changes (see `trackPending`).
+ * @param startedAt  When the fetch went out; changes confirmed before it are in its answer. Leave
+ *                   it out to put back only the writes still on their way.
+ * @returns The items with the changes on; the same array when none applies.
+ *
+ * @example
+ *   withPending(merged, [{ id: "I_1", change: (item) => withSelfAssigned(item, "octocat", at) }], startedAt);
+ */
+export function withPending(items: Item[], pending: readonly PendingChange[], startedAt = Number.POSITIVE_INFINITY): Item[] {
+  const live = livePending(pending, startedAt);
+  if (live.length === 0) return items;
+  return items.map((item) => live.reduce((it, p) => (p.id === item.id ? p.change(it) : it), item));
 }
 
 /**

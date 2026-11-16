@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ghToken } from "../github/token";
 import { ASK_RULES_DEFAULT, classify, type Classified } from "../classify";
 import { lastBudget, missingScopes, pointsSpent, RateLimitError, tokenScopes, type Budget, type Scope } from "../github/client";
-import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, mergeDelta, mergeReloaded, transferCandidates, withPending, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage, type PendingChange } from "../github/delta";
+import { addRequested, canDelta, covers, decodeScope, DELTA_OVERLAP_MS, encodeScope, findTransfers, livePending, mergeDelta, mergeReloaded, trackPending, transferCandidates, withPending, unseenReviews, widensClosed, withdrawReviews, withinClosedWindow, type Coverage, type PendingChange } from "../github/delta";
 import { fetchBoards } from "../github/boards";
 import { embedAvatar, fetchItem, fetchItems, fetchItemsById, fetchReviewIds, fetchViewer, SEARCH_STOP } from "../github/fetch";
 import { repoVisible } from "../repoFilter";
@@ -56,7 +56,9 @@ export interface Inbox {
   reloadItems: (ids: string[]) => Promise<number>;
   /**
    * Changes one item locally and in the cache, e.g. right after a write to GitHub. With `until`
-   * (the queued write), a fetch or reload that lands before it settles keeps the change.
+   * (the queued write, rejecting when it fails), a fetch or reload that started before GitHub
+   * confirmed it keeps the change; a failed one is dropped for the caller's rollback. Without
+   * `until` the change is GitHub's answer or a rollback, and writes still on their way stay on top.
    */
   updateItem: (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => void;
   /** Item id → its status history, oldest first. */
@@ -394,7 +396,7 @@ export function useInbox(): Inbox {
       const fetchedAt = new Date();
       const result: CachedFetch = {
         viewer: { ...viewer, avatar },
-        items: withPending(items, pending.current),
+        items: withPending(items, pending.current, startedAt),
         fetchedAt,
         fullAt: delta ? last.fullAt : fetchedAt,
         scope: encodeScope(key, coverage),
@@ -402,6 +404,7 @@ export function useInbox(): Inbox {
       const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
       showMoved?.();
       apply(result);
+      pending.current = livePending(pending.current, startedAt);
       setCut((was) => (delta && was) || cutSearches.size > 0);
       await store.saveFetch(result);
       noteBudget(lastBudget());
@@ -491,20 +494,14 @@ export function useInbox(): Inbox {
     setLoading(false);
   }, []);
 
-  /** Changes one cached item locally, e.g. right after a write, until the next fetch has it from GitHub; with `until`, fetches put it back on until that write settles (see `withPending`). */
+  /** See `InboxState.updateItem`. */
   const updateItem = useCallback(
     (id: string, change: (item: Item) => Item, until?: Promise<unknown>) => {
       const last = lastFetch.current;
       if (!store || !last) return;
-      if (until) {
-        const entry = { id, change };
-        pending.current = [...pending.current, entry];
-        const settle = () => {
-          pending.current = pending.current.filter((e) => e !== entry);
-        };
-        void until.then(settle, settle);
-      }
-      const next = { ...last, items: last.items.map((item) => (item.id === id ? change(item) : item)) };
+      if (until) void trackPending(pending, { id, change }, until);
+      const update = (item: Item) => (until ? change(item) : withPending([change(item)], pending.current)[0]);
+      const next = { ...last, items: last.items.map((item) => (item.id === id ? update(item) : item)) };
       lastFetch.current = next;
       setItems(next.items);
       void store.saveFetch(next);
@@ -543,7 +540,7 @@ export function useInbox(): Inbox {
    * `transferCandidates`); what still has no new place goes through `dropGone`.
    */
   const takeReloaded = useCallback(
-    async (token: string, ids: string[], loaded: Item[]) => {
+    async (token: string, ids: string[], loaded: Item[], startedAt: number) => {
       const last = lastFetch.current;
       if (!store || !last) return;
       let fresh = loaded;
@@ -554,8 +551,9 @@ export function useInbox(): Inbox {
       if (moves.size > 0) logTransfers(last.items, fresh, moves);
       const showMoved = moves.size > 0 ? await carryOver(moves, fresh) : null;
       const current = lastFetch.current ?? last;
-      const next = { ...current, items: withPending(mergeReloaded(current.items, fresh, moves), pending.current) };
+      const next = { ...current, items: withPending(mergeReloaded(current.items, fresh, moves), pending.current, startedAt) };
       lastFetch.current = next;
+      pending.current = livePending(pending.current, startedAt);
       showMoved?.();
       setItems(next.items);
       await store.saveFetch(next);
@@ -569,10 +567,11 @@ export function useInbox(): Inbox {
     async (id: string) => {
       const last = lastFetch.current;
       if (!store || !last) return;
+      const startedAt = Date.now();
       try {
         const token = await ghToken();
         const fresh = await fetchItem(token, id, { me: last.viewer.login, boards: settings.loadBoards });
-        await takeReloaded(token, [id], fresh ? [fresh] : []);
+        await takeReloaded(token, [id], fresh ? [fresh] : [], startedAt);
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);
         setError(String(e));
@@ -585,10 +584,11 @@ export function useInbox(): Inbox {
     async (ids: string[]) => {
       const last = lastFetch.current;
       if (!store || !last || ids.length === 0) return 0;
+      const startedAt = Date.now();
       try {
         const token = await ghToken();
         const fresh = await fetchItemsById(token, ids, { me: last.viewer.login, boards: settings.loadBoards });
-        await takeReloaded(token, ids, fresh);
+        await takeReloaded(token, ids, fresh, startedAt);
         return fresh.length;
       } catch (e) {
         if (e instanceof RateLimitError) pause(e.until);

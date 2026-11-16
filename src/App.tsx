@@ -934,19 +934,16 @@ export default function App() {
         () => classifiedById(id) && assignMe(classifiedById(id)!, true),
       );
     const at = new Date().toISOString();
-    const write = queueWrite(() =>
-      ghToken()
-        .then((token) => assignSelf(token, id))
-        .then(
-          (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
-          (e) => {
-            inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
-            void inbox.logWriteFailure(id, "assign", String(e));
-            actions.notify(t("assign.failed", { number, error: String(e) }));
-          },
-        ),
-    );
+    const write = queueWrite(() => ghToken().then((token) => assignSelf(token, id)));
     inbox.updateItem(id, (item) => withSelfAssigned(item, me, at), write);
+    write.then(
+      (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
+      (e) => {
+        inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
+        void inbox.logWriteFailure(id, "assign", String(e));
+        actions.notify(t("assign.failed", { number, error: String(e) }));
+      },
+    );
   };
   /** The item as classified right now; an undo that runs later must not see the list of the render that made it. */
   const classifiedById = (id: string) => inbox.classifiedNow().find((e) => e.item.id === id);
@@ -979,20 +976,17 @@ export default function App() {
           if (now) leave(now, true);
         },
       );
-    const write = queueWrite(() =>
-      ghToken()
-        .then((token) => unassignSelf(token, id))
-        .then(
-          (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
-          (e) => {
-            inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
-            if (cleared) void inbox.restoreStatus(id, previous);
-            void inbox.logWriteFailure(id, "unassign", String(e));
-            actions.notify(t("unassign.failed", { number, error: String(e) }));
-          },
-        ),
-    );
+    const write = queueWrite(() => ghToken().then((token) => unassignSelf(token, id)));
     inbox.updateItem(id, (item) => withSelfUnassigned(item, me, at), write);
+    write.then(
+      (fresh) => inbox.updateItem(id, (item) => withAssignees(item, fresh, me)),
+      (e) => {
+        inbox.updateItem(id, (item) => withoutLocalEvent(item, { assignees, reasons }, at));
+        if (cleared) void inbox.restoreStatus(id, previous);
+        void inbox.logWriteFailure(id, "unassign", String(e));
+        actions.notify(t("unassign.failed", { number, error: String(e) }));
+      },
+    );
   };
   /** After a comment, close or reopen went to GitHub: load the item again; a close or reopen can be undone with the opposite write, an undone close with the item's plan. */
   /**
@@ -1000,18 +994,15 @@ export default function App() {
    * queued; GitHub's counts replace the local guess. A failure takes the guess back and says so.
    */
   const react = (id: string, subject: string, content: ReactionContent, on: boolean) => {
-    const write = queueWrite(() =>
-      ghToken()
-        .then((token) => setReaction(token, subject, content, on))
-        .then(
-          (fresh) => inbox.updateItem(id, (item) => withReactions(item, subject, fresh)),
-          (e) => {
-            inbox.updateItem(id, (item) => withReaction(item, subject, content, !on));
-            actions.notify(t("reaction.failed", { error: String(e) }));
-          },
-        ),
-    );
+    const write = queueWrite(() => ghToken().then((token) => setReaction(token, subject, content, on)));
     inbox.updateItem(id, (item) => withReaction(item, subject, content, on), write);
+    write.then(
+      (fresh) => inbox.updateItem(id, (item) => withReactions(item, subject, fresh)),
+      (e) => {
+        inbox.updateItem(id, (item) => withReaction(item, subject, content, !on));
+        actions.notify(t("reaction.failed", { error: String(e) }));
+      },
+    );
   };
   const replied = (id: string, change?: StateWrite) => {
     void inbox.reloadItem(id);

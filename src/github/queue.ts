@@ -5,14 +5,17 @@ let tail: Promise<void> = Promise.resolve();
  * already shows their outcome. A failed write does not hold up the ones behind it; the caller
  * handles its own failure.
  *
- * @param write  The request, e.g. `() => assignSelf(token, id).then(apply)`.
- * @returns When this write has run, with its outcome.
+ * @param write  The request, e.g. `() => assignSelf(token, id)`.
+ * @returns The write's outcome once it has run: its answer, or its failure.
  *
  * @example
- *   void queueWrite(() => assignSelf(token, item.id).then(show, putBack));
+ *   queueWrite(() => assignSelf(token, item.id)).then(show, putBack);
  */
-export function queueWrite(write: () => Promise<void>): Promise<void> {
+export function queueWrite<T>(write: () => Promise<T>): Promise<T> {
   const run = tail.then(write);
-  tail = run.catch(() => undefined);
+  tail = run.then(
+    () => undefined,
+    () => undefined,
+  );
   return run;
 }
