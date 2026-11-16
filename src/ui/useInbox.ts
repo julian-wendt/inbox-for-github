@@ -358,7 +358,7 @@ export function useInbox(): Inbox {
       const key = JSON.stringify([settings.orgs, viewer.login]);
       const last = lastFetch.current;
       const had = decodeScope(last?.scope);
-      const same = !full && !!last && had?.key === key && canDelta({ fullAt: last.fullAt, scope: had.key }, key);
+      const same = !full && !!last && had?.key === key && canDelta({ fullAt: last.fullAt, scope: had.key, items: last.items }, key);
       const widen = same && widensClosed(had.coverage, want);
       const delta = (same && covers(had.coverage, want)) || widen;
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.

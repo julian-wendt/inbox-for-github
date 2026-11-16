@@ -284,11 +284,14 @@ export function widensClosed(have: Coverage, want: Coverage): boolean {
 
 /**
  * Whether the next refresh may be a delta: there is an earlier fetch for the same settings
- * (`scope`), and its last full fetch is recent enough.
+ * (`scope`), its last full fetch is recent enough, and its items are not from before posts
+ * carried their node ids and reactions. Those cannot be filled in empty like other new fields,
+ * since reacting needs the ids, so such a cache costs one full fetch right after the update.
  *
  * @example
- *   canDelta({ scope: "a", fullAt: new Date() }, "a"); // true
+ *   canDelta({ scope: "a", fullAt: new Date(), items }, "a"); // true
  */
-export function canDelta(last: { scope?: string; fullAt?: Date } | null, scope: string, now = Date.now()): boolean {
-  return !!last?.fullAt && last.scope === scope && now - last.fullAt.getTime() < FULL_EVERY_MS;
+export function canDelta(last: { scope?: string; fullAt?: Date; items?: readonly Item[] } | null, scope: string, now = Date.now()): boolean {
+  const predatesReactions = last?.items?.some((item) => item.reactions === undefined) ?? false;
+  return !!last?.fullAt && last.scope === scope && now - last.fullAt.getTime() < FULL_EVERY_MS && !predatesReactions;
 }

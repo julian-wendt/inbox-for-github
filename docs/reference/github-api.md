@@ -88,6 +88,8 @@ Each was checked against the live API during development.
   "You and 2 others", not who.
 - Whether a reaction moves the item's `updatedAt` is not verified; the simulator assumes it does
   not, so a delta may show others' new reactions only with the next full fetch or a reload.
+- Caches from before reactions have no node ids on their posts, which reacting needs and an
+  empty value cannot stand in for, so `canDelta` asks for one full fetch right after the update.
 
 ## What moves `updatedAt` (2026-10-29)
 

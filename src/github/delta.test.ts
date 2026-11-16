@@ -161,6 +161,13 @@ describe("canDelta", () => {
     expect(canDelta({ scope: "other", fullAt: new Date(now) }, "s", now)).toBe(false);
     expect(canDelta(null, "s", now)).toBe(false);
   });
+
+  it("asks for a full fetch once when cached items predate reactions", () => {
+    const fresh = { reactions: [] } as unknown as Item;
+    const old = {} as unknown as Item;
+    expect(canDelta({ scope: "s", fullAt: new Date(now), items: [fresh] }, "s", now)).toBe(true);
+    expect(canDelta({ scope: "s", fullAt: new Date(now), items: [fresh, old] }, "s", now)).toBe(false);
+  });
 });
 
 describe("coverage", () => {
