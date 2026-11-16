@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.7.0...v0.8.0) (2026-11-16)
+
+
+### Features
+
+* show reactions in the detail and react from the app ([#162](https://github.com/julian-wendt/inbox-for-github/issues/162)) ([1bb2f7e](https://github.com/julian-wendt/inbox-for-github/commit/1bb2f7ea7227288e23e536f9d0041a4660b7d0cc))
+
+
+### Bug Fixes
+
+* make spacing, type and menus consistent across the app ([#160](https://github.com/julian-wendt/inbox-for-github/issues/160)) ([a46d6fe](https://github.com/julian-wendt/inbox-for-github/commit/a46d6fe9d3607f8f37f58e99c1b700d727ce5160))
+
 ## [0.7.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.6.0...v0.7.0) (2026-11-16)
 
 
