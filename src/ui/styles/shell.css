@@ -755,7 +755,7 @@
 
 .org-select-menu button:hover,
 .org-select-menu button.on {
-  background: var(--hover);
+  background: var(--selected);
 }
 
 /* As tall as the time and segmented fields next to it, not like the organization picker. */
@@ -769,8 +769,7 @@
 .calendar-select .org-select-button:hover,
 .calendar-select .org-select-button:has(+ .calendar-clear:hover) {
   border-color: transparent;
-  /* --hover over the fill, as a segmented button over its track; --hover alone would lighten it. */
-  background: linear-gradient(var(--hover), var(--hover)), var(--control-fill);
+  background: var(--control-hover);
 }
 
 .calendar-placeholder,
@@ -923,8 +922,7 @@
 
 /* A choice that has its place but nothing to do here, greyed out like header controls. */
 .segmented button:disabled {
-  opacity: 0.4;
-  cursor: default;
+  opacity: 0.5;
 }
 
 .segmented button:not(.on, :disabled):hover {
@@ -1212,43 +1210,12 @@
   white-space: nowrap;
 }
 
-.status-map-choice {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--radius-m);
-  background: var(--track);
-}
-
-.status-map-choice button {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 11.5px;
-  font-weight: 500;
-}
-
-.status-map-choice button:hover:not(.on, .auto) {
-  background: var(--hover);
-  color: var(--text-muted);
-}
-
-/* Selected like any segment; the app's guess stays at normal weight, the viewer's own choice is bold and has the reset button. */
+/* The app's guess looks selected but keeps the medium weight; the viewer's own choice is bold (.on) and has the reset button. */
 .status-map-choice button.auto,
-.status-map-choice button.on {
+.status-map-choice button.auto:hover {
   background: var(--panel);
   color: var(--text);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
-}
-
-.status-map-choice button.on {
-  font-weight: 600;
 }
 
 .attribute-list {

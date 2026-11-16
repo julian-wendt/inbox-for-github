@@ -88,13 +88,12 @@
 
 /* Header controls are greyed out instead of hidden, so the others never jump. */
 .chip-btn:disabled {
-  color: var(--text-faint);
-  cursor: default;
+  opacity: 0.5;
 }
 
 .chip-btn:hover:not(:disabled),
 .chip-btn[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--control-hover);
   color: var(--text);
 }
 
@@ -402,8 +401,14 @@
   padding: 0 8px;
   border: 0;
   border-radius: var(--radius-m);
-  background: var(--hover);
+  background: var(--control-fill);
   color: var(--text-muted);
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+
+.toast-undo:hover {
+  background: var(--control-hover);
+  color: var(--text);
 }
 
 /* A list's time group: a quiet, foldable heading like the sidebar's, no bar background. */

@@ -848,7 +848,7 @@
 }
 
 .close-menu button:hover {
-  background: var(--hover);
+  background: var(--selected);
 }
 
 .close-menu span {

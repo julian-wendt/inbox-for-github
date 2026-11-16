@@ -36,6 +36,8 @@
   --focus-fill: color-mix(in srgb, var(--accent) 52%, transparent);
   /* The active part of a date or time field; softer than --focus-fill by choice, so below 3:1. */
   --segment-fill: color-mix(in srgb, var(--accent) 24%, transparent);
+  /* Hover and open state of a filled control (--control-fill); follows --text in both themes. */
+  --control-hover: color-mix(in srgb, var(--text) 12%, transparent);
   --accent-soft: rgb(0 0 0 / 0.06);
   --on-accent: #ffffff;
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18);

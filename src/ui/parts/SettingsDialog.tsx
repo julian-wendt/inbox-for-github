@@ -477,7 +477,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                         <span className="status-map-value" title={value}>
                           {value}
                         </span>
-                        <div className="status-map-choice" role="radiogroup" aria-label={value}>
+                        <div className="segmented compact status-map-choice" role="radiogroup" aria-label={value}>
                           {WORK_STATUSES.map((s) => (
                             <button
                               key={s}

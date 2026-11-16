@@ -166,7 +166,7 @@ kbd {
 }
 
 .icon-btn:disabled {
-  color: var(--text-faint);
+  opacity: 0.5;
 }
 
 /* Small tags share one size, 18px tall; each keeps its own fill, border and color.
