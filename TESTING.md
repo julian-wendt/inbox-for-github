@@ -107,6 +107,14 @@ Test-PR, z. B. im Repo `inbox-for-github`.
 - [ ] Senden ohne WLAN: Text bleibt, darunter „Nicht gesendet: …“.
 - [ ] Entwurf bleibt beim Wechsel zwischen Items erhalten.
 
+## Reaktionen (Test-Issue)
+
+- [ ] Unter einem Kommentar und unter der aufgeklappten Beschreibung: je Emoji eine Pille mit Zahl, die eigene blau umrandet; Tooltip „Du und 2 weitere …“.
+- [ ] Klick auf eine Pille nimmt die eigene Reaktion dazu oder zurück, die Zahl springt sofort; auf GitHub steht danach dasselbe.
+- [ ] Smiley öffnet die acht Emoji in derselben Zeile; Auswahl, Esc oder Klick daneben schließt sie.
+- [ ] Reaktion ohne WLAN: die Pille springt zurück, Hinweis „Die Reaktion konnte auf GitHub nicht gespeichert werden …“.
+- [ ] Eine Reaktion auf eine Erwähnung lässt das Item in der Inbox; eine fremde Reaktion macht nichts ungelesen und meldet nichts.
+
 ## Schließen und Wiedereröffnen (Test-Issue, Test-PR)
 
 - [ ] „Issue schließen“ und über den Pfeil „Als nicht geplant schließen“; auf GitHub den Grund

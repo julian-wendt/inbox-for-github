@@ -174,7 +174,11 @@ validated against the live schema 2026-10-25 with an unknown node id, which GitH
 `unassignSelf` removes the viewer the same way (`removeAssigneesFromAssignable`, 1 point;
 validated like `assignSelf` on 2026-10-25).
 
-Assigning and unassigning are shown at once and sent behind it through `queueWrite` (`src/github/queue.ts`), one
+`setReaction` adds or takes back the viewer's reaction on an item's description, a comment, a
+review or an inline review comment (`addReaction`, `removeReaction` on the post's node id,
+1 point each, returning the post's `reactionGroups`; validated like `assignSelf` on 2026-11-16).
+
+Assigning, unassigning and reactions are shown at once and sent behind it through `queueWrite` (`src/github/queue.ts`), one
 write after another; a failed one is undone locally with a toast. Measured 2026-10-25: about
 350 ms per GraphQL request and 70 ms for `gh auth token`, so waiting for the write plus a reload
 of the item and its boards took two to three seconds.

@@ -32,7 +32,7 @@ GitHub through the GraphQL API with the `gh` CLI's token and keeps everything el
 - **Read before you edit**, even for a one-line change: this file, [`CONTRIBUTING.md`](CONTRIBUTING.md) and the doc for what you touch (table below).
 - **Every UI text in both dictionaries:** `src/ui/locales/en.ts` is the source, `de.ts` mirrors it. No literal UI strings in components.
 - **Contrast:** WCAG AA in light and dark, 4.5:1 for text, 3:1 for icons and control states. Compute it; see [`ui.md`](docs/conventions/ui.md).
-- **GitHub writes are limited** to plain comments, close/reopen and assigning or unassigning yourself. No review actions, no edits of others' text.
+- **GitHub writes are limited** to plain comments, close/reopen, assigning or unassigning yourself and your own reactions on posts. No review actions, no edits of others' text.
 - **Statuses, notes and settings never leave the Mac.**
 - **Frugal with the API:** measure a query's cost with `rateLimit(dryRun: true) { cost }` before shipping it; filter locally instead of refetching. See [`github-api.md`](docs/reference/github-api.md).
 - **Public repo:** no employer, clients, their orgs, repos or boards, work circumstances, real people or personal data in code, commits, PRs or issues; examples come from the demo's fictional world. See [`CONTRIBUTING.md`](CONTRIBUTING.md#public-content).

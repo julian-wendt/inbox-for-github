@@ -129,7 +129,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
   loses the reason "review" and, left without a reason, the cache (`withdrawReviews`); an id the
   cache does not hold as a review request is loaded by id and gets it (`unseenReviews`,
   `addRequested`, at most 50 per delta), whether or not the request moved `updatedAt`.
-- **Pending writes:** assigning or unassigning oneself shows at once; until the queued write
+- **Pending writes:** assigning or unassigning oneself, and reacting, shows at once; until the queued write
   settles, every fetch or reload puts that change back on the item (`withPending`), so one that
   ran before GitHub had the write does not take it back.
 - **Coverage:** the cache's `scope` records what it holds (closed days, boards, item limit;

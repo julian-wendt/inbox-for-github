@@ -91,9 +91,9 @@ picks up a release nobody reviewed:
   literal UI strings.
 - Colors MUST meet WCAG AA in light and dark: 4.5:1 for text, 3:1 for icons and the visual cue
   of a control's state. Decorative lines and tracks are exempt.
-- The app MUST write to GitHub only as plain comments, close/reopen and adding the viewer to or
-  removing them from the assignees. Review actions and edits of other people's text stay in
-  GitHub's UI.
+- The app MUST write to GitHub only as plain comments, close/reopen, adding the viewer to or
+  removing them from the assignees, and the viewer's own reactions on posts. Review actions and
+  edits of other people's text stay in GitHub's UI.
 - Statuses, notes, settings and the cache MUST stay in the local database.
 - A new or changed query MUST have its cost measured (`rateLimit(dryRun: true) { cost }`), and
   SHOULD reuse an existing request before adding one.

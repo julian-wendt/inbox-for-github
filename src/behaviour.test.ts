@@ -790,6 +790,45 @@ describe("rule 10: an ask notifies only when it is newer than the fetch before",
   ]);
 });
 
+describe("rule 11: a reaction is no ask, no news and no answer", () => {
+  walk([
+    {
+      situation: "someone else's reaction on the description or a comment is no news and brings nothing back",
+      run: async (world, app) => {
+        const issue = world.issue({ author: ME, assignees: [ME, "bob"] });
+        const comment = world.comment(issue, "bob", "Pushed a fix");
+        world.advance(MINUTE);
+        await app.refresh();
+        const seen = new Map([[issue.id, world.now.toISOString()]]);
+        const before = viewsOf(app.entry(issue));
+        const inbox = new Map(app.classified().filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
+        const lastFetch = world.now.toISOString();
+        world.advance(HOUR);
+        world.react(issue.id, "alice", "HEART");
+        world.react(comment, "alice", "ROCKET");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).item.comments[0].reactions).toEqual([{ content: "ROCKET", count: 1, mine: false }]);
+        expect(viewsOf(app.entry(issue))).toEqual(before);
+        expect(hasNewActivity(app.entry(issue), seen, ME)).toBe(false);
+        expect(arrivals(app.classified(), inbox, lastFetch)).toEqual([]);
+      },
+    },
+    {
+      situation: "reacting to a mention answers nothing: it stays in the inbox",
+      run: async (world, app) => {
+        const issue = world.issue();
+        const ask = world.comment(issue, "alice", "@octocat could you look?");
+        await app.refresh();
+        world.advance(HOUR);
+        world.react(ask, ME, "THUMBS_UP");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).item.comments[0].reactions).toEqual([{ content: "THUMBS_UP", count: 1, mine: true }]);
+        expect(viewsOf(app.entry(issue))).toEqual(["inbox"]);
+      },
+    },
+  ]);
+});
+
 describe("answered questions", () => {
   walk([
     {

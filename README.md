@@ -26,8 +26,8 @@ there is something to ship, not on a schedule.
   the event in the calendar moves or removes the plan. The item's title, day, link and reference
   then reach the calendar's server (iCloud, Google, Exchange).
 - **Reply from the app:** a comment box modeled on GitHub's, with Markdown toolbar and preview,
-  plus close (as completed or not planned), reopen, and assigning or removing yourself (⌃A).
-  Reviews, approvals and inline comments stay in GitHub's own UI.
+  plus close (as completed or not planned), reopen, assigning or removing yourself (⌃A), and
+  emoji reactions on comments. Reviews, approvals and inline comments stay in GitHub's own UI.
 - **Keyboard first:** the actions have keys (? lists them), and ⌘K opens a palette for commands
   and items.
   "Open in Orca" opens an item's repository in [Orca](https://github.com/stablyai/orca), cloning

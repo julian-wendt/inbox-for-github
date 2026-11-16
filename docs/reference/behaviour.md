@@ -78,6 +78,10 @@ Independent of each other:
 10. An ask notifies only when it is newer than the fetch before (less the 5 minutes a delta
     overlaps, for GitHub's late indexing). An item missing from a result for a while, e.g. cut
     from a search, comes back quietly with its old ask; an ask of unknown time still notifies.
+11. A reaction is no ask, no news and no answer. An emoji someone else adds or takes back, on the
+    description or a post, changes nothing about where an item shows, its dot or what notifies;
+    one the viewer adds answers nothing, so a mention they only reacted to stays in the inbox
+    until a reply, D, F, P or T.
 
 ## Situations
 

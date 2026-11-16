@@ -17,7 +17,7 @@ Check, and report only real findings with file and line:
    and dark; compute ratios for anything doubtful (see the `contrast-check` skill).
 3. **Comments:** doc headers on exported functions are present and useful; body comments are rare,
    one or two lines, explain why; no narration, no commented-out code.
-4. **GitHub writes:** only comments, close/reopen and assigning or unassigning yourself; no review actions, no edits of others' text.
+4. **GitHub writes:** only comments, close/reopen, assigning or unassigning yourself and the viewer's own reactions; no review actions, no edits of others' text.
 5. **API cost:** new or extended queries have a measured cost; nothing refetches what could be
    filtered locally.
 6. **Breaking changes:** no removed or renamed settings keys, tables, columns or cache fields
