@@ -18,6 +18,7 @@
   --sidebar: rgb(240 241 244 / 0.72);
   --text: #18191b;
   --text-muted: #4d5159;
+  /* At least 4.5:1 on --panel and on --selected rows in both themes (light 4.7:1, dark 4.6:1 there). */
   --text-faint: #646973;
   --border: #e2e4e8;
   --border-strong: #cdd0d6;
@@ -25,7 +26,7 @@
   --divider: #e2e4e8;
   --hover: rgb(0 0 0 / 0.035);
   --track: rgb(0 0 0 / 0.075);
-  /* Fill of buttons, segmented controls and the search bar; decorative; --text-muted on it is 6.8:1 in light and 5.1:1 in dark, --text-faint 4.7:1 and 3.9:1 (icons only). */
+  /* Fill of buttons, segmented controls and the search bar; decorative; --text-muted on it is 6.8:1 in light and 5.1:1 in dark, --text-faint 4.7:1 and 4.3:1 (icons only). */
   --control-fill: rgb(0 0 0 / 0.05);
   --selected: rgb(0 0 0 / 0.055);
   --accent: #2b2d31;
@@ -73,7 +74,7 @@
     --sidebar: rgb(25 26 29 / 0.55);
     --text: #e9eaec;
     --text-muted: #9ba0a8;
-    --text-faint: #858a93;
+    --text-faint: #8c9199;
     --border: #28292d;
     --border-strong: #34363b;
     --divider: #28292d;
@@ -108,7 +109,7 @@
   --sidebar: rgb(25 26 29 / 0.55);
   --text: #e9eaec;
   --text-muted: #9ba0a8;
-  --text-faint: #858a93;
+  --text-faint: #8c9199;
   --border: #28292d;
   --border-strong: #34363b;
   --divider: #28292d;
