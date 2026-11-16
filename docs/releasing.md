@@ -45,7 +45,9 @@ Privacy & Security › "Open Anyway"). Release PRs may change the version
 fields in the two lockfiles; other lockfile changes still need approval.
 
 `release-please-config.json` has the settings; `.release-please-manifest.json` holds the last released
-version. The `Checks` workflow runs typecheck, lint and tests on every PR.
+version. The `Checks` workflow runs typecheck, lint and tests on every PR. The `Shell` workflow compiles
+the Rust shell on macOS (`cargo check --locked`) for every PR that touches `src-tauri/` or the
+toolchain, so a broken shell shows up there instead of in the release build.
 
 **`Cargo.lock` needs `.value` in its filter** (verified 2026-10-27, release-please 17.6.0): the `toml`
 updater parses with a tagging parser that wraps every string in an object with its position, so

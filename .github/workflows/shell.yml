@@ -1,0 +1,36 @@
+name: Shell
+
+on:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "src-tauri/**"
+      - "rust-toolchain.toml"
+      - ".github/workflows/shell.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: compile the shell on macOS
+    runs-on: macos-latest
+    permissions:
+      contents: read # check out the repository
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust
+        run: rustup toolchain install
+
+      - name: Check
+        working-directory: src-tauri
+        run: cargo check --locked
