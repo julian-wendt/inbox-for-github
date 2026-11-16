@@ -39,12 +39,10 @@ Every `gap`, `padding`, `margin` and `inset` uses these px values, negative ones
 nothing else: **0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48**.
 
 - 1px only as a hairline gap or an optical nudge (a mono face lifted 1px, a tag's 1px padding).
-- 2–6px inside a control (icon to text: 4px in rows, 6px in buttons and chips), 8–12px between
-  controls and inside rows and cards (cards `10px 12px`, rows `0 12px`), 16–24px around dialogs,
-  popovers and sections, 32–48px only for empty states and the end of a scroll area.
+- Which step an element takes is in the catalog below. An element not in it copies the
+  nearest entry; when none fits, ask, then add it to the catalog.
 - A value that follows from others is written as their sum, e.g. `calc(12px + 1px)` for a row's
-  padding plus its border. Structural sizes are tokens (`--traffic-lights`) or local custom
-  properties (`--measure` on the crash page).
+  padding plus its border. Sizes above 64px are layout tokens in `tokens.css`.
 
 ## Sizes and positions
 
@@ -73,22 +71,6 @@ nothing else: **0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48**.
 
 Pixel radii of 3px or less are only for drawn marks (repo dot, check box, stop square).
 
-## Heights
-
-| Height | For |
-|---|---|
-| 18px | tags |
-| 20 / 24 / 28px | labels and chips in the list / table / detail |
-| 22px | compact segments, small × buttons |
-| 26px | `.icon-btn`, `.chip-btn`, segments |
-| 28px | `.btn` in panes |
-| 30px (`--control-h`) | every control in a dialog, sidebar items, menu rows (minimum) |
-| 36px | the search bar, palette items, organization dropdown items |
-| 40px | bars, table rows, the organization dropdown, post and description heads |
-| 44px | the pane header and the sidebar's top |
-| 60px | inbox rows |
-| 62px (`--row-h`) | rows with a switch in Settings (minimum) |
-
 ## Icons and avatars
 
 | Icon size | For |
@@ -102,47 +84,79 @@ Strokes: Lucide's default (2), `1.75` for the thin day and time marks and the na
 `2.2` for colored status icons (`StatusIcon`). Avatars are 18 (chips), 20 (posts, the sidebar's
 footer), 28 (Settings lists) or 34 (inbox rows).
 
+Every building block and its exact values are in the [catalog](#catalog).
 
-**Tags** (bot, draft, review verdict, New, the table's plan, follow-up, carried and new marks):
-one size, defined once in `base.css`, 18px tall, 11px semibold, `0 8px`. A tag sets only its
-fill, border and color; a new tag joins the selector list there.
+## Motion
 
-**Buttons**
-
-- `.btn`: 28px (30px in dialogs), `--border` on `--panel`, 500; hover `--hover` and
-  `--border-strong`. Variants `primary`, `success`, `ghost`.
-- `.icon-btn`: 26px, transparent, `--text-muted`; hover `--hover` and `--text`.
-- `.chip-btn` and every other filled control: `--control-fill`, `--text-muted`; hover and open
-  `--control-hover` and `--text`.
-- Every button with a hover fill fades `background` and `color` in `120ms var(--ease)`; rows and
-  menu items change at once.
-- Disabled: `opacity: 0.5`, for every control.
-
-**Fields:** `--border` on `--bg`, `--radius-m`, `0 10px`, `--control-h` in dialogs; focus turns
-the border `--text-faint` (global rule). The comment and note fields sit in a card and focus with
-`--border-strong`; the search bar is filled and has no border.
-
-**Segmented control:** track `--control-fill`, 2px padding, `--radius-m`; segments
-`calc(var(--radius-m) - 2px)`, `--text-muted`, hover `--hover` and `--text`; the selected one
-`--panel`, `--text`, 600 and a small shadow. `.compact` is 22px at `--fs-s`, `.multi` adds a 2px gap.
-
-**Menus:** `--panel`, `--border`, `--radius-l`, `--shadow-pop`, 4px padding. Items `--radius-m`,
-highlighted with `--selected` (hover, keyboard and the chosen entry alike), hints `--text-muted`.
-
-**Dialogs and popovers:** the menus' container. Dialogs have `20px 24px` of padding (Settings
-lays out its own panes) and a 15px semibold title. Pop-ups open 6px from their trigger. The error
-bar keeps its red border.
-
-**Cards** in Settings: `--border`, `--radius-m`, `10px 12px`, `--border` lines between parts.
-Posts, the description and the comment box in the detail use `--border-strong` with `--surface`
-heads, as GitHub does.
-
-**Rows:** hover `--hover`, selected `--selected`, `--radius-m`, no transition.
-
-**Motion:** CSS takes `--dur-fade` (120ms: hover, fades), `--dur-move` (160ms: chevrons, the
+CSS takes `--dur-fade` (120ms: hover, fades), `--dur-move` (160ms: chevrons, the
 switch knob, slides) or `--dur-slow` (400ms: scrollbar, usage meter), always with `var(--ease)`.
 Animated elements in components take `MOVE` or `DIALOG_MOTION` from `src/ui/motion.ts`; every
 dialog opens the same way.
+
+## Catalog
+
+The exact spec of every building block. Columns: height, padding, gap between its parts, type
+(size token / weight), text color, fill, corner. "—" means none is set; a missing state uses the
+row above. A change to a block changes its row here.
+
+**Containers**
+
+| Block | Height | Padding | Gap | Type | Color | Fill and line | Corner |
+|---|---|---|---|---|---|---|---|
+| Pane header `.pane-header` | 44 | `0 16px` | 8 | title `m`/600 | `--text` | `--panel`, `--divider` below | — |
+| Dialog `.dialog` | — | `20px 24px` | 12 | title `l`/600 | `--text` | `--panel`, `--border`, `--shadow-pop` | `l` |
+| Popover `.popover` | — | `12px 16px` | — | `s` | `--text-muted` | as dialog | `l` |
+| Menu `.context-menu`, dropdowns | — | 4 | — | — | — | as dialog | `l` |
+| Toast `.toast` | 40 | `0 6px 0 16px` | 16 | `m`/500 | `--text` | as dialog | `l` |
+| Error bar `.error-bar` | — | `12px 16px` | — | `m` | `--new` | `--panel`, red 50% line, `--shadow-pop` | `l` |
+| Card in Settings `.toggle-row`, `.toggle-card`, `.status-map`, `.delivery-card` | `--row-h` min (switch rows) | `10px 12px` | 12 | `m`, hint `s` | `--text`, hint `--text-faint` | `--border`, `--border` lines between parts | `m` |
+| Attribute row `.attribute-row` | — | `8px 12px 8px 6px` | 12 | `m` | `--text` | `--panel`, `--border` | `m` |
+| Sidebar notice `.scope-notice` | — | `10px 12px` | 6 | `s`, title 600 | `--text-muted` | `--surface`, `--border-strong` | `m` |
+| Post, description `.post`, `.description` | head 40 min | head `6px 16px` / `0 16px`, body `12px 16px` / `0 16px 12px` | 8 | `m`, name 600 | `--text` | `--panel` or `--surface`, `--border-strong`, head `--surface` | `m` |
+| Comment box `.comment-box` | tabs 36 | tabs `0 12px`, body 8 | — | `m` | `--text-muted`, active `--text` | `--border-strong`, head `--surface` | `m` |
+| Empty state `.inbox-empty`, `.detail-empty` | — | — | 6 | `m` | `--text-faint` | — | — |
+
+**Rows and items** (hover `--hover`, selected `--selected`, no transition)
+
+| Block | Height | Padding | Gap | Type | Color | Corner |
+|---|---|---|---|---|---|---|
+| Inbox row `.inbox-row` | 60 | `0 12px`, 4px apart | 10 | title `m`/500 (unread 700), context `s`, end `xs` | `--text`, context `--text-muted`, end `--text-faint` | `m` |
+| Table row `.table-row` | 40 | `0 12px 0 32px` | 12 | title `m`/500 (unread 700), number `s`, time `xs` | `--text`, number and time `--text-faint` | `m` |
+| Bar `.bar` | 40 | `0 12px 0 6px` | 8 | `m`/600, count 500, hint `s`/450 | `--text`, count and hint `--text-faint` | `m`, fill `--surface` |
+| List group heading `.list-bar .bar` | 26 | `0 12px 0 6px` | 8 | small caps | `--text-faint`, hover `--text-muted` | `m` |
+| Sidebar item `.nav-item` | 30 | `0 8px` | 8 | `m`/500 (unread 700), count `xs` | `--text-muted`, on `--text` | `m`, on `--hover` with a `--border` ring |
+| Sidebar heading `.nav-heading` | — | margin `20px 8px 6px` | — | small caps | `--text-faint` | — |
+| Menu item `.menu-row`, dropdown and close-menu items | 30 min (dropdown with avatar 36) | `6px 8px` (dropdowns `0 8px` at their fixed height) | 8 | `m`, hint `s` | `--text`, hint `--text-muted` | `m` |
+| Palette item `[cmdk-item]` | 36 min | `6px 10px` | 10 | `m`, hint `s` | `--text-muted`, selected `--text` | `m` |
+| Activity `.activity` | — | `0 12px` | 10 | `s`, names 600 | `--text-muted`, time `--text-faint` | icon circle 24 |
+
+**Controls** (hover fades `--dur-fade`; disabled `opacity: 0.5`)
+
+| Block | Height | Padding | Gap | Type | Color | Fill and line | Corner |
+|---|---|---|---|---|---|---|---|
+| Button `.btn` | 28 (dialogs 30) | `0 10px` | 6 | `m`/500 | `--text` | `--panel`, `--border`; hover `--hover`, `--border-strong` | `m` |
+| Primary / success `.btn.primary`, `.btn.success` | as `.btn` | | | | `--on-accent` / white | `--accent` / `--green-fill` | `m` |
+| Ghost `.btn.ghost` | as `.btn` | | | | `--text-muted`, hover `--text` | none, hover `--hover` | `m` |
+| Icon button `.icon-btn` | 26 (small × 22) | 0 | — | icon 16 | `--text-muted`, hover `--text` | none, hover `--hover` | `m` |
+| Filled button `.chip-btn` | 26 | 0, with label `0 8px` | 4 | label `s` | `--text-muted`, hover `--text` | `--control-fill`, hover and open `--control-hover` | `m` |
+| Segmented `.segmented` | 26 (+2 track) | track 2, segment `0 12px` | — | `m`/500, on 600 | `--text-muted`, on `--text` | track `--control-fill`, on `--panel` + `--shadow-raised` | `m`, segment `m − 2px` |
+| Compact segmented `.compact` | 22 | `0 10px` | — | `s` | as above | | |
+| Field (input, select, segment field) | 30 | `0 10px` | — | `m` | `--text` | `--bg`, `--border`; focus `--text-faint` | `m` |
+| Text area | — | `8px 10px` | — | `m`, comment mono | `--text` | `--bg` (comment: `--panel` in its box) | `m` |
+| Organization dropdown `.org-select-button` | 40 | `0 12px` | 8 | `m` | `--text` | as field | `m` |
+| Search bar `.search-bar` | 36 | `0 8px 0 12px` | 10 | `m` | `--text`, placeholder `--text-muted` | `--control-fill`, no line | `m` |
+| Switch `.switch` | 18 × 32 | knob 14 at 2 | — | — | — | off `--border-strong`, on `--green-fill`, knob white + `--shadow-knob` | full |
+| Link button `.link-btn` | — | 0 | — | `s`/600 | `--text`, underline `--border-strong` | — | — |
+| Key `kbd` | 18 | `0 4px` | — | `xs`/500 | `--text-muted` | `--panel`, `--border` | `s` |
+
+**Marks**
+
+| Block | Height | Padding | Type | Color and fill | Corner |
+|---|---|---|---|---|---|
+| Tag (bot, draft, review verdict, New, plan, follow-up, carried, new) | 18 | `1px 8px` (with a line `0 8px`) | `xs`/600 | own fill, line and color only; shared rule in `base.css` | full |
+| Chip `.chip` | 24 (detail 28) | `0 12px` | `s` (detail `m`) | `--text`, `--border-strong` line | full |
+| Label `.label` | 20 (table 24, detail 28) | `0 8px` (table and detail `0 12px`) | `xs`/500 (detail `m`) | label color at `--tint` | full |
+| Dot | 6 or 8 | — | — | a hue | full |
 
 ## Surfaces and effects
 
