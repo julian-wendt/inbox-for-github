@@ -1,5 +1,8 @@
 # UI conventions
 
+The values for type, corners, heights and the building blocks are in
+[`style-guide.md`](style-guide.md); this page covers tokens, contrast, texts and keys.
+
 ## Design tokens
 
 All colors, radii, fonts and shadows are CSS custom properties in `src/ui/styles/tokens.css`,
@@ -13,7 +16,8 @@ Notable tokens:
 |---|---|
 | `--text`, `--text-muted`, `--text-faint` | text levels; lists and detail use `--text-content` (slightly dimmer, about 12:1 in both themes) |
 | `--border`, `--border-strong` | quiet and visible lines; cards, inputs and dropdowns use `--border` (`--border-strong` on hover), chips `--border-strong` |
-| `--hover`, `--selected` | row and button backgrounds |
+| `--hover`, `--selected` | row and button backgrounds; menus highlight with `--selected` |
+| `--control-fill`, `--control-hover` | filled controls (header buttons, segmented tracks, the search bar) and their hover |
 | `--focus-fill` | keyboard focus fill, 3:1 against the panel |
 | `--segment-fill` | the active part of a date or time field; softer by choice, below 3:1 |
 | `--yellow`, `--green`, `--blue`, `--red`, `--purple`, `--pink` | the only tone of each hue; AA as text in both themes, except light yellow (3:1, icons and dots only) |
@@ -43,12 +47,12 @@ darkens instead.
 - Chips, pills and labels are fully rounded (`border-radius: 999px`).
 - A highlight inside a rounded container matches the container's inner radius
   (`calc(var(--radius-m) - 1px)` inside a 1px border).
-- Items of one kind are equally tall wherever they appear: in the settings every control is
+- Items of one kind are equally tall wherever they appear: in every dialog each control is
   `--control-h` (30 px) and every row with a switch at least `--row-h`, with or without a hint.
   The organization dropdown is the one larger control (40 px), as it carries an avatar and a count.
 - A segmented control picks one option; one where several can be on (weekdays) is
   `.segmented.multi`, whose options stand apart with a gap.
-- Controls in a list or table header are greyed out (`disabled`, `--text-faint`) when they have
+- Controls in a list or table header are greyed out (`disabled`, dimmed to 50 % like every disabled control) when they have
   nothing to act on, never hidden, so the others keep their place. Counts in a switch show 0.
 - A scroll area keeps its left padding; a visible scrollbar takes the place of the right one
   (`useGutter` sets `--gutter`, CSS uses `max(0px, calc(<padding> - var(--gutter, 0px)))`), so

@@ -83,7 +83,7 @@ small {
 
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
-  border-radius: 10px;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--border-strong) calc(var(--thumb-alpha) * 100%), transparent) padding-box;
 }
 
