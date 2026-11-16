@@ -964,6 +964,7 @@
   color: var(--text-muted);
   font-size: var(--fs-s);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .reaction:not(:disabled):hover {
@@ -980,15 +981,29 @@
   padding: 0 6px;
 }
 
+.reaction-menu {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  box-shadow: var(--shadow-pop);
+}
+
 .reaction-pick {
   display: inline-grid;
   place-items: center;
   width: 28px;
   height: 28px;
+  padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-s);
   background: transparent;
   font-size: var(--fs-l);
+  line-height: 1;
 }
 
 .reaction-pick:hover {
