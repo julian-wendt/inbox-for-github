@@ -52,21 +52,32 @@ export function ContextMenu(props: MenuAt & { entries: MenuEntry[]; onClose: () 
   const [subActive, setSubActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const submenu = useRef<HTMLDivElement>(null);
-  // Measured at the window's corner first, where nothing squeezes it, then placed.
   const [pos, setPos] = useState({ x: 0, y: 0 });
-  const [subLeft, setSubLeft] = useState(false);
+  const [subPlace, setSubPlace] = useState({ left: false, up: 0 });
   const token = (name: string) => parseFloat(getComputedStyle(root.current!).getPropertyValue(name));
 
   useLayoutEffect(() => {
-    const box = root.current?.getBoundingClientRect();
-    if (!box) return;
+    const menu = root.current;
+    if (!menu) return;
+    // Measured at the window's corner, where the window's edge cannot squeeze it narrower.
+    const { left, top } = menu.style;
+    menu.style.left = menu.style.top = "0px";
+    const box = menu.getBoundingClientRect();
+    menu.style.left = left;
+    menu.style.top = top;
     setPos(menuPosition(box, { x, y, anchor, end, centered, centerX }, { width: window.innerWidth, height: window.innerHeight }, token("--pop-gap"), token("--window-margin")));
   }, [x, y, anchor, end, centered, centerX]);
 
   useLayoutEffect(() => {
-    const width = submenu.current?.offsetWidth;
-    if (!width || !root.current) return;
-    setSubLeft(root.current.getBoundingClientRect().right + token("--pop-gap") + width > window.innerWidth - token("--window-margin"));
+    const menu = submenu.current;
+    const slot = menu?.parentElement;
+    if (!menu || !slot || !root.current) return;
+    const margin = token("--window-margin");
+    const top = slot.getBoundingClientRect().top + menu.offsetTop;
+    setSubPlace({
+      left: root.current.getBoundingClientRect().right + token("--pop-gap") + menu.offsetWidth > window.innerWidth - margin,
+      up: Math.max(0, Math.min(top + menu.offsetHeight - (window.innerHeight - margin), top - margin)),
+    });
   }, [sub]);
 
   const run = (entry: MenuEntry) => {
@@ -148,7 +159,7 @@ export function ContextMenu(props: MenuAt & { entries: MenuEntry[]; onClose: () 
             onSelect={() => (entry.items ? setSub(i) : run(entry))}
           />
           {sub === i && entry.items && (
-            <div ref={submenu} className={`context-menu submenu${subLeft ? " left" : ""}`} role="menu">
+            <div ref={submenu} className={`context-menu submenu${subPlace.left ? " left" : ""}`} role="menu" style={{ translate: `0 ${-subPlace.up}px` }}>
               {entry.items.map((child, j) => (
                 <div key={child.label} className="menu-slot">
                   {child.divided && <hr />}
