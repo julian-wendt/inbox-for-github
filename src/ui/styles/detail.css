@@ -966,3 +966,40 @@
   margin-left: -2px;
   opacity: 0.7;
 }
+
+/* One pill per emoji, as on GitHub; the viewer's own is marked by the blue border (4.5:1 or more against both cards). */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 0 16px 12px;
+}
+
+.description-body .reactions {
+  padding: 12px 0 0;
+}
+
+.reaction {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reaction:not(:disabled):hover {
+  background: var(--hover);
+}
+
+.reaction.mine {
+  border-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+  color: var(--text);
+}

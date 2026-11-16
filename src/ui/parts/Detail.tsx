@@ -18,6 +18,7 @@ import { Avatar } from "./Avatar";
 import { Description } from "./Description";
 import { GitHubMark } from "./GitHubMark";
 import { OrcaMark } from "./OrcaMark";
+import { Reactions } from "./Reactions";
 import { HeaderMenu } from "./HeaderMenu";
 import type { MenuEntry } from "./ContextMenu";
 import { KindIcon, FollowUpChip, PlanChip } from "./ItemMarks";
@@ -251,7 +252,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
             {item.draft && <span className="draft">{t("detail.draft")}</span>}
           </div>
 
-          <Description body={opening.body} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
+          <Description body={opening.body} reactions={opening.reactions} me={me} mode={descriptionMode} innerRef={isTrigger(opening) ? descriptionRef : undefined} />
 
           <PrivateNote key={item.id} note={note} onSave={(text) => onNote(item.id, text)} />
 
@@ -328,6 +329,7 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
         )}
       </div>
       <div className="post-body">{open ? <Markdown source={post.body} me={me} /> : <p className="post-summary">{firstLine(post.body)}</p>}</div>
+      <Reactions reactions={post.reactions} />
     </li>
   );
 }

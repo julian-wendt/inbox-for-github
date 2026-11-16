@@ -1,4 +1,4 @@
-import type { Item, ReviewState } from "./model";
+import type { Item, Reaction, ReviewState } from "./model";
 
 /** One authored text on an item: the opening post or a comment. */
 export interface Post {
@@ -7,6 +7,9 @@ export interface Post {
   at: string;
   where?: string;
   reviewState?: ReviewState;
+  /** The node id to react to: the item's for the opening post; absent for comments cached before it was kept. */
+  id?: string;
+  reactions?: Reaction[];
 }
 
 /** A post that mentions the viewer, with a short excerpt around the mention. */
@@ -23,8 +26,8 @@ const EXCERPT_RADIUS = 80;
 /** Opening post followed by the loaded comments, oldest first. */
 export function posts(item: Item): Post[] {
   return [
-    { author: item.author, body: item.body, at: item.createdAt },
-    ...item.comments.map((c) => ({ author: c.author, body: c.body, at: c.createdAt, where: c.where, reviewState: c.reviewState })),
+    { author: item.author, body: item.body, at: item.createdAt, id: item.id, reactions: item.reactions },
+    ...item.comments.map((c) => ({ author: c.author, body: c.body, at: c.createdAt, where: c.where, reviewState: c.reviewState, id: c.id, reactions: c.reactions })),
   ].sort((a, b) => a.at.localeCompare(b.at));
 }
 
