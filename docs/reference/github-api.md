@@ -134,6 +134,11 @@ Checked against a real transfer:
 again: `retry-after` for secondary limits, else `x-ratelimit-reset`. `useInbox` pauses automatic
 refreshes until then and below 400 remaining points (`LOW_BUDGET`).
 
+The responses of one refresh can come from two hourly windows in turn, each with its own
+`x-ratelimit-reset` and `x-ratelimit-used` (seen 2026-11-10 and 2026-11-11 with one token).
+`pointsSpent` therefore counts the drop in `remaining` per window, and what a window used before
+the app saw it only when the earlier windows have reset, i.e. on a real new hour.
+
 ## Timeouts
 
 GitHub gives a request ten seconds. One that takes longer gets `502 Bad Gateway` from the gateway

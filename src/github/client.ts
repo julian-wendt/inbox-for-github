@@ -25,10 +25,14 @@ const GAVE_UP_UNTIL_MS = 20_000;
 
 let latestBudget: Budget | null = null;
 let spent = 0;
+/** Reset time (ms) → the lowest `remaining` seen in that window; GitHub can answer from two windows in turn. */
+const windows = new Map<number, number>();
 
 /**
- * GraphQL points this app has used since it started, as far as the headers show: the drop in
- * `remaining` between responses, and on a new hourly window what that window used so far.
+ * GraphQL points this app has used since it started, as far as the headers show: per hourly
+ * window, the drop in `remaining` between its responses, and on a new hour what that hour used
+ * so far. A second window GitHub answers from while the first still runs counts only its drops,
+ * since what it used before is not this app's.
  * Compare two readings to get the cost of what ran in between.
  */
 export function pointsSpent(): number {
@@ -40,16 +44,18 @@ export function lastBudget(): Budget | null {
   return latestBudget;
 }
 
-function noteHeaders(headers: Headers): void {
+function noteHeaders(headers: Headers, now = Date.now()): void {
   const remaining = Number(headers.get("x-ratelimit-remaining"));
   const reset = Number(headers.get("x-ratelimit-reset"));
   if (headers.get("x-ratelimit-resource") !== "graphql" || !reset) return;
   const limit = Number(headers.get("x-ratelimit-limit")) || 5000;
   const resetAt = new Date(reset * 1000);
-  if (latestBudget) {
-    const sameWindow = latestBudget.resetAt.getTime() === resetAt.getTime();
-    spent += Math.max(0, sameWindow ? latestBudget.remaining - remaining : limit - remaining);
-  }
+  const lowest = windows.get(resetAt.getTime());
+  const newHour = [...windows.keys()].every((at) => at <= now);
+  if (lowest !== undefined) spent += Math.max(0, lowest - remaining);
+  else if (latestBudget && newHour) spent += limit - remaining;
+  windows.set(resetAt.getTime(), Math.min(lowest ?? remaining, remaining));
+  for (const at of windows.keys()) if (at <= now && at !== resetAt.getTime()) windows.delete(at);
   latestBudget = { remaining, limit, resetAt };
 }
 
