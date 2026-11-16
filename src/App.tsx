@@ -1248,6 +1248,7 @@ export default function App() {
         calendarAccess={calendarAccess}
         loading={inbox.loading}
         fetchedAt={inbox.fetchedAt}
+        cut={inbox.cut}
         error={inbox.error}
         pausedUntil={inbox.pausedUntil}
         usage={inbox.usage}

@@ -13,22 +13,30 @@ import { followUpOn, thisAfternoon } from "./snooze";
  * follow-up also raises again what was pending when F was pressed; those asks are older than the
  * due time and stay quiet too, while one newer than it notifies.
  *
+ * An ask from before `since` is old news: an item that was missing from the previous result,
+ * e.g. cut from a search, comes back quietly. An ask of unknown time still notifies.
+ *
  * @param classified  The current classification.
  * @param known       Item id → `askKey` of the inbox items in the previous result, or null before the first one.
+ * @param since       Asks before then (ISO 8601) stay quiet; null lets every ask notify.
  * @returns The items to notify about, in list order.
  *
  * @example
  *   arrivals(classified, null);                         // nothing: the baseline
  *   arrivals(classified, new Map([["I_1", askKey(c)]])); // every inbox item but I_1, unless its ask changed
+ *   arrivals(classified, known, "2026-11-13T09:55:00Z"); // as above, but only asks made since 09:55
  */
-export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null): Classified[] {
+export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null, since: string | null = null): Classified[] {
   if (!known) return [];
-  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && c.asks.some((ask) => loud(c, ask)));
+  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && c.asks.some((ask) => loud(c, ask, since)));
 }
 
 const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
 
-const loud = ({ asked }: Classified, ask: Ask) => !quiet(ask) && !(asked.due && (asked[ask] ?? "") <= asked.due);
+function loud({ asked }: Classified, ask: Ask, since: string | null): boolean {
+  const at = asked[ask];
+  return !quiet(ask) && !(asked.due && (at ?? "") <= asked.due) && !(since && at && at < since);
+}
 
 /**
  * Whether an item's follow-up rings: "Remind me" is on and it asks as due (see `Classified.notify`).

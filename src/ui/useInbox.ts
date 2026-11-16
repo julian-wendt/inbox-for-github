@@ -38,6 +38,8 @@ export interface Inbox {
   /** Organizations the viewer belongs to, for the settings; empty until the first fetch. */
   memberOrgs: Org[];
   fetchedAt: Date | null;
+  /** Whether a search found more than GitHub returns (`SEARCH_STOP`), so the oldest items are missing; known after a full fetch. */
+  cut: boolean;
   settings: Settings;
   classified: Classified[];
   /**
@@ -213,6 +215,7 @@ export function useInbox(): Inbox {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
+  const [cut, setCut] = useState(false);
   const lastFetch = useRef<CachedFetch | null>(null);
   const pending = useRef<PendingChange[]>([]);
   const storedStatuses = useRef(statuses);
@@ -359,7 +362,8 @@ export function useInbox(): Inbox {
       // A delta keeps what the cache covers, so a narrower setting does not shrink it; the view filters.
       const coverage: Coverage = delta ? { ...had.coverage, closedDays: Math.max(had.coverage.closedDays, want.closedDays), boards: want.boards } : want;
       // Boards switched on come for every item at once through `withBoards` below, not twice.
-      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards && (!delta || had.coverage.boards), signal };
+      const cutSearches = new Set<string>();
+      const options = { limit: coverage.maxItems, closedDays: coverage.closedDays, me: viewer.login, boards: want.boards && (!delta || had.coverage.boards), signal, onCut: (q: string) => cutSearches.add(q) };
       // The added days first, so the delta's newer copy of an item in both wins the merge.
       const [fetched, requested] = delta
         ? await Promise.all([
@@ -398,10 +402,11 @@ export function useInbox(): Inbox {
       const showMoved = moves.size > 0 ? await carryOver(moves, items) : null;
       showMoved?.();
       apply(result);
+      setCut((was) => (delta && was) || cutSearches.size > 0);
       await store.saveFetch(result);
       noteBudget(lastBudget());
       setUsage({ budget: lastBudget(), lastCost: pointsSpent() - mark });
-      log.debug("refresh", { kind: widen ? "widen" : delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining });
+      log.debug("refresh", { kind: widen ? "widen" : delta ? "delta" : "full", fetched: fetched.length, items: items.length, ms: Date.now() - startedAt, cost: pointsSpent() - mark, remaining: lastBudget()?.remaining, cut: cutSearches.size });
       log.debug("cache saved", { items: items.length });
       return true;
     } catch (e) {
@@ -821,6 +826,7 @@ export function useInbox(): Inbox {
     usage,
     memberOrgs,
     fetchedAt,
+    cut,
     settings,
     classified,
     refresh,
