@@ -352,7 +352,7 @@
   flex: 1;
   place-content: center;
   justify-items: center;
-  gap: 4px;
+  gap: 6px;
   /* Like the list, so the scrollbar's room and the header's alignment stay when it empties. */
   overflow-y: scroll;
   color: var(--text-faint);

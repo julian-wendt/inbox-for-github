@@ -109,7 +109,11 @@ describe("style guide", () => {
   });
 
   it("keeps line heights, layers, opacities and letter spacing to their sets", () => {
-    expect(outside((v) => LINE_HEIGHTS.test(v), declared("line-height"))).toEqual([]);
+    const shorthand = declared("font").flatMap((d) => {
+      const height = /\/\s*([\d.]+(?:px)?)/.exec(d.value)?.[1];
+      return height ? [{ at: d.at, value: height }] : [];
+    });
+    expect(outside((v) => LINE_HEIGHTS.test(v), [...declared("line-height"), ...shorthand])).toEqual([]);
     expect(outside((v) => Z_LAYERS.has(v), declared("z-index"))).toEqual([]);
     expect(outside((v) => OPACITIES.has(v), declared("opacity"))).toEqual([]);
     expect(outside((v) => LETTER_SPACINGS.has(v), declared("letter-spacing"))).toEqual([]);

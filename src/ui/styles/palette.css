@@ -107,11 +107,8 @@
   grid-template-rows: auto auto minmax(0, 1fr);
   width: min(var(--help-w), calc(100vw - var(--dialog-margin)));
   height: min(var(--help-h), var(--dialog-max-h));
+  gap: 12px;
   padding: 20px 24px;
-}
-
-.help h2 {
-  margin-bottom: 12px;
 }
 
 .help-tabs {
@@ -122,7 +119,7 @@
 }
 
 .help-body {
-  margin: 16px -24px 0 0;
+  margin: 0 -24px 0 0;
   padding-right: max(0px, calc(24px - var(--gutter, 0px)));
   overflow-y: auto;
   color: var(--text-muted);

@@ -241,7 +241,7 @@
   flex: none;
   gap: 6px;
   margin: 8px 4px 0;
-  padding: 10px;
+  padding: 10px 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-m);
   background: var(--surface);
@@ -685,7 +685,7 @@
 .org-select-button,
 .org-select-menu button {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
   width: 100%;
   border: 0;
@@ -747,7 +747,7 @@
 
 .org-select-menu button {
   height: 36px;
-  padding: 0 10px;
+  padding: 0 8px;
   border-radius: var(--radius-m);
 }
 
@@ -758,7 +758,6 @@
 
 /* As tall as the time and segmented fields next to it, not like the organization picker. */
 .calendar-select .org-select-button {
-  gap: 8px;
   height: 30px;
   border-color: transparent;
   background: var(--control-fill);
@@ -801,7 +800,6 @@
 }
 
 .calendar-select .org-select-menu button {
-  gap: 8px;
   height: 30px;
 }
 
@@ -848,7 +846,7 @@
 .repo-search {
   flex: 1;
   min-width: var(--search-min-w);
-  height: 28px;
+  height: var(--control-h);
   padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
@@ -965,7 +963,7 @@
 
 .toggle-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
   min-height: var(--row-h);
   padding: 10px 12px;
@@ -1226,7 +1224,7 @@
 
 .attribute-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   padding: 8px 12px 8px 6px;
   border: 1px solid var(--border);
