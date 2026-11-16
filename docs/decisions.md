@@ -267,6 +267,12 @@ returns only through an ask newer than its handled-until. The reasons:
 - **The picked repositories narrow the counts next to the views; no other filter does,** and the
   list header shows no count (2026-10-26). With a repo picked, a count of 4 beside a list of 1
   read as a bug; the dock badge still counts everything.
+- **The unread dot travels to the control that hides it** (2026-11-13, #133). When the kind,
+  sprint or ask filter hides unread items the sidebar counts, the options that would show them
+  carry the dot, and so does the sprint button; a folded bar holding unread rows does too, except
+  the parked ones (Blocked, Follow-up, Finished), which the badge does not count. Only when no
+  shown row is unread does a line under the list say how many are hidden, with "Show all". The
+  sidebar's repository filter gets no dot: its own counts say where items are.
 
 ## Tables and lists
 
