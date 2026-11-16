@@ -101,6 +101,10 @@ question, and D follows that intent (2026-11-11); the table of views is in
   state, and O opens the work again and keeps the follow-up. P and T never apply to a finished
   part. F that changes nothing (same date, or none again, with no ask waiting) is a no-op, so
   neither the status time nor the snapshot moves.
+- **X gives back what a when handled** (2026-11-13). F, P and T count as handling, so a review
+  request parked with F and then taken off with X used to land in the Done bar, unreviewed. X now
+  removes handled-until, so what is still pending asks again, as when the date comes; with
+  nothing pending nothing comes back, and a finished part stays done. To be rid of an item, D.
 - **One follow-up, which can ring** (2026-10-24, 2026-11-12). "Snooze" and "reminder" were two
   ways to say "bring this back at a date", and an item could carry both. The follow-up has a date
   or none. A passed date brings the item back as an ask, quietly, and unread like any return,
@@ -300,14 +304,24 @@ returns only through an ask newer than its handled-until. The reasons:
   date as quiet absolute text after the title, never two relative times side by side; Created by
   me by the opening. Chips no longer filter; the sprint filter and the properties sit in the
   header.
-- **Inline comments stay on GitHub.** The timeline shows one line per review (verdict, number of
-  inline comments, how many are resolved), linked to the review on GitHub, instead of each
-  comment as a post; only one mentioning the viewer stays a post. Resolving has no time on GitHub,
-  so it changes the line's state in brackets and never adds a line of its own.
-- **X gives back what a when handled** (2026-11-13). F, P and T count as handling, so a review
-  request parked with F and then taken off with X used to land in the Done bar, unreviewed. X now
-  removes handled-until, so what is still pending asks again, as when the date comes; with
-  nothing pending nothing comes back, and a finished part stays done. To be rid of an item, D.
+
+## Detail and timeline
+
+- **The detail's buttons go from the item's state outward** (2026-11-13, 2026-11-16). They stand
+  on the right, "Issue details" or "PR details" on the left; first the status switch and the
+  reason the item sits there (💡), then, all at one even gap:
+  - opening it elsewhere: GitHub, Orca;
+  - tools on it: link, refresh;
+  - Assign me, the one button that writes to GitHub;
+  - the pop-up's ×.
+
+  Assign me shows only when it can act, so it sits last, where its coming and going moves
+  nothing else. In a column narrower than 700px the tools after the 💡 fold into a "…" menu, as
+  the list's controls do. Below 560px the status switch keeps only its icons. The repository and
+  number stand above the title for good: in the header they were cut or, moved there only when
+  they fit, jumped between the two places as the column changed width; moving the buttons left
+  instead read worse. That line makes the repository chip under the title redundant, so the
+  detail has none and its attribute settings no switch for it; the tables keep it.
 - **The timeline tells the viewer's own decisions too** (2026-11-13). Plans, follow-ups with
   their dates, filing and each return to the inbox get a line that stays, so an item's place can
   always be read from its log: before, a plan left no trace, X on a follow-up read "Reopened
@@ -315,6 +329,17 @@ returns only through an ask newer than its handled-until. The reasons:
   for one: a "when" replaced by another, or a cleared status D filed, is not shown again, and a
   follow-up set and taken off in one go leaves nothing. Stored additively: new nullable columns on
   `status_log`, plans and returns in `item_log`, so older rows read as before.
+- **Inline comments stay on GitHub.** The timeline shows one line per review (verdict, number of
+  inline comments, how many are resolved), linked to the review on GitHub, instead of each
+  comment as a post; only one mentioning the viewer stays a post. Resolving has no time on GitHub,
+  so it changes the line's state in brackets and never adds a line of its own.
+- **Reactions** (2026-11-16): reacting is the lightest answer to a comment, so the detail shows
+  GitHub's emoji under each post and lets the viewer add or take back their own; still no review
+  actions and no edits of others' text. They change nothing about where an item shows, its dot or
+  what notifies, and reacting answers nothing (rule 11 in
+  [`behaviour.md`](reference/behaviour.md)): an emoji is too light to count as handled. Counts
+  only, no names of who reacted: the names would cost a search page more than three times its
+  points ([`github-api.md`](reference/github-api.md#reactions-2026-11-16)).
 
 ## Fetching and the API
 
@@ -377,13 +402,6 @@ returns only through an ask newer than its handled-until. The reasons:
   viewer to or removing them from the assignees ("Assign me" ⌃A, ⌃U; others stay assigned), and
   the viewer's own reactions (2026-11-16). Review actions (approve, request changes, inline
   reviews) stay in GitHub's UI; deleting reminder comments or editing descriptions was declined.
-- **Reactions** (2026-11-16): reacting is the lightest answer to a comment, so the detail shows
-  GitHub's emoji under each post and lets the viewer add or take back their own; still no review
-  actions and no edits of others' text. They change nothing about where an item shows, its dot or
-  what notifies, and reacting answers nothing (rule 11 in
-  [`behaviour.md`](reference/behaviour.md)): an emoji is too light to count as handled. Counts
-  only, no names of who reacted: the names would cost a search page more than three times its
-  points ([`github-api.md`](reference/github-api.md#reactions-2026-11-16)).
 
 ## Data, settings and privacy
 
@@ -425,21 +443,6 @@ returns only through an ask newer than its handled-until. The reasons:
 
 ## Look
 
-- **The detail's buttons go from the item's state outward** (2026-11-13, 2026-11-16). They stand
-  on the right, "Issue details" or "PR details" on the left; first the status switch and the
-  reason the item sits there (💡), then, all at one even gap:
-  - opening it elsewhere: GitHub, Orca;
-  - tools on it: link, refresh;
-  - Assign me, the one button that writes to GitHub;
-  - the pop-up's ×.
-
-  Assign me shows only when it can act, so it sits last, where its coming and going moves
-  nothing else. In a column narrower than 700px the tools after the 💡 fold into a "…" menu, as
-  the list's controls do. Below 560px the status switch keeps only its icons. The repository and
-  number stand above the title for good: in the header they were cut or, moved there only when
-  they fit, jumped between the two places as the column changed width; moving the buttons left
-  instead read worse. That line makes the repository chip under the title redundant, so the
-  detail has none and its attribute settings no switch for it; the tables keep it.
 - **Calm placeholders.** GitHub's identicons are replaced by gradient orbs picked per login.
   **No two people share an orb:** an orb is a look (palette, accent and accent angle, one number
   below `LOOKS`). A login's first look comes from its name and is kept whenever it is free;
