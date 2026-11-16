@@ -243,7 +243,8 @@ kbd {
   gap: 12px;
   align-content: center;
   min-height: 100vh;
-  padding: 32px max(32px, calc((100% - 560px) / 2));
+  --measure: 560px;
+  padding: 32px max(32px, calc((100% - var(--measure)) / 2));
   background: var(--bg);
   color: var(--text);
 }

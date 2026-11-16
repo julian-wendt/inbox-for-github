@@ -18,6 +18,8 @@
   /* One height per kind in the settings: every control, and every row with a switch (title and a one-line hint). */
   --control-h: 30px;
   --row-h: 62px;
+  /* Room for the window's traffic lights in the overlay title bar. */
+  --traffic-lights: 84px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
   --dur-fade: 120ms;

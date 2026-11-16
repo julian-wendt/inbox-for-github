@@ -8,6 +8,7 @@ const FONT_SIZE = /^(var\(--fs-(xs|s|m|l|xl|2xl)\)|inherit|0\.85em)$/;
 const FONT_WEIGHTS = new Set(["450", "500", "600", "700"]);
 const RADIUS = /^(0|50%|999px|var\(--radius-[sml]\)|calc\(var\(--radius-[sml]\) - [12]px\)|[0-3](\.5)?px)$/;
 const HEX_ALLOWED = new Set(["#fff", "#000"]);
+const SPACES = new Set([0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48]);
 const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|\d+px)$/;
 const Z_LAYERS = new Set(["1", "2", "5", "25", "26", "30", "35", "40"]);
 const OPACITIES = new Set(["0", "0.5", "1"]);
@@ -53,6 +54,18 @@ describe("style guide", () => {
   it("rounds corners with the radius tokens, full rounding or a drawn mark's few pixels", () => {
     const corners = ["border-radius", "border-top-left-radius", "border-top-right-radius", "border-bottom-left-radius", "border-bottom-right-radius"];
     expect(outside((v) => RADIUS.test(v), corners.flatMap((p) => declared(p)))).toEqual([]);
+  });
+
+  it("spaces with the spacing scale", () => {
+    const spacing = /^\s*((gap|row-gap|column-gap|padding|margin)(-[a-z-]+)?|inset):\s*([^;]+);/;
+    const off = sheets.flatMap((sheet) =>
+      sheet.lines.flatMap((line, i) => {
+        const value = spacing.exec(line)?.[4] ?? "";
+        const bad = [...value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((m) => Math.abs(Number(m[1]))).filter((n) => !SPACES.has(n));
+        return bad.length ? [`${sheet.name}:${i + 1} ${value}`] : [];
+      }),
+    );
+    expect(off).toEqual([]);
   });
 
   it("moves with the duration tokens on the app's curve", () => {

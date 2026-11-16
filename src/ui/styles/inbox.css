@@ -72,7 +72,7 @@
 
 .chip-btn.header-select {
   display: inline-flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
   width: auto;
   max-width: 180px;
@@ -109,7 +109,7 @@
   right: 0;
   z-index: 26;
   width: 300px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   background: var(--panel);
@@ -183,7 +183,7 @@
   gap: 10px;
   align-items: center;
   min-width: 0;
-  padding: 0 8px 0 14px;
+  padding: 0 8px 0 12px;
   border-radius: var(--radius-m);
   color: var(--text-muted);
 }
@@ -246,7 +246,7 @@
 
 /* The label's own color, so it keeps the label's contrast. */
 .segment-count {
-  margin-left: 5px;
+  margin-left: 4px;
   font-weight: 450;
   font-variant-numeric: tabular-nums;
 }
@@ -272,7 +272,7 @@
   gap: 10px;
   align-items: center;
   height: 60px;
-  margin: 3px max(0px, calc(8px - var(--gutter, 0px))) 3px 8px;
+  margin: 4px max(0px, calc(8px - var(--gutter, 0px))) 4px 8px;
   padding: 0 12px;
   border-radius: var(--radius-m);
 }
@@ -303,7 +303,7 @@
 
 .row-context {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
   min-width: 0;
   color: var(--text-muted);
@@ -327,7 +327,7 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   align-items: flex-end;
   color: var(--text-faint);
   font-size: var(--fs-xs);
@@ -337,7 +337,7 @@
 /* A plan's day or a follow-up's time, after its icon (see `WhenIcon`). */
 .row-when {
   display: inline-flex;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
 }
 
@@ -381,10 +381,10 @@
   left: calc(var(--sidebar-w, 0px) + (100vw - var(--sidebar-w, 0px)) / 2);
   z-index: 35;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   height: 38px;
-  padding: 0 6px 0 14px;
+  padding: 0 6px 0 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   background: var(--panel);
@@ -461,7 +461,7 @@
 }
 
 .hidden-unread {
-  margin: 14px auto;
+  margin: 16px auto;
 }
 
 /* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
@@ -473,7 +473,7 @@
 .row-mark {
   display: inline-flex;
   flex: none;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
   font-size: var(--fs-xs);
 }
@@ -537,7 +537,7 @@
   align-items: center;
   width: 100%;
   height: 40px;
-  padding: 0 12px 0 4px;
+  padding: 0 12px 0 6px;
   border: 0;
   border-radius: var(--radius-m);
   background: var(--surface);
@@ -573,7 +573,7 @@
 }
 
 .bar-chevron {
-  margin-right: 3px;
+  margin-right: 4px;
   color: var(--text-faint);
   transition: rotate var(--dur-move) var(--ease);
 }
@@ -585,11 +585,11 @@
 .table-row {
   position: relative;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
   height: 40px;
-  /* The kind icon starts under the bar's chevron (28px); the unread dot sits in front of it. */
-  padding: 0 12px 0 28px;
+  /* The kind icon lines up with the bar's title (6 + 14 + 4 + 8px); the unread dot sits in front of it. */
+  padding: 0 12px 0 32px;
   border-radius: var(--radius-m);
 }
 
@@ -714,13 +714,13 @@
 
 .table-attrs .label {
   height: 24px;
-  padding: 0 11px;
+  padding: 0 12px;
   white-space: nowrap;
 }
 
 .assignee-pill {
-  gap: 5px;
-  padding: 0 4px 0 9px;
+  gap: 4px;
+  padding: 0 4px 0 8px;
 }
 
 .people {
@@ -728,7 +728,7 @@
 }
 
 .people .assignee-avatar + .assignee-avatar {
-  margin-left: -5px;
+  margin-left: -4px;
   transition: margin-left var(--dur-move) var(--ease);
 }
 
@@ -792,7 +792,7 @@
 .table-update {
   display: inline-flex;
   flex: none;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
   justify-content: flex-end;
   width: 36px;
@@ -871,7 +871,7 @@
   align-items: center;
   width: 100%;
   min-height: 30px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 0;
   border-radius: var(--radius-m);
   background: transparent;
@@ -941,7 +941,7 @@
 .elsewhere {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 6px 16px;
   justify-content: center;
   max-width: 480px;
   margin: 10px auto 0;

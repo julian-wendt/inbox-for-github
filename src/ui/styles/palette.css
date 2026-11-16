@@ -6,7 +6,7 @@
 .palette [cmdk-input] {
   width: 100%;
   height: 50px;
-  padding: 0 18px;
+  padding: 0 16px;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: transparent;
@@ -107,7 +107,7 @@
   grid-template-rows: auto auto minmax(0, 1fr);
   width: min(680px, calc(100vw - 32px));
   height: min(720px, 86vh);
-  padding: 20px 22px;
+  padding: 20px 24px;
 }
 
 .help h2 {
@@ -122,15 +122,15 @@
 }
 
 .help-body {
-  margin: 16px -22px 0 0;
-  padding-right: max(0px, calc(22px - var(--gutter, 0px)));
+  margin: 16px -24px 0 0;
+  padding-right: max(0px, calc(24px - var(--gutter, 0px)));
   overflow-y: auto;
   color: var(--text-muted);
   font-size: var(--fs-m);
 }
 
 .help-body section + section {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .help-body strong {
@@ -154,7 +154,7 @@
 
 .help-body > small {
   display: block;
-  margin-top: 14px;
+  margin-top: 16px;
   color: var(--text-faint);
 }
 
@@ -187,7 +187,7 @@
   display: grid;
   gap: 12px;
   width: min(340px, calc(100vw - 32px));
-  padding: 20px 22px;
+  padding: 20px 24px;
 }
 
 .snooze-when {
@@ -237,7 +237,7 @@
   display: grid;
   gap: 12px;
   width: min(520px, calc(100vw - 32px));
-  padding: 20px 22px;
+  padding: 20px 24px;
 }
 
 .calendar-day-head {

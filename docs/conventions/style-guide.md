@@ -33,6 +33,19 @@ sidebar's headings, the list's time groups, the palette's groups and the private
 - `--text-faint` is text only on `--panel`, `--surface` and selected rows. On `--control-fill`,
   `--track` and in menus, secondary text takes `--text-muted`.
 
+## Spacing
+
+Every `gap`, `padding`, `margin` and `inset` uses these px values, negative ones included, and
+nothing else: **0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48**.
+
+- 1px only as a hairline gap or an optical nudge (a mono face lifted 1px, a tag's 1px padding).
+- 2–6px inside a control (icon to text: 4px in rows, 6px in buttons and chips), 8–12px between
+  controls and inside rows and cards (cards `10px 12px`, rows `0 12px`), 16–24px around dialogs,
+  popovers and sections, 32–48px only for empty states and the end of a scroll area.
+- A value that follows from others is written as their sum, e.g. `calc(12px + 1px)` for a row's
+  padding plus its border. Structural sizes are tokens (`--traffic-lights`) or local custom
+  properties (`--measure` on the crash page).
+
 ## Corners
 
 | Radius | For |
@@ -85,12 +98,12 @@ the border `--text-faint` (global rule). The comment and note fields sit in a ca
 
 **Segmented control:** track `--control-fill`, 2px padding, `--radius-m`; segments
 `calc(var(--radius-m) - 2px)`, `--text-muted`, hover `--hover` and `--text`; the selected one
-`--panel`, `--text`, 600 and a small shadow. `.compact` is 22px at 12px, `.multi` adds a 2px gap.
+`--panel`, `--text`, 600 and a small shadow. `.compact` is 22px at `--fs-s`, `.multi` adds a 2px gap.
 
 **Menus:** `--panel`, `--border`, `--radius-l`, `--shadow-pop`, 4px padding. Items `--radius-m`,
 highlighted with `--selected` (hover, keyboard and the chosen entry alike), hints `--text-muted`.
 
-**Dialogs and popovers:** the menus' container. Dialogs have `20px 22px` of padding (Settings
+**Dialogs and popovers:** the menus' container. Dialogs have `20px 24px` of padding (Settings
 lays out its own panes) and a 15px semibold title. Pop-ups open 6px from their trigger. The error
 bar keeps its red border.
 
