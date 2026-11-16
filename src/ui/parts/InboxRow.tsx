@@ -10,6 +10,7 @@ import { useScrollIntoView } from "../useScrollIntoView";
 import { Avatar } from "./Avatar";
 import { EventMark, KindIcon, NotifyMark, WhenIcon } from "./ItemMarks";
 import type { RowWhen } from "../followUp";
+import { MOVE } from "../motion";
 
 interface Props {
   entry: Classified;
@@ -45,8 +46,8 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       layout={still ? false : "position"}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -24, transition: { duration: 0.16 } }}
-      transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+      exit={{ opacity: 0, x: -24, transition: MOVE }}
+      transition={MOVE}
       className={`inbox-row${selected ? " selected" : ""}${unread ? " unread" : ""}`}
       aria-selected={selected}
       data-id={item.id}
@@ -61,7 +62,7 @@ export function InboxRow({ entry, selected, unread, dated, event, carriedSince, 
       <span className="row-main">
         <span className="row-title"><Highlight spans={titleSpans(item.title, query)} /></span>
         <span className={`row-context${mention?.self ? " self-mention" : ""}`}>
-          <KindIcon item={item} size={13} status={status} />
+          <KindIcon item={item} size={12} status={status} />
           {carriedSince && (
             <span className="row-mark carried" title={t("focus.carriedHint", { date: dayLong(carriedSince) })}>
               {carriedText(carriedSince)}
@@ -96,7 +97,7 @@ function DayMark({ dated }: { dated: Dated }) {
   const { text, title } = datedText(dated);
   return (
     <span className="row-mark" title={title}>
-      <CalendarDays size={14} strokeWidth={1.75} aria-hidden />
+      <CalendarDays size={12} strokeWidth={1.75} aria-hidden />
       {text}
     </span>
   );

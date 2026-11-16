@@ -7,6 +7,7 @@ import { t, type MessageKey } from "../i18n";
 import { DONE_DAYS } from "../doneBar";
 import { VIEWS } from "../labels";
 import { useGutter } from "../useGutter";
+import { DIALOG_MOTION } from "../motion";
 
 export type HelpTab = "guide" | "rules" | "keys" | "basics";
 
@@ -107,9 +108,7 @@ export function Help(props: { tab: HelpTab; reopenOn: Reopen; refreshMinutes: nu
         className="dialog help"
         role="dialog"
         aria-label={t("help.title")}
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.16 }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <h2>{t("help.title")}</h2>

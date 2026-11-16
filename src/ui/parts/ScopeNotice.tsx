@@ -20,7 +20,7 @@ export function ScopeNotice({ missing }: { missing: Scope[] }) {
   return (
     <div className="scope-notice" role="status">
       <strong>
-        <KeyRound size={13} /> {t("scopes.title")}
+        <KeyRound size={12} /> {t("scopes.title")}
       </strong>
       <ul>
         {missing.map((scope) => (

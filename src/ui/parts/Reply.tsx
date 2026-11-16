@@ -171,7 +171,7 @@ export function Reply({ item, me, onSent }: { item: Item; me: string; onSent: (c
                 <div key={i} className="comment-tools">
                   {group.map(([f, Icon]) => (
                     <button key={f} className="icon-btn" title={t(`format.${f}`)} aria-label={t(`format.${f}`)} onMouseDown={(e) => e.preventDefault()} onClick={() => format(f)}>
-                      <Icon size={15} />
+                      <Icon size={16} />
                     </button>
                   ))}
                 </div>

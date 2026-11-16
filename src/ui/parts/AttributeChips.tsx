@@ -56,7 +56,7 @@ function chips(key: string, item: Item, prs: LinkedPr[], interactive: boolean, s
     case "repo":
       return [
         <span key="repo" className="chip" title={item.repo}>
-          <BookMarked size={13} strokeWidth={2.2} className="chip-icon" />
+          <BookMarked size={12} strokeWidth={2.2} className="chip-icon" />
           {item.repo.split("/")[1]}
         </span>,
       ];

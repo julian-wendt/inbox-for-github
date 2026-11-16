@@ -1,16 +1,16 @@
 .dialog.palette {
-  width: min(760px, calc(100vw - 32px));
+  width: min(var(--palette-w), calc(100vw - var(--dialog-margin)));
   overflow: hidden;
 }
 
 .palette [cmdk-input] {
   width: 100%;
-  height: 50px;
-  padding: 0 18px;
+  height: 48px;
+  padding: 0 16px;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: transparent;
-  font-size: 15px;
+  font-size: var(--fs-l);
   outline: none;
   -webkit-user-select: text;
   user-select: text;
@@ -21,7 +21,7 @@
 }
 
 .palette [cmdk-list] {
-  max-height: min(540px, 66vh);
+  max-height: var(--palette-list-h);
   padding: 6px max(0px, calc(6px - var(--gutter, 0px))) 6px 6px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -31,9 +31,11 @@
   padding: 8px 10px 4px;
   overflow: hidden;
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
+  letter-spacing: 0.04em;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -82,7 +84,7 @@
 .palette-hint {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-s);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -96,20 +98,17 @@
 .palette-sub {
   flex: none;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 .dialog.help {
   position: relative;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  width: min(680px, calc(100vw - 32px));
-  height: min(720px, 86vh);
-  padding: 22px 26px;
-}
-
-.help h2 {
-  margin-bottom: 12px;
+  width: min(var(--help-w), calc(100vw - var(--dialog-margin)));
+  height: min(var(--help-h), var(--dialog-max-h));
+  gap: 12px;
+  padding: 20px 24px;
 }
 
 .help-tabs {
@@ -120,15 +119,15 @@
 }
 
 .help-body {
-  margin: 16px -26px 0 0;
-  padding-right: max(0px, calc(26px - var(--gutter, 0px)));
+  margin: 0 -24px 0 0;
+  padding-right: max(0px, calc(24px - var(--gutter, 0px)));
   overflow-y: auto;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-m);
 }
 
 .help-body section + section {
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 .help-body strong {
@@ -139,7 +138,7 @@
 .help-body h3 {
   margin: 0 0 2px;
   color: var(--text);
-  font-size: 12.5px;
+  font-size: var(--fs-m);
   font-weight: 600;
 }
 
@@ -152,7 +151,7 @@
 
 .help-body > small {
   display: block;
-  margin-top: 14px;
+  margin-top: 16px;
   color: var(--text-faint);
 }
 
@@ -183,9 +182,9 @@
 
 .dialog.snooze-picker {
   display: grid;
-  gap: 14px;
-  width: min(340px, calc(100vw - 32px));
-  padding: 20px 22px;
+  gap: 12px;
+  width: min(var(--dialog-s-w), calc(100vw - var(--dialog-margin)));
+  padding: 20px 24px;
 }
 
 .snooze-when {
@@ -196,11 +195,10 @@
 .segment-field {
   display: flex;
   align-items: center;
-  height: 32px;
   padding: 0 10px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
   font-variant-numeric: tabular-nums;
   cursor: text;
@@ -232,11 +230,10 @@
 }
 
 .dialog.calendar-day {
-  --gutter-x: 52px;
   display: grid;
   gap: 12px;
-  width: min(520px, calc(100vw - 32px));
-  padding: 18px 20px;
+  width: min(var(--calendar-day-w), calc(100vw - var(--dialog-margin)));
+  padding: 20px 24px;
 }
 
 .calendar-day-head {
@@ -248,25 +245,23 @@
 .calendar-day-head h2 {
   flex: 1;
   margin: 0;
-  font-size: 15px;
   text-align: center;
 }
 
 .calendar-title {
   flex: none;
   width: 100%;
-  height: 30px;
 }
 
 .calendar-all-day {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  padding-left: var(--gutter-x);
+  padding-left: var(--calendar-hours-w);
 }
 
 .calendar-scroller {
-  height: min(440px, 52vh);
+  height: var(--calendar-day-h);
   overflow-y: auto;
   border-top: 1px solid var(--divider);
   border-bottom: 1px solid var(--divider);
@@ -288,11 +283,11 @@
 .calendar-hour span {
   position: absolute;
   top: -8px;
-  width: calc(var(--gutter-x) - 8px);
+  width: calc(var(--calendar-hours-w) - 8px);
   padding-right: 8px;
   background: var(--panel);
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -304,9 +299,9 @@
   padding: 2px 6px;
   border-left: 3px solid var(--event, var(--text-faint));
   border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--event, var(--text-faint)) 16%, var(--panel));
+  background: color-mix(in srgb, var(--event, var(--text-faint)) var(--tint), var(--panel));
   color: var(--text-content);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   line-height: 1.3;
   pointer-events: none;
 }
@@ -318,13 +313,13 @@
 
 /* Events marked free leave the time open, so they stay lighter. */
 .calendar-event.free {
-  background: color-mix(in srgb, var(--event, var(--text-faint)) 6%, var(--panel));
+  background: color-mix(in srgb, var(--event, var(--text-faint)) calc(var(--tint) / 2), var(--panel));
 }
 
 .calendar-slot {
   position: absolute;
   right: 8px;
-  left: var(--gutter-x);
+  left: var(--calendar-hours-w);
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -334,8 +329,8 @@
   background: var(--accent);
   box-shadow: var(--shadow-pop);
   color: var(--on-accent);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: var(--fs-s);
+  line-height: 1.3;
   cursor: grab;
 }
 
@@ -370,5 +365,5 @@
 .calendar-day-hint {
   margin-right: auto;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: var(--fs-s);
 }

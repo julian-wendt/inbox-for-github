@@ -30,6 +30,7 @@ import { OrgPicker } from "./OrgPicker";
 import { OrgSelect } from "./OrgSelect";
 import { RepoFilterEditor } from "./RepoFilterEditor";
 import { UsageMeter } from "./UsageMeter";
+import { DIALOG_MOTION } from "../motion";
 
 type Section = SettingsSection;
 
@@ -181,9 +182,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
         className={`dialog settings${welcome ? " welcome" : ""}`}
         role="dialog"
         aria-label={t("settings.title")}
-        initial={{ opacity: 0, scale: 0.97, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter" && e.metaKey && welcome) start();
@@ -194,7 +193,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
             <h2>{t("settings.title")}</h2>
             {SECTIONS.map(({ id, icon: Icon }) => (
               <button key={id} className={`nav-item${active === id ? " on" : ""}`} onClick={() => setActive(id)}>
-                <Icon size={15} strokeWidth={1.8} />
+                <Icon size={16} strokeWidth={1.75} />
                 <span>{t(`settings.section.${id}`)}</span>
                 {unseenSettings(seenSettings, id).length > 0 && <NewChip />}
               </button>
@@ -477,7 +476,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
                         <span className="status-map-value" title={value}>
                           {value}
                         </span>
-                        <div className="status-map-choice" role="radiogroup" aria-label={value}>
+                        <div className="segmented compact status-map-choice" role="radiogroup" aria-label={value}>
                           {WORK_STATUSES.map((s) => (
                             <button
                               key={s}

@@ -46,7 +46,7 @@
 
 .pane-header h1 {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-m);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -67,16 +67,17 @@
   border-radius: var(--radius-m);
   background: var(--control-fill);
   color: var(--text-muted);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
 }
 
 .chip-btn.header-select {
   display: inline-flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
   width: auto;
-  max-width: 180px;
+  max-width: var(--header-select-w);
   padding: 0 8px;
-  font-size: 12px;
+  font-size: var(--fs-s);
   white-space: nowrap;
 }
 
@@ -87,13 +88,12 @@
 
 /* Header controls are greyed out instead of hidden, so the others never jump. */
 .chip-btn:disabled {
-  color: var(--text-faint);
-  cursor: default;
+  opacity: 0.5;
 }
 
 .chip-btn:hover:not(:disabled),
 .chip-btn[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--control-hover);
   color: var(--text);
 }
 
@@ -105,17 +105,17 @@
 
 .popover {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + var(--pop-gap));
   right: 0;
   z-index: 26;
-  width: 300px;
-  padding: 12px 14px;
+  width: var(--popover-w);
+  padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   background: var(--panel);
   box-shadow: var(--shadow-pop);
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
 .popover strong {
@@ -126,8 +126,8 @@
 /* Bridges the gap to the button, so a hover-opened popover stays open on the way over. */
 .popover::before {
   position: absolute;
-  inset: -8px 0 auto;
-  height: 8px;
+  inset: calc(-1 * var(--pop-gap)) 0 auto;
+  height: var(--pop-gap);
   content: "";
 }
 
@@ -183,7 +183,7 @@
   gap: 10px;
   align-items: center;
   min-width: 0;
-  padding: 0 8px 0 14px;
+  padding: 0 8px 0 12px;
   border-radius: var(--radius-m);
   color: var(--text-muted);
 }
@@ -212,7 +212,7 @@
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--fs-m);
   -webkit-user-select: text;
   user-select: text;
 }
@@ -221,47 +221,33 @@
   color: var(--text-muted);
 }
 
-/* A yellow 30% wash keeps the row text above 5:1 in both themes, selected rows included. */
+/* A strong yellow wash keeps the row text above 5:1 in both themes, selected rows included. */
 .hit {
   border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--yellow) 30%, transparent);
+  background: color-mix(in srgb, var(--yellow) var(--tint-strong), transparent);
   color: inherit;
 }
 
 .search-count {
   flex: none;
-  font-size: 12px;
+  font-size: var(--fs-s);
   white-space: nowrap;
 }
 
 .search-close {
-  display: grid;
   flex: none;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-s);
-  background: transparent;
-  color: var(--text-muted);
-}
-
-.search-close:hover {
-  background: var(--hover);
-  color: var(--text);
 }
 
 .segmented.compact button {
   height: 22px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 /* The label's own color, so it keeps the label's contrast. */
 .segment-count {
-  margin-left: 5px;
-  font-weight: 400;
+  margin-left: 4px;
+  font-weight: 450;
   font-variant-numeric: tabular-nums;
 }
 
@@ -286,7 +272,7 @@
   gap: 10px;
   align-items: center;
   height: 60px;
-  margin: 3px max(0px, calc(8px - var(--gutter, 0px))) 3px 8px;
+  margin: 4px max(0px, calc(8px - var(--gutter, 0px))) 4px 8px;
   padding: 0 12px;
   border-radius: var(--radius-m);
 }
@@ -309,7 +295,7 @@
 
 .row-title {
   overflow: hidden;
-  font-size: 13.5px;
+  font-size: var(--fs-m);
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -317,11 +303,11 @@
 
 .row-context {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
   min-width: 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
 .row-context > .row-text {
@@ -341,17 +327,17 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   align-items: flex-end;
   color: var(--text-faint);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
 }
 
 /* A plan's day or a follow-up's time, after its icon (see `WhenIcon`). */
 .row-when {
   display: inline-flex;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
 }
 
@@ -366,7 +352,7 @@
   flex: 1;
   place-content: center;
   justify-items: center;
-  gap: 4px;
+  gap: 6px;
   /* Like the list, so the scrollbar's room and the header's alignment stay when it empties. */
   overflow-y: scroll;
   color: var(--text-faint);
@@ -380,11 +366,11 @@
   border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 18px;
+  font-size: var(--fs-2xl);
 }
 
 .inbox-empty-mark.loading {
-  background: none;
+  background: transparent;
   color: var(--text-muted);
 }
 
@@ -395,10 +381,10 @@
   left: calc(var(--sidebar-w, 0px) + (100vw - var(--sidebar-w, 0px)) / 2);
   z-index: 35;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
-  height: 38px;
-  padding: 0 6px 0 14px;
+  height: 40px;
+  padding: 0 6px 0 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   background: var(--panel);
@@ -415,8 +401,14 @@
   padding: 0 8px;
   border: 0;
   border-radius: var(--radius-m);
-  background: var(--hover);
+  background: var(--control-fill);
   color: var(--text-muted);
+  transition: background var(--dur-fade) var(--ease), color var(--dur-fade) var(--ease);
+}
+
+.toast-undo:hover {
+  background: var(--control-hover);
+  color: var(--text);
 }
 
 /* A list's time group: a quiet, foldable heading like the sidebar's, no bar background. */
@@ -429,7 +421,7 @@
   padding-left: 6px;
   background: transparent;
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -453,8 +445,8 @@
 
 .fresh-dot {
   flex: none;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--unread);
 }
@@ -469,7 +461,7 @@
 }
 
 .hidden-unread {
-  margin: 14px auto;
+  margin: 16px auto;
 }
 
 /* In list rows the kind glyph carries the status color (StatusIcon's palette, AA for icons). */
@@ -481,9 +473,9 @@
 .row-mark {
   display: inline-flex;
   flex: none;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
 }
 
 .row-mark.carried {
@@ -545,7 +537,7 @@
   align-items: center;
   width: 100%;
   height: 40px;
-  padding: 0 12px 0 4px;
+  padding: 0 12px 0 6px;
   border: 0;
   border-radius: var(--radius-m);
   background: var(--surface);
@@ -574,16 +566,16 @@
   margin-left: 4px;
   overflow: hidden;
   color: var(--text-faint);
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--fs-s);
+  font-weight: 450;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .bar-chevron {
-  margin-right: 3px;
+  margin-right: 4px;
   color: var(--text-faint);
-  transition: rotate 140ms var(--ease);
+  transition: rotate var(--dur-move) var(--ease);
 }
 
 .bar[aria-expanded="true"] .bar-chevron {
@@ -593,11 +585,11 @@
 .table-row {
   position: relative;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
   height: 40px;
-  /* The kind icon starts under the bar's chevron (28px); the unread dot sits in front of it. */
-  padding: 0 12px 0 28px;
+  /* The kind icon lines up with the bar's title (6 + 14 + 4 + 8px); the unread dot sits in front of it. */
+  padding: 0 12px 0 32px;
   border-radius: var(--radius-m);
 }
 
@@ -618,9 +610,9 @@
 
 .table-number {
   flex: none;
-  min-width: 46px;
+  min-width: 48px;
   color: var(--text-faint);
-  font-size: 12px;
+  font-size: var(--fs-s);
   font-variant-numeric: tabular-nums;
 }
 
@@ -629,7 +621,7 @@
   flex: 1;
   gap: 8px;
   align-items: baseline;
-  min-width: 220px;
+  min-width: var(--title-min-w);
   overflow: hidden;
   white-space: nowrap;
 }
@@ -654,7 +646,7 @@
 }
 
 .table-row .fresh-dot {
-  left: 11px;
+  left: 12px;
 }
 
 .table-row.unread .table-title-text {
@@ -665,24 +657,12 @@
 .table-opened {
   flex: none;
   color: var(--text-faint);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
 }
 
 /* Badges after the title: the planned day blue, like Plan elsewhere. */
-.table-planned,
-.table-carried {
-  display: inline-flex;
-  flex: none;
-  gap: 4px;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
 .table-planned {
-  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  background: color-mix(in srgb, var(--blue) var(--tint), transparent);
   color: var(--text);
 }
 
@@ -692,7 +672,7 @@
 
 /* A follow-up's return time after the title, pink like Follow-up elsewhere. */
 .table-planned.table-followup {
-  background: color-mix(in srgb, var(--pink) 14%, transparent);
+  background: color-mix(in srgb, var(--pink) var(--tint), transparent);
 }
 
 .table-followup svg {
@@ -706,7 +686,7 @@
 
 /* Carried over from an earlier day: the one warm mark in Today, so leftovers are dealt with first. */
 .table-carried {
-  background: color-mix(in srgb, var(--red) 16%, transparent);
+  background: color-mix(in srgb, var(--red) var(--tint), transparent);
   color: var(--text);
 }
 
@@ -720,7 +700,7 @@
   min-width: 0;
   height: 24px;
   overflow: hidden;
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 .assignee-avatar {
@@ -734,13 +714,13 @@
 
 .table-attrs .label {
   height: 24px;
-  padding: 0 11px;
+  padding: 0 12px;
   white-space: nowrap;
 }
 
 .assignee-pill {
-  gap: 5px;
-  padding: 0 4px 0 9px;
+  gap: 4px;
+  padding: 0 4px 0 8px;
 }
 
 .people {
@@ -748,8 +728,8 @@
 }
 
 .people .assignee-avatar + .assignee-avatar {
-  margin-left: -5px;
-  transition: margin-left 140ms var(--ease);
+  margin-left: -4px;
+  transition: margin-left var(--dur-move) var(--ease);
 }
 
 .assignee-pill:hover .assignee-avatar + .assignee-avatar {
@@ -812,27 +792,27 @@
 .table-update {
   display: inline-flex;
   flex: none;
-  gap: 3px;
+  gap: 4px;
   align-items: center;
   justify-content: flex-end;
   width: 36px;
   white-space: nowrap;
   color: var(--text-faint);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
 }
 
 /* Room for the icon and a weekday ("Donnerstag") in Planned. */
 .when-days .table-update {
-  width: 84px;
+  width: var(--weekday-w);
 }
 
 /* The detail as a pop-up above the table */
 .item-popup {
   position: relative;
   display: flex;
-  width: min(940px, calc(100vw - 64px));
-  height: min(88vh, 900px);
+  width: min(var(--item-popup-w), calc(100vw - 2 * var(--dialog-margin)));
+  height: min(var(--dialog-max-h), var(--item-popup-h));
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
@@ -853,20 +833,15 @@
 
 /* Marks an assignment the viewer has not opened since it was made. */
 .new-mark {
-  flex: none;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--yellow) 18%, transparent);
+  background: color-mix(in srgb, var(--yellow) var(--tint), transparent);
   color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .context-menu {
   position: fixed;
   z-index: 40;
-  min-width: 260px;
-  max-width: 340px;
+  min-width: var(--menu-min-w);
+  max-width: var(--menu-max-w);
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
@@ -884,10 +859,16 @@
   position: relative;
 }
 
+/* Level with its row and --pop-gap beside the menu: the slot sits inside 4px padding and a 1px border. */
 .submenu {
   position: absolute;
-  top: -5px;
-  left: calc(100% + 2px);
+  top: calc(-4px - 1px);
+  left: calc(100% + 4px + 1px + var(--pop-gap));
+}
+
+.submenu.left {
+  right: calc(100% + 4px + 1px + var(--pop-gap));
+  left: auto;
 }
 
 .menu-row {
@@ -896,12 +877,12 @@
   align-items: center;
   width: 100%;
   min-height: 30px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 0;
   border-radius: var(--radius-m);
-  background: none;
+  background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-m);
   text-align: left;
 }
 
@@ -928,9 +909,8 @@
   gap: 1px;
 }
 
-/* Text, so --text-muted: --text-faint is below 4.5:1 on the selected row in dark. */
 .context-menu.fit {
-  max-width: calc(100vw - 16px);
+  max-width: calc(100vw - 2 * var(--window-margin));
 }
 
 .context-menu.fit > .menu-slot > .menu-row .menu-hint {
@@ -938,24 +918,25 @@
 }
 
 .context-menu.centered {
-  min-width: 340px;
+  min-width: var(--menu-max-w);
   padding: 6px;
 }
 
 .context-menu.centered > .menu-slot > .menu-row {
   min-height: 40px;
   padding: 8px 12px;
-  font-size: 14px;
+  font-size: var(--fs-m);
 }
 
 .context-menu.centered > .menu-slot > .menu-row .menu-hint {
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
+/* Text, so --text-muted: --text-faint is below 4.5:1 on the selected row in dark. */
 .menu-hint {
   color: var(--text-muted);
-  font-size: 11.5px;
-  line-height: 1.35;
+  font-size: var(--fs-s);
+  line-height: 1.3;
 }
 
 .menu-row kbd,
@@ -966,12 +947,12 @@
 .elsewhere {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 6px 16px;
   justify-content: center;
-  max-width: 480px;
+  max-width: var(--elsewhere-w);
   margin: 10px auto 0;
   color: var(--text-faint);
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
 /* The label on its own line, so the links below wrap as one centered group. */

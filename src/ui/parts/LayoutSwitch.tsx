@@ -13,7 +13,7 @@ import { HeaderMenu } from "./HeaderMenu";
 export function LayoutSwitch({ layout, onLayout }: { layout: Layout; onLayout: (layout: Layout) => void }) {
   return (
     <HeaderMenu
-      icon={layout === "table" ? <Table2 size={13} /> : <LayoutList size={13} />}
+      icon={layout === "table" ? <Table2 size={16} /> : <LayoutList size={16} />}
       title={t("layout.title")}
       entries={(["list", "table"] as const).map((l) => ({ label: t(`layout.${l}`), checked: layout === l, onSelect: () => onLayout(l) }))}
     />

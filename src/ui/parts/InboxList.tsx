@@ -23,6 +23,7 @@ import { HeaderMenu } from "./HeaderMenu";
 import type { MenuEntry } from "./ContextMenu";
 import { SearchField } from "./SearchField";
 import { HiddenUnreadHint } from "./HiddenUnreadHint";
+import { MOVE } from "../motion";
 
 interface Props {
   /** The search bar ⌘F opens: null while closed, else the typed text; `searchRef` is its input. */
@@ -129,7 +130,7 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
         <h1>{title}</h1>
         <span className="header-controls" aria-hidden />
         <span className="header-compact">
-          <HeaderMenu icon={<ListFilter size={13} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} hiding={reveals.size > 0} />
+          <HeaderMenu icon={<ListFilter size={14} />} label={filterLabel} title={t(asking ? "inbox.filter" : "list.kind")} entries={filterEntries} hiding={reveals.size > 0} />
         </span>
         <span className="header-full">
         {asking ? (
@@ -161,13 +162,13 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
             title={t(anyOpen ? "table.collapseAll" : "table.expandAll")}
             aria-label={t(anyOpen ? "table.collapseAll" : "table.expandAll")}
           >
-            {anyOpen ? <ChevronsDownUp size={15} /> : <ChevronsUpDown size={15} />}
+            {anyOpen ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
           </button>
         )}
         <SortButton order={sort} onFlip={onSort} by={byReturn ? "return" : undefined} />
         </span>
         <span className="header-compact">
-          <HeaderMenu icon={<Settings size={13} />} title={t("list.options")} entries={moreEntries} />
+          <HeaderMenu icon={<Settings size={16} />} title={t("list.options")} entries={moreEntries} />
         </span>
         <BucketInfo key={bucket} bucket={bucket} reopenOn={reopenOn} onShowRules={onShowRules} />
       </header>
@@ -197,8 +198,8 @@ export function InboxList({ bucket, title, reopenOn, onShowRules, entries, kind,
                         layout={moving ? false : "position"}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.16 } }}
-                        transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+                        exit={{ opacity: 0, transition: MOVE }}
+                        transition={MOVE}
                       >
                         <button
                           className={`bar${selectedGroup === group ? " selected" : ""}`}

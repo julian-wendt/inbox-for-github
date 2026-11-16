@@ -14,7 +14,7 @@ export function SortButton({ order, onFlip, by }: { order: SortOrder; onFlip: ()
   const label = t(by === "return" ? (order === "newest" ? "sort.soonest" : "sort.latest") : order === "newest" ? "sort.newest" : "sort.oldest");
   return (
     <button className="chip-btn" onClick={onFlip} title={label} aria-label={label}>
-      {order === "newest" ? <ArrowDownWideNarrow size={15} /> : <ArrowUpNarrowWide size={15} />}
+      {order === "newest" ? <ArrowDownWideNarrow size={16} /> : <ArrowUpNarrowWide size={16} />}
     </button>
   );
 }

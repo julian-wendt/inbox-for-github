@@ -15,7 +15,7 @@ export function CalendarNotice({ access }: { access: CalendarAccess }) {
   return (
     <div className="scope-notice warn" role="status">
       <strong>
-        <CalendarX size={13} /> {t("calendarAccess.title")}
+        <CalendarX size={12} /> {t("calendarAccess.title")}
       </strong>
       <small>{t("calendarAccess.text")}</small>
       {access.missing === "denied" && <small>{t("calendarAccess.denied")}</small>}

@@ -9,6 +9,7 @@ import { statusesFor, statusHint, type LinkFormat, type View, type VIEWS } from 
 import { StatusIcon } from "./StatusIcon";
 import { useGutter } from "../useGutter";
 import { noteInput } from "../inputTrail";
+import { DIALOG_MOTION } from "../motion";
 
 interface Props {
   /** The views to offer under "Go to", in sidebar order (see `VIEWS`). */
@@ -93,9 +94,7 @@ export function CommandPalette(props: Props) {
     <div className="overlay" onMouseDown={props.onClose}>
       <motion.div
         className="dialog palette"
-        initial={{ opacity: 0, scale: 0.98, y: -6 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <Command loop>

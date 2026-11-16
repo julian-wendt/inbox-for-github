@@ -7,6 +7,7 @@ import { localDay } from "../assignments";
 import { firstFree, midnight, momentOf, placeSpans, snap, spansOf, STEP, stepWorkday, type Span } from "../calendarSlot";
 import { dateLocale, t } from "../i18n";
 import { dayLong } from "../plan";
+import { DIALOG_MOTION } from "../motion";
 
 /** Height of one hour in the grid, in pixels. */
 const HOUR = 44;
@@ -159,9 +160,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
         className="dialog calendar-day"
         role="dialog"
         aria-label={t(linked ? "calendarDay.titleChange" : "calendarDay.title")}
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.16 }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="calendar-day-head">
@@ -202,7 +201,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
                 key={item.id}
                 className={`calendar-event${item.busy ? "" : " free"}`}
                 title={`${clock(span.start)}–${clock(span.end)} ${item.title}`}
-                style={{ "--event": colors[item.calendarId], top: span.start * PX, height: (span.end - span.start) * PX, left: `calc(var(--gutter-x) + (100% - var(--gutter-x) - 8px) * ${column / columns})`, width: `calc((100% - var(--gutter-x) - 8px) / ${columns} - 2px)` } as CSSProperties}
+                style={{ "--event": colors[item.calendarId], top: span.start * PX, height: (span.end - span.start) * PX, left: `calc(var(--calendar-hours-w) + (100% - var(--calendar-hours-w) - 8px) * ${column / columns})`, width: `calc((100% - var(--calendar-hours-w) - 8px) / ${columns} - 2px)` } as CSSProperties}
               >
                 {item.title}
               </div>

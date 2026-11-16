@@ -39,7 +39,7 @@ function TimeChip({ removeLabel, onRemove, children }: { removeLabel: string; on
       {children}
       {onRemove && (
         <button className="icon-btn time-chip-x" aria-label={removeLabel} title={removeLabel} onClick={onRemove}>
-          <X size={13} />
+          <X size={12} />
         </button>
       )}
     </span>

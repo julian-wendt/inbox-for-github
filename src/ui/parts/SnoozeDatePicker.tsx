@@ -5,6 +5,7 @@ import { daysInMonth, daysOf, HOURS, MINUTES, MONTHS, yearsFrom } from "../segme
 import { localDay } from "../assignments";
 import { followUpOn } from "../snooze";
 import { SegmentField } from "./SegmentField";
+import { DIALOG_MOTION } from "../motion";
 
 interface When {
   day: number;
@@ -73,9 +74,7 @@ export function SnoozeDatePicker({ onPick, onClose, day = false }: { onPick: (un
         className="dialog snooze-picker"
         role="dialog"
         aria-label={t("snooze.pick")}
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.16 }}
+        {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
         onSubmit={(e) => {
           e.preventDefault();

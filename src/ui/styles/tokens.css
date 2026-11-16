@@ -2,6 +2,13 @@
 :root {
   --font: "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  /* The type scale; every font size is one of these (style-guide.md). */
+  --fs-xs: 11px;
+  --fs-s: 12px;
+  --fs-m: 13.5px;
+  --fs-l: 15px;
+  --fs-xl: 17px;
+  --fs-2xl: 20px;
   /* A mid tone that keeps 3:1 as a dot on light and dark backgrounds alike. */
   --orange: #dc5a1e;
 
@@ -11,13 +18,69 @@
   /* One height per kind in the settings: every control, and every row with a switch (title and a one-line hint). */
   --control-h: 30px;
   --row-h: 62px;
+  /* Room for the window's traffic lights in the overlay title bar. */
+  --traffic-lights: 84px;
+
+  /* Layout: every size above 64px lives here, named by what it sizes (style-guide.md). */
+  --dialog-margin: 32px;
+  --dialog-max-h: 86vh;
+  --dialog-top: 12vh;
+  --dialog-w: 560px;
+  --dialog-s-w: 340px;
+  --calendar-day-w: 520px;
+  --calendar-day-h: min(440px, 52vh);
+  --calendar-hours-w: 52px;
+  --help-w: 680px;
+  --help-h: 720px;
+  --palette-w: 760px;
+  --palette-list-h: min(540px, 66vh);
+  --settings-w: 880px;
+  --settings-h: 620px;
+  --settings-nav-w: 190px;
+  --settings-label-w: 96px;
+  --settings-list-h: 260px;
+  --item-popup-w: 940px;
+  --item-popup-h: 900px;
+  --detail-min-w: 320px;
+  --reading-w: 760px;
+  --popover-w: 300px;
+  --close-menu-w: 280px;
+  --menu-min-w: 260px;
+  --menu-max-w: 340px;
+  --dropdown-max-h: 280px;
+  --notice-w: 420px;
+  --elsewhere-w: 480px;
+  --header-select-w: 180px;
+  --title-min-w: 220px;
+  --chip-text-w: 220px;
+  --search-min-w: 160px;
+  --weekday-w: 84px;
+  --reply-h: 110px;
+  --code-max-h: 240px;
+  /* A menu or pop-up's distance to the control that opened it, and what it keeps free to the window's edges. */
+  --pop-gap: 6px;
+  --window-margin: 8px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
+  --dur-fade: 120ms;
+  --dur-move: 160ms;
+  --dur-slow: 400ms;
+  /* How much of a hue a mix takes: a notice's wash, a wash behind --text (tags, labels, events),
+     the search hit, a colored line or a Markdown table's stripe. */
+  --tint-faint: 8%;
+  --tint: 14%;
+  --tint-strong: 30%;
+  --tint-half: 50%;
+  /* A selected segment lifted off its track, and a switch's knob. */
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-knob: 0 1px 2px rgb(0 0 0 / 0.25);
 
   --bg: #f3f4f6;
   --panel: #f9fafb;
   --sidebar: rgb(240 241 244 / 0.72);
   --text: #18191b;
   --text-muted: #4d5159;
+  /* At least 4.5:1 on --panel and on --selected rows in both themes (light 4.7:1, dark 4.6:1 there). */
   --text-faint: #646973;
   --border: #e2e4e8;
   --border-strong: #cdd0d6;
@@ -25,7 +88,7 @@
   --divider: #e2e4e8;
   --hover: rgb(0 0 0 / 0.035);
   --track: rgb(0 0 0 / 0.075);
-  /* Fill of buttons, segmented controls and the search bar; decorative; --text-muted on it is 6.8:1 in light and 5.1:1 in dark, --text-faint 4.7:1 and 3.9:1 (icons only). */
+  /* Fill of buttons, segmented controls and the search bar; decorative; --text-muted on it is 6.8:1 in light and 5.1:1 in dark, --text-faint 4.7:1 and 4.3:1 (icons only). */
   --control-fill: rgb(0 0 0 / 0.05);
   --selected: rgb(0 0 0 / 0.055);
   --accent: #2b2d31;
@@ -36,6 +99,8 @@
   --focus-fill: color-mix(in srgb, var(--accent) 52%, transparent);
   /* The active part of a date or time field; softer than --focus-fill by choice, so below 3:1. */
   --segment-fill: color-mix(in srgb, var(--accent) 24%, transparent);
+  /* Hover and open state of a filled control (--control-fill); follows --text in both themes. */
+  --control-hover: color-mix(in srgb, var(--text) 12%, transparent);
   --accent-soft: rgb(0 0 0 / 0.06);
   --on-accent: #ffffff;
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.18);
@@ -71,13 +136,13 @@
     --sidebar: rgb(25 26 29 / 0.55);
     --text: #e9eaec;
     --text-muted: #9ba0a8;
-    --text-faint: #858a93;
+    --text-faint: #8c9199;
     --border: #28292d;
     --border-strong: #34363b;
     --divider: #28292d;
     --hover: rgb(255 255 255 / 0.04);
     --track: rgb(255 255 255 / 0.09);
-  --control-fill: rgb(255 255 255 / 0.09);
+    --control-fill: rgb(255 255 255 / 0.09);
     --selected: rgb(255 255 255 / 0.065);
     --accent: #d6d8dc;
     --text-content: #d8dade;
@@ -93,7 +158,7 @@
     --blue: #4493f8;
     --red: #ff6b6f;
     --purple: #b796f5;
-  --pink: #f778ba;
+    --pink: #f778ba;
     --green-fill: #1a7a35;
     --surface: #212226;
     color-scheme: dark;
@@ -106,7 +171,7 @@
   --sidebar: rgb(25 26 29 / 0.55);
   --text: #e9eaec;
   --text-muted: #9ba0a8;
-  --text-faint: #858a93;
+  --text-faint: #8c9199;
   --border: #28292d;
   --border-strong: #34363b;
   --divider: #28292d;
@@ -136,15 +201,15 @@
 
 /* Dev builds only (data-env is set in main.tsx): an orange tint marks the window; 8% keeps --text-faint at 4.5:1. */
 :root[data-env="dev"] {
-  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(240 241 244 / 0.85));
+  --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(240 241 244 / 0.85));
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-env="dev"]:not([data-theme="light"]) {
-    --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+    --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(25 26 29 / 0.8));
   }
 }
 
 :root[data-env="dev"][data-theme="dark"] {
-  --sidebar: color-mix(in srgb, var(--orange) 8%, rgb(25 26 29 / 0.8));
+  --sidebar: color-mix(in srgb, var(--orange) var(--tint-faint), rgb(25 26 29 / 0.8));
 }

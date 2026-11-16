@@ -45,7 +45,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
   const title = t("snooze.followUpAt", { until: text });
   return (
     <span className="chip" title={entry.notify ? `${title} · ${t("snooze.notify")}` : title}>
-      {entry.notify ? <Bell size={13} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={13} />}
+      {entry.notify ? <Bell size={12} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} /> : <StatusIcon status="snoozed" size={12} />}
       {text}
       {onRemove && (
         <button className="chip-x" title={`${t("followUp.remove")} (X)`} aria-label={t("followUp.remove")} onClick={onRemove}>
@@ -70,7 +70,7 @@ export function EventMark({ dated, className }: { dated: Dated; className: strin
   if (!event) return null;
   return (
     <span className={`${className} event-mark`} title={event.title} aria-label={event.title}>
-      <CalendarClock size={13} strokeWidth={1.75} aria-hidden />
+      <CalendarClock size={12} strokeWidth={1.75} aria-hidden />
       {event.text && <span>{event.text}</span>}
     </span>
   );
@@ -104,8 +104,8 @@ const WHEN_ICONS = { plan: CalendarDays, followUp: RotateCw, remind: Bell };
 export function WhenIcon({ when }: { when: RowWhen }) {
   if (!when.icon) return null;
   const Icon = WHEN_ICONS[when.icon];
-  if (when.icon === "remind") return <Icon size={13} strokeWidth={1.75} role="img" aria-label={t("snooze.notify")} />;
-  return <Icon size={13} strokeWidth={1.75} aria-hidden />;
+  if (when.icon === "remind") return <Icon size={12} strokeWidth={1.75} role="img" aria-label={t("snooze.notify")} />;
+  return <Icon size={12} strokeWidth={1.75} aria-hidden />;
 }
 
 /**
@@ -123,7 +123,7 @@ export function PlanChip({ dated, onPlan }: { dated: Dated; onPlan: (at: DOMRect
   const { text, title } = datedText(dated);
   return (
     <button className="chip chip-link plan-chip" title={`${title} (P)`} onClick={(e) => onPlan(e.currentTarget.getBoundingClientRect())}>
-      <CalendarDays size={13} strokeWidth={1.75} aria-hidden />
+      <CalendarDays size={12} strokeWidth={1.75} aria-hidden />
       {text}
       <EventMark dated={dated} className="row-mark" />
     </button>
