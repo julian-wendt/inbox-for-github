@@ -22,7 +22,7 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 .detail .pane-header {
@@ -50,7 +50,7 @@
 .detail-crumb {
   margin: 0 0 4px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-s);
   font-weight: 500;
   -webkit-user-select: text;
   user-select: text;
@@ -81,7 +81,7 @@
   align-items: center;
   margin-bottom: 24px;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
 .draft {
@@ -93,7 +93,7 @@
 .detail-meta :is(.chip, .label) {
   height: 28px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: var(--fs-m);
 }
 
 .detail-meta .assignee-pill {
@@ -122,7 +122,7 @@
 
 .detail-title {
   margin: 0 0 10px;
-  font-size: 20px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   letter-spacing: -0.012em;
   line-height: 1.3;
@@ -198,7 +198,7 @@
 /* The mono face sits low in the chip's line box; lift it to the icon's center. */
 .chip-text.mono {
   margin-bottom: 1px;
-  font: 11.5px var(--font-mono);
+  font: var(--fs-s) var(--font-mono);
 }
 
 .chip strong {
@@ -215,7 +215,7 @@
 
 .diff {
   margin-bottom: 1px;
-  font: 11.5px var(--font-mono);
+  font: var(--fs-s) var(--font-mono);
 }
 
 .label {
@@ -226,7 +226,7 @@
   border: 1px solid transparent;
   border-radius: 999px;
   background: color-mix(in srgb, var(--label) 14%, transparent);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   font-weight: 500;
   line-height: 18px;
 }
@@ -370,7 +370,7 @@
   gap: 4px;
   align-items: center;
   color: var(--mention);
-  font-size: 12px;
+  font-size: var(--fs-s);
   font-weight: 600;
 }
 
@@ -477,7 +477,7 @@
   margin-left: auto;
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: var(--fs-s);
   text-overflow: ellipsis;
 }
 
@@ -490,14 +490,14 @@
   min-width: 0;
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: var(--fs-s);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .section-title {
   margin: 32px 0 12px;
-  font-size: 17px;
+  font-size: var(--fs-xl);
   font-weight: 600;
 }
 
@@ -515,7 +515,7 @@
   align-items: center;
   padding: 0 12px;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-s);
 }
 
 .activity-icon {
@@ -758,7 +758,7 @@
 }
 
 .reply-field {
-  font: 13px/1.5 var(--font-mono);
+  font: var(--fs-m)/1.5 var(--font-mono);
   resize: vertical;
 }
 
@@ -880,7 +880,7 @@
   gap: 10px;
   align-items: center;
   color: var(--st-accepted);
-  font-size: 12px;
+  font-size: var(--fs-s);
   font-weight: 600;
 }
 
@@ -897,7 +897,7 @@
   gap: 4px;
   margin: 12px 0;
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -909,7 +909,7 @@
   border-radius: var(--radius-m);
   background: var(--surface);
   color: var(--text);
-  font: 13px/1.45 var(--font);
+  font: var(--fs-m)/1.45 var(--font);
   letter-spacing: normal;
   text-transform: none;
   resize: vertical;
@@ -931,7 +931,7 @@
 
 .closed-chip {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 .segment-more {

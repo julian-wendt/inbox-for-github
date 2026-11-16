@@ -14,7 +14,7 @@ body,
 body {
   background: transparent;
   color: var(--text);
-  font: 450 13.5px/1.5 var(--font);
+  font: 450 var(--fs-m)/1.5 var(--font);
   font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   cursor: default;
@@ -62,7 +62,7 @@ html:not([data-input="pointer"]) .btn.success:focus-visible {
 }
 
 small {
-  font-size: 12px;
+  font-size: var(--fs-s);
 }
 
 ::selection {
@@ -116,7 +116,7 @@ kbd {
   border-radius: var(--radius-s);
   background: var(--panel);
   color: var(--text-muted);
-  font: 500 11px/1 var(--font);
+  font: 500 var(--fs-xs)/1 var(--font);
 }
 
 .btn {
@@ -184,7 +184,7 @@ kbd {
   align-items: center;
   padding: 1px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   line-height: 16px;
   white-space: nowrap;
@@ -250,7 +250,7 @@ kbd {
 
 .crash h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
 }
 
@@ -270,7 +270,7 @@ kbd {
   padding: 12px;
   border-radius: var(--radius-m);
   background: var(--surface);
-  font: 11.5px/1.5 var(--font-mono);
+  font: var(--fs-s)/1.5 var(--font-mono);
   white-space: pre-wrap;
 }
 

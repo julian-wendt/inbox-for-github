@@ -10,24 +10,19 @@ review. Tokens and contrast are in [`ui.md`](ui.md).
 **Weights:** 450 text, 500 medium (row titles, buttons, field labels), 600 semibold (headings,
 emphasis, tags, bar titles, the selected segment), 700 only for unread rows and counts.
 
-**Sizes**, each with its role:
+**Sizes:** six tokens, nothing in between (`inherit` and `0.85em` for inline code are the only
+other values):
 
-| Size | Used for |
-|---|---|
-| 20px | the detail title, the crash page heading |
-| 18px | the glyph in the empty list's mark |
-| 17px | section titles in the detail |
-| 15px | dialog titles, the palette's input |
-| 14px | the search input, rows of a centered menu |
-| 13.5px | body text: list and table rows, buttons, palette items, dropdown items |
-| 13px | the pane header's title, context menu rows, the help text, comment and note fields |
-| 12.5px | context and meta lines: a row's context, the detail's meta line, activities, popovers |
-| 12px | secondary text: every `small`, field labels, counts, compact segments |
-| 11.5px | times and dates in rows, labels, menu hints, monospace chips |
-| 11px | small-caps headings, tags, the sidebar's counts and footer line |
-| 0.85em | inline code |
+| Token | Size | Used for |
+|---|---|---|
+| `--fs-xs` | 11px | small-caps headings, tags, labels, `kbd`, times and dates in rows, the sidebar's counts and footer line |
+| `--fs-s` | 12px | secondary text: every `small`, hints, field labels, context and meta lines, menu hints, popovers, compact segments, monospace chips |
+| `--fs-m` | 13.5px | body text: rows, buttons, menus, fields (the search field too), the pane header's title, the help text |
+| `--fs-l` | 15px | dialog titles, the palette's input |
+| `--fs-xl` | 17px | section titles in the detail |
+| `--fs-2xl` | 20px | the detail title, the crash page heading, the empty list's glyph |
 
-A hint under a label is 1.5px smaller than the label: 13.5 → 12, 13 → 11.5, 14 → 12.5.
+A hint under a label is one step smaller: `--fs-m` → `--fs-s`.
 
 **Small-caps heading:** 11px, 600, uppercase, `letter-spacing: 0.04em`, `--text-faint`. The
 sidebar's headings, the list's time groups, the palette's groups and the private note use it.

@@ -2,6 +2,13 @@
 :root {
   --font: "Inter Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  /* The type scale; every font size is one of these (style-guide.md). */
+  --fs-xs: 11px;
+  --fs-s: 12px;
+  --fs-m: 13.5px;
+  --fs-l: 15px;
+  --fs-xl: 17px;
+  --fs-2xl: 20px;
   /* A mid tone that keeps 3:1 as a dot on light and dark backgrounds alike. */
   --orange: #dc5a1e;
 

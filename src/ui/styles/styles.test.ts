@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /** The style guide's value sets (docs/conventions/style-guide.md); a value outside them fails. */
-const FONT_SIZES = new Set(["11px", "11.5px", "12px", "12.5px", "13px", "13.5px", "14px", "15px", "17px", "18px", "20px", "0.85em"]);
+const FONT_SIZE = /^(var\(--fs-(xs|s|m|l|xl|2xl)\)|inherit|0\.85em)$/;
 const FONT_WEIGHTS = new Set(["450", "500", "600", "700"]);
 const RADIUS = /^(0|50%|999px|var\(--radius-[sml]\)|calc\(var\(--radius-[sml]\) - [12]px\)|[0-3](\.5)?px)$/;
 const HEX_ALLOWED = new Set(["#fff", "#000"]);
@@ -33,9 +33,9 @@ describe("style guide", () => {
     expect(sheets.map((sheet) => sheet.name)).toEqual(expect.arrayContaining(["base.css", "shell.css", "tokens.css"]));
   });
 
-  it("uses only the font sizes of the type scale", () => {
-    const shorthand = declared("font").map((d) => ({ at: d.at, value: /(\d+(\.\d+)?(px|em))/.exec(d.value)?.[1] ?? "inherit" }));
-    expect(outside((v) => FONT_SIZES.has(v) || v === "inherit", [...declared("font-size"), ...shorthand])).toEqual([]);
+  it("sizes text with the type scale's tokens", () => {
+    const shorthand = declared("font").map((d) => ({ at: d.at, value: /var\(--fs-[a-z0-9]+\)|^inherit$/.exec(d.value)?.[0] ?? d.value }));
+    expect(outside((v) => FONT_SIZE.test(v), [...declared("font-size"), ...shorthand])).toEqual([]);
   });
 
   it("uses only the four font weights", () => {
