@@ -140,6 +140,8 @@ The responses of one refresh can come from two hourly windows in turn, each with
 the app saw it only on a real new hour: when its reset lies an hour or more after every window it
 knows. Only GitHub's reset times decide, so a Mac clock that runs ahead cannot bring back the
 overcount.
+While two windows run, `lastBudget` reports the one with less left, for the usage ring and the
+pause at `LOW_BUDGET`, so neither jumps with each response.
 
 ## Timeouts
 

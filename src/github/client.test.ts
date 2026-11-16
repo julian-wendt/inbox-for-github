@@ -64,6 +64,16 @@ describe("graphql rate limits", () => {
     expect(pointsSpent() - before).toBe(10);
   });
 
+  it("reports the window with less left while two run", async () => {
+    const headers = (remaining: number, reset: number) => ({ "x-ratelimit-resource": "graphql", "x-ratelimit-remaining": String(remaining), "x-ratelimit-reset": String(reset) });
+    vi.spyOn(Date, "now").mockReturnValue(2_200_000_000_000);
+    for (const [remaining, reset] of [[3000, 2_200_000_660], [4880, 2_200_000_600]]) {
+      respond(200, { data: {} }, headers(remaining, reset));
+      await graphql("t", "{ ok }");
+    }
+    expect(lastBudget()).toEqual({ remaining: 3000, limit: 5000, resetAt: new Date(2_200_000_660 * 1000) });
+  });
+
   it("takes no second window for a new hour when the local clock runs ahead", async () => {
     const headers = (remaining: number, reset: number) => ({ "x-ratelimit-resource": "graphql", "x-ratelimit-remaining": String(remaining), "x-ratelimit-reset": String(reset) });
     vi.spyOn(Date, "now").mockReturnValue(2_000_000_300_000);

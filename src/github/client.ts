@@ -40,9 +40,16 @@ export function pointsSpent(): number {
   return spent;
 }
 
-/** The GraphQL budget as of the last response, read from its `x-ratelimit-*` headers; free. */
-export function lastBudget(): Budget | null {
-  return latestBudget;
+/**
+ * The GraphQL budget as the responses' `x-ratelimit-*` headers show it; free. While GitHub
+ * answers from two windows that both still run, the one with less left, so the usage ring does
+ * not jump between them and the pause at a low budget comes rather early than late.
+ */
+export function lastBudget(now = Date.now()): Budget | null {
+  const running = [...windows].filter(([at]) => at > now);
+  if (!latestBudget || running.length < 2) return latestBudget;
+  const [at, remaining] = running.reduce((tightest, next) => (next[1] < tightest[1] ? next : tightest));
+  return { remaining, limit: latestBudget.limit, resetAt: new Date(at) };
 }
 
 function noteHeaders(headers: Headers): void {
