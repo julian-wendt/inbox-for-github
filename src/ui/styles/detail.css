@@ -115,18 +115,13 @@
   height: 14px;
 }
 
-.detail-meta .option-dot {
-  width: 9px;
-  height: 9px;
-}
-
 .detail-meta strong {
   color: var(--text);
   font-weight: 600;
 }
 
 .detail-column {
-  max-width: 760px;
+  max-width: var(--reading-w);
   margin: 0 auto;
 }
 
@@ -194,7 +189,7 @@
 }
 
 .chip-text {
-  max-width: 220px;
+  max-width: var(--chip-text-w);
   overflow: hidden;
   color: var(--text-muted);
   text-overflow: ellipsis;
@@ -257,7 +252,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 23px;
+  left: calc(12px + 12px - 1px);
   width: 2px;
   background: var(--border);
   content: "";
@@ -708,7 +703,7 @@
 
 /* The active tab opens into the body below, as on GitHub; the box border is its top edge. */
 .comment-tabs button {
-  height: 34px;
+  height: 36px;
   padding: 0 12px;
   border: 1px solid transparent;
   border-top: 0;
@@ -755,7 +750,7 @@
 .reply-preview {
   display: block;
   width: 100%;
-  min-height: 110px;
+  min-height: var(--reply-h);
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
@@ -831,7 +826,7 @@
 .close-menu {
   right: 0;
   display: grid;
-  width: 280px;
+  width: var(--close-menu-w);
   padding: 4px;
 }
 

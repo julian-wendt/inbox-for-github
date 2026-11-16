@@ -20,6 +20,42 @@
   --row-h: 62px;
   /* Room for the window's traffic lights in the overlay title bar. */
   --traffic-lights: 84px;
+
+  /* Layout: every size above 64px lives here, named by what it sizes (style-guide.md). */
+  --dialog-margin: 32px;
+  --dialog-max-h: 86vh;
+  --dialog-w: 560px;
+  --dialog-s-w: 340px;
+  --calendar-day-w: 520px;
+  --calendar-day-h: 440px;
+  --calendar-hours-w: 52px;
+  --help-w: 680px;
+  --help-h: 720px;
+  --palette-w: 760px;
+  --palette-list-h: 540px;
+  --settings-w: 880px;
+  --settings-h: 620px;
+  --settings-nav-w: 190px;
+  --settings-label-w: 96px;
+  --settings-list-h: 260px;
+  --item-popup-w: 940px;
+  --item-popup-h: 900px;
+  --detail-min-w: 320px;
+  --reading-w: 760px;
+  --popover-w: 300px;
+  --close-menu-w: 280px;
+  --menu-min-w: 260px;
+  --menu-max-w: 340px;
+  --dropdown-max-h: 280px;
+  --notice-w: 420px;
+  --elsewhere-w: 480px;
+  --header-select-w: 180px;
+  --title-min-w: 220px;
+  --chip-text-w: 220px;
+  --search-min-w: 160px;
+  --weekday-w: 84px;
+  --reply-h: 110px;
+  --code-max-h: 240px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   /* Durations: a hover or fade, a movement (chevron, knob, slide), a slow fade (scrollbar, meter). */
   --dur-fade: 120ms;

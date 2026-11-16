@@ -31,6 +31,11 @@ describe("components", () => {
     expect(found(/strokeWidth=\{(\d+(?:\.\d+)?)\}/g).filter((s) => !STROKES.has(s.value)).map((s) => `${s.name} ${s.value}`)).toEqual([]);
   });
 
+  it("set inline styles only from computed values", () => {
+    const fixed = found(/style=\{\{([^}]*)\}\}/g).filter(({ value }) => /:\s*("|'|\d)/.test(value));
+    expect(fixed.map((f) => `${f.name} ${f.value.trim()}`)).toEqual([]);
+  });
+
   it("take every duration from motion.ts", () => {
     expect(parts.filter(({ text }) => /duration:\s*\d|ease:\s*\[/.test(text)).map((p) => p.name)).toEqual([]);
   });

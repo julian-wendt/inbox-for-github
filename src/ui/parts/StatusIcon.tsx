@@ -12,5 +12,5 @@ const ICONS: Record<Status, LucideIcon> = { open: Circle, snoozed: RotateCw, don
  */
 export function StatusIcon({ status, size = 14 }: { status: Status; size?: number }) {
   const Icon = ICONS[status];
-  return <Icon size={size} strokeWidth={2.2} color={`var(--st-${status})`} aria-hidden style={{ flex: "none" }} />;
+  return <Icon size={size} strokeWidth={2.2} color={`var(--st-${status})`} aria-hidden />;
 }

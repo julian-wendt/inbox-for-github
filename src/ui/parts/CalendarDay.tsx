@@ -201,7 +201,7 @@ export function CalendarDay({ title, day: initialDay, minutes, workdays, linked,
                 key={item.id}
                 className={`calendar-event${item.busy ? "" : " free"}`}
                 title={`${clock(span.start)}–${clock(span.end)} ${item.title}`}
-                style={{ "--event": colors[item.calendarId], top: span.start * PX, height: (span.end - span.start) * PX, left: `calc(var(--gutter-x) + (100% - var(--gutter-x) - 8px) * ${column / columns})`, width: `calc((100% - var(--gutter-x) - 8px) / ${columns} - 2px)` } as CSSProperties}
+                style={{ "--event": colors[item.calendarId], top: span.start * PX, height: (span.end - span.start) * PX, left: `calc(var(--calendar-hours-w) + (100% - var(--calendar-hours-w) - 8px) * ${column / columns})`, width: `calc((100% - var(--calendar-hours-w) - 8px) / ${columns} - 2px)` } as CSSProperties}
               >
                 {item.title}
               </div>

@@ -1,6 +1,6 @@
 /* The list yields width before the detail pane drops below 320px. */
 .shell {
-  --list-fit: min(var(--list-w), calc(100vw - var(--sidebar-w) - 320px));
+  --list-fit: min(var(--list-w), calc(100vw - var(--sidebar-w) - var(--detail-min-w)));
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-w) var(--list-fit) minmax(0, 1fr);
@@ -33,7 +33,7 @@
   top: 0;
   bottom: 0;
   left: -4px;
-  width: 7px;
+  width: 8px;
   cursor: col-resize;
 }
 
@@ -41,7 +41,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 3px;
+  left: 4px;
   width: 1px;
   background: var(--text-faint);
   content: "";
@@ -344,9 +344,9 @@
 
 .error-bar {
   position: fixed;
-  top: 52px;
+  top: calc(44px + 8px);
   right: 16px;
-  max-width: 420px;
+  max-width: var(--notice-w);
   padding: 12px 16px;
   border: 1px solid color-mix(in srgb, var(--new) 50%, transparent);
   border-radius: var(--radius-l);
@@ -369,7 +369,7 @@
 }
 
 .dialog {
-  width: min(560px, calc(100vw - 32px));
+  width: min(var(--dialog-w), calc(100vw - var(--dialog-margin)));
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   background: var(--panel);
@@ -381,16 +381,16 @@
 .dialog.settings {
   position: relative;
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: var(--settings-nav-w) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
-  width: min(880px, calc(100vw - 32px));
-  height: min(620px, 85vh);
+  width: min(var(--settings-w), calc(100vw - var(--dialog-margin)));
+  height: min(var(--settings-h), var(--dialog-max-h));
   overflow: hidden;
 }
 
 .dialog.settings.welcome {
   grid-template-columns: minmax(0, 1fr);
-  width: min(560px, calc(100vw - 32px));
+  width: min(var(--dialog-w), calc(100vw - var(--dialog-margin)));
   height: auto;
 }
 
@@ -572,7 +572,7 @@
 
 .delivery-line {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: var(--settings-label-w) minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
@@ -734,7 +734,7 @@
   right: 0;
   left: 0;
   z-index: 26;
-  max-height: 280px;
+  max-height: var(--dropdown-max-h);
   margin: 0;
   padding: 4px;
   overflow-y: auto;
@@ -782,7 +782,7 @@
 .icon-btn.calendar-clear {
   position: absolute;
   top: 50%;
-  right: 33px;
+  right: calc(12px + 14px + 8px);
   transform: translateY(-50%);
   width: 22px;
   height: 22px;
@@ -847,7 +847,7 @@
 
 .repo-search {
   flex: 1;
-  min-width: 160px;
+  min-width: var(--search-min-w);
   height: 28px;
   padding: 0 10px;
   border: 1px solid var(--border);
@@ -867,7 +867,7 @@
 }
 
 .field .repo-list {
-  max-height: 260px;
+  max-height: var(--settings-list-h);
 }
 
 .repo-list label {
@@ -1119,8 +1119,8 @@
 
 .stop-mark {
   position: absolute;
-  right: 5px;
-  bottom: 5px;
+  right: 4px;
+  bottom: 4px;
   width: 6px;
   height: 6px;
   border-radius: 1.5px;
@@ -1275,7 +1275,7 @@
 
 .orb-list {
   display: grid;
-  max-height: 260px;
+  max-height: var(--settings-list-h);
   margin: 0;
   padding: 0;
   overflow-y: auto;

@@ -9,6 +9,8 @@ const FONT_WEIGHTS = new Set(["450", "500", "600", "700"]);
 const RADIUS = /^(0|50%|999px|var\(--radius-[sml]\)|calc\(var\(--radius-[sml]\) - [12]px\)|[0-3](\.5)?px)$/;
 const HEX_ALLOWED = new Set(["#fff", "#000"]);
 const SPACES = new Set([0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48]);
+const SIZES = new Set([0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 36, 40, 44, 48, 60, 64]);
+const BORDER_WIDTHS = new Set(["1px", "1.5px", "3px"]);
 const LINE_HEIGHTS = /^(1|1\.3|1\.5|1\.6|\d+px)$/;
 const Z_LAYERS = new Set(["1", "2", "5", "25", "26", "30", "35", "40"]);
 const OPACITIES = new Set(["0", "0.5", "1"]);
@@ -66,6 +68,35 @@ describe("style guide", () => {
       }),
     );
     expect(off).toEqual([]);
+  });
+
+  it("sizes and places boxes with the size steps, and anything above 64px with a layout token", () => {
+    const sizing = /^\s*(width|height|min-width|min-height|max-width|max-height|top|left|right|bottom|inset|translate|grid-template-columns):\s*([^;]+);/;
+    const off = sheets.flatMap((sheet) =>
+      sheet.lines.flatMap((line, i) => {
+        const value = sizing.exec(line)?.[2] ?? "";
+        const bad = [...value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map((m) => Math.abs(Number(m[1]))).filter((n) => !SIZES.has(n));
+        return bad.length ? [`${sheet.name}:${i + 1} ${value}`] : [];
+      }),
+    );
+    expect(off).toEqual([]);
+  });
+
+  it("keeps custom properties with a px value in tokens.css", () => {
+    const own = sheets
+      .filter((sheet) => sheet.name !== "tokens.css")
+      .flatMap((sheet) => sheet.lines.flatMap((line, i) => (/^\s*--[\w-]+:[^;]*\d+px/.test(line) ? [`${sheet.name}:${i + 1}`] : [])));
+    expect(own).toEqual([]);
+  });
+
+  it("draws borders 1px, or 1.5px for a drawn check and 3px for an edge", () => {
+    const widths = sheets.flatMap((sheet) =>
+      sheet.lines.flatMap((line, i) => {
+        const width = /^\s*border(-(top|right|bottom|left))?(-width)?:\s*(\d+(?:\.\d+)?px)/.exec(line)?.[4];
+        return width ? [{ at: `${sheet.name}:${i + 1}`, value: width }] : [];
+      }),
+    );
+    expect(outside((v) => BORDER_WIDTHS.has(v), widths)).toEqual([]);
   });
 
   it("moves with the duration tokens on the app's curve", () => {

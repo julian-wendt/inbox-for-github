@@ -45,7 +45,7 @@ export function FollowUpChip({ entry, onRemove }: { entry: Pick<Classified, "sta
   const title = t("snooze.followUpAt", { until: text });
   return (
     <span className="chip" title={entry.notify ? `${title} · ${t("snooze.notify")}` : title}>
-      {entry.notify ? <Bell size={12} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} style={{ flex: "none" }} /> : <StatusIcon status="snoozed" size={12} />}
+      {entry.notify ? <Bell size={12} strokeWidth={2.2} color="var(--st-snoozed)" role="img" aria-label={t("snooze.notify")} /> : <StatusIcon status="snoozed" size={12} />}
       {text}
       {onRemove && (
         <button className="chip-x" title={`${t("followUp.remove")} (X)`} aria-label={t("followUp.remove")} onClick={onRemove}>

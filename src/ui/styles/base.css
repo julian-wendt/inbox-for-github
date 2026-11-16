@@ -61,6 +61,11 @@ html:not([data-input="pointer"]) .btn.success:focus-visible {
   box-shadow: none;
 }
 
+/* Icons keep their size in a squeezed row. */
+.lucide {
+  flex: none;
+}
+
 small {
   font-size: var(--fs-s);
 }
@@ -243,8 +248,7 @@ kbd {
   gap: 12px;
   align-content: center;
   min-height: 100vh;
-  --measure: 560px;
-  padding: 32px max(32px, calc((100% - var(--measure)) / 2));
+  padding: 32px max(32px, calc((100% - var(--dialog-w)) / 2));
   background: var(--bg);
   color: var(--text);
 }
@@ -266,7 +270,7 @@ kbd {
 }
 
 .crash pre {
-  max-height: 240px;
+  max-height: var(--code-max-h);
   overflow: auto;
   padding: 12px;
   border-radius: var(--radius-m);

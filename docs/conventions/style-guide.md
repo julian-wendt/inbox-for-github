@@ -46,6 +46,20 @@ nothing else: **0, 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48**.
   padding plus its border. Structural sizes are tokens (`--traffic-lights`) or local custom
   properties (`--measure` on the crash page).
 
+## Sizes and positions
+
+- `width`, `height`, their `min-`/`max-` forms, `top`/`right`/`bottom`/`left`, `inset`,
+  `translate` and grid columns use **0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28,
+  30, 32, 36, 40, 44, 48, 60, 64** px, or a sum of them that says where it comes from
+  (`calc(44px + 8px)`: below the header, 8px apart).
+- Anything larger is a layout token in `tokens.css` (`--dialog-w`, `--menu-max-w`, …), named by
+  what it sizes; a custom property with a px value lives nowhere else.
+- Dots are 6px (on buttons and in text) or 8px (in rows and before options).
+- Borders are 1px; 1.5px only for a drawn check box or radio, 3px only for an edge that carries a
+  color (blockquote, calendar event).
+- Inline styles in components only carry computed values: positions, measured widths, colors
+  from GitHub. Fixed values belong in the CSS.
+
 ## Corners
 
 | Radius | For |
