@@ -77,6 +77,11 @@ Shortcuts are registered in `App.tsx` with `useHotkeys` (`src/ui/useHotkeys.ts`)
 lowercased; `mod+` is ⌘, `shift+` is added with ⌘ and for letters. Single-key shortcuts do not
 fire while typing in a field.
 
+A key or click check reads the modifiers through `modifiersOf` (`src/ui/platform.ts`), never
+`metaKey` or `ctrlKey` itself: `mod` is ⌘ and `ctrl` is ⌃. The
+[Windows edition](https://github.com/andremieth/inbox-for-github), a fork, runs the same code
+with Ctrl as `mod` and Alt as `ctrl`, so a check written this way works there unchanged.
+
 Tab in the main window follows the "Tab reaches buttons" setting (`tabToButtons`), off by
 default as in most Mac apps: Tab then does nothing there, in its text fields neither, so it never
 strands the focus on a button. The web view itself walks buttons whatever the Mac's "Keyboard

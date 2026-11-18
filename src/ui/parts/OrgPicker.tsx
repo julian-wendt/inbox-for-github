@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Org } from "../../model";
 import { sameLogin } from "../../timeline";
 import { t } from "../i18n";
+import { modifiersOf } from "../platform";
 
 /**
  * Picks the organizations to watch: the viewer's own organizations as switches, plus any other
@@ -58,7 +59,7 @@ export function OrgPicker({ memberOrgs, selected, onChange }: { memberOrgs: Org[
           value={extra}
           onChange={(e) => setExtra(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.metaKey) {
+            if (e.key === "Enter" && !modifiersOf(e).mod) {
               e.preventDefault();
               add();
             }
