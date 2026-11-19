@@ -129,7 +129,16 @@ export async function graphql<T>(
     if (!until && (response.status === 502 || response.status === 504) && gaveUp()) throw new TimeoutError();
     throw until ? new RateLimitError(until) : new Error(`GitHub API ${response.status}: ${text}`);
   }
-  const payload = (await response.json()) as { data?: T; errors?: { message: string; type?: string }[] };
+  let body = "";
+  let payload: { data?: T; errors?: { message: string; type?: string }[] };
+  try {
+    body = await response.text();
+    payload = JSON.parse(body) as typeof payload;
+  } catch (e) {
+    report({ status: response.status, ...rate, bytes: body.length, failed: String(e) });
+    // The timeout also comes as a 200 whose body no parser takes (github-api.md, "Timeouts").
+    throw gaveUp() ? new TimeoutError() : e;
+  }
   if (payload.errors?.length && !(allowNotFound && payload.errors.every((e) => e.type === "NOT_FOUND"))) {
     const messages = payload.errors.map((e) => (e.type === "RATE_LIMITED" ? `rate limit: ${e.message}` : e.message));
     const until = refusedUntil(response, messages);

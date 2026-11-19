@@ -175,4 +175,17 @@ describe("graphql timeouts", () => {
     after(40);
     await expect(graphql("t", "{ ok }")).rejects.toThrow("GitHub API 502");
   });
+
+  it("takes a late 200 without a body as the timeout, and an early one as the error it is", async () => {
+    const empty = () => vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(new Response("", { status: 200 }))));
+    empty();
+    after(10_500);
+    await expect(graphql("t", "{ ok }")).rejects.toBeInstanceOf(TimeoutError);
+    vi.restoreAllMocks();
+    empty();
+    after(40);
+    const error = await graphql("t", "{ ok }").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(SyntaxError);
+    expect(error).not.toBeInstanceOf(TimeoutError);
+  });
 });
