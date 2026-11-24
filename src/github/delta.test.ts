@@ -22,6 +22,13 @@ describe("mergeDelta", () => {
     expect(mergeDelta([old, fresh], [], 7, now).map((i) => i.id)).toEqual(["fresh"]);
     expect(mergeDelta([fresh], [], 0, now)).toEqual([]);
   });
+
+  it("keeps the teams of the cached copy, which a delta does not search, also for a new review request", () => {
+    const cached = item("a", { teams: ["octo-org/platform"], reasons: ["involved"] });
+    expect(mergeDelta([cached], [item("a", { title: "a2" })], 7, now)[0].teams).toEqual(["octo-org/platform"]);
+    expect(addRequested([cached], [item("a", { reasons: [] })])[0].teams).toEqual(["octo-org/platform"]);
+    expect(mergeDelta([cached], [item("a", { teams: [] })], 7, now)[0].teams).toEqual([]);
+  });
 });
 
 describe("withPending", () => {

@@ -19,6 +19,8 @@ export interface NotifyOptions {
 export interface ReminderOptions {
   /** The last fetch's time, read only with the first result and only while no reminder has rung (`Pending.rangAt`). */
   since: Date | null;
+  /** The last full fetch's time, for team mentions (see `arrivals`). */
+  fullAt: Date | null;
   workdays: readonly number[];
   followUpTime: string;
   /** Sets the item's follow-up anew, with "Remind me", at `until` (ISO 8601). */
@@ -70,11 +72,12 @@ const TICK_MS = 30_000;
  * @param reminders   What due reminders need (see `ReminderOptions`).
  *
  * @example
- *   useAttention(inbox.classified, unreadIds, { on: true, reasons: { review: false }, inFront: false, delivery }, true, (id) => show(id), pending, (change) => store(change(pending)), { since: inbox.fetchedAt, workdays, followUpTime, onLater });
+ *   useAttention(inbox.classified, unreadIds, { on: true, reasons: { review: false }, inFront: false, delivery }, true, (id) => show(id), pending, (change) => store(change(pending)), { since: inbox.fetchedAt, fullAt: inbox.fullAt, workdays, followUpTime, onLater });
  */
 export function useAttention(classified: Classified[], unread: ReadonlySet<string>, notify: NotifyOptions, badge: boolean, onOpen: (itemId: string | null) => void, pending: Pending, onPending: (change: (current: Pending) => Pending) => void, reminders: ReminderOptions): void {
   const known = useRef<Map<string, string> | null>(null);
   const knownAt = useRef<Date | null>(null);
+  const knownFullAt = useRef<Date | null>(null);
   const rang = useRef<Set<string> | null>(null);
   const { on, reasons, inFront, delivery } = notify;
   const { collected, lastSummary, rangAt } = pending;
@@ -119,7 +122,7 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
 
   useEffect(() => {
     if (classified.length === 0) return;
-    const { since, workdays, followUpTime } = remind.current;
+    const { since, fullAt, workdays, followUpTime } = remind.current;
     const due = dueReminders(classified, rang.current, latest.current.rangAt ?? since?.toISOString() ?? null);
     rang.current = new Set(classified.filter(ringing).map((c) => c.item.id));
     if (due.length > 0) {
@@ -128,10 +131,11 @@ export function useAttention(classified: Classified[], unread: ReadonlySet<strin
       if (on) void sendReminders(due, laterChoices(now, workdays, followUpTime));
     }
     // The overlap allows for GitHub's search lagging behind, as a delta does.
-    const quietBefore = knownAt.current && new Date(knownAt.current.getTime() - DELTA_OVERLAP_MS).toISOString();
-    const fresh = arrivals(classified, known.current, quietBefore).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
+    const quietBefore = (at: Date | null) => at && new Date(at.getTime() - DELTA_OVERLAP_MS).toISOString();
+    const fresh = arrivals(classified, known.current, quietBefore(knownAt.current), quietBefore(knownFullAt.current)).filter((c) => !due.includes(c) && notifies(notifyReason(c), reasons));
     known.current = new Map(classified.filter((c) => c.bucket === "inbox").map((c) => [c.item.id, askKey(c)]));
     knownAt.current = since;
+    knownFullAt.current = fullAt;
     if (!on || fresh.length === 0) return;
     if (!notifiesLive(delivery, new Date())) {
       const ids = fresh.map((c) => c.item.id);

@@ -33,7 +33,8 @@ Independent of each other:
 ## Rules
 
 1. The inbox holds every item with an ask newer than its handled-until.
-2. Everything that brings an item back is an ask with a time: a mention, a review request,
+2. Everything that brings an item back is an ask with a time: a mention (also of one of my
+   teams, unless I wrote it), a review request,
    feedback, a reply in my review thread, new commits after my review, a reopen, news after my
    part done, a follow-up that is due, and with "Bring back on: Any post" any post by someone else
    on an item outside the tables. A due follow-up asks again what was pending, though F handled
@@ -76,7 +77,8 @@ Independent of each other:
    the others were corrections; and none when that last takes off a follow-up or plan set in the
    same run. Dates are absolute, as the lines stay.
 10. An ask notifies only when it is newer than the fetch before (less the 5 minutes a delta
-    overlaps, for GitHub's late indexing). An item missing from a result for a while, e.g. cut
+    overlaps, for GitHub's late indexing); a mention of my team, which only a full fetch finds,
+    when it is newer than the full fetch before. An item missing from a result for a while, e.g. cut
     from a search, comes back quietly with its old ask; an ask of unknown time still notifies.
 11. A reaction is no ask, no news and no answer. An emoji someone else adds or takes back, on the
     description or a post, changes nothing about where an item shows, its dot or what notifies;

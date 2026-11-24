@@ -172,6 +172,8 @@ export interface Item {
   assignees: string[];
   comments: Comment[];
   reasons: Reason[];
+  /** The viewer's teams its posts mention, `org/slug`; set by a full fetch, kept by deltas and reloads. */
+  teams?: string[];
 }
 
 /** An issue's type as the organization defines it, e.g. "Bug"; `color` is GitHub's name for it, e.g. "RED". */

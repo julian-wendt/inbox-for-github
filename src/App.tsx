@@ -1258,7 +1258,7 @@ export default function App() {
     const entry = inbox.classified.find((c) => c.item.id === itemId);
     if (entry) followUp(entry, until, true);
   };
-  const reminderOptions = { since: inbox.fetchedAt, workdays: inbox.settings.workdays, followUpTime: inbox.settings.followUpTime, onLater: laterNotified };
+  const reminderOptions = { since: inbox.fetchedAt, fullAt: inbox.fullAt, workdays: inbox.settings.workdays, followUpTime: inbox.settings.followUpTime, onLater: laterNotified };
   useAttention(inbox.classified, badgeIds, notifyOptions, inbox.settings.dockBadge, openNotified, pending, savePending, reminderOptions);
 
   const orbLogins = useOrbLogins();

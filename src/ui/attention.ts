@@ -14,11 +14,13 @@ import { followUpOn, thisAfternoon } from "./snooze";
  * due time and stay quiet too, while one newer than it notifies.
  *
  * An ask from before `since` is old news: an item that was missing from the previous result,
- * e.g. cut from a search, comes back quietly. An ask of unknown time still notifies.
+ * e.g. cut from a search, comes back quietly. An ask of unknown time still notifies. A mention of
+ * the viewer's team counts from `teamSince` instead, since only a full fetch searches for it.
  *
  * @param classified  The current classification.
  * @param known       Item id → `askKey` of the inbox items in the previous result, or null before the first one.
  * @param since       Asks before then (ISO 8601) stay quiet; null lets every ask notify.
+ * @param teamSince   The same for a team mention: the full fetch before the previous result's.
  * @returns The items to notify about, in list order.
  *
  * @example
@@ -26,9 +28,9 @@ import { followUpOn, thisAfternoon } from "./snooze";
  *   arrivals(classified, new Map([["I_1", askKey(c)]])); // every inbox item but I_1, unless its ask changed
  *   arrivals(classified, known, "2026-11-13T09:55:00Z"); // as above, but only asks made since 09:55
  */
-export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null, since: string | null = null): Classified[] {
+export function arrivals(classified: Classified[], known: ReadonlyMap<string, string> | null, since: string | null = null, teamSince = since): Classified[] {
   if (!known) return [];
-  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && c.asks.some((ask) => loud(c, ask, since)));
+  return classified.filter((c) => c.bucket === "inbox" && known.get(c.item.id) !== askKey(c) && c.asks.some((ask) => loud(c, ask, ask === "mention" && c.mention?.team ? teamSince : since)));
 }
 
 const quiet = (ask: Ask) => ask === "opened" || ask === "reopened" || ask === "post" || ask === "due";
@@ -149,6 +151,6 @@ export function notificationTitle(entry: Pick<Classified, "asks" | "mention"> & 
     case "review":
       return t("notify.reviewRequested");
     case "mention":
-      return t("notify.mentioned", { name: entry.mention?.by ?? "" });
+      return entry.mention?.team ? t("notify.teamMentioned", { name: entry.mention.by, team: entry.mention.team }) : t("notify.mentioned", { name: entry.mention?.by ?? "" });
   }
 }

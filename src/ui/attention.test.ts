@@ -20,6 +20,13 @@ describe("arrivals", () => {
     expect(arrivals([entry("I_1"), entry("I_2"), watched], new Map([["I_1", askKey(entry("I_1"))]])).map((c) => c.item.id)).toEqual(["I_2"]);
   });
 
+  it("measures a team mention from the full fetch before, since deltas do not search for it", () => {
+    const at = "2026-11-24T10:02:00Z";
+    const team = entry("I_4", { asks: ["mention"], asked: { mention: at }, mention: { by: "alice", at, excerpt: "", self: false, team: "octo-org/platform" } });
+    const direct = entry("I_5", { asks: ["mention"], asked: { mention: at }, mention: { by: "alice", at, excerpt: "", self: false } });
+    expect(arrivals([team, direct], new Map(), "2026-11-24T10:05:00Z", "2026-11-24T09:55:00Z").map((c) => c.item.id)).toEqual(["I_4"]);
+  });
+
   it("lets an item that only asks again come back without a notification", () => {
     const back = entry("I_2", { asks: ["reopened"] });
     const asked = entry("I_3", { asks: ["reopened", "mention"] });
@@ -55,6 +62,12 @@ describe("notificationTitle", () => {
     expect(notificationTitle({ asks: ["mention"], mention: { by: "bob", at, excerpt: "", self: false } })).toBe("bob mentioned you");
     expect(notificationTitle({ asks: ["mention"], mention: { by: "me", at, excerpt: "", self: true } })).toBe("Self-mention");
     expect(notificationTitle({ asks: ["review"], mention: null })).toBe("Review requested");
+  });
+
+  it("names the team when the mention was of the viewer's team, under the mention reason", () => {
+    const team = { asks: ["mention" as const], mention: { by: "bob", at, excerpt: "", self: false, team: "octo-org/platform" } };
+    expect(notificationTitle(team)).toBe("bob mentioned your team @octo-org/platform");
+    expect(notifyReason(team)).toBe("mention");
   });
 
   it("names who gave feedback, answered in a thread or closed an own item, under its own reason", () => {

@@ -98,6 +98,31 @@ describe("searching the world", () => {
   });
 });
 
+describe("team mentions", () => {
+  it("finds a parent team's mention on a full fetch, and searches no teams on a delta", async () => {
+    world.teams = ["platform-api"];
+    world.parentTeams = { "platform-api": "platform" };
+    const issue = world.issue({ author: "alice", body: "@octo-org/platform heads-up: the API freezes on Friday." });
+
+    const [item] = await fetchAll({ closedDays: 7 });
+    expect(item).toMatchObject({ id: issue.id, teams: ["octo-org/platform"] });
+    expect(world.requests.filter((r) => r.op === "teams")).toHaveLength(1);
+
+    const before = world.requests.length;
+    expect(await fetchAll({ since: new Date(0) })).toEqual([]);
+    expect(world.requests.slice(before).map((r) => r.op)).not.toContain("teams");
+  });
+
+  it("goes on without team mentions when GitHub refuses the teams", async () => {
+    world.teams = ["platform"];
+    world.issue({ author: "alice", body: "@octo-org/platform please check." });
+    const mine = world.issue({ assignees: ["octocat"] });
+    world.fail("teams", "Resource protected by organization SAML enforcement.");
+
+    expect((await fetchAll()).map((i) => i.id)).toEqual([mine.id]);
+  });
+});
+
 describe("what a request costs", () => {
   it("charges a page of 50 with 19 points and a page of 20 with 7, a single item 1", async () => {
     const issue = world.issue({ assignees: ["octocat"] });
@@ -114,7 +139,8 @@ describe("what a request costs", () => {
     world.issue({ assignees: ["octocat"] });
     await fetchAll({ pageSize: 20 });
 
-    expect(lastBudget()?.remaining).toBe(5000 - 14);
+    // Two pages of 7 and the viewer's teams for 1.
+    expect(lastBudget()?.remaining).toBe(5000 - 15);
     expect(lastBudget()?.limit).toBe(5000);
   });
 

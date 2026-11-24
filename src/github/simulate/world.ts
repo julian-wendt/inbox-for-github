@@ -81,6 +81,8 @@ export class GitHubSimulator {
   private fixed: Date | null;
   /** Slugs of the teams the viewer belongs to; a review requested from one of them finds its pull request for them. */
   teams: string[] = [];
+  /** Team slug → the slug of its parent team, for the team mention search. */
+  parentTeams: Record<string, string> = {};
   /** Classic scopes in `X-OAuth-Scopes`; null sends no header, like a fine-grained token. */
   scopes: string[] | null = ["repo", "read:org", "project"];
   /** Fail every request at the network, like a Mac without Wi-Fi. */

@@ -19,6 +19,8 @@ export interface Mention {
   excerpt: string;
   /** True when the viewer mentioned themselves as a note to self. */
   self: boolean;
+  /** The viewer's team it mentions, `org/slug`, when it does not name the viewer. */
+  team?: string;
 }
 
 const EXCERPT_RADIUS = 80;
@@ -61,13 +63,33 @@ export function findMention(body: string, login: string): string | null {
   return `${start > 0 ? "…" : ""}${excerpt}${end < text.length ? "…" : ""}`;
 }
 
-/** All posts that mention `me`, oldest first. */
+/**
+ * All posts that mention `me`, or one of the viewer's teams in `item.teams`, oldest first. A team
+ * the viewer mentions themselves is no ask for them, so their own posts count only with `me`.
+ */
 export function mentionsOf(item: Item, me: string): Mention[] {
   return posts(item).flatMap((post) => {
     const excerpt = findMention(post.body, me);
-    if (excerpt === null) return [];
-    return [{ by: post.author, at: post.at, excerpt, self: sameLogin(post.author, me) }];
+    if (excerpt !== null) return [{ by: post.author, at: post.at, excerpt, self: sameLogin(post.author, me) }];
+    if (!item.teams?.length || sameLogin(post.author, me)) return [];
+    for (const team of item.teams) {
+      const found = findMention(post.body, team);
+      if (found !== null) return [{ by: post.author, at: post.at, excerpt: found, self: false, team }];
+    }
+    return [];
   });
+}
+
+/**
+ * The viewer's teams that a post of `item` mentions, for `Item.teams`.
+ *
+ * @param teams  Team handles, `org/slug`.
+ * @example
+ *   mentionedTeams(item, ["octo-org/platform", "octo-org/docs"]); // ["octo-org/platform"]
+ */
+export function mentionedTeams(item: Item, teams: readonly string[]): string[] {
+  const bodies = posts(item).map((post) => post.body);
+  return teams.filter((team) => bodies.some((body) => findMention(body, team) !== null));
 }
 
 /**

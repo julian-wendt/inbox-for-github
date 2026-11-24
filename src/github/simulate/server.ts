@@ -28,6 +28,11 @@ const OPERATIONS: Operation[] = [
       cost: 1,
     }),
   },
+  {
+    name: "teams",
+    matches: /\bteams\(first: 100, userLogins:/,
+    answer: (w, v) => ({ data: Object.fromEntries(Object.entries(v).filter(([key]) => /^o\d+$/.test(key)).map(([key, login]) => [key, w.orgs.includes(String(login)) ? { teams: { nodes: w.teams.map((slug) => team(w, String(login), slug)) } } : null])), cost: 1 }),
+  },
   { name: "repos", matches: /\brepositoryOwner\(/, answer: (w, v) => repos(w, String(v.org)) },
   { name: "reviewIds", matches: /\bsearch\(type: ISSUE, query: \$q, first: 100/, answer: (w, v) => ({ ...search(w, { ...v, first: 100 }), cost: 1 }) },
   { name: "search", matches: /\bsearch\(type: ISSUE/, answer: search },
@@ -71,15 +76,24 @@ function mentions(text: string, login: string): boolean {
   return new RegExp(`(^|[^\\w/-])@${login.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\w-])`, "i").test(addressedText(text));
 }
 
+function team(world: GitHubSimulator, org: string, slug: string): { combinedSlug: string; parentTeam: unknown } {
+  const parent = world.parentTeams[slug];
+  return { combinedSlug: `${org}/${slug}`, parentTeam: parent ? team(world, org, parent) : null };
+}
+
+function postsOf(raw: ReturnType<GitHubSimulator["raw"]>): string[] {
+  return [raw.body, ...raw.comments.nodes.map((c) => c.body), ...(raw.reviews?.nodes ?? []).map((r) => r.body), ...(raw.reviewThreads?.nodes ?? []).flatMap((t) => t.comments.nodes.map((c) => c.body))];
+}
+
 /** GitHub's `involves:`: author, assignee, mentioned or commenter; reviewers count as commenters. */
 function involves(world: GitHubSimulator, raw: ReturnType<GitHubSimulator["raw"]>): boolean {
   const me = world.viewer.toLowerCase();
-  const posts = [raw.body, ...raw.comments.nodes.map((c) => c.body), ...(raw.reviews?.nodes ?? []).map((r) => r.body), ...(raw.reviewThreads?.nodes ?? []).flatMap((t) => t.comments.nodes.map((c) => c.body))];
+  const posts = postsOf(raw);
   const people = [raw.author?.login, ...raw.assignees.nodes.map((a) => a.login), ...raw.comments.nodes.map((c) => c.author?.login), ...(raw.reviews?.nodes ?? []).map((r) => r.author?.login), ...(raw.reviewThreads?.nodes ?? []).flatMap((t) => t.comments.nodes.map((c) => c.author?.login))];
   return people.some((p) => p?.toLowerCase() === me) || posts.some((text) => mentions(text, world.viewer));
 }
 
-/** Answers a search the way `fetchItems` phrases it: state, one of two qualifiers, owners, `updated:>=`. */
+/** Answers a search the way `fetchItems` phrases it: state, one of two qualifiers or `team:` ones joined with OR, owners, `updated:>=`. */
 function search(world: GitHubSimulator, vars: Variables): Answer {
   const tokens = String(vars.q).split(/\s+/);
   const value = (prefix: string) => tokens.find((t) => t.startsWith(prefix))?.slice(prefix.length);
@@ -87,12 +101,14 @@ function search(world: GitHubSimulator, vars: Variables): Answer {
   const updatedSince = value("updated:>=");
   const closedSince = value("closed:>=");
   const wantClosed = tokens.includes("is:closed");
+  const teams = tokens.flatMap((t) => /team:([^\s)]+)/.exec(t)?.[1] ?? []);
   const hits = [...world.entries.values()]
     .filter(({ raw, requested }) => {
       if (owners.length > 0 && !owners.includes(raw.repository.nameWithOwner.split("/")[0].toLowerCase())) return false;
       if (wantClosed ? !raw.closed || (!!closedSince && (raw.closedAt ?? "").slice(0, 10) < closedSince) : raw.closed) return false;
       if (updatedSince && raw.updatedAt < updatedSince) return false;
       if (tokens.includes("is:pr") && raw.__typename !== "PullRequest") return false;
+      if (teams.length > 0) return postsOf(raw).some((text) => teams.some((team) => text.toLowerCase().includes(`@${team.toLowerCase()}`)));
       if (tokens.includes("review-requested:@me")) return requested.has(world.viewer) || world.teams.some((slug) => requested.has(`team:${slug}`));
       return tokens.includes("involves:@me") ? involves(world, raw) : true;
     })

@@ -7,12 +7,16 @@ notification settings can be turned off once the app runs. Read 2026-10-29 from 
 and [search qualifiers](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests).
 
 The app does not read GitHub's notifications. It searches issues and pull requests in the
-watched owners (`fetchItems` in `src/github/fetch.ts`) with two qualifiers:
+watched owners (`fetchItems` in `src/github/fetch.ts`) with three qualifiers:
 
 - `involves:@me`, which GitHub defines as `author` OR `assignee` OR `mentions` OR `commenter`
   for one user;
 - `is:pr review-requested:@me`, which includes requests to a team the viewer is on (the
-  "Direct requests only" setting can hide those per repo).
+  "Direct requests only" setting can hide those per repo);
+- `team:ORG/TEAM` for each of the viewer's teams in the watched organizations, and their parent
+  teams, joined with OR into one search. It runs on the full refresh only, every
+  `FULL_EVERY_MS` (15 minutes), so a new team mention can show that much later; a team the
+  viewer mentions themselves does not count.
 
 Open items always; closed ones within "Show closed and merged items"; up to GitHub's 1000 hits
 per search.
@@ -27,7 +31,7 @@ per search.
 | `mention` | you were @mentioned | yes (`involves`, reason "mentioned"), in issues and PRs only |
 | `review_requested` | you or one of your teams were asked to review | yes (`review-requested`) |
 | `state_change` | you closed, reopened or merged it | only if you are involved otherwise; your own action needs no notice |
-| `team_mention` | a team you are on was @mentioned | **no**: `involves` names users only; GitHub's `team:` qualifier would find them |
+| `team_mention` | a team you are on was @mentioned | yes (`team:`, as a mention naming the team), up to 15 minutes late |
 | `manual` | you subscribed to the thread by hand | **no** |
 | `subscribed` | you watch the repository | **no** |
 | `ci_activity` | a workflow run you triggered finished | **no** (a PR's checks show on the item, but nothing notifies) |
@@ -53,15 +57,15 @@ On [github.com/settings/notifications](https://github.com/settings/notifications
   review requests in the watched owners all reach the app. Keep it if you get mentions outside
   them or in discussions.
 - **Participating, on GitHub (web inbox):** can stay on as a quiet fallback; nothing pushes it at
-  you, and it holds the gaps above (team mentions, other owners, discussions).
+  you, and it holds the gaps above (other owners, discussions).
 - **Watching:** not covered. Leave it as it is if you rely on watched repositories; otherwise
   set repositories to "Participating and @mentions".
 - **GitHub Actions workflow runs:** not covered; keep it (e.g. failed runs only).
 - **Dependabot alerts:** not covered; keep it.
 - **GitHub Mobile push** (direct mentions, assignments, review requests): covered while the app
   runs on the Mac; turn it off only if that is where you work.
-- **Team mentions:** GitHub's docs do not say which of these settings delivers them (read
-  2026-10-29). Turn Participating off on every channel only if team mentions do not matter.
+- **Team mentions:** reach the app as well, on the full refresh (see above). GitHub's docs do
+  not say which of these settings delivers them (read 2026-10-29).
 
 The app writes nothing to these settings (see the write limits in `CONTRIBUTING.md`).
 
@@ -90,7 +94,7 @@ leave the gaps in the inbox, with the emails kept as a searchable archive. From 
 | `your_activity` | you opened, commented on or closed it yourself | file away |
 | `state_change` | a thread you are subscribed to was closed or opened | file away unless you watch repositories |
 | `push` | someone pushed to a PR you are subscribed to | file away unless you watch repositories |
-| `team_mention` | a team you belong to was mentioned | keep |
+| `team_mention` | a team you belong to was mentioned | file away |
 | `subscribed` | activity in a repository you watch | keep |
 | `manual` | a thread you subscribed to by hand | keep |
 | `ci_activity` | a workflow run you triggered finished | keep |

@@ -214,7 +214,7 @@ function askText(ask: Ask, { mention, updates, closedBy, feedback, repliedBy, pu
     case "closed":
       return closedBy ? t("row.closedBy", { name: closedBy }) : null;
     case "mention":
-      return mention ? (mention.self ? t("row.selfMention") : t("row.mentioned", { name: mention.by })) : null;
+      return mention ? (mention.self ? t("row.selfMention") : mention.team ? t("row.teamMentioned", { name: mention.by, team: mention.team }) : t("row.mentioned", { name: mention.by })) : null;
     case "feedback":
       return feedback ? t(`row.feedback.${feedback.kind}`, { name: feedback.by }) : null;
     case "reply":
