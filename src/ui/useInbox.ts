@@ -38,6 +38,8 @@ export interface Inbox {
   /** Organizations the viewer belongs to, for the settings; empty until the first fetch. */
   memberOrgs: Org[];
   fetchedAt: Date | null;
+  /** When the last full fetch ran; team mentions are searched only then. */
+  fullAt: Date | null;
   /** Whether a search found more than GitHub returns (`SEARCH_STOP`), so the oldest items are missing; known after a full fetch. */
   cut: boolean;
   settings: Settings;
@@ -217,6 +219,7 @@ export function useInbox(): Inbox {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
+  const [fullAt, setFullAt] = useState<Date | null>(null);
   const [cut, setCut] = useState(false);
   const lastFetch = useRef<CachedFetch | null>(null);
   const pending = useRef<PendingChange[]>([]);
@@ -294,7 +297,7 @@ export function useInbox(): Inbox {
   );
 
   const apply = (fetch: CachedFetch) => {
-    const { viewer, items, fetchedAt } = fetch;
+    const { viewer, items, fetchedAt, fullAt } = fetch;
     lastFetch.current = fetch;
     setMe(viewer.login);
     setMyName(viewer.name);
@@ -305,6 +308,7 @@ export function useInbox(): Inbox {
     setMemberOrgs(viewer.orgs);
     setItems(items);
     setFetchedAt(fetchedAt);
+    setFullAt(fullAt ?? null);
   };
 
   useEffect(() => {
@@ -826,6 +830,7 @@ export function useInbox(): Inbox {
     usage,
     memberOrgs,
     fetchedAt,
+    fullAt,
     cut,
     settings,
     classified,
