@@ -168,12 +168,20 @@ Measured 2026-11-11 from Node, where the status shows: a search page came back a
 10.9 s. In the app the same failures were logged 10.5 to 11 s after the request went out, and the
 sidebar read "Offline" on a working network.
 
+The timeout has a second face: status 200 with an empty body, which no JSON parser takes
+(`SyntaxError: Unexpected end of JSON input`). Measured 2026-11-19 in WebView2: a search page of
+50 came back after 11.1 s with status 200 and 0 bytes; asked again at 25 it answered, and the
+full fetch went through. The day before, when `graphql` still let that error through and did not
+log such a request, two of the first four full fetches that read every search to its end failed
+with it, one of them 0.2 s after another search of the same fetch had run into the 502.
+
 The search page is what runs into it. In an organization whose pull requests carry many reviews
 and threads, a page of 50 took 7 to 11 s, a page of 25 4 to 8 s and a page of 10 2 to 3 s, and
 the later pages of a search were slower than its first (measured 2026-11-11).
 
 `graphql` throws `TimeoutError` for a request that fails 9 to 20 s after it went out
-(`GAVE_UP_MS`, `GAVE_UP_UNTIL_MS`): a missing network fails at once, and a fetch caught by a Mac
+(`GAVE_UP_MS`, `GAVE_UP_UNTIL_MS`), in either way: a `fetch` that rejects, a 502 or 504 whose
+status can be read, or a body that cannot be read as JSON. A missing network fails at once, and a fetch caught by a Mac
 going to sleep fails much later; both stay what they are. `search` in `src/github/fetch.ts` asks
 for the page again at half the size, down to 5 hits, and holds every later page and search to
 that size until the next full fetch, which tries 50 again: a slow organization costs one dropped
