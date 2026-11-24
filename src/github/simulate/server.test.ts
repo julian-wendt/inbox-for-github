@@ -112,6 +112,15 @@ describe("team mentions", () => {
     expect(await fetchAll({ since: new Date(0) })).toEqual([]);
     expect(world.requests.slice(before).map((r) => r.op)).not.toContain("teams");
   });
+
+  it("goes on without team mentions when GitHub refuses the teams", async () => {
+    world.teams = ["platform"];
+    world.issue({ author: "alice", body: "@octo-org/platform please check." });
+    const mine = world.issue({ assignees: ["octocat"] });
+    world.fail("teams", "Resource protected by organization SAML enforcement.");
+
+    expect((await fetchAll()).map((i) => i.id)).toEqual([mine.id]);
+  });
 });
 
 describe("what a request costs", () => {

@@ -31,7 +31,7 @@ const OPERATIONS: Operation[] = [
   {
     name: "teams",
     matches: /\bteams\(first: 100, userLogins:/,
-    answer: (w) => ({ data: { viewer: { organizations: { nodes: w.orgs.filter((login) => login !== w.viewer).map((login) => ({ login, teams: { nodes: w.teams.map((slug) => team(w, login, slug)) } })) } } }, cost: 1 }),
+    answer: (w, v) => ({ data: Object.fromEntries(Object.entries(v).filter(([key]) => /^o\d+$/.test(key)).map(([key, login]) => [key, w.orgs.includes(String(login)) ? { teams: { nodes: w.teams.map((slug) => team(w, String(login), slug)) } } : null])), cost: 1 }),
   },
   { name: "repos", matches: /\brepositoryOwner\(/, answer: (w, v) => repos(w, String(v.org)) },
   { name: "reviewIds", matches: /\bsearch\(type: ISSUE, query: \$q, first: 100/, answer: (w, v) => ({ ...search(w, { ...v, first: 100 }), cost: 1 }) },
@@ -108,7 +108,7 @@ function search(world: GitHubSimulator, vars: Variables): Answer {
       if (wantClosed ? !raw.closed || (!!closedSince && (raw.closedAt ?? "").slice(0, 10) < closedSince) : raw.closed) return false;
       if (updatedSince && raw.updatedAt < updatedSince) return false;
       if (tokens.includes("is:pr") && raw.__typename !== "PullRequest") return false;
-      if (teams.length > 0) return postsOf(raw).some((text) => teams.some((team) => mentions(text, team)));
+      if (teams.length > 0) return postsOf(raw).some((text) => teams.some((team) => text.toLowerCase().includes(`@${team.toLowerCase()}`)));
       if (tokens.includes("review-requested:@me")) return requested.has(world.viewer) || world.teams.some((slug) => requested.has(`team:${slug}`));
       return tokens.includes("involves:@me") ? involves(world, raw) : true;
     })

@@ -16,7 +16,7 @@ numbers below go stale when fields are added.
 |---|---|---|
 | Search page of 50 items with all fields | `QUERY` in `src/github/fetch.ts` | ~19 points (18 before commits got their own window; unchanged by `issueType`, review ids and links, thread state, the state events, an issue window of 20 instead of 10, the commit author and `TransferredEvent`, dry run 2026-10-29; and by `issueCount` and `sort:updated-desc`, dry run 2026-11-13; and by the reaction counts and post ids, dry run 2026-11-16) |
 | Search page of 20 items (delta) | same, `pageSize: 20` | ~7 points (re-measured 2026-10-25; unchanged by `TransferredEvent`, dry run 2026-10-29, and by `issueCount` and the sort, 2026-11-13, and by the reaction counts, 2026-11-16) |
-| The viewer's teams, with two levels of parents | `TEAMS_QUERY` (`fetchTeams`, full fetch only) | 1 point (dry run and `rateLimit`, 2026-11-24); `ancestors(first: 10)` instead of `parentTeam` would cost 101 |
+| The viewer's teams, with two levels of parents | `fetchTeams` (full fetch only), one `organization` alias per watched owner | 1 point for four organizations (dry run and `rateLimit`, 2026-11-24); `ancestors(first: 10)` instead of `parentTeam` would cost 101 |
 | Team mentions, page of 20 | `TEAM_QUERY` (`ISSUE_ADVANCED`, full fetch only), one per state | 7 points, the same as `QUERY` at 20 (dry run and `rateLimit`, 2026-11-24, 15 teams joined with OR) |
 | Open review requests, ids only | `REVIEW_IDS_QUERY` (`fetchReviewIds`, every delta), page of 100 | 1 point (dry run and `x-ratelimit-used`, 2026-10-29) |
 | One item by node id | `NODE_QUERY` (`reloadItem`, ⌃R) | 1 point |
@@ -25,8 +25,11 @@ numbers below go stale when fields are added.
 | Budget read | `x-ratelimit-*` response headers | free |
 | `rate_limit` REST endpoint | — | free |
 
-A full fetch also reads the viewer's teams (1 point) and, when there are any, searches their
-mentions once per state (7 points each), so 15 points more with a closed window and 8 without.
+A full fetch also reads the viewer's teams (1 point, one alias per watched organization) and,
+when there are any, searches their mentions once per state, 7 points per page of 20 hits: 15
+points more with a closed window and 8 without, while the open team mentions fit one page.
+Reading the teams or searching them may fail, e.g. for an organization whose SSO the token
+lacks; the refresh then goes on without team mentions.
 A full fetch pages through every search to its end (at most GitHub's 1000 hits, `SEARCH_STOP`;
 two qualifiers, for open and, with a closed window, closed items), about 19 points per 50 hits.
 Every search sorts by `sort:updated-desc`, so a search past the stop misses only the oldest items

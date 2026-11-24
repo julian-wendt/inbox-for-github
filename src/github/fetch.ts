@@ -1,6 +1,6 @@
 import type { Activity, Comment, Item, Org, PullState, Reaction, ReactionContent, Reason, ReviewRequest, ReviewState, ReviewThread } from "../model";
 import { fetchBoards } from "./boards";
-import { graphql, TimeoutError } from "./client";
+import { graphql, RateLimitError, TimeoutError } from "./client";
 import { log } from "../log";
 import { mentionedTeams, mentionsOf, sameLogin } from "../timeline";
 
@@ -362,7 +362,7 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
   const byId = new Map<string, Item>();
   const updated = since ? ` updated:>=${since.toISOString().slice(0, 19)}Z` : "";
   if (!since && !closedBefore) pageCap = Number.POSITIVE_INFINITY;
-  const teams = since || !me ? [] : await fetchTeams(token, orgs, me, signal);
+  const teams = since || !me ? [] : await fetchTeams(token, orgs, me, signal).catch((e: unknown) => withoutTeams(e, signal));
   const qualifiers = (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ reason, qualifier: `${QUALIFIERS[reason]} ${scope}`, team: false }));
   if (teams.length > 0) qualifiers.push({ reason: "mentioned", qualifier: `(${teams.map((t) => `team:${t}`).join(" OR ")})`, team: true });
   const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => qualifiers.map((qualifier) => ({ state, ...qualifier })));
@@ -370,7 +370,8 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
   await Promise.all(
     searches.map(async ({ state, reason, qualifier, team }) => {
       const q = `${state} ${qualifier}${updated} sort:updated-desc`;
-      const { hits, cut } = await search(token, q, limit, team ? Math.min(pageSize, TEAM_PAGE_SIZE) : pageSize, signal, team ? TEAM_QUERY : QUERY);
+      const found = search(token, q, limit, team ? Math.min(pageSize, TEAM_PAGE_SIZE) : pageSize, signal, team ? TEAM_QUERY : QUERY);
+      const { hits, cut } = await (team ? found.catch((e: unknown) => ({ hits: withoutTeams(e, signal), cut: false })) : found);
       if (cut) onCut?.(q);
       for (const raw of hits) {
         const item = byId.get(raw.id) ?? toItem(raw);
@@ -389,46 +390,46 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
   return [...byId.values()];
 }
 
-const TEAMS_QUERY = `
-query ($me: String!) {
-  viewer {
-    organizations(first: 100) {
-      nodes { login teams(first: 100, userLogins: [$me]) { nodes { combinedSlug parentTeam { combinedSlug parentTeam { combinedSlug } } } } }
-    }
-  }
-}`;
+const TEAM_FIELDS = "combinedSlug parentTeam { combinedSlug parentTeam { combinedSlug } }";
 
 interface RawTeam {
   combinedSlug: string;
   parentTeam?: RawTeam | null;
 }
 
-interface TeamsResult {
-  viewer: { organizations: { nodes: ({ login: string; teams: { nodes: RawTeam[] } } | null)[] } };
-}
-
 /**
- * The teams of the viewer in the watched organizations, for the team mention search. GitHub lists
- * only the teams the viewer is a member of; a mention of a parent team notifies them as well, so
- * parents count up to two levels (`ancestors` would cost 100 points, measured 2026-11-24).
+ * The teams of the viewer in the watched organizations, for the team mention search, in one
+ * request with an alias per organization. GitHub lists only the teams the viewer is a member of;
+ * a mention of a parent team notifies them as well, so parents count up to two levels
+ * (`ancestors` would cost 100 points, measured 2026-11-24).
  *
  * @param token   GitHub token with `read:org` scope.
  * @param orgs    The watched owners; the viewer's own login has no teams.
  * @param me      The viewer's login.
  * @param signal  Stops the request.
  * @returns Team handles, `org/slug`, each once; empty when the viewer is on no team there.
+ * @throws Error with GitHub's messages, e.g. for an organization whose SSO the token lacks.
  *
  * @example
  *   await fetchTeams(token, ["octo-org"], "octocat"); // ["octo-org/platform", "octo-org/engineering"]
  */
 export async function fetchTeams(token: string, orgs: string[], me: string, signal?: AbortSignal): Promise<string[]> {
-  const data = await graphql<TeamsResult>(token, TEAMS_QUERY, { me }, signal);
-  const watched = data.viewer.organizations.nodes.filter((org) => org && orgs.some((o) => sameLogin(o, org.login)));
+  const owners = orgs.filter((org) => !sameLogin(org, me));
+  if (owners.length === 0) return [];
+  const query = `query ($me: String!, ${owners.map((_, i) => `$o${i}: String!`).join(", ")}) { ${owners.map((_, i) => `o${i}: organization(login: $o${i}) { teams(first: 100, userLogins: [$me]) { nodes { ${TEAM_FIELDS} } } }`).join(" ")} }`;
+  const data = await graphql<Record<string, { teams: { nodes: RawTeam[] } } | null>>(token, query, { me, ...Object.fromEntries(owners.map((org, i) => [`o${i}`, org])) }, signal, { allowNotFound: true });
   const handles = new Set<string>();
-  for (const org of watched) {
-    for (const direct of org!.teams.nodes) for (let team: RawTeam | null | undefined = direct; team; team = team.parentTeam) handles.add(team.combinedSlug);
+  for (const org of Object.values(data)) {
+    for (const direct of org?.teams.nodes ?? []) for (let team: RawTeam | null | undefined = direct; team; team = team.parentTeam) handles.add(team.combinedSlug);
   }
   return [...handles];
+}
+
+/** Lets a refresh go on without team mentions when reading them failed; a stop or rate limit still ends it. */
+function withoutTeams(e: unknown, signal?: AbortSignal): never[] {
+  if (signal?.aborted || e instanceof RateLimitError) throw e;
+  log.debug("team mentions skipped", { error: String(e) });
+  return [];
 }
 
 /** The search qualifiers for the watched owners: `user:` for the viewer's own login, else `org:`. */
