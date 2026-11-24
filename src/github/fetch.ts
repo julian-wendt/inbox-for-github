@@ -2,7 +2,7 @@ import type { Activity, Comment, Item, Org, PullState, Reaction, ReactionContent
 import { fetchBoards } from "./boards";
 import { graphql, TimeoutError } from "./client";
 import { log } from "../log";
-import { mentionsOf, sameLogin } from "../timeline";
+import { mentionedTeams, mentionsOf, sameLogin } from "../timeline";
 
 const PAGE_SIZE = 50;
 
@@ -98,6 +98,12 @@ query ($q: String!, $first: Int!, $after: String) {
     }
   }
 }`;
+
+/** Only the advanced search joins `team:` qualifiers with OR; there, space-joined `org:` would mean AND (see `docs/reference/github-api.md`). */
+const TEAM_QUERY = QUERY.replace("type: ISSUE,", "type: ISSUE_ADVANCED,");
+
+/** Team mentions are rare, so their search reads small pages. */
+const TEAM_PAGE_SIZE = 20;
 
 interface RawAuthor {
   login: string;
@@ -356,15 +362,21 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
   const byId = new Map<string, Item>();
   const updated = since ? ` updated:>=${since.toISOString().slice(0, 19)}Z` : "";
   if (!since && !closedBefore) pageCap = Number.POSITIVE_INFINITY;
-  const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ state, reason })));
+  const teams = since || !me ? [] : await fetchTeams(token, orgs, me, signal);
+  const qualifiers = (Object.keys(QUALIFIERS) as Reason[]).map((reason) => ({ reason, qualifier: `${QUALIFIERS[reason]} ${scope}`, team: false }));
+  if (teams.length > 0) qualifiers.push({ reason: "mentioned", qualifier: `(${teams.map((t) => `team:${t}`).join(" OR ")})`, team: true });
+  const searches = searchStates(now, closedDays, closedBefore).flatMap((state) => qualifiers.map((qualifier) => ({ state, ...qualifier })));
 
   await Promise.all(
-    searches.map(async ({ state, reason }) => {
-      const q = `${state} ${QUALIFIERS[reason]} ${scope}${updated} sort:updated-desc`;
-      const { hits, cut } = await search(token, q, limit, pageSize, signal);
+    searches.map(async ({ state, reason, qualifier, team }) => {
+      const q = `${state} ${qualifier}${updated} sort:updated-desc`;
+      const { hits, cut } = await search(token, q, limit, team ? Math.min(pageSize, TEAM_PAGE_SIZE) : pageSize, signal, team ? TEAM_QUERY : QUERY);
       if (cut) onCut?.(q);
       for (const raw of hits) {
         const item = byId.get(raw.id) ?? toItem(raw);
+        if (teams.length > 0) item.teams = mentionedTeams(item, teams);
+        // A team found only in code or a quote, or in a post past the loaded ones, asks nothing.
+        if (team && !item.teams?.length) continue;
         for (const r of [reason, ...reasonsOf(item, me)]) if (!item.reasons.includes(r)) item.reasons.push(r);
         byId.set(raw.id, item);
       }
@@ -375,6 +387,48 @@ export async function fetchItems(token: string, orgs: string[], { limit = SEARCH
     for (const item of byId.values()) item.boards = found.get(item.id) ?? [];
   }
   return [...byId.values()];
+}
+
+const TEAMS_QUERY = `
+query ($me: String!) {
+  viewer {
+    organizations(first: 100) {
+      nodes { login teams(first: 100, userLogins: [$me]) { nodes { combinedSlug parentTeam { combinedSlug parentTeam { combinedSlug } } } } }
+    }
+  }
+}`;
+
+interface RawTeam {
+  combinedSlug: string;
+  parentTeam?: RawTeam | null;
+}
+
+interface TeamsResult {
+  viewer: { organizations: { nodes: ({ login: string; teams: { nodes: RawTeam[] } } | null)[] } };
+}
+
+/**
+ * The teams of the viewer in the watched organizations, for the team mention search. GitHub lists
+ * only the teams the viewer is a member of; a mention of a parent team notifies them as well, so
+ * parents count up to two levels (`ancestors` would cost 100 points, measured 2026-11-24).
+ *
+ * @param token   GitHub token with `read:org` scope.
+ * @param orgs    The watched owners; the viewer's own login has no teams.
+ * @param me      The viewer's login.
+ * @param signal  Stops the request.
+ * @returns Team handles, `org/slug`, each once; empty when the viewer is on no team there.
+ *
+ * @example
+ *   await fetchTeams(token, ["octo-org"], "octocat"); // ["octo-org/platform", "octo-org/engineering"]
+ */
+export async function fetchTeams(token: string, orgs: string[], me: string, signal?: AbortSignal): Promise<string[]> {
+  const data = await graphql<TeamsResult>(token, TEAMS_QUERY, { me }, signal);
+  const watched = data.viewer.organizations.nodes.filter((org) => org && orgs.some((o) => sameLogin(o, org.login)));
+  const handles = new Set<string>();
+  for (const org of watched) {
+    for (const direct of org!.teams.nodes) for (let team: RawTeam | null | undefined = direct; team; team = team.parentTeam) handles.add(team.combinedSlug);
+  }
+  return [...handles];
 }
 
 /** The search qualifiers for the watched owners: `user:` for the viewer's own login, else `org:`. */
@@ -522,7 +576,7 @@ let pageCap = Number.POSITIVE_INFINITY;
  * size that worked holds for every later page and search (`pageCap`) until the next full fetch,
  * so a slow organization costs the wait once per full fetch and not on every delta.
  */
-async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal): Promise<{ hits: RawItem[]; cut: boolean }> {
+async function search(token: string, q: string, limit: number, pageSize: number, signal?: AbortSignal, query = QUERY): Promise<{ hits: RawItem[]; cut: boolean }> {
   const hits: RawItem[] = [];
   let read = 0;
   let found = 0;
@@ -533,7 +587,7 @@ async function search(token: string, q: string, limit: number, pageSize: number,
     while (!data) {
       size = Math.min(size, pageCap);
       try {
-        data = await graphql<SearchResult>(token, QUERY, { q, first: size, after }, signal);
+        data = await graphql<SearchResult>(token, query, { q, first: size, after }, signal);
       } catch (e) {
         if (!(e instanceof TimeoutError) || size <= MIN_PAGE_SIZE) throw e;
         pageCap = Math.min(pageCap, Math.max(MIN_PAGE_SIZE, Math.ceil(size / 2)));

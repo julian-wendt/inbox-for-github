@@ -8,7 +8,8 @@ export const DELTA_OVERLAP_MS = 5 * 60_000;
 
 /**
  * Merges a delta fetch into the items shown so far: every item in `changed` replaces its old
- * version (with the reasons the delta found), new ones are added, and the rest stays as it was.
+ * version (with the reasons the delta found, and the teams of the old one, see `keepTeams`), new
+ * ones are added, and the rest stays as it was.
  * Closed items drop out once they are older than `closedDays`, as a full fetch would leave them out.
  *
  * Items that stopped matching every search without changing stay until the next full fetch
@@ -25,8 +26,13 @@ export const DELTA_OVERLAP_MS = 5 * 60_000;
  */
 export function mergeDelta(previous: Item[], changed: Item[], closedDays: number, now = Date.now()): Item[] {
   const byId = new Map(previous.map((item) => [item.id, item]));
-  for (const item of changed) byId.set(item.id, item);
+  for (const item of changed) byId.set(item.id, keepTeams(item, byId.get(item.id)));
   return withinClosedWindow([...byId.values()], closedDays, now);
+}
+
+/** The fresh copy with the old one's `teams`, which only a full fetch searches; a fresh copy that has them stays as it is. */
+export function keepTeams(fresh: Item, old: Item | undefined): Item {
+  return fresh.teams === undefined && old?.teams ? { ...fresh, teams: old.teams } : fresh;
 }
 
 /** A local change to one item, made at once for a write to GitHub, kept while a fetch may still miss the write. */
@@ -152,8 +158,9 @@ export function unseenReviews(items: Item[], requested: ReadonlySet<string>): st
 export function addRequested(items: Item[], loaded: Item[]): Item[] {
   const byId = new Map(items.map((item) => [item.id, item]));
   for (const fresh of loaded) {
-    const kept = byId.get(fresh.id)?.reasons.filter((r) => r === "involved") ?? [];
-    byId.set(fresh.id, { ...fresh, reasons: [...new Set<Reason>([...kept, "review", ...fresh.reasons])] });
+    const old = byId.get(fresh.id);
+    const kept = old?.reasons.filter((r) => r === "involved") ?? [];
+    byId.set(fresh.id, keepTeams({ ...fresh, reasons: [...new Set<Reason>([...kept, "review", ...fresh.reasons])] }, old));
   }
   return [...byId.values()];
 }
@@ -201,7 +208,7 @@ export function transferCandidates(cached: Item[], gone: string[]): string[] {
 
 /**
  * Puts items loaded by id into the cached ones: each replaces its cached version, keeping the
- * reasons only a search knows ("review", "involved"), and the old copies of transferred issues
+ * reasons only a search knows ("review", "involved") and the teams, and the old copies of transferred issues
  * (`moves`) go. Items not cached are not added.
  *
  * @param cached  The cached items.
@@ -217,7 +224,7 @@ export function mergeReloaded(cached: Item[], fresh: Item[], moves: ReadonlyMap<
   return cached.flatMap((old) => {
     if (moves.has(old.id)) return [];
     const item = byId.get(old.id);
-    return [item ? { ...item, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...item.reasons] } : old];
+    return [item ? keepTeams({ ...item, reasons: [...old.reasons.filter((r) => r === "review" || r === "involved"), ...item.reasons] }, old) : old];
   });
 }
 

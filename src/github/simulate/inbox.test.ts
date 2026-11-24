@@ -94,6 +94,36 @@ describe("Inbox", () => {
     expect(app.entry(pr).asks).toContain("review");
   });
 
+  it("holds a mention of the viewer's team like one of the viewer, and a delta keeps it", async () => {
+    const { world, app } = sim;
+    world.teams = ["platform"];
+    const issue = world.issue({ author: "alice" });
+    world.comment(issue, "alice", "@octo-org/platform can someone pick this up?");
+    await app.refresh();
+    expect(app.viewOf(issue)).toBe("inbox");
+    expect(app.entry(issue).mention).toMatchObject({ by: "alice", team: "octo-org/platform", self: false });
+
+    world.advance(5 * MINUTE);
+    world.comment(issue, "bob", "Same here.");
+    expect((await app.refresh()).kind).toBe("delta");
+    await app.reload(issue);
+    expect(app.entry(issue).mention?.team).toBe("octo-org/platform");
+
+    await app.comment(issue, "On it.");
+    expect(app.viewOf(issue)).toBe("done");
+  });
+
+  it("leaves out a team mention by the viewer and one inside code", async () => {
+    const { world, app } = sim;
+    world.teams = ["platform"];
+    const own = world.issue({ author: "octocat", body: "@octo-org/platform please review the plan." });
+    const quoted = world.issue({ author: "alice", body: "Run `notify @octo-org/platform` to page them." });
+    await app.refresh();
+
+    expect(app.entry(own).mention).toBeNull();
+    expect(app.viewOf(quoted)).toBeNull();
+  });
+
   it("takes a mention of themselves as a reminder", async () => {
     const { world, app } = sim;
     const issue = world.issue({ author: "octocat" });
