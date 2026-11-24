@@ -29,6 +29,7 @@ describe("the demo world", () => {
 
     expect(inbox).toEqual(expect.arrayContaining(ids("retries", "csvExport", "dateFns", "installNote", "tooltip", "rounding")));
     expect(session.entry(refs.installNote).mention?.self).toBe(true);
+    expect(session.entry(refs.deployFreeze).mention).toMatchObject({ by: "lena-f", team: "lumen-labs/platform" });
     expect(session.entry(refs.csvExport).asks).toContain("review");
     expect(session.entry(refs.dateFns).asks).toContain("review");
     expect(session.entry(refs.tooltip).asks).toEqual(["due"]);

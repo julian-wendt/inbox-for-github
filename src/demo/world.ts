@@ -25,7 +25,7 @@ export type DemoRefs = Record<
   | "retries" | "csvExport" | "dateFns" | "installNote" | "tooltip" | "ownKeys" | "rounding"
   | "leak" | "settings" | "savedFilters" | "statement" | "contributing" | "rateCache" | "signature"
   | "virtualRows" | "focusTrap" | "retryDocs" | "syncBackup" | "buildTooling"
-  | "sidebarTokens" | "xmlPayloads" | "glossary" | "negativeBalances" | "frameBudget" | "rateHeaders",
+  | "sidebarTokens" | "xmlPayloads" | "glossary" | "negativeBalances" | "frameBudget" | "rateHeaders" | "deployFreeze",
   Ref
 >;
 
@@ -70,6 +70,9 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
   world.at(5 * HOUR, () => world.requestReview(dateFns, "sam-r", "team:platform"));
   world.at(4 * HOUR, () => world.forcePush(dateFns, "sam-r"));
   world.at(3 * HOUR, () => world.forcePush(dateFns, "sam-r"));
+
+  const deployFreeze = world.issue({ repo: REPO.relay, title: "Freeze deploys during the queue migration", author: "lena-f", ago: 5 * HOUR, labels: [CHORE], body: "The queue moves to the new cluster on Thursday." });
+  world.at(4 * HOUR, () => world.comment(deployFreeze, "lena-f", "@lumen-labs/platform please hold your deploys from Thursday 9:00 until the migration is done."));
 
   const installNote = world.issue({ repo: REPO.docs, title: "Quick start misses the new install flag", author: "ines-d", ago: 6 * DAY });
   world.at(3 * DAY, () => world.comment(installNote, me, "@juniper check the install steps again once 2.0 ships."));
@@ -161,6 +164,6 @@ export function buildDemoWorld(): { world: GitHubSimulator; refs: DemoRefs } {
 
   return {
     world,
-    refs: { retries, csvExport, dateFns, installNote, tooltip, ownKeys, rounding, leak, settings, savedFilters, statement, contributing, rateCache, signature, virtualRows, focusTrap, retryDocs, syncBackup, buildTooling, sidebarTokens, xmlPayloads, glossary, negativeBalances, frameBudget, rateHeaders },
+    refs: { retries, csvExport, dateFns, installNote, tooltip, ownKeys, rounding, leak, settings, savedFilters, statement, contributing, rateCache, signature, virtualRows, focusTrap, retryDocs, syncBackup, buildTooling, sidebarTokens, xmlPayloads, glossary, negativeBalances, frameBudget, rateHeaders, deployFreeze },
   };
 }
