@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/julian-wendt/inbox-for-github/compare/v0.8.1...v0.9.0) (2026-11-24)
+
+
+### Features
+
+* pick follow-up and plan days from a month calendar ([#168](https://github.com/julian-wendt/inbox-for-github/issues/168)) ([1eaed5e](https://github.com/julian-wendt/inbox-for-github/commit/1eaed5e94c18e0855d7351d5f2a0855cea9a5cf6))
+* show mentions of your teams in the inbox ([#179](https://github.com/julian-wendt/inbox-for-github/issues/179)) ([4bf0f68](https://github.com/julian-wendt/inbox-for-github/commit/4bf0f68b8fb2e69407cd94988fdc254f006486fb))
+
 ## [0.8.1](https://github.com/julian-wendt/inbox-for-github/compare/v0.8.0...v0.8.1) (2026-11-16)
 
 
