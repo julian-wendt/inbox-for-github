@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { noteInput } from "./inputTrail";
+import { modifiersOf } from "./platform";
 
 /**
  * Key → handler. Keys use `KeyboardEvent.key`, prefixed with "mod+" for ⌘ or "ctrl+" for ⌃,
- * e.g. "mod+k", "ctrl+a", "e", "ArrowDown".
+ * e.g. "mod+k", "ctrl+a", "e", "ArrowDown". On Windows "mod+" is Ctrl and "ctrl+" is Alt
+ * (`modifiersOf`); the bindings are written once for both.
  */
 export type Hotkeys = Record<string, (event: KeyboardEvent) => void>;
 
@@ -12,6 +14,20 @@ const FIELD_KEYS = new Set(["mod+z", "mod+y"]);
 
 /** Plain keys whose binding fires inside a text field too. */
 const ANYWHERE_KEYS = new Set(["Escape", "Tab"]);
+
+/**
+ * The name a key press is bound under: "mod+shift+r", "ctrl+a", "ArrowDown", "?". Shift counts
+ * with "mod" and with letters (⇧A); "?" and other shifted symbols arrive as themselves. A key
+ * pressed with AltGr on Windows gets "altgr+" in front, which no binding has, so it triggers nothing.
+ *
+ * @example
+ *   hotkeyOf(event); // "mod+k" for ⌘K on macOS and for Ctrl+K on Windows
+ */
+export function hotkeyOf(event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "altKey" | "shiftKey">): string {
+  const { mod, ctrl, altGr } = modifiersOf(event);
+  const shift = event.shiftKey && (mod || /^[a-z]$/i.test(event.key)) ? "shift+" : "";
+  return `${altGr ? "altgr+" : ""}${mod ? "mod+" : ""}${ctrl ? "ctrl+" : ""}${shift}${event.key.length === 1 ? event.key.toLowerCase() : event.key}`;
+}
 
 /**
  * Binds window-wide shortcuts. Plain keys and "ctrl+" keys are ignored while focus is in a text
@@ -35,12 +51,10 @@ export function useHotkeys(hotkeys: Hotkeys, enabled = true): void {
   useEffect(() => {
     if (!enabled) return;
     const onKey = (event: KeyboardEvent) => {
-      // Shift counts with ⌘ and with letters (⇧A); "?" and other shifted symbols arrive as themselves.
-      const shift = event.shiftKey && (event.metaKey || /^[a-z]$/i.test(event.key)) ? "shift+" : "";
-      const key = `${event.metaKey ? "mod+" : ""}${event.ctrlKey ? "ctrl+" : ""}${shift}${event.key.length === 1 ? event.key.toLowerCase() : event.key}`;
+      const key = hotkeyOf(event);
       const handler = current.current[key];
       if (!handler) return;
-      if ((!event.metaKey || FIELD_KEYS.has(key)) && !ANYWHERE_KEYS.has(key) && isTyping(event.target)) return;
+      if ((!modifiersOf(event).mod || FIELD_KEYS.has(key)) && !ANYWHERE_KEYS.has(key) && isTyping(event.target)) return;
       if ((key === "Enter" || key === " ") && isKeyFocusedControl(event.target)) return;
       event.preventDefault();
       noteInput(`key:${key}`);

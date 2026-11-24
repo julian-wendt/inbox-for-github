@@ -6,6 +6,7 @@ import type { Item } from "../../model";
 import { settleDraft } from "../drafts";
 import { t } from "../i18n";
 import { applyFormat, type Format } from "../markdownFormat";
+import { modifiersOf } from "../platform";
 import { CloseButton } from "./CloseButton";
 import { Markdown } from "./Markdown";
 
@@ -137,13 +138,14 @@ export function Reply({ item, me, onSent }: { item: Item; me: string; onSent: (c
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    const shortcut = e.metaKey && tab === "write" ? SHORTCUTS[e.key.toLowerCase()] : undefined;
+    const { mod } = modifiersOf(e);
+    const shortcut = mod && tab === "write" ? SHORTCUTS[e.key.toLowerCase()] : undefined;
     if (shortcut) {
       // ⌘K formats a link here instead of opening the palette.
       e.preventDefault();
       e.stopPropagation();
       format(shortcut);
-    } else if (e.key === "Enter" && e.metaKey) {
+    } else if (e.key === "Enter" && mod) {
       e.preventDefault();
       void send();
     } else if (e.key === "Escape") {

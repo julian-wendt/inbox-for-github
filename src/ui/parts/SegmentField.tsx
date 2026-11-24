@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { modifiersOf } from "../platform";
 import { padSegment, stepSegment, typeSegment, type Segment } from "../segments";
 
 /** One part of a `SegmentField`: what it is called, what it holds and its range. */
@@ -52,7 +53,7 @@ export function SegmentField({ parts, separator, label, onChange, autoFocus = fa
     } else if (e.key === "Backspace" || e.key === "Delete") {
       onChange(index, segment.min);
       typed.current = "";
-    } else if (e.key.length !== 1 || e.metaKey) {
+    } else if (e.key.length !== 1 || modifiersOf(e).mod) {
       return;
     }
     e.preventDefault();

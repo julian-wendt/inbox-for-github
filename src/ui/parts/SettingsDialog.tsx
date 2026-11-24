@@ -11,6 +11,7 @@ import type { BotComments, Settings } from "../../store";
 import { agoInSentence } from "../labels";
 import { NOTIFY_REASONS, notifies } from "../attention";
 import { t, type Lang } from "../i18n";
+import { modifiersOf } from "../platform";
 import type { Theme } from "../theme";
 import { useGutter } from "../useGutter";
 import { HOURS, MINUTES } from "../segments";
@@ -185,7 +186,7 @@ export function SettingsDialog({ settings, welcome, onSave, onClose, memberOrgs,
         {...DIALOG_MOTION}
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && e.metaKey && welcome) start();
+          if (e.key === "Enter" && modifiersOf(e).mod && welcome) start();
         }}
       >
         {!welcome && (

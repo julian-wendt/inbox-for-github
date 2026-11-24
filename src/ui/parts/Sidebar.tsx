@@ -3,6 +3,7 @@ import type { Budget, Scope } from "../../github/client";
 import { CalendarDays, CircleHelp, Eraser, Inbox, RefreshCw, RotateCw, Search, Settings2, SquarePen, UserCheck, type LucideIcon } from "lucide-react";
 import { dateLocale, t } from "../i18n";
 import { ago, type VIEWS, type View } from "../labels";
+import { modifiersOf } from "../platform";
 import { Avatar } from "./Avatar";
 import { ScopeNotice } from "./ScopeNotice";
 import { CalendarNotice } from "./CalendarNotice";
@@ -116,7 +117,7 @@ export function Sidebar(props: Props) {
               <li key={name}>
                 <button
                   className={`nav-item${repoFilter.includes(name) ? " on" : ""}`}
-                  onClick={(e) => props.onRepo(name, e.metaKey || picking)}
+                  onClick={(e) => props.onRepo(name, modifiersOf(e).mod || picking)}
                   onContextMenu={(e) => props.onRepoMenu(name, e)}
                   title={`${name} · ${t(picking ? "sidebar.repoHintPicking" : "sidebar.repoHint")}${props.isDirectOnly(name) ? ` · ${t("sidebar.directOnly")}` : ""}`}
                   aria-pressed={repoFilter.includes(name)}
