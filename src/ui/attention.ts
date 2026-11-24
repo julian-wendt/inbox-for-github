@@ -149,6 +149,6 @@ export function notificationTitle(entry: Pick<Classified, "asks" | "mention"> & 
     case "review":
       return t("notify.reviewRequested");
     case "mention":
-      return t("notify.mentioned", { name: entry.mention?.by ?? "" });
+      return entry.mention?.team ? t("notify.teamMentioned", { name: entry.mention.by, team: entry.mention.team }) : t("notify.mentioned", { name: entry.mention?.by ?? "" });
   }
 }

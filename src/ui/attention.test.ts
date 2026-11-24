@@ -57,6 +57,12 @@ describe("notificationTitle", () => {
     expect(notificationTitle({ asks: ["review"], mention: null })).toBe("Review requested");
   });
 
+  it("names the team when the mention was of the viewer's team, under the mention reason", () => {
+    const team = { asks: ["mention" as const], mention: { by: "bob", at, excerpt: "", self: false, team: "octo-org/platform" } };
+    expect(notificationTitle(team)).toBe("bob mentioned your team @octo-org/platform");
+    expect(notifyReason(team)).toBe("mention");
+  });
+
   it("names who gave feedback, answered in a thread or closed an own item, under its own reason", () => {
     expect(notificationTitle({ asks: ["feedback"], mention: null, feedback: { by: "bob", at, kind: "approved" } })).toBe("bob approved");
     expect(notificationTitle({ asks: ["reply"], mention: null, repliedBy: "alice" })).toBe("alice answered in your review thread");

@@ -65,8 +65,9 @@ export function explain(entry: Classified, reopenOn: Reopen, me = "", dated: Dat
         case "due":
           return t("explain.due", { ago: agoInSentence(entry.asked.due ?? "") });
         case "mention":
-          return mention!.self
-            ? t("explain.selfMention", { ago: agoInSentence(mention!.at) })
+          if (mention!.self) return t("explain.selfMention", { ago: agoInSentence(mention!.at) });
+          return mention!.team
+            ? t("explain.teamMention", { name: mention!.by, team: mention!.team, ago: agoInSentence(mention!.at) })
             : t("explain.mention", { name: mention!.by, ago: agoInSentence(mention!.at) });
       }
     });

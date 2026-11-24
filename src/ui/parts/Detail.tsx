@@ -133,7 +133,7 @@ function DetailBody({ entry, me, reopenOn, datedOf, hiddenBoards, history, event
     .filter((s) => s.activity.kind !== "reviewed" || !covered.has(`${s.activity.actor}@${s.activity.at}`))
     .filter((s) => !since || s.activity.at >= since);
   const timeline = [
-    ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} onReact={onReact} /> })),
+    ...visible.map((post, i) => ({ at: post.at, node: <Post key={`p-${post.at}-${i}`} post={post} review={reviewOf(post)} me={me} teams={item.teams} avatar={item.avatars[post.author]} trigger={isTrigger(post)} botsFolded={botComments === "folded"} innerRef={isTrigger(post) ? trigger : undefined} onReact={onReact} /> })),
     ...activities.map((shown, i) => ({ at: shown.activity.at, node: <ActivityRow key={`a-${shown.activity.at}-${i}`} shown={shown} me={me} itemUrl={item.url} /> })),
     ...reviewRows.map((line, i) => ({ at: line.at, node: <ReviewRow key={`r-${line.at}-${i}`} line={line} me={me} /> })),
     ...localLines(history, withReturn(events, history, backEvent(entry)), item).filter((l) => !since || l.at >= since).map((line, i) => ({ at: line.at, node: <LocalLineRow key={`s-${line.at}-${i}`} line={line} /> })),
@@ -285,6 +285,8 @@ interface PostProps {
   /** For a review summary: its line, whose inline comments and state show in the header. */
   review?: ReviewLine;
   me: string;
+  /** The viewer's teams the item mentions (`Item.teams`); a post naming one is tagged like a mention. */
+  teams?: string[];
   avatar?: string;
   /** The mention that keeps the item in the inbox. */
   trigger?: boolean;
@@ -295,12 +297,13 @@ interface PostProps {
 }
 
 /** One post; comments by bots can fold to their first line, since they are mostly reports. */
-function Post({ post, review, me, avatar, trigger = false, botsFolded = true, innerRef, onReact }: PostProps) {
+function Post({ post, review, me, teams = [], avatar, trigger = false, botsFolded = true, innerRef, onReact }: PostProps) {
   const note = review && reviewNote(review);
   const bot = isBot(post.author);
   const [open, setOpen] = useState(!bot || !botsFolded);
   const mentionsMe = findMention(post.body, me) !== null;
-  const kind = mentionsMe ? (sameLogin(post.author, me) ? " self-mention" : " mention") : "";
+  const mentionsTeam = !mentionsMe && !sameLogin(post.author, me) && teams.some((team) => findMention(post.body, team) !== null);
+  const kind = mentionsMe ? (sameLogin(post.author, me) ? " self-mention" : " mention") : mentionsTeam ? " mention" : "";
   return (
     <li ref={innerRef} className={`post${kind}${bot ? " bot" : ""}${trigger ? " trigger" : ""}`}>
       <div
@@ -327,7 +330,7 @@ function Post({ post, review, me, avatar, trigger = false, botsFolded = true, in
         {kind && (
           <span className="mention-tag">
             {kind === " self-mention" ? <Bell size={12} /> : <AtSign size={12} />}
-            {kind === " self-mention" ? t("post.selfMention") : t("post.mentioned")}
+            {kind === " self-mention" ? t("post.selfMention") : mentionsTeam ? t("post.teamMentioned") : t("post.mentioned")}
           </span>
         )}
       </div>
