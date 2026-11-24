@@ -140,6 +140,23 @@ describe("rule 2: everything that brings an item back is an ask with a time", ()
       },
     },
     {
+      situation: "a mention of one of my teams after D; one I write myself asks nothing",
+      run: async (world, app) => {
+        world.teams = ["platform"];
+        const issue = world.issue({ author: "alice", body: "@octo-org/platform please check the rollout." });
+        await app.refresh();
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["mention"] });
+        app.done(issue);
+        world.advance(HOUR);
+        world.comment(issue, ME, "@octo-org/platform reminder: rollout on Friday.");
+        await refetch(world, app, issue);
+        expect(app.entry(issue).asks).toEqual([]);
+        world.comment(issue, "bob", "@octo-org/platform one more thing");
+        await refetch(world, app, issue);
+        expect(app.entry(issue)).toMatchObject({ bucket: "inbox", asks: ["mention"], mention: { by: "bob", team: "octo-org/platform" } });
+      },
+    },
+    {
       situation: "a review request after D",
       run: async (world, app) => {
         const pr = world.pullRequest();

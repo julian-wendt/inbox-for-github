@@ -16,7 +16,10 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
    refresh. The token is never stored.
 2. **Fetch:** `fetchItems` (`src/github/fetch.ts`) runs one search per qualifier in
    `QUALIFIERS` (`involves:@me`, `is:pr review-requested:@me`) for open items, and the same for
-   closed items when `closedDays` > 0. Boards come from a separate batched query
+   closed items when `closedDays` > 0. A full fetch also searches mentions of the viewer's teams
+   in the watched organizations (`fetchTeams`, `TEAM_QUERY`) and keeps on each item the teams
+   its posts name (`Item.teams`); `mentionsOf` counts those like the viewer's login, deltas and
+   reloads keep them from the cached copy (`keepTeams`). Boards come from a separate batched query
    (`src/github/boards.ts`) when "Load boards" is on.
 3. **Cache:** every fetch is saved to `item_cache` (`Store.saveFetch`) and shown at the next start
    before any request, also offline.
@@ -123,7 +126,7 @@ gh CLI token ──► src/github (GraphQL) ──► Item[] ──► store cac
 
 - **Full fetch** at start, when the organizations change, at least every `FULL_EVERY_MS`
   (15 minutes), and on ⇧⌘R (`refresh(true)`).
-- **Delta** otherwise (`canDelta`): the same searches with `updated:>=` the last fetch minus
+- **Delta** otherwise (`canDelta`): the same searches, without the team mentions, with `updated:>=` the last fetch minus
   `DELTA_OVERLAP_MS` (5 minutes), page size 20, merged with `mergeDelta`. Next to them, the ids
   of all open review requests (`fetchReviewIds`, 1 point): a cached item whose request is gone
   loses the reason "review" and, left without a reason, the cache (`withdrawReviews`); an id the
